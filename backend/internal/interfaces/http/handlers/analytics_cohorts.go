@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -316,12 +318,6 @@ func (h *AnalyticsHandler) setToCache(c *gin.Context, key string, value interfac
 
 	return h.redisClient.Set(c.Request.Context(), key, data, ttl).Err()
 }
-
-// Helper imports
-import (
-	"encoding/json"
-	"fmt"
-)
 
 // Health check for analytics service
 // @Summary Analytics health check

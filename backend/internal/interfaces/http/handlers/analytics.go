@@ -1,11 +1,17 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 
+	matomoClient "github.com/bivex/paywall-iap/internal/infrastructure/external/matomo"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
@@ -13,12 +19,23 @@ import (
 // AnalyticsHandler handles HTTP requests for analytics data
 type AnalyticsHandler struct {
 	analyticsService *service.AnalyticsService
+	matomoClient     *matomoClient.Client
+	redisClient      *redis.Client
+	logger           *zap.Logger
 }
 
 // NewAnalyticsHandler creates a new analytics handler
-func NewAnalyticsHandler(analyticsService *service.AnalyticsService) *AnalyticsHandler {
+func NewAnalyticsHandler(
+	analyticsService *service.AnalyticsService,
+	matomoClient *matomoClient.Client,
+	redisClient *redis.Client,
+	logger *zap.Logger,
+) *AnalyticsHandler {
 	return &AnalyticsHandler{
 		analyticsService: analyticsService,
+		matomoClient:     matomoClient,
+		redisClient:      redisClient,
+		logger:           logger,
 	}
 }
 
