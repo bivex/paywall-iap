@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/bivex/paywall-iap/internal/application/dto"
 	"github.com/bivex/paywall-iap/internal/domain/entity"
-	"github.com/bivex/paywall-iap/internal/domain/repository"
 	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
+	"github.com/google/uuid"
 )
 
 // IAPVerifier interface for IAP verification services
@@ -31,11 +31,11 @@ type IAPVerificationResult struct {
 
 // VerifyIAPCommand handles IAP receipt verification
 type VerifyIAPCommand struct {
-	userRepo           repository.UserRepository
-	subscriptionRepo   repository.SubscriptionRepository
-	transactionRepo    repository.TransactionRepository
-	iosVerifier        IAPVerifier
-	androidVerifier    IAPVerifier
+	userRepo         repository.UserRepository
+	subscriptionRepo repository.SubscriptionRepository
+	transactionRepo  repository.TransactionRepository
+	iosVerifier      IAPVerifier
+	androidVerifier  IAPVerifier
 }
 
 // NewVerifyIAPCommand creates a new verify IAP command
@@ -62,9 +62,8 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.
 		return nil, fmt.Errorf("%w: invalid user ID", domainErrors.ErrInvalidInput)
 	}
 
-	// Get user
-	user, err := c.userRepo.GetByID(ctx, userUUID)
-	if err != nil {
+	// Get user (validates existence)
+	if _, err := c.userRepo.GetByID(ctx, userUUID); err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 

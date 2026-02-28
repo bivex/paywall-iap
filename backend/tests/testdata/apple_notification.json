@@ -1,0 +1,6 @@
+{
+  "signedPayload": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJub3RpZmljYXRpb25UeXBlIjoiRElEX1JFTkVXIiwiZW52aXJvbm1lbnQiOiJTYW5kYm94IiwidmVyc2lvbiI6IjIuMCJ9.signature",
+  "version": "2.0",
+  "notificationType": "DID_RENEW",
+  "environment": "Sandbox"
+}

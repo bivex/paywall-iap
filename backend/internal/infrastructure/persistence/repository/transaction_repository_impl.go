@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/bivex/paywall-iap/internal/domain/entity"
-	"github.com/bivex/paywall-iap/internal/domain/repository"
-	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
-	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 )
 
 type transactionRepositoryImpl struct {
@@ -28,8 +28,8 @@ func (r *transactionRepositoryImpl) Create(ctx context.Context, txn *entity.Tran
 		Amount:         txn.Amount,
 		Currency:       txn.Currency,
 		Status:         string(txn.Status),
-		ReceiptHash:    txn.ReceiptHash,
-		ProviderTxID:   txn.ProviderTxID,
+		ReceiptHash:    &txn.ReceiptHash,
+		ProviderTxID:   &txn.ProviderTxID,
 	}
 
 	_, err := r.queries.CreateTransaction(ctx, params)
@@ -79,7 +79,7 @@ func (r *transactionRepositoryImpl) GetBySubscriptionID(ctx context.Context, sub
 }
 
 func (r *transactionRepositoryImpl) CheckDuplicateReceipt(ctx context.Context, receiptHash string) (bool, error) {
-	_, err := r.queries.CheckDuplicateReceipt(ctx, receiptHash)
+	_, err := r.queries.CheckDuplicateReceipt(ctx, &receiptHash)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return false, nil
@@ -91,6 +91,14 @@ func (r *transactionRepositoryImpl) CheckDuplicateReceipt(ctx context.Context, r
 }
 
 func (r *transactionRepositoryImpl) mapToEntity(row generated.Transaction) *entity.Transaction {
+	var receiptHash, providerTxID string
+	if row.ReceiptHash != nil {
+		receiptHash = *row.ReceiptHash
+	}
+	if row.ProviderTxID != nil {
+		providerTxID = *row.ProviderTxID
+	}
+
 	return &entity.Transaction{
 		ID:             row.ID,
 		UserID:         row.UserID,
@@ -98,8 +106,8 @@ func (r *transactionRepositoryImpl) mapToEntity(row generated.Transaction) *enti
 		Amount:         row.Amount,
 		Currency:       row.Currency,
 		Status:         entity.TransactionStatus(row.Status),
-		ReceiptHash:    row.ReceiptHash,
-		ProviderTxID:   row.ProviderTxID,
+		ReceiptHash:    receiptHash,
+		ProviderTxID:   providerTxID,
 		CreatedAt:      row.CreatedAt,
 	}
 }

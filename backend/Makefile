@@ -17,6 +17,22 @@ test-unit:
 test-integration:
 	go test ./tests/integration/... -tags=integration -race
 
+test-e2e:
+	go test ./tests/e2e/... -tags=e2e -race -v
+
+test-clean:
+	go clean -testcache
+	docker container prune -f
+
+test-load:
+	k6 run tests/load/basic_load_test.js
+
+test-load-stress:
+	k6 run tests/load/stress_test.js
+
+test-load-soak:
+	k6 run tests/load/soak_test.js
+
 test-coverage:
 	go test ./... -race -coverprofile=coverage.out
 	go tool cover -func=coverage.out

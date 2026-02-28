@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -17,7 +16,6 @@ import (
 func SetupTestDB(ctx context.Context) (*pgxpool.Pool, func(), error) {
 	// Create PostgreSQL container
 	pgContainer, err := postgres.RunContainer(ctx,
-		"testcontainers/postgresql:15-alpine",
 		testcontainers.WithImage("postgres:15-alpine"),
 		postgres.WithDatabase("testdb"),
 		postgres.WithUsername("test"),

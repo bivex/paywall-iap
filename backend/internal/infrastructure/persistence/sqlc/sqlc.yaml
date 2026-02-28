@@ -13,6 +13,7 @@ sql:
         emit_interface: true
         emit_exact_table_names: false
         emit_empty_slices: true
+        emit_pointers_for_null_types: true
         overrides:
           - column: "users.id"
             go_type: "github.com/google/uuid.UUID"
@@ -39,24 +40,33 @@ sql:
           - column: "users.email"
             go_type: "string"
           - column: "users.device_id"
-            go_type: "string"
-            nullable: true
+            go_type:
+              type: "string"
+              pointer: true
           - column: "users.ltv"
             go_type: "float64"
           - column: "users.created_at"
             go_type: "time.Time"
           - column: "users.deleted_at"
-            go_type: "time.Time"
-            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
           - column: "users.ltv_updated_at"
-            go_type: "time.Time"
-            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
           - column: "subscriptions.deleted_at"
-            go_type: "time.Time"
-            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
           - column: "transactions.receipt_hash"
-            go_type: "string"
-            nullable: true
+            go_type:
+              type: "string"
+              pointer: true
           - column: "transactions.provider_tx_id"
-            go_type: "string"
-            nullable: true
+            go_type:
+              type: "string"
+              pointer: true

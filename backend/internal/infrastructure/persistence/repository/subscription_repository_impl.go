@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/bivex/paywall-iap/internal/domain/entity"
-	"github.com/bivex/paywall-iap/internal/domain/repository"
-	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
-	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 )
 
 type subscriptionRepositoryImpl struct {
@@ -136,11 +136,6 @@ func (r *subscriptionRepositoryImpl) CanAccess(ctx context.Context, userID uuid.
 }
 
 func (r *subscriptionRepositoryImpl) mapToEntity(row generated.Subscription) *entity.Subscription {
-	var deletedAt *time.Time
-	if !row.DeletedAt.IsZero() {
-		deletedAt = &row.DeletedAt
-	}
-
 	return &entity.Subscription{
 		ID:        row.ID,
 		UserID:    row.UserID,
@@ -153,6 +148,6 @@ func (r *subscriptionRepositoryImpl) mapToEntity(row generated.Subscription) *en
 		AutoRenew: row.AutoRenew,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
-		DeletedAt: deletedAt,
+		DeletedAt: row.DeletedAt,
 	}
 }

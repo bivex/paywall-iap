@@ -1,0 +1,8 @@
+{
+    "message": {
+        "data": "eyJ2ZXJzaW9uIjoiMS4wIiwicGFja2FnZU5hbWUiOiJjb20uYXBwLnByZW1pdW0iLCJzdWJzY3JpcHRpb25Ob3RpZmljYXRpb24iOnsic3Vic2NyaXB0aW9uVG9rZW4iOiJzdWJfdG9rZW5fMTIzIiwibm90aWZpY2F0aW9uVHlwZSI6Mywic3Vic2NyaXB0aW9uSWQiOiJjb20uYXBwLnByZW1pdW0ifX0=",
+        "messageId": "msg_123",
+        "publishTime": "2026-02-28T12:00:00Z"
+    },
+    "subscription": "projects/your-project/topics/google-play-billing"
+}

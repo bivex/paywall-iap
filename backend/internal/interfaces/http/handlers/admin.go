@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/bivex/paywall-iap/internal/application/dto"
+	"net/http"
+
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
+	"github.com/gin-gonic/gin"
 )
 
 // AdminHandler handles admin endpoints
@@ -27,7 +28,7 @@ func NewAdminHandler() *AdminHandler {
 // @Success 204
 // @Router /admin/users/{id}/grant [post]
 func (h *AdminHandler) GrantSubscription(c *gin.Context) {
-	userID := c.Param("id")
+	_ = c.Param("id")
 
 	var req struct {
 		ProductID string `json:"product_id" binding:"required"`
@@ -40,10 +41,6 @@ func (h *AdminHandler) GrantSubscription(c *gin.Context) {
 	}
 
 	// TODO: Implement grant subscription logic
-	// 1. Validate admin has permissions (ops+ role)
-	// 2. Create or update subscription
-	// 3. Write to admin_audit_log
-
 	c.JSON(http.StatusNotImplemented, gin.H{"message": "Not yet implemented"})
 }
 
@@ -58,7 +55,7 @@ func (h *AdminHandler) GrantSubscription(c *gin.Context) {
 // @Success 204
 // @Router /admin/users/{id}/revoke [post]
 func (h *AdminHandler) RevokeSubscription(c *gin.Context) {
-	userID := c.Param("id")
+	_ = c.Param("id")
 
 	var req struct {
 		Reason string `json:"reason"`
@@ -69,10 +66,6 @@ func (h *AdminHandler) RevokeSubscription(c *gin.Context) {
 	}
 
 	// TODO: Implement revoke subscription logic
-	// 1. Validate admin has permissions (ops+ role)
-	// 2. Cancel subscription
-	// 3. Write to admin_audit_log
-
 	c.JSON(http.StatusNotImplemented, gin.H{"message": "Not yet implemented"})
 }
 
@@ -90,10 +83,6 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 	limit := c.DefaultQuery("limit", "50")
 
 	// TODO: Implement user listing logic
-	// 1. Validate admin has permissions (support+ role)
-	// 2. Fetch users with pagination
-	// 3. Return response
-
 	c.JSON(http.StatusNotImplemented, gin.H{
 		"message": "Not yet implemented",
 		"page":    page,
@@ -110,15 +99,10 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 // @Router /admin/health [get]
 func (h *AdminHandler) GetHealth(c *gin.Context) {
 	// TODO: Implement health check logic
-	// 1. Check database connectivity
-	// 2. Check Redis connectivity
-	// 3. Check queue status
-	// 4. Return health status
-
 	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"status":   "ok",
 		"database": "ok",
-		"redis": "ok",
-		"queue": "ok",
+		"redis":    "ok",
+		"queue":    "ok",
 	})
 }

@@ -2,15 +2,13 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/bivex/paywall-iap/internal/application/dto"
-	"github.com/bivex/paywall-iap/internal/domain/entity"
-	"github.com/bivex/paywall-iap/internal/domain/repository"
-	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	appMiddleware "github.com/bivex/paywall-iap/internal/application/middleware"
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
 )
 
 // RegisterCommand handles user registration

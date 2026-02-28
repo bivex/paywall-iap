@@ -43,7 +43,7 @@ func (r *mockUserRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.User,
 	var user entity.User
 	err := row.Scan(
 		&user.ID, &user.PlatformUserID, &user.DeviceID, &user.Platform,
-		&user.AppVersion, &user.Email, &user.LTV, &user.LtvUpdatedAt,
+		&user.AppVersion, &user.Email, &user.LTV, &user.LTVUpdatedAt,
 		&user.CreatedAt, &user.DeletedAt,
 	)
 	if err != nil {
@@ -64,7 +64,7 @@ func (r *mockUserRepo) GetByPlatformID(ctx context.Context, platformUserID strin
 	var user entity.User
 	err := row.Scan(
 		&user.ID, &user.PlatformUserID, &user.DeviceID, &user.Platform,
-		&user.AppVersion, &user.Email, &user.LTV, &user.LtvUpdatedAt,
+		&user.AppVersion, &user.Email, &user.LTV, &user.LTVUpdatedAt,
 		&user.CreatedAt, &user.DeletedAt,
 	)
 	if err != nil {
@@ -85,7 +85,7 @@ func (r *mockUserRepo) GetByEmail(ctx context.Context, email string) (*entity.Us
 	var user entity.User
 	err := row.Scan(
 		&user.ID, &user.PlatformUserID, &user.DeviceID, &user.Platform,
-		&user.AppVersion, &user.Email, &user.LTV, &user.LtvUpdatedAt,
+		&user.AppVersion, &user.Email, &user.LTV, &user.LTVUpdatedAt,
 		&user.CreatedAt, &user.DeletedAt,
 	)
 	if err != nil {

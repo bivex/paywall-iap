@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/bivex/paywall-iap/internal/domain/entity"
-	"github.com/bivex/paywall-iap/internal/domain/repository"
-	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
-	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 )
 
 type userRepositoryImpl struct {
@@ -25,7 +25,7 @@ func NewUserRepository(queries *generated.Queries) repository.UserRepository {
 func (r *userRepositoryImpl) Create(ctx context.Context, user *entity.User) error {
 	params := generated.CreateUserParams{
 		PlatformUserID: user.PlatformUserID,
-		DeviceID:       user.DeviceID,
+		DeviceID:       &user.DeviceID,
 		Platform:       string(user.Platform),
 		AppVersion:     user.AppVersion,
 		Email:          user.Email,
@@ -111,21 +111,26 @@ func (r *userRepositoryImpl) ExistsByPlatformID(ctx context.Context, platformUse
 }
 
 func (r *userRepositoryImpl) mapToEntity(row generated.User) *entity.User {
-	var deletedAt *time.Time
-	if !row.DeletedAt.IsZero() {
-		deletedAt = &row.DeletedAt
+	var deviceID string
+	if row.DeviceID != nil {
+		deviceID = *row.DeviceID
+	}
+
+	var ltvUpdatedAt time.Time
+	if row.LtvUpdatedAt != nil {
+		ltvUpdatedAt = *row.LtvUpdatedAt
 	}
 
 	return &entity.User{
-		ID:            row.ID,
+		ID:             row.ID,
 		PlatformUserID: row.PlatformUserID,
-		DeviceID:      row.DeviceID,
-		Platform:      entity.Platform(row.Platform),
-		AppVersion:    row.AppVersion,
-		Email:         row.Email,
-		LTV:           row.Ltv,
-		LTVUpdatedAt:  row.LtvUpdatedAt,
-		CreatedAt:     row.CreatedAt,
-		DeletedAt:     deletedAt,
+		DeviceID:       deviceID,
+		Platform:       entity.Platform(row.Platform),
+		AppVersion:     row.AppVersion,
+		Email:          row.Email,
+		LTV:            row.Ltv,
+		LTVUpdatedAt:   ltvUpdatedAt,
+		CreatedAt:      row.CreatedAt,
+		DeletedAt:      row.DeletedAt,
 	}
 }

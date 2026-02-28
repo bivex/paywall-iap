@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
-	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 )
 
 // JWTClaims represents the JWT claims structure
@@ -152,6 +152,22 @@ func (j *JWTMiddleware) GenerateRefreshToken(userID string) (string, string, err
 	}
 
 	return tokenString, jti, nil
+}
+
+// ParseToken parses a token string and returns the claims without checking the Redis blocklist.
+// Useful for testing and internal token inspection.
+func (j *JWTMiddleware) ParseToken(tokenString string) (*JWTClaims, error) {
+	claims := &JWTClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return j.secret, nil
+	})
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+	return claims, nil
 }
 
 // RevokeToken adds a token to the blocklist
