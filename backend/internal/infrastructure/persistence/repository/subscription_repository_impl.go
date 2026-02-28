@@ -136,11 +136,6 @@ func (r *subscriptionRepositoryImpl) CanAccess(ctx context.Context, userID uuid.
 }
 
 func (r *subscriptionRepositoryImpl) mapToEntity(row generated.Subscription) *entity.Subscription {
-	var deletedAt *time.Time
-	if row.DeletedAt.Valid {
-		deletedAt = &row.DeletedAt.Time
-	}
-
 	return &entity.Subscription{
 		ID:        row.ID,
 		UserID:    row.UserID,
@@ -153,6 +148,6 @@ func (r *subscriptionRepositoryImpl) mapToEntity(row generated.Subscription) *en
 		AutoRenew: row.AutoRenew,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
-		DeletedAt: deletedAt,
+		DeletedAt: row.DeletedAt,
 	}
 }

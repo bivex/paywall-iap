@@ -2,6 +2,7 @@ package response
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -105,7 +106,7 @@ func Conflict(c *gin.Context, message string) {
 
 // RateLimited sends a 429 Too Many Requests response
 func RateLimited(c *gin.Context, retryAfter int) {
-	c.Header("Retry-After", string(retryAfter))
+	c.Header("Retry-After", strconv.Itoa(retryAfter))
 	Error(c, http.StatusTooManyRequests, "RATE_LIMIT_EXCEEDED", "Rate limit exceeded")
 }
 

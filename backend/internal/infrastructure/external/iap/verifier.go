@@ -3,6 +3,7 @@ package iap
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	iap "github.com/awa/go-iap/appstore"
@@ -11,7 +12,7 @@ import (
 // AppleVerifier verifies Apple IAP receipts
 type AppleVerifier struct {
 	sharedSecret string
-	environment  string // "sandbox" or "production"
+	environment  iap.Environment // iap.Sandbox or iap.Production
 }
 
 // NewAppleVerifier creates a new Apple verifier
@@ -52,9 +53,7 @@ func (v *AppleVerifier) VerifyReceipt(ctx context.Context, receiptData string) (
 	}
 
 	// Create IAP client
-	client := iap.New(iap.Config{
-		PrivateKey: []byte(v.sharedSecret), // For local validation
-	})
+	client := iap.New()
 
 	// Verify the receipt
 	req := iap.IAPRequest{
@@ -62,8 +61,8 @@ func (v *AppleVerifier) VerifyReceipt(ctx context.Context, receiptData string) (
 		Password:    v.sharedSecret,
 	}
 
-	result, err := client.Verify(ctx, v.environment, req)
-	if err != nil {
+	var result iap.IAPResponse
+	if err := client.Verify(ctx, req, &result); err != nil {
 		return nil, fmt.Errorf("failed to verify receipt: %w", err)
 	}
 
@@ -75,29 +74,30 @@ func (v *AppleVerifier) VerifyReceipt(ctx context.Context, receiptData string) (
 	}
 
 	// Parse receipt info
-	latestReceipt := result.LatestReceiptInfo
-	if latestReceipt == nil {
+	latestReceipts := result.LatestReceiptInfo
+	if len(latestReceipts) == 0 {
 		return &VerifyResponse{
 			Valid: false,
 		}, nil
 	}
+	first := latestReceipts[0]
 
 	// Calculate expires at
 	expiresAt := time.Now()
-	if latestReceipt.ExpiresDateMs > 0 {
-		expiresAt = time.Unix(latestReceipt.ExpiresDateMs/1000, 0)
-	} else if latestReceipt.ExpiresDate > 0 {
-		// Try ExpiresDate field
-		expiresAtStr := latestReceipt.ExpiresDate
-		expiresAt, _ = time.Parse(time.RFC3339, expiresAtStr)
+	if first.ExpiresDateMS != "" {
+		if ms, err := strconv.ParseInt(first.ExpiresDateMS, 10, 64); err == nil {
+			expiresAt = time.Unix(ms/1000, 0)
+		}
+	} else if first.ExpiresDate.ExpiresDate != "" {
+		expiresAt, _ = time.Parse(time.RFC3339, first.ExpiresDate.ExpiresDate)
 	}
 
 	return &VerifyResponse{
 		Valid:         true,
-		TransactionID: latestReceipt.TransactionID,
-		ProductID:     latestReceipt.ProductID,
+		TransactionID: first.TransactionID,
+		ProductID:     first.ProductID,
 		ExpiresAt:     expiresAt,
-		IsRenewable:   latestReceipt.IsInIntroOfferPeriod == "false",
-		OriginalTxID:  latestReceipt.OriginalTransactionID,
+		IsRenewable:   first.IsInIntroOfferPeriod == "false",
+		OriginalTxID:  string(first.OriginalTransactionID),
 	}, nil
 }

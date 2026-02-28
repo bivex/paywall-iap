@@ -3,8 +3,6 @@ package tasks
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"time"
 
 	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
@@ -22,39 +20,32 @@ const (
 	TypeExpireGracePeriod    = "expire:grace_period"
 )
 
-// RegisterHandlers registers all task handlers with the worker
-func RegisterHandlers(worker *asynq.Worker) {
-	// Register task handlers
-	worker.Register(TypeUpdateLTV, HandleUpdateLTV)
-	worker.Register(TypeComputeAnalytics, HandleComputeAnalytics)
-	worker.Register(TypeProcessWebhook, HandleProcessWebhook)
-	worker.Register(TypeSendNotification, HandleSendNotification)
-	worker.Register(TypeSyncLago, HandleSyncLago)
-	worker.Register(TypeExpireGracePeriod, HandleExpireGracePeriod)
+// RegisterHandlers registers all task handlers with the server mux
+func RegisterHandlers(mux *asynq.ServeMux) {
+	mux.HandleFunc(TypeUpdateLTV, HandleUpdateLTV)
+	mux.HandleFunc(TypeComputeAnalytics, HandleComputeAnalytics)
+	mux.HandleFunc(TypeProcessWebhook, HandleProcessWebhook)
+	mux.HandleFunc(TypeSendNotification, HandleSendNotification)
+	mux.HandleFunc(TypeSyncLago, HandleSyncLago)
+	mux.HandleFunc(TypeExpireGracePeriod, HandleExpireGracePeriod)
 }
 
 // RegisterScheduledTasks registers all scheduled (cron) tasks
 func RegisterScheduledTasks(scheduler *asynq.Scheduler) {
 	// Update LTV every hour
-	_, err := scheduler.Register("*/60 * * * *", func() (string, []any) {
-		return fmt.Sprintf("%s:%s", time.Now().Format("20060102-15:04"), TypeUpdateLTV), nil
-	})
+	_, err := scheduler.Register("0 * * * *", asynq.NewTask(TypeUpdateLTV, nil))
 	if err != nil {
 		logging.Logger.Error("Failed to schedule LTV update", zap.Error(err))
 	}
 
 	// Compute daily analytics at midnight
-	_, err = scheduler.Register("0 0 * * *", func() (string, []any) {
-		return fmt.Sprintf("%s:%s", time.Now().Format("20060102"), TypeComputeAnalytics), nil
-	})
+	_, err = scheduler.Register("0 0 * * *", asynq.NewTask(TypeComputeAnalytics, nil))
 	if err != nil {
 		logging.Logger.Error("Failed to schedule analytics computation", zap.Error(err))
 	}
 
 	// Check expiring grace periods every 5 minutes
-	_, err = scheduler.Register("*/5 * * * *", func() (string, []any) {
-		return fmt.Sprintf("%s:%s", time.Now().Format("20060102-15:04"), TypeExpireGracePeriod), nil
-	})
+	_, err = scheduler.Register("*/5 * * * *", asynq.NewTask(TypeExpireGracePeriod, nil))
 	if err != nil {
 		logging.Logger.Error("Failed to schedule grace period check", zap.Error(err))
 	}

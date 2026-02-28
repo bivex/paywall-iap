@@ -2,7 +2,6 @@ package iap
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/bivex/paywall-iap/internal/application/command"
