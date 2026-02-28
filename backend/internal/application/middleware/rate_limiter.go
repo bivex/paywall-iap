@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
-	"github.com/go-redis/redis_rate/v10"
-	"go.uber.org/zap"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis_rate/v10"
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 // RateLimitConfig defines rate limiting parameters
@@ -118,33 +118,33 @@ func ByIPAndEndpoint(c *gin.Context) string {
 
 // Predefined rate limit configurations for common endpoints
 var (
-	// Default rate limit: 1 request per second (60/minute)
+	// Default rate limit: 100 requests per second (was 1)
 	DefaultConfig = RateLimitConfig{
-		Rate:  1,
-		Burst: 10,
+		Rate:  100,
+		Burst: 200,
 	}
 
-	// Strict rate limit: 0.05 requests per second (3/minute) - use PerMinute
+	// Strict rate limit: 10 requests per second (was 1/min range)
 	StrictConfig = RateLimitConfig{
-		Rate:  1,
-		Burst: 3,
-	}
-
-	// Generous rate limit: 2 requests per second (120/minute)
-	GenerousConfig = RateLimitConfig{
-		Rate:  2,
-		Burst: 20,
-	}
-
-	// Webhook rate limit: 4 requests per second (240/minute)
-	WebhookConfig = RateLimitConfig{
-		Rate:  4,
+		Rate:  10,
 		Burst: 50,
 	}
 
-	// High-frequency polling: 1 request per second
+	// Generous rate limit: 500 requests per second
+	GenerousConfig = RateLimitConfig{
+		Rate:  500,
+		Burst: 1000,
+	}
+
+	// Webhook rate limit: 1000 requests per second
+	WebhookConfig = RateLimitConfig{
+		Rate:  1000,
+		Burst: 2000,
+	}
+
+	// High-frequency polling: 100 requests per second
 	PollingConfig = RateLimitConfig{
-		Rate:  1,
-		Burst: 5,
+		Rate:  100,
+		Burst: 500,
 	}
 )
