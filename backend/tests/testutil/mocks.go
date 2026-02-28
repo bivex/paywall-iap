@@ -205,3 +205,24 @@ func (r *mockSubscriptionRepo) CanAccess(ctx context.Context, userID uuid.UUID) 
 	).Scan(&count)
 	return count > 0, err
 }
+
+func (r *mockSubscriptionRepo) GetUsersWithCancelledSubscriptions(ctx context.Context, daysSinceChurn int) ([]uuid.UUID, error) {
+	rows, err := r.pool.Query(ctx,
+		"SELECT DISTINCT user_id FROM subscriptions WHERE status = 'cancelled' AND updated_at > now() - ($1 * INTERVAL '1 day') AND deleted_at IS NULL",
+		daysSinceChurn,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var userIDs []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, id)
+	}
+	return userIDs, rows.Err()
+}

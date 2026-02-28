@@ -72,3 +72,11 @@ func (m *MockSubscriptionRepository) CanAccess(ctx context.Context, userID uuid.
 	args := m.Called(ctx, userID)
 	return args.Bool(0), args.Error(1)
 }
+
+func (m *MockSubscriptionRepository) GetUsersWithCancelledSubscriptions(ctx context.Context, daysSinceChurn int) ([]uuid.UUID, error) {
+	args := m.Called(ctx, daysSinceChurn)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]uuid.UUID), args.Error(1)
+}
