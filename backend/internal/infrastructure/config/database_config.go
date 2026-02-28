@@ -6,12 +6,12 @@ import (
 
 // DatabaseConfig holds database connection configuration
 type DatabaseConfig struct {
-	URL            string
-	MaxConnections int
-	MinConnections int
-	MaxLifetime    time.Duration
-	MaxIdleTime    time.Duration
-	HealthCheck    time.Duration
+	URL            string        `mapstructure:"url"`
+	MaxConnections int           `mapstructure:"max_connections"`
+	MinConnections int           `mapstructure:"min_connections"`
+	MaxLifetime    time.Duration `mapstructure:"max_lifetime"`
+	MaxIdleTime    time.Duration `mapstructure:"max_idle_time"`
+	HealthCheck    time.Duration `mapstructure:"health_check"`
 }
 
 // DefaultDatabaseConfig returns default database configuration

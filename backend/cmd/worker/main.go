@@ -46,12 +46,12 @@ func main() {
 	taskHandlers := worker_tasks.NewTaskHandlers(queries)
 
 	// Initialize Redis
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     cfg.Redis.URL,
-		Password: cfg.Redis.Password,
-		DB:       0,
-		PoolSize: cfg.Redis.PoolSize,
-	})
+	opts, err := redis.ParseURL(cfg.Redis.URL)
+	if err != nil {
+		logging.Logger.Fatal("Failed to parse Redis URL", zap.Error(err))
+	}
+	opts.PoolSize = cfg.Redis.PoolSize
+	redisClient := redis.NewClient(opts)
 	defer redisClient.Close()
 
 	// Test Redis connection
