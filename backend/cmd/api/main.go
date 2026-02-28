@@ -18,6 +18,7 @@ import (
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/application/query"
 	"github.com/bivex/paywall-iap/internal/domain/service"
+	"github.com/bivex/paywall-iap/internal/infrastructure/cache"
 	"github.com/bivex/paywall-iap/internal/infrastructure/config"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/pool"
@@ -85,6 +86,11 @@ func main() {
 	analyticsService := service.NewAnalyticsService(analyticsRepo, subscriptionRepo)
 	auditService := service.NewAuditService(dbPool)
 
+	// Initialize bandit components
+	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
+	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
+	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
+
 	// Initialize middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(
 		cfg.JWT.Secret,
@@ -126,6 +132,9 @@ func main() {
 		asynqClient,
 	)
 
+	// Initialize bandit handler
+	banditHandler := app_handler.NewBanditHandler(banditService)
+
 	// Setup Gin router
 	if cfg.Sentry.Environment != "development" {
 		gin.SetMode(gin.ReleaseMode)
@@ -161,6 +170,15 @@ func main() {
 				rateLimiter.Middleware(middleware.ByIP, middleware.DefaultConfig),
 				authHandler.RefreshToken,
 			)
+		}
+
+		// Bandit routes (multi-armed bandit)
+		bandit := v1.Group("/bandit")
+		{
+			bandit.POST("/assign", banditHandler.Assign)
+			bandit.POST("/reward", banditHandler.Reward)
+			bandit.GET("/statistics", banditHandler.Statistics)
+			bandit.GET("/health", banditHandler.Health)
 		}
 
 		// Protected routes (require JWT)
