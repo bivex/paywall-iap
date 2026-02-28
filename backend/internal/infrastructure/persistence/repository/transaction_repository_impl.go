@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/bivex/paywall-iap/internal/domain/entity"
@@ -28,8 +29,8 @@ func (r *transactionRepositoryImpl) Create(ctx context.Context, txn *entity.Tran
 		Amount:         txn.Amount,
 		Currency:       txn.Currency,
 		Status:         string(txn.Status),
-		ReceiptHash:    &txn.ReceiptHash,
-		ProviderTxID:   &txn.ProviderTxID,
+		ReceiptHash:    sql.NullString{String: txn.ReceiptHash, Valid: txn.ReceiptHash != ""},
+		ProviderTxID:   sql.NullString{String: txn.ProviderTxID, Valid: txn.ProviderTxID != ""},
 	}
 
 	_, err := r.queries.CreateTransaction(ctx, params)
@@ -79,7 +80,7 @@ func (r *transactionRepositoryImpl) GetBySubscriptionID(ctx context.Context, sub
 }
 
 func (r *transactionRepositoryImpl) CheckDuplicateReceipt(ctx context.Context, receiptHash string) (bool, error) {
-	_, err := r.queries.CheckDuplicateReceipt(ctx, &receiptHash)
+	_, err := r.queries.CheckDuplicateReceipt(ctx, sql.NullString{String: receiptHash, Valid: receiptHash != ""})
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return false, nil
@@ -92,11 +93,11 @@ func (r *transactionRepositoryImpl) CheckDuplicateReceipt(ctx context.Context, r
 
 func (r *transactionRepositoryImpl) mapToEntity(row generated.Transaction) *entity.Transaction {
 	var receiptHash, providerTxID string
-	if row.ReceiptHash != nil {
-		receiptHash = *row.ReceiptHash
+	if row.ReceiptHash.Valid {
+		receiptHash = row.ReceiptHash.String
 	}
-	if row.ProviderTxID != nil {
-		providerTxID = *row.ProviderTxID
+	if row.ProviderTxID.Valid {
+		providerTxID = row.ProviderTxID.String
 	}
 
 	return &entity.Transaction{
