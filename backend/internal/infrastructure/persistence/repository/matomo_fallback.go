@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
@@ -16,11 +17,11 @@ import (
 // PostgresMatomoEventRepository implements event persistence using PostgreSQL
 type PostgresMatomoEventRepository struct {
 	pool   *pgxpool.Pool
-	logger Logger
+	logger *zap.Logger
 }
 
 // NewPostgresMatomoEventRepository creates a new PostgreSQL-backed event repository
-func NewPostgresMatomoEventRepository(pool *pgxpool.Pool, logger Logger) *PostgresMatomoEventRepository {
+func NewPostgresMatomoEventRepository(pool *pgxpool.Pool, logger *zap.Logger) *PostgresMatomoEventRepository {
 	return &PostgresMatomoEventRepository{
 		pool:   pool,
 		logger: logger,
@@ -60,8 +61,8 @@ func (r *PostgresMatomoEventRepository) EnqueueEvent(ctx context.Context, event 
 	}
 
 	r.logger.Debug("Enqueued Matomo event",
-		"event_id", event.ID.String(),
-		"type", event.EventType,
+		zap.String("event_id", event.ID.String()),
+		zap.String("type", event.EventType),
 	)
 
 	return nil
@@ -142,7 +143,7 @@ func (r *PostgresMatomoEventRepository) UpdateEventStatus(ctx context.Context, e
 		if err != nil {
 			return fmt.Errorf("failed to mark event as sent: %w", err)
 		}
-		r.logger.Debug("Marked event as sent", "event_id", eventID.String())
+		r.logger.Debug("Marked event as sent", zap.String("event_id", eventID.String()))
 		return nil
 	}
 
@@ -174,8 +175,8 @@ func (r *PostgresMatomoEventRepository) UpdateEventStatus(ctx context.Context, e
 				return fmt.Errorf("failed to mark event as failed: %w", err)
 			}
 			r.logger.Warn("Event marked as permanently failed",
-				"event_id", eventID.String(),
-				"error", errorMsg,
+				zap.String("event_id", eventID.String()),
+				zap.String("error", errorMsg),
 			)
 			return nil
 		}
@@ -195,8 +196,8 @@ func (r *PostgresMatomoEventRepository) UpdateEventStatus(ctx context.Context, e
 			return fmt.Errorf("failed to schedule retry: %w", err)
 		}
 		r.logger.Debug("Event scheduled for retry",
-			"event_id", eventID.String(),
-			"retry_count", retryCount+1,
+			zap.String("event_id", eventID.String()),
+			zap.Int("retry_count", retryCount+1),
 		)
 		return nil
 	}
@@ -295,7 +296,7 @@ func (r *PostgresMatomoEventRepository) RetryFailedEvent(ctx context.Context, ev
 	if err != nil {
 		return fmt.Errorf("failed to retry failed event: %w", err)
 	}
-	r.logger.Info("Retrying failed event", "event_id", eventID.String())
+	r.logger.Info("Retrying failed event", zap.String("event_id", eventID.String()))
 	return nil
 }
 
@@ -313,7 +314,7 @@ func (r *PostgresMatomoEventRepository) CleanupOldSentEvents(ctx context.Context
 	}
 
 	count := result.RowsAffected()
-	r.logger.Debug("Cleaned up old sent events", "count", count)
+	r.logger.Debug("Cleaned up old sent events", zap.Int64("count", count))
 	return count, nil
 }
 

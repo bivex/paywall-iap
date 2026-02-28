@@ -11,10 +11,23 @@ import (
 	"github.com/bivex/paywall-iap/internal/infrastructure/external/matomo"
 )
 
+// CohortWorker defines the interface for cohort-based LTV calculations
+type CohortWorker interface {
+	CalculateLTVFromCohorts(ctx context.Context, userID uuid.UUID) (map[string]float64, error)
+	GetCohortMetrics(ctx context.Context, fromDate, toDate time.Time) ([]CohortMetrics, error)
+}
+
+// CohortMetrics represents cohort analytics data
+type CohortMetrics struct {
+	CohortSize int                    `json:"cohort_size"`
+	Retention  map[string]int         `json:"retention"`
+	Revenue    map[string]float64     `json:"revenue"`
+}
+
 // LTVService handles Lifetime Value calculations and predictions
 type LTVService struct {
 	matomoClient      *matomo.Client
-	cohortWorker      *CohortWorker
+	cohortWorker      CohortWorker
 	subscriptionRepo  SubscriptionRepository
 	logger            *zap.Logger
 }
@@ -38,7 +51,7 @@ type Subscription struct {
 // NewLTVService creates a new LTV service
 func NewLTVService(
 	matomoClient *matomo.Client,
-	cohortWorker *CohortWorker,
+	cohortWorker CohortWorker,
 	subscriptionRepo SubscriptionRepository,
 	logger *zap.Logger,
 ) *LTVService {
@@ -158,13 +171,6 @@ func (s *LTVService) predictLTVFromCohorts(ctx context.Context, userID uuid.UUID
 		// Use default LTV based on product pricing
 		return s.getDefaultLTV(days), nil
 	}
-
-	joinDate := subs[0].CreatedAt
-
-	// Fetch cohort data for the user's cohort
-	// TODO: Implement proper cohort matching based on user attributes
-	// For now, use a simple date-based cohort
-	cohortPeriod := joinDate.Format("2006-01-02")
 
 	// Get LTV from cohort worker
 	ltvMap, err := s.cohortWorker.CalculateLTVFromCohorts(ctx, userID)

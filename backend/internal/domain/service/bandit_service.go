@@ -154,7 +154,7 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 	}
 
 	// Create sticky assignment in cache
-	cacheKey = fmt.Sprintf("ab:assign:%s:%s", experimentID.String(), userID.String())
+	cacheKey := fmt.Sprintf("ab:assign:%s:%s", experimentID.String(), userID.String())
 	if err := b.cache.SetAssignment(ctx, cacheKey, bestArm.ID, 24*time.Hour); err != nil {
 		b.logger.Warn("Failed to cache assignment", zap.Error(err))
 	}

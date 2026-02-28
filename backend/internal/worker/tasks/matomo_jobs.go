@@ -134,18 +134,6 @@ func (w *MatomoWorker) HandleSendEvent(ctx context.Context, t *asynq.Task) error
 		return fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
 
-	// Parse user ID
-	var userID *string
-	if payload.UserID != "" {
-		userID = &payload.UserID
-	}
-
-	// Track event (will be queued for async delivery)
-	var userIDUUID *string
-	if userID != nil {
-		userIDUUID = userID
-	}
-
 	// This would need a UUID - for now, we'll track without user ID
 	// In production, convert string UUID to uuid.UUID
 	if err := w.forwarder.TrackEvent(ctx, nil, payload.Category, payload.Action, payload.Name, payload.Value, payload.CustomVars); err != nil {
@@ -233,25 +221,26 @@ func (w *MatomoWorker) HandleSendEcommerce(ctx context.Context, t *asynq.Task) e
 	return nil
 }
 
-// RegisterHandlers registers all Matomo task handlers with the Asynq server
-func RegisterMatomoHandlers(server *asynq.Server, worker *MatomoWorker) {
-	server.HandleFunc(TypeMatomoProcessBatch, worker.HandleProcessBatch)
-	server.HandleFunc(TypeMatomoSendEvent, worker.HandleSendEvent)
-	server.HandleFunc(TypeMatomoSendEcommerce, worker.HandleSendEcommerce)
+// RegisterMatomoHandlers registers all Matomo task handlers with the Asynq mux
+func RegisterMatomoHandlers(mux *asynq.ServeMux, worker *MatomoWorker) {
+	mux.HandleFunc(TypeMatomoProcessBatch, worker.HandleProcessBatch)
+	mux.HandleFunc(TypeMatomoSendEvent, worker.HandleSendEvent)
+	mux.HandleFunc(TypeMatomoSendEcommerce, worker.HandleSendEcommerce)
 }
 
 // SchedulePeriodicBatchProcessing schedules periodic batch processing jobs
-func SchedulePeriodicBatchProcessing(client *asynq.Client, interval time.Duration, batchSize int) error {
+func SchedulePeriodicBatchProcessing(scheduler *asynq.Scheduler, interval time.Duration, batchSize int) error {
 	task, err := NewProcessBatchTask(batchSize)
 	if err != nil {
 		return err
 	}
 
-	// Schedule periodic task
-	entryID, err := client.Register(
-		"*/5 * * * *", // Every 5 minutes - adjust as needed
+	// Schedule periodic task - every 5 minutes
+	cron := fmt.Sprintf("@every %s", interval.String())
+
+	entryID, err := scheduler.Register(
+		cron,
 		task,
-		asynq.Queue("matomo"),
 	)
 
 	if err != nil {

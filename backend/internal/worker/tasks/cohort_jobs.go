@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	matomoClient "github.com/bivex/paywall-iap/internal/infrastructure/external/matomo"
 )
 
@@ -130,12 +131,8 @@ func (w *CohortWorker) HandleCohortAggregation(ctx context.Context, t *asynq.Tas
 		}
 
 		// Extract revenue data
-		if metrics, ok := cohort.Metrics["revenue"].(map[string]interface{}); ok {
-			for day, rev := range metrics {
-				if r, ok := rev.(float64); ok {
-					aggregate.Revenue[day] = r
-				}
-			}
+		for day, rev := range cohort.Metrics {
+			aggregate.Revenue[day] = rev
 		}
 
 		// Store in database
@@ -162,7 +159,7 @@ func (w *CohortWorker) HandleCohortAggregation(ctx context.Context, t *asynq.Tas
 }
 
 // ScheduleDailyCohortAggregation schedules daily cohort aggregation jobs
-func ScheduleDailyCohortAggregation(client *asynq.Client, hour int, periods int) error {
+func ScheduleDailyCohortAggregation(scheduler *asynq.Scheduler, hour int, periods int) error {
 	// Schedule for daily execution at specified hour
 	cron := fmt.Sprintf("0 %d * * *", hour)
 
@@ -179,11 +176,9 @@ func ScheduleDailyCohortAggregation(client *asynq.Client, hour int, periods int)
 
 	task := asynq.NewTask(TypeCohortAggregation, data)
 
-	entryID, err := client.Register(
+	entryID, err := scheduler.Register(
 		cron,
 		task,
-		asynq.Queue("analytics"),
-		asynq.Retention(7*24*time.Hour), // Keep 7 days of history
 	)
 
 	if err != nil {
@@ -199,9 +194,9 @@ func ScheduleDailyCohortAggregation(client *asynq.Client, hour int, periods int)
 	return nil
 }
 
-// RegisterCohortHandlers registers cohort task handlers with the Asynq server
-func RegisterCohortHandlers(server *asynq.Server, worker *CohortWorker) {
-	server.HandleFunc(TypeCohortAggregation, worker.HandleCohortAggregation)
+// RegisterCohortHandlers registers cohort task handlers with the Asynq mux
+func RegisterCohortHandlers(mux *asynq.ServeMux, worker *CohortWorker) {
+	mux.HandleFunc(TypeCohortAggregation, worker.HandleCohortAggregation)
 }
 
 // CalculateLTVFromCohorts calculates LTV estimates from cohort data

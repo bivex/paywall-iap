@@ -99,15 +99,16 @@ func (c *RedisBanditCache) SetArmStats(ctx context.Context, key string, stats *s
 
 // GetAssignment retrieves a user's assigned arm from cache
 func (c *RedisBanditCache) GetAssignment(ctx context.Context, key string) (uuid.UUID, error) {
-	data, err := c.client.Get(ctx, key).Bytes()
-	if err != nil {
+	cmd := c.client.Get(ctx, key)
+	if err := cmd.Err(); err != nil {
 		if err == redis.Nil {
 			return uuid.Nil, fmt.Errorf("assignment not found in cache")
 		}
 		return uuid.Nil, fmt.Errorf("failed to get assignment: %w", err)
 	}
 
-	armID, err := uuid.ParseBytes(data)
+	data := cmd.String()
+	armID, err := uuid.Parse(data)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to parse arm ID: %w", err)
 	}
@@ -117,7 +118,7 @@ func (c *RedisBanditCache) GetAssignment(ctx context.Context, key string) (uuid.
 
 // SetAssignment stores a user's assigned arm in cache
 func (c *RedisBanditCache) SetAssignment(ctx context.Context, key string, armID uuid.UUID, ttl time.Duration) error {
-	if err := c.client.Set(ctx, key, armID.Bytes(), ttl).Err(); err != nil {
+	if err := c.client.Set(ctx, key, armID.String(), ttl).Err(); err != nil {
 		return fmt.Errorf("failed to set assignment: %w", err)
 	}
 
@@ -205,7 +206,7 @@ func (c *RedisBanditCache) GetArmStatsBatch(ctx context.Context, armIDs []uuid.U
 
 	// Parse results
 	results := make(map[uuid.UUID]*service.ArmStats)
-	for i, cmd := range cmds {
+	for _, cmd := range cmds {
 		data, err := cmd.Bytes()
 		if err != nil {
 			if err == redis.Nil {

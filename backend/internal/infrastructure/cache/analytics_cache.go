@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -407,7 +408,8 @@ type CacheStats struct {
 func parseMemoryUsage(info string) int64 {
 	// Parse "used_memory:1234567" from INFO output
 	// This is a simplified implementation
-	for _, line := range []string(info) {
+	lines := strings.Split(info, "\n")
+	for _, line := range lines {
 		if len(line) > 12 && line[:12] == "used_memory:" {
 			var mem int64
 			fmt.Sscanf(line[12:], "%d", &mem)

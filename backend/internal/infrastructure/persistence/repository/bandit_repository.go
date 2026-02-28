@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
@@ -15,11 +16,11 @@ import (
 // PostgresBanditRepository implements bandit data persistence using PostgreSQL
 type PostgresBanditRepository struct {
 	pool   *pgxpool.Pool
-	logger Logger
+	logger *zap.Logger
 }
 
 // NewPostgresBanditRepository creates a new PostgreSQL-backed bandit repository
-func NewPostgresBanditRepository(pool *pgxpool.Pool, logger Logger) *PostgresBanditRepository {
+func NewPostgresBanditRepository(pool *pgxpool.Pool, logger *zap.Logger) *PostgresBanditRepository {
 	return &PostgresBanditRepository{
 		pool:   pool,
 		logger: logger,
@@ -136,10 +137,10 @@ func (r *PostgresBanditRepository) UpdateArmStats(ctx context.Context, stats *se
 	}
 
 	r.logger.Debug("Updated arm stats",
-		"arm_id", stats.ArmID.String(),
-		"alpha", stats.Alpha,
-		"beta", stats.Beta,
-		"samples", stats.Samples,
+		zap.String("arm_id", stats.ArmID.String()),
+		zap.Float64("alpha", stats.Alpha),
+		zap.Float64("beta", stats.Beta),
+		zap.Int("samples", stats.Samples),
 	)
 
 	return nil
@@ -171,9 +172,9 @@ func (r *PostgresBanditRepository) CreateAssignment(ctx context.Context, assignm
 	}
 
 	r.logger.Debug("Created assignment",
-		"experiment_id", assignment.ExperimentID.String(),
-		"user_id", assignment.UserID.String(),
-		"arm_id", assignment.ArmID.String(),
+		zap.String("experiment_id", assignment.ExperimentID.String()),
+		zap.String("user_id", assignment.UserID.String()),
+		zap.String("arm_id", assignment.ArmID.String()),
 	)
 
 	return nil
@@ -219,10 +220,10 @@ func (r *PostgresBanditRepository) SaveConversion(ctx context.Context, experimen
 	// TODO: Create ab_test_conversions table if detailed tracking is needed
 
 	r.logger.Debug("Conversion saved",
-		"experiment_id", experimentID.String(),
-		"arm_id", armID.String(),
-		"user_id", userID.String(),
-		"amount", amount,
+		zap.String("experiment_id", experimentID.String()),
+		zap.String("arm_id", armID.String()),
+		zap.String("user_id", userID.String()),
+		zap.Float64("amount", amount),
 	)
 
 	return nil
@@ -276,7 +277,7 @@ func (r *PostgresBanditRepository) CleanupExpiredAssignments(ctx context.Context
 	}
 
 	count := result.RowsAffected()
-	r.logger.Debug("Cleaned up expired assignments", "count", count)
+	r.logger.Debug("Cleaned up expired assignments", zap.Int64("count", count))
 
 	return count, nil
 }
