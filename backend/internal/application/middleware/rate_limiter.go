@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -51,9 +50,14 @@ func (r *RateLimiter) Middleware(keyFunc func(*gin.Context) string, config RateL
 
 		// Create rate limiter for this key
 		limiterKey := r.prefix + key
-		limit := redis_rate.PerSecond(config.Rate)
-		res, err := r.limiter.AllowN(context.Background(), limiterKey, limit, config.Burst)
+		limit := redis_rate.Limit{
+			Rate:   config.Rate,
+			Burst:  config.Burst,
+			Period: time.Second,
+		}
+		res, err := r.limiter.Allow(c.Request.Context(), limiterKey, limit)
 		if err != nil {
+
 			r.logger.Error("rate limiter error", zap.Error(err))
 			if r.failOpen {
 				// Fail open - allow the request but log it
