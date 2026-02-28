@@ -1,8 +1,8 @@
 # Multi-stage build for Worker service
 FROM golang:1.25-alpine AS builder
 
-# Install build dependencies
-RUN apk add --no-cache git make
+# Install build dependencies + binutils for strip
+RUN apk add --no-cache git make binutils
 
 WORKDIR /app
 
@@ -13,8 +13,13 @@ RUN go mod download
 # Copy source code
 COPY backend/ ./
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o worker ./cmd/worker
+# Build the application with optimizations
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -trimpath \
+    -a -installsuffix cgo \
+    -o worker ./cmd/worker && \
+    strip /app/worker
 
 # Final stage
 FROM alpine:latest
