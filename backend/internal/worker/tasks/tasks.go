@@ -62,7 +62,7 @@ func HandleUpdateLTV(ctx context.Context, t *asynq.Task) error {
 	}
 
 	logging.Logger.Info("Updating LTV",
-		zap.String("task_id", t.ResultWriterID()),
+		zap.String("task_id", t.ResultWriter().TaskID()),
 		zap.String("user_id", payload.UserID),
 		zap.Float64("amount", payload.Amount),
 	)
@@ -85,7 +85,7 @@ func HandleComputeAnalytics(ctx context.Context, t *asynq.Task) error {
 	}
 
 	logging.Logger.Info("Computing analytics",
-		zap.String("task_id", t.ResultWriterID()),
+		zap.String("task_id", t.ResultWriter().TaskID()),
 		zap.String("date", payload.Date),
 	)
 
@@ -111,7 +111,7 @@ func HandleProcessWebhook(ctx context.Context, t *asynq.Task) error {
 	}
 
 	logging.Logger.Info("Processing webhook",
-		zap.String("task_id", t.ResultWriterID()),
+		zap.String("task_id", t.ResultWriter().TaskID()),
 		zap.String("provider", payload.Provider),
 		zap.String("event_type", payload.EventType),
 	)
@@ -140,7 +140,7 @@ func HandleSendNotification(ctx context.Context, t *asynq.Task) error {
 	}
 
 	logging.Logger.Info("Sending notification",
-		zap.String("task_id", t.ResultWriterID()),
+		zap.String("task_id", t.ResultWriter().TaskID()),
 		zap.String("user_id", payload.UserID),
 		zap.String("type", payload.Type),
 	)
@@ -163,7 +163,7 @@ func HandleSyncLago(ctx context.Context, t *asynq.Task) error {
 	}
 
 	logging.Logger.Info("Syncing with Lago",
-		zap.String("task_id", t.ResultWriterID()),
+		zap.String("task_id", t.ResultWriter().TaskID()),
 		zap.String("subscription_id", payload.SubscriptionID),
 	)
 
@@ -178,7 +178,7 @@ func HandleSyncLago(ctx context.Context, t *asynq.Task) error {
 // HandleExpireGracePeriod processes expiring grace periods
 func HandleExpireGracePeriod(ctx context.Context, t *asynq.Task) error {
 	logging.Logger.Info("Checking expiring grace periods",
-		zap.String("task_id", t.ResultWriterID()),
+		zap.String("task_id", t.ResultWriter().TaskID()),
 	)
 
 	// TODO: Implement grace period expiration logic

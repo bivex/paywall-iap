@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -48,29 +47,31 @@ func main() {
 		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
 	}
 
-	// Initialize Asynq worker
-	worker := asynq.NewWorker(
-		asynq.Config{
-			Concurrency: 10,
-			Queues:      []string{"critical", "default", "low"},
-			RetryDelayFunc: func(n int, err error, task *asynq.Task) time.Duration {
-				// Exponential backoff: 2^n seconds
-				return time.Duration(1<<uint(n)) * time.Second
-			},
+	// Initialize Asynq server
+	server := asynq.NewServerFromRedisClient(redisClient, asynq.Config{
+		Concurrency: 10,
+		Queues: map[string]int{
+			"critical": 6,
+			"default":  3,
+			"low":      1,
 		},
-		asynq.WithRedisClientOpt(asynq.RedisClientOpt{RedisClient: redisClient}),
-	)
+		RetryDelayFunc: func(n int, err error, task *asynq.Task) time.Duration {
+			// Exponential backoff: 2^n seconds
+			return time.Duration(1<<uint(n)) * time.Second
+		},
+	})
 
 	// Register task handlers
-	worker_tasks.RegisterHandlers(worker)
+	mux := asynq.NewServeMux()
+	worker_tasks.RegisterHandlers(mux)
 
-	// Start worker in background
-	if err := worker.Start(); err != nil {
+	// Start server in background
+	if err := server.Start(mux); err != nil {
 		logging.Logger.Fatal("Failed to start worker", zap.Error(err))
 	}
 
 	// Register scheduled tasks
-	scheduler := asynq.NewScheduler(asynq.RedisClientOpt{RedisClient: redisClient})
+	scheduler := asynq.NewSchedulerFromRedisClient(redisClient, nil)
 	worker_tasks.RegisterScheduledTasks(scheduler)
 
 	// Start scheduler
@@ -87,12 +88,8 @@ func main() {
 
 	logging.Logger.Info("Shutting down worker...")
 
-	// Graceful shutdown
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer shutdownCancel()
-
 	scheduler.Shutdown()
-	worker.Shutdown()
+	server.Shutdown()
 
 	logging.Logger.Info("Worker exited")
 }

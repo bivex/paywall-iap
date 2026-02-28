@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -17,15 +16,12 @@ import (
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/application/query"
-	"github.com/bivex/paywall-iap/internal/domain/repository"
 	"github.com/bivex/paywall-iap/internal/infrastructure/config"
-	"github.com/bivex/paywall-iap/internal/infrastructure/external/iap"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/pool"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
-	app_handler "github.com/bivex/paywall-iap/internal/interfaces/http/handlers"
-	http_response "github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
+	app_handler "github.com/bivex/paywall-iap/internal/interfaces/http/handlers"
 )
 
 func main() {
@@ -76,7 +72,6 @@ func main() {
 	queries := &generated.Queries{} // Mock - needs actual initialization
 	userRepo := repository.NewUserRepository(queries)
 	subscriptionRepo := repository.NewSubscriptionRepository(queries)
-	transactionRepo := repository.NewTransactionRepository(queries)
 
 	// Initialize middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(
@@ -86,20 +81,8 @@ func main() {
 	)
 	rateLimiter := middleware.NewRateLimiter(redisClient, true) // fail open
 
-	// Initialize IAP verifiers
-	appleVerifier := iap.NewAppleVerifier(cfg.IAP.AppleSharedSecret, true) // sandbox mode
-	googleVerifier := iap.NewGoogleVerifier(cfg.IAP.GoogleKeyJSON, false)
-
 	// Initialize commands
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
-	iapAdapter := iap.NewIAPAdapter(appleVerifier, googleVerifier)
-	verifyIAPCmd := command.NewVerifyIAPCommand(
-		userRepo,
-		subscriptionRepo,
-		transactionRepo,
-		iapAdapter, // iOS verifier
-		iapAdapter, // Android verifier
-	)
 	cancelSubCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
 
 	// Initialize queries
