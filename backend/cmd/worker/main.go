@@ -14,6 +14,8 @@ import (
 
 	"github.com/bivex/paywall-iap/internal/infrastructure/config"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/pool"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	worker_tasks "github.com/bivex/paywall-iap/internal/worker/tasks"
 )
 
@@ -32,6 +34,17 @@ func main() {
 
 	logging.Logger.Info("Starting IAP Worker server")
 
+	// Initialize database for worker tasks
+	ctx := context.Background()
+	dbPool, err := pool.NewPool(ctx, cfg.Database)
+	if err != nil {
+		logging.Logger.Fatal("Failed to create database pool", zap.Error(err))
+	}
+	defer pool.Close(dbPool)
+
+	queries := generated.New(dbPool)
+	taskHandlers := worker_tasks.NewTaskHandlers(queries)
+
 	// Initialize Redis
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     cfg.Redis.URL,
@@ -42,7 +55,6 @@ func main() {
 	defer redisClient.Close()
 
 	// Test Redis connection
-	ctx := context.Background()
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
 	}
@@ -63,7 +75,7 @@ func main() {
 
 	// Register task handlers
 	mux := asynq.NewServeMux()
-	worker_tasks.RegisterHandlers(mux)
+	worker_tasks.RegisterHandlers(mux, taskHandlers)
 
 	// Start server in background
 	if err := server.Start(mux); err != nil {
