@@ -194,33 +194,86 @@ func (h *TaskHandlers) HandleProcessWebhook(ctx context.Context, t *asynq.Task) 
 		return err
 	}
 
-	// Mark the webhook_event as processed once we handle it
-	eventUUID, err := uuid.Parse(payload.EventID)
-	_ = eventUUID
-	_ = err
-
 	h.logger.Info("Processing webhook event",
 		zap.String("provider", payload.Provider),
 		zap.String("event_type", payload.EventType),
 		zap.String("event_id", payload.EventID),
 	)
 
-	// Dispatch based on provider and event type
-	// Each case should update subscriptions, trigger notifications, etc.
-	switch payload.Provider {
-	case "stripe":
-		h.logger.Info("Stripe event dispatched", zap.String("type", payload.EventType))
-		// TODO per event type: invoice.payment_succeeded → renew sub
-		//                       customer.subscription.deleted → cancel sub
-	case "apple":
-		h.logger.Info("Apple event dispatched", zap.String("type", payload.EventType))
-		// TODO per event type: DID_RENEW → extend expiry
-		//                       EXPIRED → mark expired
-	case "google":
-		h.logger.Info("Google event dispatched", zap.String("type", payload.EventType))
-		// TODO per event type: notificationType 2 → renewed, 3 → cancelled
+	// Fetch event from database to get payload
+	event, err := h.queries.GetWebhookEventByProviderAndID(ctx, generated.GetWebhookEventByProviderAndIDParams{
+		Provider: payload.Provider,
+		EventID:  payload.EventID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to fetch webhook event: %w", err)
 	}
 
+	// Dispatch based on provider
+	switch payload.Provider {
+	case "stripe":
+		if err := h.handleStripeEvent(ctx, event); err != nil {
+			return err
+		}
+	case "apple":
+		h.logger.Info("Apple event ignored (stub)", zap.String("type", payload.EventType))
+	case "google":
+		h.logger.Info("Google event ignored (stub)", zap.String("type", payload.EventType))
+	}
+
+	// Mark as processed
+	if err := h.queries.MarkWebhookEventProcessed(ctx, event.ID); err != nil {
+		h.logger.Error("Failed to mark event processed", zap.Error(err))
+	}
+
+	return nil
+}
+
+func (h *TaskHandlers) handleStripeEvent(ctx context.Context, event generated.WebhookEvent) error {
+	var body struct {
+		Type string `json:"type"`
+		Data struct {
+			Object struct {
+				Customer string `json:"customer"` // is mapped to platform_user_id in k6
+			} `json:"object"`
+		} `json:"data"`
+	}
+
+	if err := json.Unmarshal(event.Payload, &body); err != nil {
+		return fmt.Errorf("failed to unmarshal stripe payload: %w", err)
+	}
+
+	// k6 simulation uses platform_user_id as Stripe customer ID
+	platformID := body.Data.Object.Customer
+	if platformID == "" {
+		return fmt.Errorf("missing customer (platform_id) in stripe payload")
+	}
+
+	// Find the user
+	user, err := h.queries.GetUserByPlatformID(ctx, platformID)
+	if err != nil {
+		return fmt.Errorf("failed to find user by platform_id %s: %w", platformID, err)
+	}
+
+	// Provision premium access (simple create subscription)
+	_, err = h.queries.CreateSubscription(ctx, generated.CreateSubscriptionParams{
+		UserID:    user.ID,
+		Status:    "active",
+		Source:    "stripe",
+		Platform:  "web",
+		ProductID: "pro_monthly_k6",
+		PlanType:  "monthly",
+		ExpiresAt: time.Now().AddDate(0, 1, 0), // 1 month
+		AutoRenew: true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create subscription: %w", err)
+	}
+
+	h.logger.Info("Stripe subscription provisioned",
+		zap.String("user_id", user.ID.String()),
+		zap.String("platform_id", platformID),
+	)
 	return nil
 }
 

@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
@@ -70,6 +71,10 @@ func main() {
 		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
 	}
 
+	// Initialize Asynq client
+	asynqClient := asynq.NewClient(asynq.RedisClientOpt{Addr: opts.Addr, Password: opts.Password})
+	defer asynqClient.Close()
+
 	// Initialize repositories
 	queries := generated.New(dbPool)
 	userRepo := repository.NewUserRepository(queries)
@@ -118,6 +123,7 @@ func main() {
 		cfg.IAP.AppleWebhookSecret,
 		cfg.IAP.GoogleWebhookSecret,
 		queries,
+		asynqClient,
 	)
 
 	// Setup Gin router

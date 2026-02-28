@@ -64,9 +64,9 @@ type User struct {
 	Platform       string     `json:"platform"`
 	AppVersion     string     `json:"app_version"`
 	Email          string     `json:"email"`
+	Role           string     `json:"role"`
 	Ltv            float64    `json:"ltv"`
 	LtvUpdatedAt   *time.Time `json:"ltv_updated_at"`
-	Role           string     `json:"role"`
 	CreatedAt      time.Time  `json:"created_at"`
 	DeletedAt      *time.Time `json:"deleted_at"`
 }

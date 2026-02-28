@@ -9,6 +9,7 @@ CREATE TABLE users (
     platform            TEXT NOT NULL CHECK (platform IN ('ios', 'android')),
     app_version         TEXT NOT NULL,
     email               TEXT UNIQUE,
+    role                TEXT NOT NULL DEFAULT 'user',
     ltv                 NUMERIC(10,2) DEFAULT 0,
     ltv_updated_at      TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),

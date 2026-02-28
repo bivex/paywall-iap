@@ -36,8 +36,10 @@ export const options = {
             rate: 2, // 2 purchase events per second
             timeUnit: '1s',
             duration: '3m',
-            preAllocatedVUs: 10,
+            preAllocatedVUs: 50,
+            maxVUs: 100,
         }
+
     },
     thresholds: {
         http_req_duration: ['p(95)<300'], // response time under 300ms
@@ -91,13 +93,14 @@ export default function () {
 
         // 4. Post-Purchase Usage (Unlocked)
         group('4. Premium Access Flow', function () {
+            sleep(3); // Wait for worker to catch up (async processed)
             const premiumRes = http.get(`${API_URL}/subscription/access`, getAuthHeaders(token));
             check(premiumRes, {
                 'access check is 200': (r) => r.status === 200,
-                // In a perfect world we verify persistence, but workers are async
-                // 'access is now true': (r) => r.json('data.has_access') === true,
+                'access is now true': (r) => r.json('data.has_access') === true,
             });
         });
+
     });
 
     sleep(1);

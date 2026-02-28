@@ -13,3 +13,7 @@ LIMIT 100;
 UPDATE webhook_events
 SET processed_at = now()
 WHERE id = $1;
+
+-- name: GetWebhookEventByProviderAndID :one
+SELECT * FROM webhook_events
+WHERE provider = $1 AND event_id = $2;

@@ -11,9 +11,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
+	"github.com/bivex/paywall-iap/internal/worker/tasks"
 	"github.com/gin-gonic/gin"
+	"github.com/hibiken/asynq"
+	"go.uber.org/zap"
 )
 
 // WebhookHandler handles webhook endpoints from external services
@@ -23,15 +27,17 @@ type WebhookHandler struct {
 	googleWebhookSecret string
 	allowedIPs          map[string][]string // service -> IPs
 	queries             *generated.Queries
+	asynqClient         *asynq.Client
 }
 
 // NewWebhookHandler creates a new webhook handler
-func NewWebhookHandler(stripeSecret, appleSecret, googleSecret string, queries *generated.Queries) *WebhookHandler {
+func NewWebhookHandler(stripeSecret, appleSecret, googleSecret string, queries *generated.Queries, asynqClient *asynq.Client) *WebhookHandler {
 	return &WebhookHandler{
 		stripeWebhookSecret: stripeSecret,
 		appleWebhookSecret:  appleSecret,
 		googleWebhookSecret: googleSecret,
 		queries:             queries,
+		asynqClient:         asynqClient,
 		allowedIPs: map[string][]string{
 			"stripe": {
 				"54.187.174.169/32",
@@ -308,6 +314,16 @@ func (h *WebhookHandler) StripeWebhook(c *gin.Context) {
 	}); err != nil {
 		// Log but return 200 — Stripe retries on failure
 		_ = err
+	}
+
+	// Enqueue background processing task
+	payload, _ := json.Marshal(map[string]string{
+		"provider":   "stripe",
+		"event_type": event.Type,
+		"event_id":   event.ID,
+	})
+	if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, payload)); err != nil {
+		logging.Logger.Error("Failed to enqueue webhook task", zap.Error(err))
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "received"})

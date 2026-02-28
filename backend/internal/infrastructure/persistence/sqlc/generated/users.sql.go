@@ -26,7 +26,7 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (platform_user_id, device_id, platform, app_version, email, role)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, platform_user_id, device_id, platform, app_version, email, ltv, ltv_updated_at, role, created_at, deleted_at
+RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at
 `
 
 type CreateUserParams struct {
@@ -55,9 +55,9 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Platform,
 		&i.AppVersion,
 		&i.Email,
+		&i.Role,
 		&i.Ltv,
 		&i.LtvUpdatedAt,
-		&i.Role,
 		&i.CreatedAt,
 		&i.DeletedAt,
 	)
@@ -65,7 +65,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, platform_user_id, device_id, platform, app_version, email, ltv, ltv_updated_at, role, created_at, deleted_at FROM users
+SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at FROM users
 WHERE email = $1 AND deleted_at IS NULL
 LIMIT 1
 `
@@ -80,18 +80,17 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Platform,
 		&i.AppVersion,
 		&i.Email,
+		&i.Role,
 		&i.Ltv,
 		&i.LtvUpdatedAt,
-		&i.Role,
 		&i.CreatedAt,
 		&i.DeletedAt,
 	)
-
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, platform_user_id, device_id, platform, app_version, email, ltv, ltv_updated_at, role, created_at, deleted_at FROM users
+SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at FROM users
 WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1
 `
@@ -106,18 +105,17 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Platform,
 		&i.AppVersion,
 		&i.Email,
+		&i.Role,
 		&i.Ltv,
 		&i.LtvUpdatedAt,
-		&i.Role,
 		&i.CreatedAt,
 		&i.DeletedAt,
 	)
-
 	return i, err
 }
 
 const getUserByPlatformID = `-- name: GetUserByPlatformID :one
-SELECT id, platform_user_id, device_id, platform, app_version, email, ltv, ltv_updated_at, role, created_at, deleted_at FROM users
+SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at FROM users
 WHERE platform_user_id = $1 AND deleted_at IS NULL
 LIMIT 1
 `
@@ -132,6 +130,7 @@ func (q *Queries) GetUserByPlatformID(ctx context.Context, platformUserID string
 		&i.Platform,
 		&i.AppVersion,
 		&i.Email,
+		&i.Role,
 		&i.Ltv,
 		&i.LtvUpdatedAt,
 		&i.CreatedAt,
@@ -141,7 +140,7 @@ func (q *Queries) GetUserByPlatformID(ctx context.Context, platformUserID string
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, platform_user_id, device_id, platform, app_version, email, ltv, ltv_updated_at, role, created_at, deleted_at FROM users
+SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at FROM users
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -168,15 +167,14 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.Platform,
 			&i.AppVersion,
 			&i.Email,
+			&i.Role,
 			&i.Ltv,
 			&i.LtvUpdatedAt,
-			&i.Role,
 			&i.CreatedAt,
 			&i.DeletedAt,
 		); err != nil {
 			return nil, err
 		}
-
 		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
@@ -189,7 +187,7 @@ const softDeleteUser = `-- name: SoftDeleteUser :one
 UPDATE users
 SET deleted_at = now()
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, ltv, ltv_updated_at, role, created_at, deleted_at
+RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at
 `
 
 func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -202,6 +200,7 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) (User, error
 		&i.Platform,
 		&i.AppVersion,
 		&i.Email,
+		&i.Role,
 		&i.Ltv,
 		&i.LtvUpdatedAt,
 		&i.CreatedAt,
@@ -214,7 +213,7 @@ const updateUserLTV = `-- name: UpdateUserLTV :one
 UPDATE users
 SET ltv = $2, ltv_updated_at = now()
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, ltv, ltv_updated_at, role, created_at, deleted_at
+RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at
 `
 
 type UpdateUserLTVParams struct {
@@ -232,9 +231,9 @@ func (q *Queries) UpdateUserLTV(ctx context.Context, arg UpdateUserLTVParams) (U
 		&i.Platform,
 		&i.AppVersion,
 		&i.Email,
+		&i.Role,
 		&i.Ltv,
 		&i.LtvUpdatedAt,
-		&i.Role,
 		&i.CreatedAt,
 		&i.DeletedAt,
 	)
@@ -245,7 +244,7 @@ const updateUserRole = `-- name: UpdateUserRole :one
 UPDATE users
 SET role = $2
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, ltv, ltv_updated_at, role, created_at, deleted_at
+RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at
 `
 
 type UpdateUserRoleParams struct {
@@ -263,9 +262,9 @@ func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) 
 		&i.Platform,
 		&i.AppVersion,
 		&i.Email,
+		&i.Role,
 		&i.Ltv,
 		&i.LtvUpdatedAt,
-		&i.Role,
 		&i.CreatedAt,
 		&i.DeletedAt,
 	)
