@@ -38,6 +38,8 @@ func RequestMiddleware(logger *zap.Logger) gin.HandlerFunc {
 		latency := time.Since(start)
 		statusCode := c.Writer.Status()
 		requestLogger.Info("request completed",
+			zap.String("method", c.Request.Method),
+			zap.String("path", path),
 			zap.Int("status", statusCode),
 			zap.Duration("latency", latency),
 		)
