@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/password9090/paywall-iap/internal/application/dto"
-	"github.com/password9090/paywall-iap/internal/domain/entity"
-	"github.com/password9090/paywall-iap/internal/domain/repository"
-	domainErrors "github.com/password9090/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/application/dto"
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 )
 
 // IAPVerifier interface for IAP verification services

@@ -7,10 +7,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/password9090/paywall-iap/internal/domain/entity"
-	"github.com/password9090/paywall-iap/internal/domain/repository"
-	domainErrors "github.com/password9090/paywall-iap/internal/domain/errors"
-	"github.com/password9090/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 )
 
 type subscriptionRepositoryImpl struct {

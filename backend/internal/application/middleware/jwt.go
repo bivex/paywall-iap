@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
-	"github.com/password9090/paywall-iap/internal/infrastructure/logging"
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 )
 
 // JWTClaims represents the JWT claims structure

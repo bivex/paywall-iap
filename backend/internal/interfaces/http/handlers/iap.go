@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/password9090/paywall-iap/internal/application/command"
-	"github.com/password9090/paywall-iap/internal/application/middleware"
-	"github.com/password9090/paywall-iap/internal/application/dto"
-	"github.com/password9090/paywall-iap/internal/interfaces/http/response"
+	"github.com/bivex/paywall-iap/internal/application/command"
+	"github.com/bivex/paywall-iap/internal/application/middleware"
+	"github.com/bivex/paywall-iap/internal/application/dto"
+	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
 // IAPHandler handles IAP verification endpoints

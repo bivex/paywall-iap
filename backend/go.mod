@@ -1,4 +1,4 @@
-module github.com/password9090/paywall-iap
+module github.com/bivex/paywall-iap
 
 go 1.25.0
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/password9090/paywall-iap/internal/application/command"
+	"github.com/bivex/paywall-iap/internal/application/command"
 )
 
 // IAPAdapter implements the IAPVerifier interface for the command layer

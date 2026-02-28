@@ -13,9 +13,9 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"github.com/password9090/paywall-iap/internal/infrastructure/config"
-	"github.com/password9090/paywall-iap/internal/infrastructure/logging"
-	worker_tasks "github.com/password9090/paywall-iap/internal/worker/tasks"
+	"github.com/bivex/paywall-iap/internal/infrastructure/config"
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
+	worker_tasks "github.com/bivex/paywall-iap/internal/worker/tasks"
 )
 
 func main() {

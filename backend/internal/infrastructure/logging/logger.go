@@ -3,7 +3,7 @@ package logging
 import (
 	"os"
 
-	"github.com/password9090/paywall-iap/internal/infrastructure/config"
+	"github.com/bivex/paywall-iap/internal/infrastructure/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

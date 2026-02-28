@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/password9090/paywall-iap/internal/domain/repository"
-	domainErrors "github.com/password9090/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 )
 
 // CancelSubscriptionCommand handles subscription cancellation

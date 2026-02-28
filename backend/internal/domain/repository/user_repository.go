@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/password9090/paywall-iap/internal/domain/entity"
+	"github.com/bivex/paywall-iap/internal/domain/entity"
 )
 
 // UserRepository defines the interface for user data access

@@ -8,9 +8,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/password9090/paywall-iap/internal/domain/entity"
-	domainErrors "github.com/password9090/paywall-iap/internal/domain/errors"
-	"github.com/password9090/paywall-iap/internal/domain/repository"
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
+	"github.com/bivex/paywall-iap/internal/domain/repository"
 )
 
 // MockQueries is a mock sqlc queries implementation

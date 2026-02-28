@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/password9090/paywall-iap/internal/interfaces/http/response"
+	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
 // WebhookHandler handles webhook endpoints from external services

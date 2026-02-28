@@ -13,12 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/password9090/paywall-iap/internal/application/command"
-	"github.com/password9090/paywall-iap/internal/application/middleware"
-	"github.com/password9090/paywall-iap/internal/application/query"
-	"github.com/password9090/paywall-iap/internal/domain/entity"
-	app_handler "github.com/password9090/paywall-iap/internal/interfaces/http/handlers"
-	"github.com/password9090/paywall-iap/tests/testutil"
+	"github.com/bivex/paywall-iap/internal/application/command"
+	"github.com/bivex/paywall-iap/internal/application/middleware"
+	"github.com/bivex/paywall-iap/internal/application/query"
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	app_handler "github.com/bivex/paywall-iap/internal/interfaces/http/handlers"
+	"github.com/bivex/paywall-iap/tests/testutil"
 )
 
 func TestSubscriptionEndpoints(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/go-redis/redis_rate/v10"
 	"go.uber.org/zap"
-	"github.com/password9090/paywall-iap/internal/infrastructure/logging"
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 )
 
 // RateLimitConfig defines rate limiting parameters

@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/password9090/paywall-iap/internal/application/dto"
-	"github.com/password9090/paywall-iap/internal/interfaces/http/response"
+	"github.com/bivex/paywall-iap/internal/application/dto"
+	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
 // AdminHandler handles admin endpoints

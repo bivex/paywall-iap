@@ -9,7 +9,7 @@ import (
 	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
 
-	"github.com/password9090/paywall-iap/internal/infrastructure/logging"
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 )
 
 // Task names

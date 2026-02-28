@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/password9090/paywall-iap/internal/infrastructure/config"
+	"github.com/bivex/paywall-iap/internal/infrastructure/config"
 )
 
 // NewPool creates a new PostgreSQL connection pool
