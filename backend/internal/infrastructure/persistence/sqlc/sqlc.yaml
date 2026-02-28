@@ -7,9 +7,56 @@ sql:
       go:
         package: "generated"
         out: "generated"
-        sql_package: "github.com/jackc/pgx/v5"
+        sql_package: "pgx/v5"
         emit_json_tags: true
         emit_prepared_queries: false
         emit_interface: true
         emit_exact_table_names: false
         emit_empty_slices: true
+        overrides:
+          - column: "users.id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "subscriptions.id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "subscriptions.user_id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "subscriptions.expires_at"
+            go_type: "time.Time"
+          - column: "subscriptions.created_at"
+            go_type: "time.Time"
+          - column: "subscriptions.updated_at"
+            go_type: "time.Time"
+          - column: "transactions.id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "transactions.user_id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "transactions.subscription_id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "transactions.amount"
+            go_type: "float64"
+          - column: "transactions.created_at"
+            go_type: "time.Time"
+          - column: "users.email"
+            go_type: "string"
+          - column: "users.device_id"
+            go_type: "string"
+            nullable: true
+          - column: "users.ltv"
+            go_type: "float64"
+          - column: "users.created_at"
+            go_type: "time.Time"
+          - column: "users.deleted_at"
+            go_type: "time.Time"
+            nullable: true
+          - column: "users.ltv_updated_at"
+            go_type: "time.Time"
+            nullable: true
+          - column: "subscriptions.deleted_at"
+            go_type: "time.Time"
+            nullable: true
+          - column: "transactions.receipt_hash"
+            go_type: "string"
+            nullable: true
+          - column: "transactions.provider_tx_id"
+            go_type: "string"
+            nullable: true

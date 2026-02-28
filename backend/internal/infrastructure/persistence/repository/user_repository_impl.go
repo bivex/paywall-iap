@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -110,6 +111,11 @@ func (r *userRepositoryImpl) ExistsByPlatformID(ctx context.Context, platformUse
 }
 
 func (r *userRepositoryImpl) mapToEntity(row generated.User) *entity.User {
+	var deletedAt *time.Time
+	if !row.DeletedAt.IsZero() {
+		deletedAt = &row.DeletedAt
+	}
+
 	return &entity.User{
 		ID:            row.ID,
 		PlatformUserID: row.PlatformUserID,
@@ -118,8 +124,8 @@ func (r *userRepositoryImpl) mapToEntity(row generated.User) *entity.User {
 		AppVersion:    row.AppVersion,
 		Email:         row.Email,
 		LTV:           row.Ltv,
-		LTVUpdatedAt:  row.LtvUpdatedAt.Time,
+		LTVUpdatedAt:  row.LtvUpdatedAt,
 		CreatedAt:     row.CreatedAt,
-		DeletedAt:     row.DeletedAt,
+		DeletedAt:     deletedAt,
 	}
 }
