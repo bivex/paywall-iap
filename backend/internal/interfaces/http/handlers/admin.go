@@ -12,6 +12,7 @@ import (
 
 	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
+	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
@@ -23,6 +24,8 @@ type AdminHandler struct {
 	queries          *generated.Queries
 	dbPool           *pgxpool.Pool
 	redisClient      *redis.Client
+	analyticsService *service.AnalyticsService
+	auditService     *service.AuditService
 }
 
 // NewAdminHandler creates a new admin handler
@@ -32,6 +35,8 @@ func NewAdminHandler(
 	queries *generated.Queries,
 	dbPool *pgxpool.Pool,
 	redisClient *redis.Client,
+	analyticsService *service.AnalyticsService,
+	auditService *service.AuditService,
 ) *AdminHandler {
 	return &AdminHandler{
 		subscriptionRepo: subscriptionRepo,
@@ -39,6 +44,8 @@ func NewAdminHandler(
 		queries:          queries,
 		dbPool:           dbPool,
 		redisClient:      redisClient,
+		analyticsService: analyticsService,
+		auditService:     auditService,
 	}
 }
 
@@ -89,7 +96,18 @@ func (h *AdminHandler) GrantSubscription(c *gin.Context) {
 		return
 	}
 
+	// Audit log
+	adminID, _ := c.Get("admin_id")
+	if aid, ok := adminID.(uuid.UUID); ok {
+		_ = h.auditService.LogAction(c.Request.Context(), aid, "grant_subscription", "user", &userID, map[string]interface{}{
+			"product_id": req.ProductID,
+			"plan_type":  req.PlanType,
+			"expires_at": req.ExpiresAt,
+		})
+	}
+
 	c.Status(http.StatusNoContent)
+
 }
 
 // RevokeSubscription revokes a user's subscription
@@ -128,7 +146,17 @@ func (h *AdminHandler) RevokeSubscription(c *gin.Context) {
 		return
 	}
 
+	// Audit log
+	adminID, _ := c.Get("admin_id")
+	if aid, ok := adminID.(uuid.UUID); ok {
+		_ = h.auditService.LogAction(c.Request.Context(), aid, "revoke_subscription", "user", &userID, map[string]interface{}{
+			"reason":          req.Reason,
+			"subscription_id": sub.ID,
+		})
+	}
+
 	c.Status(http.StatusNoContent)
+
 }
 
 // ListUsers returns a paginated list of users
@@ -208,5 +236,32 @@ func (h *AdminHandler) GetHealth(c *gin.Context) {
 		"status":   "ok",
 		"database": dbStatus,
 		"redis":    redisStatus,
+	})
+}
+
+// GetDashboardMetrics returns aggregate metrics for the dashboard
+// @Summary Admin dashboard metrics
+// @Tags admin
+// @Router /admin/dashboard/metrics [get]
+func (h *AdminHandler) GetDashboardMetrics(c *gin.Context) {
+	end := time.Now()
+	start := end.AddDate(0, 0, -30)
+
+	revenue, err := h.analyticsService.CalculateRevenueMetrics(c.Request.Context(), start, end)
+	if err != nil {
+		response.InternalError(c, "Failed to calculate revenue")
+		return
+	}
+
+	churn, err := h.analyticsService.CalculateChurnMetrics(c.Request.Context(), start, end)
+	if err != nil {
+		response.InternalError(c, "Failed to calculate churn")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"revenue":      revenue,
+		"churn":        churn,
+		"last_updated": time.Now(),
 	})
 }

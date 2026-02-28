@@ -1,7 +1,8 @@
 -- name: CreateUser :one
-INSERT INTO users (platform_user_id, device_id, platform, app_version, email)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO users (platform_user_id, device_id, platform, app_version, email, role)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
+
 
 -- name: GetUserByID :one
 SELECT * FROM users
@@ -39,3 +40,10 @@ LIMIT $1 OFFSET $2;
 -- name: CountUsers :one
 SELECT COUNT(*) FROM users
 WHERE deleted_at IS NULL;
+
+-- name: UpdateUserRole :one
+UPDATE users
+SET role = $2
+WHERE id = $1
+RETURNING *;
+

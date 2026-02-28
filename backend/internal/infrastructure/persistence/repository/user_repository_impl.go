@@ -29,6 +29,7 @@ func (r *userRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 		Platform:       string(user.Platform),
 		AppVersion:     user.AppVersion,
 		Email:          user.Email,
+		Role:           user.Role,
 	}
 
 	row, err := r.queries.CreateUser(ctx, params)
@@ -77,14 +78,22 @@ func (r *userRepositoryImpl) GetByEmail(ctx context.Context, email string) (*ent
 }
 
 func (r *userRepositoryImpl) Update(ctx context.Context, user *entity.User) error {
-	params := generated.UpdateUserLTVParams{
+	// Update LTV
+	_, err := r.queries.UpdateUserLTV(ctx, generated.UpdateUserLTVParams{
 		ID:  user.ID,
 		Ltv: user.LTV,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update LTV: %w", err)
 	}
 
-	_, err := r.queries.UpdateUserLTV(ctx, params)
+	// Update Role
+	_, err = r.queries.UpdateUserRole(ctx, generated.UpdateUserRoleParams{
+		ID:   user.ID,
+		Role: user.Role,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to update user: %w", err)
+		return fmt.Errorf("failed to update role: %w", err)
 	}
 
 	return nil
@@ -131,7 +140,9 @@ func (r *userRepositoryImpl) mapToEntity(row generated.User) *entity.User {
 		Email:          row.Email,
 		LTV:            row.Ltv,
 		LTVUpdatedAt:   ltvUpdatedAt,
+		Role:           row.Role,
 		CreatedAt:      row.CreatedAt,
-		DeletedAt:      row.DeletedAt,
+
+		DeletedAt: row.DeletedAt,
 	}
 }
