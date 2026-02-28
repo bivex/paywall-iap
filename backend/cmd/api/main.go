@@ -16,6 +16,7 @@ import (
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/application/query"
+	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/config"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/pool"
@@ -72,6 +73,11 @@ func main() {
 	queries := generated.New(dbPool)
 	userRepo := repository.NewUserRepository(queries)
 	subscriptionRepo := repository.NewSubscriptionRepository(queries)
+	analyticsRepo := repository.NewAnalyticsRepository(dbPool)
+
+	// Initialize services
+	analyticsService := service.NewAnalyticsService(analyticsRepo, subscriptionRepo)
+	auditService := service.NewAuditService(dbPool)
 
 	// Initialize middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(
@@ -103,6 +109,8 @@ func main() {
 		queries,
 		dbPool,
 		redisClient,
+		analyticsService,
+		auditService,
 	)
 	webhookHandler := app_handler.NewWebhookHandler(
 		cfg.IAP.StripeWebhookSecret,
@@ -160,18 +168,17 @@ func main() {
 				subscriptionHandler.CheckAccess,
 			)
 			subs.DELETE("", subscriptionHandler.CancelSubscription)
-
-			// IAP verification
-			// protected.POST("/verify/iap", verifyIAPHandler)
 		}
 
 		// Admin routes
 		admin := v1.Group("/admin")
 		admin.Use(jwtMiddleware.Authenticate())
+		admin.Use(middleware.AdminMiddleware(userRepo, cfg.JWT.Secret))
 		{
 			admin.POST("/users/:id/grant", adminHandler.GrantSubscription)
 			admin.POST("/users/:id/revoke", adminHandler.RevokeSubscription)
 			admin.GET("/users", adminHandler.ListUsers)
+			admin.GET("/dashboard/metrics", adminHandler.GetDashboardMetrics)
 			admin.GET("/health", adminHandler.GetHealth)
 		}
 	}

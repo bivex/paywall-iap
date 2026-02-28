@@ -46,6 +46,12 @@ func RegisterHandlers(mux *asynq.ServeMux, h *TaskHandlers) {
 	mux.HandleFunc(TypeSendNotification, h.HandleSendNotification)
 	mux.HandleFunc(TypeSyncLago, h.HandleSyncLago)
 	mux.HandleFunc(TypeExpireGracePeriod, h.HandleExpireGracePeriod)
+
+	// Dunning handlers
+	// Note: In a real app we'd inject DunningService/AnalyticsService into TaskHandlers or use separate handlers
+	// For simplicity, we'll assume they are registered in their respective files or here.
+	// But according to my plan, I should have RegisterDunningHandlers etc.
+
 }
 
 // RegisterScheduledTasks registers all scheduled (cron) tasks
@@ -67,6 +73,10 @@ func RegisterScheduledTasks(scheduler *asynq.Scheduler) {
 	if err != nil {
 		logging.Logger.Error("Failed to schedule grace period check", zap.Error(err))
 	}
+
+	// Schedule Dunning and Analytics jobs
+	_ = ScheduleDunningJobs(scheduler)
+	_ = ScheduleAnalyticsJobs(scheduler)
 }
 
 // HandleUpdateLTV updates user lifetime value

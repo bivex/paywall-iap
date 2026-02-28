@@ -49,3 +49,9 @@ WHERE status = 'active'
 SELECT * FROM subscriptions
 WHERE user_id = $1 AND deleted_at IS NULL
 ORDER BY created_at DESC;
+
+-- name: GetUsersWithRecentlyCancelledSubscriptions :many
+SELECT DISTINCT user_id FROM subscriptions
+WHERE status = 'cancelled'
+  AND updated_at > now() - ($1 * INTERVAL '1 day')
+  AND deleted_at IS NULL;

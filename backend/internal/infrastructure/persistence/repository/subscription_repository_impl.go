@@ -136,6 +136,10 @@ func (r *subscriptionRepositoryImpl) CanAccess(ctx context.Context, userID uuid.
 	return true, nil
 }
 
+func (r *subscriptionRepositoryImpl) GetUsersWithCancelledSubscriptions(ctx context.Context, daysSinceChurn int) ([]uuid.UUID, error) {
+	return r.queries.GetUsersWithRecentlyCancelledSubscriptions(ctx, int32(daysSinceChurn))
+}
+
 func (r *subscriptionRepositoryImpl) mapToEntity(row generated.Subscription) *entity.Subscription {
 	return &entity.Subscription{
 		ID:        row.ID,
