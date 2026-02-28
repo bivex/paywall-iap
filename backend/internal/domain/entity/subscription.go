@@ -65,6 +65,9 @@ func NewSubscription(userID uuid.UUID, source SubscriptionSource, platform, prod
 
 // IsActive returns true if the subscription is currently active
 func (s *Subscription) IsActive() bool {
+	if s.DeletedAt != nil {
+		return false
+	}
 	return s.Status == StatusActive && s.ExpiresAt.After(time.Now())
 }
 
