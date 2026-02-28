@@ -2,8 +2,10 @@ package logging
 
 import (
 	"os"
+	"time"
 
 	"github.com/bivex/paywall-iap/internal/infrastructure/config"
+	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -40,9 +42,16 @@ func Init(cfg *config.SentryConfig) error {
 
 	// Add Sentry if configured
 	if cfg != nil && cfg.DSN != "" {
-		// TODO: Initialize Sentry integration
-		// This requires the sentry-go SDK
-		Logger.Info("Sentry integration configured (not yet implemented)")
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:              cfg.DSN,
+			Environment:      cfg.Environment,
+			Release:          cfg.Release,
+			TracesSampleRate: 0.1,
+		}); err != nil {
+			Logger.Warn("Sentry init failed", zap.Error(err))
+		} else {
+			Logger.Info("Sentry initialized", zap.String("env", cfg.Environment))
+		}
 	}
 
 	return nil
@@ -50,6 +59,7 @@ func Init(cfg *config.SentryConfig) error {
 
 // Sync flushes any buffered log entries
 func Sync() {
+	sentry.Flush(2 * time.Second)
 	if Logger != nil {
 		_ = Logger.Sync()
 	}
