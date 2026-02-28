@@ -1,0 +1,45 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Run tests
+        working-directory: ./backend
+        run: make test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and push Docker images
+        run: |
+          echo "Building images..."
+          # TODO: Add registry login
+          docker build -t iap-api:${GITHUB_SHA} -f infra/docker/backend/Dockerfile ./backend
+          docker build -t iap-worker:${GITHUB_SHA} -f infra/docker/worker/Dockerfile ./backend
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: deploy
+          key: ${{ secrets.VPS_DEPLOY_KEY }}
+          script: |
+            set -euo pipefail
+            cd /opt/iap-system
+            export IMAGE_TAG="${{ github.sha }}"
+            docker compose pull
+            docker compose up -d --no-deps api
+            docker compose up -d --no-deps worker
