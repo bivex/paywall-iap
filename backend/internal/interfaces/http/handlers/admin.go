@@ -2,19 +2,44 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
+	"time"
 
-	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
+
+	"github.com/bivex/paywall-iap/internal/domain/entity"
+	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
+	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
 // AdminHandler handles admin endpoints
 type AdminHandler struct {
-	// TODO: Add admin services
+	subscriptionRepo domainRepo.SubscriptionRepository
+	userRepo         domainRepo.UserRepository
+	queries          *generated.Queries
+	dbPool           *pgxpool.Pool
+	redisClient      *redis.Client
 }
 
 // NewAdminHandler creates a new admin handler
-func NewAdminHandler() *AdminHandler {
-	return &AdminHandler{}
+func NewAdminHandler(
+	subscriptionRepo domainRepo.SubscriptionRepository,
+	userRepo domainRepo.UserRepository,
+	queries *generated.Queries,
+	dbPool *pgxpool.Pool,
+	redisClient *redis.Client,
+) *AdminHandler {
+	return &AdminHandler{
+		subscriptionRepo: subscriptionRepo,
+		userRepo:         userRepo,
+		queries:          queries,
+		dbPool:           dbPool,
+		redisClient:      redisClient,
+	}
 }
 
 // GrantSubscription manually grants a subscription to a user
@@ -28,7 +53,11 @@ func NewAdminHandler() *AdminHandler {
 // @Success 204
 // @Router /admin/users/{id}/grant [post]
 func (h *AdminHandler) GrantSubscription(c *gin.Context) {
-	_ = c.Param("id")
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
 
 	var req struct {
 		ProductID string `json:"product_id" binding:"required"`
@@ -40,8 +69,27 @@ func (h *AdminHandler) GrantSubscription(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement grant subscription logic
-	c.JSON(http.StatusNotImplemented, gin.H{"message": "Not yet implemented"})
+	expiresAt, err := time.Parse(time.RFC3339, req.ExpiresAt)
+	if err != nil {
+		response.BadRequest(c, "Invalid expires_at: expected RFC3339 format")
+		return
+	}
+
+	sub := entity.NewSubscription(
+		userID,
+		entity.SourceStripe, // admin-granted via Stripe source
+		"web",
+		req.ProductID,
+		entity.PlanType(req.PlanType),
+		expiresAt,
+	)
+
+	if err := h.subscriptionRepo.Create(c.Request.Context(), sub); err != nil {
+		response.InternalError(c, "Failed to grant subscription")
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 // RevokeSubscription revokes a user's subscription
@@ -55,7 +103,11 @@ func (h *AdminHandler) GrantSubscription(c *gin.Context) {
 // @Success 204
 // @Router /admin/users/{id}/revoke [post]
 func (h *AdminHandler) RevokeSubscription(c *gin.Context) {
-	_ = c.Param("id")
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
 
 	var req struct {
 		Reason string `json:"reason"`
@@ -65,8 +117,18 @@ func (h *AdminHandler) RevokeSubscription(c *gin.Context) {
 		return
 	}
 
-	// TODO: Implement revoke subscription logic
-	c.JSON(http.StatusNotImplemented, gin.H{"message": "Not yet implemented"})
+	sub, err := h.subscriptionRepo.GetActiveByUserID(c.Request.Context(), userID)
+	if err != nil {
+		response.NotFound(c, "No active subscription found for user")
+		return
+	}
+
+	if err := h.subscriptionRepo.Cancel(c.Request.Context(), sub.ID); err != nil {
+		response.InternalError(c, "Failed to revoke subscription")
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 // ListUsers returns a paginated list of users
@@ -79,14 +141,41 @@ func (h *AdminHandler) RevokeSubscription(c *gin.Context) {
 // @Success 200 {object} response.SuccessResponse{data=object}
 // @Router /admin/users [get]
 func (h *AdminHandler) ListUsers(c *gin.Context) {
-	page := c.DefaultQuery("page", "1")
-	limit := c.DefaultQuery("limit", "50")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "50")
 
-	// TODO: Implement user listing logic
-	c.JSON(http.StatusNotImplemented, gin.H{
-		"message": "Not yet implemented",
-		"page":    page,
-		"limit":   limit,
+	pageNum, err := strconv.ParseInt(pageStr, 10, 64)
+	if err != nil || pageNum < 1 {
+		pageNum = 1
+	}
+	limitNum, err := strconv.ParseInt(limitStr, 10, 64)
+	if err != nil || limitNum < 1 || limitNum > 200 {
+		limitNum = 50
+	}
+
+	offset := (pageNum - 1) * limitNum
+	users, err := h.queries.ListUsers(c.Request.Context(), generated.ListUsersParams{
+		Limit:  int32(limitNum),
+		Offset: int32(offset),
+	})
+	if err != nil {
+		response.InternalError(c, "Failed to list users")
+		return
+	}
+
+	total, err := h.queries.CountUsers(c.Request.Context())
+	if err != nil {
+		response.InternalError(c, "Failed to count users")
+		return
+	}
+
+	response.OK(c, gin.H{
+		"users": users,
+		"pagination": gin.H{
+			"page":  pageNum,
+			"limit": limitNum,
+			"total": total,
+		},
 	})
 }
 
@@ -98,11 +187,26 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 // @Success 200 {object} response.SuccessResponse{data=object}
 // @Router /admin/health [get]
 func (h *AdminHandler) GetHealth(c *gin.Context) {
-	// TODO: Implement health check logic
-	c.JSON(http.StatusOK, gin.H{
+	ctx := c.Request.Context()
+
+	dbStatus := "ok"
+	if err := h.dbPool.Ping(ctx); err != nil {
+		dbStatus = "error: " + err.Error()
+	}
+
+	redisStatus := "ok"
+	if err := h.redisClient.Ping(ctx).Err(); err != nil {
+		redisStatus = "error: " + err.Error()
+	}
+
+	statusCode := http.StatusOK
+	if dbStatus != "ok" || redisStatus != "ok" {
+		statusCode = http.StatusServiceUnavailable
+	}
+
+	c.JSON(statusCode, gin.H{
 		"status":   "ok",
-		"database": "ok",
-		"redis":    "ok",
-		"queue":    "ok",
+		"database": dbStatus,
+		"redis":    redisStatus,
 	})
 }

@@ -68,8 +68,8 @@ func main() {
 		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
 	}
 
-	// Initialize repositories (using mock sqlc queries for now)
-	queries := &generated.Queries{} // Mock - needs actual initialization
+	// Initialize repositories
+	queries := generated.New(dbPool)
 	userRepo := repository.NewUserRepository(queries)
 	subscriptionRepo := repository.NewSubscriptionRepository(queries)
 
@@ -96,6 +96,13 @@ func main() {
 		checkAccessQuery,
 		cancelSubCmd,
 		jwtMiddleware,
+	)
+	adminHandler := app_handler.NewAdminHandler(
+		subscriptionRepo,
+		userRepo,
+		queries,
+		dbPool,
+		redisClient,
 	)
 
 	// Setup Gin router
@@ -142,6 +149,16 @@ func main() {
 
 			// IAP verification
 			// protected.POST("/verify/iap", verifyIAPHandler)
+		}
+
+		// Admin routes
+		admin := v1.Group("/admin")
+		admin.Use(jwtMiddleware.Authenticate())
+		{
+			admin.POST("/users/:id/grant", adminHandler.GrantSubscription)
+			admin.POST("/users/:id/revoke", adminHandler.RevokeSubscription)
+			admin.GET("/users", adminHandler.ListUsers)
+			admin.GET("/health", adminHandler.GetHealth)
 		}
 	}
 
