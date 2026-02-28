@@ -46,3 +46,19 @@ func (s *NotificationService) SendSubscriptionExpiredNotification(ctx context.Co
 	fmt.Printf("[NOTIFICATION] User %s: Subscription %s has expired\n", userID, subscriptionID)
 	return nil
 }
+
+// SendPaymentRetryNotification sends a notification about failed payment and retry attempt
+func (s *NotificationService) SendPaymentRetryNotification(ctx context.Context, userID uuid.UUID, retryCount int) error {
+	fmt.Printf("[NOTIFICATION] User %s: Payment failed, retry attempt %d\n", userID, retryCount)
+	return nil
+}
+
+// SendPaymentSuccessNotification sends a notification when payment is recovered
+func (s *NotificationService) SendPaymentSuccessNotification(ctx context.Context, userID uuid.UUID) {
+	fmt.Printf("[NOTIFICATION] User %s: Payment successful, subscription recovered\n", userID)
+}
+
+// SendPaymentFinalFailureNotification sends a notification when payment retries are exhausted
+func (s *NotificationService) SendPaymentFinalFailureNotification(ctx context.Context, userID uuid.UUID) {
+	fmt.Printf("[NOTIFICATION] User %s: All payment retries failed, subscription cancelled\n", userID)
+}
