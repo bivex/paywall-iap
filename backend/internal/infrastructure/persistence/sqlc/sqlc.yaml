@@ -70,3 +70,42 @@ sql:
             go_type:
               type: "string"
               pointer: true
+          # webhook_events
+          - column: "webhook_events.id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "webhook_events.created_at"
+            go_type: "time.Time"
+          - column: "webhook_events.processed_at"
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+          # analytics_aggregates
+          - column: "analytics_aggregates.id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "analytics_aggregates.metric_value"
+            go_type: "float64"
+          - column: "analytics_aggregates.metric_date"
+            go_type: "time.Time"
+          - column: "analytics_aggregates.created_at"
+            go_type: "time.Time"
+          - column: "analytics_aggregates.updated_at"
+            go_type: "time.Time"
+          # grace_periods
+          - column: "grace_periods.id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "grace_periods.user_id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "grace_periods.subscription_id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "grace_periods.expires_at"
+            go_type: "time.Time"
+          - column: "grace_periods.resolved_at"
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+          - column: "grace_periods.created_at"
+            go_type: "time.Time"
+          - column: "grace_periods.updated_at"
+            go_type: "time.Time"
