@@ -3,11 +3,12 @@ module github.com/password9090/paywall-iap
 go 1.25.0
 
 require (
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.0
 )
 
 require (
+	github.com/awa/go-iap v1.49.0 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
