@@ -38,3 +38,14 @@ UPDATE subscriptions
 SET status = 'cancelled', auto_renew = false, updated_at = now()
 WHERE id = $1
 RETURNING *;
+
+-- name: GetActiveSubscriptionCount :one
+SELECT COUNT(*) FROM subscriptions
+WHERE status = 'active'
+  AND expires_at > now()
+  AND deleted_at IS NULL;
+
+-- name: GetSubscriptionsByUserID :many
+SELECT * FROM subscriptions
+WHERE user_id = $1 AND deleted_at IS NULL
+ORDER BY created_at DESC;

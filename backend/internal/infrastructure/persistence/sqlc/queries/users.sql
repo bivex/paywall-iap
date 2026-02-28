@@ -29,3 +29,13 @@ UPDATE users
 SET deleted_at = now()
 WHERE id = $1
 RETURNING *;
+
+-- name: ListUsers :many
+SELECT * FROM users
+WHERE deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: CountUsers :one
+SELECT COUNT(*) FROM users
+WHERE deleted_at IS NULL;

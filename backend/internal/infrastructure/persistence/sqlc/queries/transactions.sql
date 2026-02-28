@@ -18,3 +18,15 @@ LIMIT $2 OFFSET $3;
 SELECT id FROM transactions
 WHERE receipt_hash = $1
 LIMIT 1;
+
+-- name: GetLTVByUserID :one
+SELECT COALESCE(SUM(amount), 0) AS ltv
+FROM transactions
+WHERE user_id = $1 AND status = 'success';
+
+-- name: GetDailyRevenue :one
+SELECT COALESCE(SUM(amount), 0) AS revenue
+FROM transactions
+WHERE status = 'success'
+  AND created_at >= $1
+  AND created_at < $2;
