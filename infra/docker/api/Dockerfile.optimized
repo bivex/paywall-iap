@@ -1,0 +1,74 @@
+# Multi-stage build for API service - LATENCY OPTIMIZED
+FROM golang:1.25-alpine AS builder
+
+# Install build dependencies + binutils for strip
+RUN apk add --no-cache git make binutils
+
+WORKDIR /app
+
+# Copy go mod files
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY backend/ ./
+
+# Build with maximum optimizations for latency
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w" \
+    -trimpath \
+    -a -installsuffix cgo \
+    -o api ./cmd/api && \
+    strip /app/api
+
+# Final stage with kernel optimizations
+FROM alpine:latest
+
+# Install ca-certificates for HTTPS requests
+RUN apk --no-cache add ca-certificates tzdata
+
+# ==================== KERNEL OPTIMIZATIONS FOR MINIMAL LATENCY ====================
+# Apply sysctl settings for low-latency networking
+RUN echo "# Latency optimizations" >> /etc/sysctl.conf && \
+    echo "net.core.rmem_max=16777216" >> /etc/sysctl.conf && \
+    echo "net.core.wmem_max=16777216" >> /etc/sysctl.conf && \
+    echo "net.core.rmem_default=262144" >> /etc/sysctl.conf && \
+    echo "net.core.wmem_default=262144" >> /etc/sysctl.conf && \
+    echo "net.core.netdev_max_backlog=5000" >> /etc/sysctl.conf && \
+    echo "net.core.somaxconn=65535" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_rmem=8192 262144 16777216" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_wmem=8192 262144 16777216" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_fastopen=3" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_fin_timeout=30" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_keepalive_time=300" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_keepalive_intvl=30" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_keepalive_probes=3" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_max_syn_backlog=8192" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_slow_start_after_idle=0" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_tw_reuse=1" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_max_tw_buckets=400000" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_timestamps=1" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_sack=1" >> /etc/sysctl.conf && \
+    echo "net.ipv4.tcp_window_scaling=1" >> /etc/sysctl.conf && \
+    echo "fs.file-max=2097152" >> /etc/sysctl.conf && \
+    sysctl -p || true
+
+WORKDIR /app
+
+# Copy binary from builder
+COPY --from=builder /app/api .
+
+# Create non-root user
+RUN addgroup -g 1001 -S appuser && \
+    adduser -u 1001 -S appuser -G appuser
+
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget -qO- http://localhost:8080/health || exit 1
+
+EXPOSE 8080
+
+CMD ["./api"]
