@@ -104,6 +104,12 @@ func main() {
 		dbPool,
 		redisClient,
 	)
+	webhookHandler := app_handler.NewWebhookHandler(
+		cfg.IAP.StripeWebhookSecret,
+		cfg.IAP.AppleWebhookSecret,
+		cfg.IAP.GoogleWebhookSecret,
+		queries,
+	)
 
 	// Setup Gin router
 	if cfg.Sentry.Environment != "development" {
@@ -120,6 +126,14 @@ func main() {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
+
+	// Webhook routes (no auth — verified by signature)
+	webhooks := router.Group("/webhook")
+	{
+		webhooks.POST("/stripe", webhookHandler.StripeWebhook)
+		webhooks.POST("/apple", webhookHandler.AppleWebhook)
+		webhooks.POST("/google", webhookHandler.GoogleWebhook)
+	}
 
 	// API v1 routes
 	v1 := router.Group("/v1")

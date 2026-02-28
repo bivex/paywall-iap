@@ -47,8 +47,11 @@ type RedisConfig struct {
 
 // IAPConfig holds IAP configuration
 type IAPConfig struct {
-	AppleSharedSecret string
-	GoogleKeyJSON     string
+	AppleSharedSecret   string
+	GoogleKeyJSON       string
+	StripeWebhookSecret string
+	AppleWebhookSecret  string
+	GoogleWebhookSecret string
 }
 
 // SentryConfig holds Sentry configuration
@@ -81,6 +84,11 @@ func Load() (*Config, error) {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
+
+	// Explicit webhook secret bindings (viper mapstructure doesn't auto-map these)
+	cfg.IAP.StripeWebhookSecret = viper.GetString("STRIPE_WEBHOOK_SECRET")
+	cfg.IAP.AppleWebhookSecret = viper.GetString("APPLE_WEBHOOK_SECRET")
+	cfg.IAP.GoogleWebhookSecret = viper.GetString("GOOGLE_WEBHOOK_SECRET")
 
 	// Validate required fields
 	if err := validate(&cfg); err != nil {
