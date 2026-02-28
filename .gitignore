@@ -54,3 +54,4 @@ mobile/src/generated/
 *.pem
 *.crt
 secrets/
+.worktrees/
