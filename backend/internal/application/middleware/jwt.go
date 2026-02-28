@@ -174,3 +174,20 @@ func (j *JWTMiddleware) ParseToken(tokenString string) (*JWTClaims, error) {
 func (j *JWTMiddleware) RevokeToken(ctx context.Context, jti string, remainingTTL time.Duration) error {
 	return j.refreshCache.Set(ctx, j.blocklistPrefix+jti, "1", remainingTTL).Err()
 }
+
+// IsRevoked checks whether a token JTI has been revoked.
+func (j *JWTMiddleware) IsRevoked(ctx context.Context, jti string) (bool, error) {
+	val, err := j.refreshCache.Get(ctx, j.blocklistPrefix+jti).Result()
+	if err == redis.Nil {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return val != "", nil
+}
+
+// AccessTTL returns the configured access token TTL.
+func (j *JWTMiddleware) AccessTTL() time.Duration {
+	return j.accessTTL
+}
