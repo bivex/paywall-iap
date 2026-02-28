@@ -31,11 +31,12 @@ func (r *userRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 		Email:          user.Email,
 	}
 
-	_, err := r.queries.CreateUser(ctx, params)
+	row, err := r.queries.CreateUser(ctx, params)
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 
+	user.ID = row.ID
 	return nil
 }
 

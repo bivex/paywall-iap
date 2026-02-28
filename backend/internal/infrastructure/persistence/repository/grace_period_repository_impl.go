@@ -188,7 +188,7 @@ func (r *GracePeriodRepositoryImpl) GetExpiringSoon(ctx context.Context, withinH
 		FROM grace_periods
 		WHERE status = 'active'
 		  AND expires_at > NOW()
-		  AND expires_at < NOW() + ($1 || ' hours')::INTERVAL
+		  AND expires_at < NOW() + ($1 * INTERVAL '1 hour')
 		ORDER BY expires_at ASC
 	`
 

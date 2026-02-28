@@ -103,6 +103,32 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 		provider_tx_id      TEXT,
 		created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 	);
+
+	-- Grace Periods table
+	CREATE TABLE IF NOT EXISTS grace_periods (
+		id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		user_id             UUID NOT NULL REFERENCES users(id),
+		subscription_id     UUID NOT NULL REFERENCES subscriptions(id),
+		status              TEXT NOT NULL CHECK (status IN ('active', 'resolved', 'expired')),
+		expires_at          TIMESTAMPTZ NOT NULL,
+		resolved_at         TIMESTAMPTZ,
+		created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+	);
+
+	-- Winback Offers table
+	CREATE TABLE IF NOT EXISTS winback_offers (
+		id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		user_id             UUID NOT NULL REFERENCES users(id),
+		campaign_id         TEXT NOT NULL,
+		discount_type       TEXT NOT NULL CHECK (discount_type IN ('percentage', 'fixed')),
+		discount_value      NUMERIC(10,2) NOT NULL,
+		status              TEXT NOT NULL CHECK (status IN ('offered', 'accepted', 'expired', 'declined')),
+		offered_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+		expires_at          TIMESTAMPTZ NOT NULL,
+		accepted_at         TIMESTAMPTZ,
+		created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+	);
 	`
 
 	_, err := pool.Exec(ctx, schema)
@@ -111,7 +137,7 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 
 // TruncateAll truncates all test tables
 func TruncateAll(ctx context.Context, pool *pgxpool.Pool) error {
-	tables := []string{"transactions", "subscriptions", "users"}
+	tables := []string{"winback_offers", "grace_periods", "transactions", "subscriptions", "users"}
 	for _, table := range tables {
 		if _, err := pool.Exec(ctx, fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table)); err != nil {
 			return err

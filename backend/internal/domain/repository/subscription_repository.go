@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/bivex/paywall-iap/internal/domain/entity"
+	"github.com/google/uuid"
 )
 
 // SubscriptionRepository defines the interface for subscription data access
@@ -35,4 +35,7 @@ type SubscriptionRepository interface {
 
 	// CanAccess checks if a user can access premium content
 	CanAccess(ctx context.Context, userID uuid.UUID) (bool, error)
+
+	// GetUsersWithCancelledSubscriptions retrieves users whose subscriptions were cancelled recently
+	GetUsersWithCancelledSubscriptions(ctx context.Context, daysSinceChurn int) ([]uuid.UUID, error)
 }

@@ -92,12 +92,13 @@ func (gp *GracePeriod) DaysRemaining() int {
 		return 0
 	}
 
-	duration := gp.ExpiresAt.Sub(time.Now())
-	if duration < 0 {
+	duration := time.Until(gp.ExpiresAt)
+	if duration <= 0 {
 		return 0
 	}
 
-	return int(duration.Hours() / 24)
+	// Add 12 hours so that integer truncation rounds to the nearest day
+	return int((duration + 12*time.Hour).Hours() / 24)
 }
 
 // HoursRemaining returns the number of hours remaining in the grace period
@@ -106,7 +107,7 @@ func (gp *GracePeriod) HoursRemaining() int {
 		return 0
 	}
 
-	duration := gp.ExpiresAt.Sub(time.Now())
+	duration := time.Until(gp.ExpiresAt)
 	if duration < 0 {
 		return 0
 	}

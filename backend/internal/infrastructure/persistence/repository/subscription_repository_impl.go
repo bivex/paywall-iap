@@ -34,11 +34,12 @@ func (r *subscriptionRepositoryImpl) Create(ctx context.Context, sub *entity.Sub
 		AutoRenew: sub.AutoRenew,
 	}
 
-	_, err := r.queries.CreateSubscription(ctx, params)
+	row, err := r.queries.CreateSubscription(ctx, params)
 	if err != nil {
 		return fmt.Errorf("failed to create subscription: %w", err)
 	}
 
+	sub.ID = row.ID
 	return nil
 }
 
