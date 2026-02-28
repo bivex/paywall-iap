@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/dto"
@@ -64,9 +66,52 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	// Validate refresh token and generate new tokens
-	// TODO: Implement refresh token validation and rotation
+	ctx := c.Request.Context()
 
-	// For now, return error indicating not implemented
-	response.InternalError(c, "Refresh token not yet implemented")
+	// Parse and validate the refresh token JWT
+	claims, err := h.jwtMiddleware.ParseToken(req.RefreshToken)
+	if err != nil {
+		response.Unauthorized(c, "Invalid refresh token")
+		return
+	}
+
+	// Check blocklist — token may have been explicitly revoked
+	revoked, err := h.jwtMiddleware.IsRevoked(ctx, claims.JTI)
+	if err != nil {
+		response.InternalError(c, "Token validation unavailable")
+		return
+	}
+	if revoked {
+		response.Unauthorized(c, "Refresh token has been revoked")
+		return
+	}
+
+	// Issue new access token
+	accessToken, _, err := h.jwtMiddleware.GenerateAccessToken(claims.UserID)
+	if err != nil {
+		response.InternalError(c, "Failed to generate access token")
+		return
+	}
+
+	// Rotate: issue a new refresh token
+	newRefreshToken, _, err := h.jwtMiddleware.GenerateRefreshToken(claims.UserID)
+	if err != nil {
+		response.InternalError(c, "Failed to generate refresh token")
+		return
+	}
+
+	// Revoke the old refresh token (remaining TTL from its expiry)
+	remainingTTL := time.Until(claims.ExpiresAt.Time)
+	if remainingTTL > 0 {
+		if err := h.jwtMiddleware.RevokeToken(ctx, claims.JTI, remainingTTL); err != nil {
+			// Non-fatal: log and continue. Token will expire naturally.
+			_ = err
+		}
+	}
+
+	response.OK(c, dto.RefreshTokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresIn:    int64(h.jwtMiddleware.AccessTTL().Seconds()),
+	})
 }
