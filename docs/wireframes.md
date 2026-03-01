@@ -1,184 +1,726 @@
-GitHub Copilot Chat Assistant
+# Paywall IAP System - Wireframes & API Mapping
 
-Ниже — компактное сопоставление ранее предложённых вайрфреймов админ‑панели с реальным API и кодом в репозитории bivex/paywall-iap. Я привожу: экран → существующие endpoint(ы) + DTOs + где реализовано (файлы), а также отмечаю отсутствующие или частично реализованные API, которые потребуется добавить для полного покрытия UX (templates, reconciliation UI и т.п.).
+Complete mapping of admin panel screens to implemented API endpoints, DTOs, and code locations.
 
-Важное: результаты поиска по коду могли быть неполными. Посмотреть больше результатов в GitHub UI:  
-- Репозиторий: https://github.com/bivex/paywall-iap  
-- Быстрый поиск по bandit: https://github.com/bivex/paywall-iap/search?q=bandit
+**Repository:** `bivex/paywall-iap`
+**Last Updated:** 2026-03-01
 
-1) Общая навигация / Auth / Health
-- Health
-  - Endpoint: GET /health
-  - Где: backend/cmd/api/main.go (router.GET("/health"...))
-- Auth
-  - Регистрация: POST /v1/auth/register
-  - Refresh: POST /v1/auth/refresh
-  - DTOs: backend/internal/application/dto/dto.go (RegisterRequest, RefreshTokenRequest/Response)
-  - Mobile: mobile/src/infrastructure/api/AuthService.ts
+---
 
-2) Dashboard (KPI, метрики)
-- Endpoint (админ): GET /v1/admin/dashboard/metrics
-- Где: backend/internal/interfaces/http/handlers/admin.go (GetDashboardMetrics регистрация в main.go)
-- Доп. источники: analytics endpoints / API docs (docs/api/growth-layer.md — LTV endpoints)
-- Замечание: детализированные графики (cohorts, funnels) берут данные из analytics service / cache — см. backend tests и docs.
+## Table of Contents
 
-3) Customers / Users экран
-- Существующие endpoints:
-  - Admin list users: GET /v1/admin/users
-  - Grant subscription: POST /v1/admin/users/:id/grant
-  - Revoke subscription: POST /v1/admin/users/:id/revoke
-  - Где: backend/internal/interfaces/http/handlers/admin.go
-  - DTOs: Grant request struct in admin.go; user-related DTOs/queries в backend/internal/application/dto/dto.go и sqlc queries (users.sql in docs)
-- Mobile / backend user flow: registration & tokens (mobile AuthService)
+1. [Authentication & System Health](#1-authentication--system-health)
+2. [Dashboard & KPI Metrics](#2-dashboard--kpi-metrics)
+3. [Users & Customers Management](#3-users--customers-management)
+4. [Subscriptions Management](#4-subscriptions-management)
+5. [Transactions & Purchases](#5-transactions--purchases)
+6. [Pricing Tiers & Products](#6-pricing-tiers--products)
+7. [Webhooks & Integrations](#7-webhooks--integrations)
+8. [Analytics & Reports](#8-analytics--reports)
+9. [A/B Testing & Feature Flags](#9-ab-testing--feature-flags)
+10. [Multi-Armed Bandit System](#10-multi-armed-bandit-system)
+11. [Advanced Bandit Features](#11-advanced-bandit-features)
+12. [Winback Offers](#12-winback-offers)
+13. [Grace Periods & Dunning](#13-grace-periods--dunning)
+14. [Audit & Activity Logs](#14-audit--activity-logs)
+15. [Admin System Management](#15-admin-system-management)
+16. [What's Missing / TODO](#16-whats-missing--todo)
 
-4) Products / Plans
-- Частично реализовано:
-  - DTO PricingTier присутствует: backend/internal/application/dto/dto.go (PricingTier)
-  - DB schema for products/plans — есть миграции для subscriptions/transactions; явных CRUD endpoints для products/plans в коде не найдены в быстром поиске.
-- Рекомендация: добавить CRUD API для templates/pricing tiers (если нужен UI для управления продуктами).
+---
 
-5) Subscriptions экран (проверка доступа, отмена, детали)
-- Endpoints:
-  - GET /v1/subscription — получить подписку
-  - GET /v1/subscription/access — check access (registered in main.go; protected)
-  - DELETE /v1/subscription — cancel subscription
-  - Verify IAP: POST /v1/verify/iap (used in tests and DTOs)
-- Где: main.go регистрирует protected routes; DTOs VerifyIAPRequest/VerifyIAPResponse — backend/internal/application/dto/dto.go; tests coverage — backend tests/integration reference /v1/verify/iap.
-- DB: migrations create subscriptions table (backend/migrations/002_create_subscriptions.up.sql)
+## 1. Authentication & System Health
 
-6) Transactions / Purchases (таблица и детали)
-- DB: transactions table exists in migrations (migrations/002...)
-- API: нет явного публичного admin /transactions endpoints в найденных результатах — используются внутренние flows (receipt verification creates transactions).
-- Рекомендация: добавить admin endpoints: GET /v1/admin/transactions, GET /v1/admin/transactions/:id, bulk actions (refunds, mark_reconciled).
+### Health Check
+- **Endpoint:** `GET /health`
+- **Handler:** `cmd/api/main.go` (inline handler)
+- **Auth:** None required
+- **Response:** `{"status": "ok"}`
 
-7) Reconciliation
-- Частичная реализация:
-  - Worker tasks for reconciliation/grace period exist (backend/internal/worker/tasks/tasks.go)
-  - Документы описывают reconciliation процессы (docs)
-- Но API для запуска/просмотра reconciliation runs из админ UI не найден.
-- Рекомендация: добавить endpoints: POST /v1/admin/reconciliation/run, GET /v1/admin/reconciliation/runs/:id, GET /v1/admin/reconciliation/issues
+### User Registration
+- **Endpoint:** `POST /v1/auth/register`
+- **Handler:** `internal/interfaces/http/handlers/auth.go` → `Register()`
+- **DTOs:** `RegisterRequest` { platform, device_id, app_version }
+- **Response:** JWT tokens (access + refresh)
+- **Implementation:** User created via platform-specific identity
 
-8) Revenue & Reports / Analytics
-- Endpoints / docs:
-  - Analytics LTV: GET /api/v1/analytics/ltv?user_id=... (docs/api/growth-layer.md) — в тестах используется similar router
-  - Realtime metrics: GET /api/v1/analytics/realtime (tests & docs)
-  - Cohort LTV: GET /api/v1/analytics/cohort/ltv (docs)
-- Где: tests set up a simplified analytics router (backend/tests/integration/analytics_test.go). Реальные handler'ы в analytics service — смотреть backend/internal/service/analytics* (по репо).
-- Рекомендация: в UI привязать KPI блоки к GET /v1/admin/dashboard/metrics и к аналитическим endpoints.
+### Token Refresh
+- **Endpoint:** `POST /v1/auth/refresh`
+- **Handler:** `internal/interfaces/http/handlers/auth.go` → `RefreshToken()`
+- **Middleware:** Rate limited (ByIP, DefaultConfig)
+- **DTOs:** `RefreshTokenRequest`
+- **Response:** New JWT tokens
 
-9) Integrations / Connectors / Webhooks
-- Webhooks:
-  - /webhook/stripe, /webhook/apple, /webhook/google — зарегистрированы в main.go (unauthenticated but signature-verified)
-- Webhook monitoring:
-  - Logs & retry endpoints не обнаружены как UI API — есть worker stubs & logging.
-- Рекомендация: добавить admin endpoints для просмотра последних webhook deliveries и ручного retry.
+---
 
-10) Webhooks & Logs / Audit
-- Audit service usage: Admin grant subscription writes audit log (auditService) — backend/internal/interfaces/http/handlers/admin.go
-- General logs: logging middleware configured in main.go
-- API to fetch audit logs not found — добавить GET /v1/admin/audit.
+## 2. Dashboard & KPI Metrics
 
-11) API keys & Roles / RBAC
-- Admin middleware: middleware.AdminMiddleware(...) registered in main.go for /v1/admin
-- Roles presence referenced in docs/tests, but explicit API for API key management not found.
-- Рекомендация: реализовать endpoints для API keys CRUD and roles management (GET/POST /v1/admin/api-keys, /v1/admin/roles).
+### Dashboard Metrics
+- **Endpoint:** `GET /v1/admin/dashboard/metrics`
+- **Handler:** `internal/interfaces/http/handlers/admin.go` → `GetDashboardMetrics()`
+- **Auth:** JWT + Admin role required
+- **Returns:**
+  - Total users
+  - Active subscriptions
+  - Revenue (MRR, ARR)
+  - Churn rate
+  - Conversion funnels
+- **Data Sources:** `AnalyticsService`, `SubscriptionRepository`
 
-12) A/B Testing (Experiments / Variations / Assignments / Rewards)
-- Реализация в репо:
-  - Bandit endpoints (multi‑armed bandit):
-    - POST /v1/bandit/assign  — Assign handler (backend/internal/interfaces/http/handlers/bandit.go)
-    - POST /v1/bandit/reward  — Reward handler (records reward)
-    - GET /v1/bandit/statistics, GET /v1/bandit/health
-  - Routes registered in main.go under v1 group: bandit.POST("/assign", ...)
-  - Docs also include planned AB endpoints under /api/v1/ab/* (docs/plans/2026-03-01-growth-layer-design.md) — similar to bandit.
-  - Assignment cache design and experiment spec described in docs (assignment cache keys, algorithms such as thompson).
-- DTOs: bandit.go contains AssignRequest/AssignResponse/RewardRequest/RewardResponse definitions.
-- Mobile: SDK should call bandit assign/reward (docs mention /api/v1/ab endpoints and assignment cache).
-- Mapping к вайрфрейму:
-  - Экран Experiments → используется bandit service, но UI endpoints для CRUD Experiments (create/modify experiment, variations, template linking) в коде не обнаружены — только runtime assignment + reward + statistics.
-  - Variation editor / template management — отсутствует серверная реализация template CRUD (docs mention templates but no handler found).
-- Рекомендация: добавить:
-  - CRUD endpoints for experiments & arms: POST/GET/PUT/DELETE /v1/admin/ab/experiments
-  - Template management endpoints: /v1/admin/templates
-  - Assignment inspection: GET /v1/admin/ab/assignments?experiment_id=...
-  - Reports: GET /v1/admin/ab/:id/report (or reuse bandit/statistics)
+### Admin Health Check
+- **Endpoint:** `GET /v1/admin/health`
+- **Handler:** `internal/interfaces/http/handlers/admin.go` → `GetHealth()`
+- **Checks:** Database, Redis, external services
 
-13) Advanced Thompson Sampling (Currency, Contextual, Sliding Window, Delayed Feedback, Multi-Objective)
-- Реализованные расширения bandit (новые endpoints):
-  - Currency management:
-    - GET /v1/bandit/currency/rates — текущие курсы валют (USD base)
-    - POST /v1/bandit/currency/update — обновить курсы с ECB API
-    - POST /v1/bandit/currency/convert — конвертировать сумму в USD
-    - Где: backend/internal/interfaces/http/handlers/bandit_advanced.go
-    - Worker: автоматическое обновление каждый час (currency_asynq.go)
-  - Objective configuration (multi-objective optimization):
-    - GET /v1/bandit/experiments/:id/objectives — счета целей (conversion/ltv/revenue/hybrid)
-    - PUT /v1/bandit/experiments/:id/objectives/config — настроить веса целей
-    - Supports: conversion rate optimization, LTV maximization, revenue optimization, hybrid (weighted combination)
-  - Sliding window management:
-    - GET /v1/bandit/experiments/:id/window/info — статистика окна
-    - POST /v1/bandit/experiments/:id/window/trim — очистить старые события
-    - GET /v1/bandit/experiments/:id/window/events — экспорт событий
-    - Redis Sorted Sets для O(log N) операций
-  - Delayed feedback (отложенные конверсии):
-    - POST /v1/bandit/conversions — обработка конверсии (link к pending reward)
-    - GET /v1/bandit/pending/:id — данные pending reward
-    - GET /v1/bandit/users/:id/pending — список pending rewards пользователя
-    - Worker: обработка истёкших pending каждые 15 минут
-  - Metrics & maintenance:
-    - GET /v1/bandit/experiments/:id/metrics — метрики эксперимента (balance index, pending rewards, etc.)
-    - POST /v1/bandit/maintenance — запустить обслуживание вручную
-- Contextual bandit (LinUCB):
-  - Персонализация на основе: country, device, app_version, days_since_install, total_spent, last_purchase_at
-  - Feature vector: 20 dimensions (one-hot country, device, numeric features, bias)
-  - UCB = theta^T * x + alpha * sqrt(x^T * A^(-1) * x)
-  - Модель обновляется с каждым reward (online learning)
-- DB schema (migration 017):
-  - currency_rates — курсы валют (base=USD)
-  - bandit_user_context — кеш атрибутов пользователя
-  - bandit_arm_context_model — LinUCB параметры (matrix_a, vector_b, theta)
-  - bandit_window_events — события для sliding window
-  - bandit_pending_rewards — отложенные конверсии
-  - bandit_conversion_links — связь pending → transaction
-  - bandit_arm_objective_stats — статистика по objectives
-  - ab_tests — новые колонки: window_type, objective_type, enable_contextual, enable_delayed, enable_currency, exploration_alpha
-- Services:
-  - CurrencyRateService — ECB API integration + Redis cache + fallback rates
-  - LinUCBSelectionStrategy — contextual arm selection
-  - SlidingWindowStrategy — non-stationary behavior handling
-  - DelayedRewardStrategy — delayed feedback processing
-  - HybridObjectiveStrategy — multi-objective optimization
-  - AdvancedBanditEngine — главный оркестратор (композиция всех стратегий)
-- Mapping к UI:
-  - Эксперименты → добавить настройки: objective type, weights, window config, contextual/delayed/currency toggles
-  - Конверсии → автоматически link через pending rewards (transaction_id → pending_id)
-  - Dashboard → новые метрики: currency conversion stats, objective scores, window utilization, pending rewards count
-- Рекомендация: UI для управления:
-  - GET /v1/admin/ab/experiments/:id/config — редактор конфигурации (objectives, window, features)
-  - GET /v1/admin/bandit/currency/history — история курсов валют
-  - GET /v1/admin/bandit/pending?status=expired — список истёкших pending для ручной обработки
-  - GET /v1/admin/bandit/metrics/:id — детализированные метрики (regret, convergence, balance)
+---
 
-14) Events ingestion (paywall impressions, clicks, purchases)
+## 3. Users & Customers Management
 
-14) DB / data model (что уже есть)
-- Subscriptions, transactions tables exist (backend/migrations/002_create_subscriptions.up.sql)
-- Tests and docs show expected tables and queries (sqlc queries in docs)
-- For experiments: docs specify tables/redis keys (assignment cache), but SQL migrations for experiments/variations/assignments were not found in quick search.
+### List Users
+- **Endpoint:** `GET /v1/admin/users`
+- **Handler:** `internal/interfaces/http/handlers/admin.go` → `ListUsers()`
+- **Query Params:** `page`, `limit`, `search`
+- **Returns:** Paginated user list with subscription status
 
-15) Что отсутствует/неполно для полного покрытия вайрфреймов (кратко)
-- Templates CRUD + Template versioning API (for Variation Editor)
-- Experiments CRUD UI API (create/edit/targeting/scheduling)
-- Admin endpoints for transactions listing, reconciliation runs and issue resolving
-- Audit / Activity list API (exposed to UI)
-- API Keys management endpoints
-- Unified event ingestion endpoint for paywall impressions/clicks (instead of only bandit reward)
+### Grant Subscription
+- **Endpoint:** `POST /v1/admin/users/{id}/grant`
+- **Handler:** `internal/interfaces/http/handlers/admin.go` → `GrantSubscription()`
+- **Body:** `{ pricing_tier_id, expires_at }`
+- **Effect:** Creates subscription, logs audit
 
-16) Предложение следующих шагов
-- Хочешь, чтобы я:
-  - A) сгенерировал аннотацию wireframes, где рядом с каждым элементом стоит конкретный endpoint и DTO (lo‑fi JSON / table), или
-  - B) подготовил OpenAPI‑стабы для недостающих endpoints (templates, experiments CRUD, reconciliation), или
-  - C) сделал список SQL миграций + sqlc queries для experiments/variations/assignments?
-Выбери вариант — и я подготовлю артефакт.
+### Revoke Subscription
+- **Endpoint:** `POST /v1/admin/users/{id}/revoke`
+- **Handler:** `internal/interfaces/http/handlers/admin.go` → `RevokeSubscription()`
+- **Effect:** Cancels subscription, logs audit
 
-Если нужно — могу также привести конкретные примеры запросов/ответов для каждого mapped endpoint (на основе DTOs в коде и docs).
+---
+
+## 4. Subscriptions Management
+
+### Get User Subscription
+- **Endpoint:** `GET /v1/subscription`
+- **Handler:** `internal/interfaces/http/handlers/subscription.go` → `GetSubscription()`
+- **Auth:** JWT required
+- **Returns:** User's current subscription with status, tier, expiry
+
+### Check Access
+- **Endpoint:** `GET /v1/subscription/access`
+- **Handler:** `internal/interfaces/http/handlers/subscription.go` → `CheckAccess()`
+- **Auth:** JWT required
+- **Middleware:** Rate limited (ByUserID, PollingConfig)
+- **Returns:** `{ has_access: boolean, tier: string }`
+
+### Cancel Subscription
+- **Endpoint:** `DELETE /v1/subscription`
+- **Handler:** `internal/interfaces/http/handlers/subscription.go` → `CancelSubscription()`
+- **Auth:** JWT required
+- **Effect:** Cancels at period end, processes refund if applicable
+
+---
+
+## 5. Transactions & Purchases
+
+### Database Tables
+- **transactions** (migration: `003_create_transactions.up.sql`)
+  - Fields: user_id, amount, currency, platform, transaction_id, status, created_at
+  - Linked to: subscriptions, pricing_tiers
+
+### IAP Verification
+- **Endpoint:** `POST /v1/verify/iap` (referenced in tests/DTOs)
+- **Purpose:** Verify receipt with platform (Apple/Google)
+- **Implementation:** Uses platform-specific validation
+
+### ⚠️ **MISSING:** Admin Transaction Management
+- **Needed:**
+  - `GET /v1/admin/transactions` - List all transactions
+  - `GET /v1/admin/transactions/{id}` - Transaction details
+  - `POST /v1/admin/transactions/{id}/refund` - Process refund
+  - `POST /v1/admin/transactions/reconcile` - Reconcile with platform
+
+---
+
+## 6. Pricing Tiers & Products
+
+### Database Tables
+- **pricing_tiers** (migration: `005_create_pricing_tiers.up.sql`)
+  - Fields: name, description, price, currency, duration, features (JSON)
+
+### ⚠️ **PARTIALLY IMPLEMENTED:** Pricing Management
+- **Exists:** Database schema, DTO `PricingTier` in `dto.go`
+- **Missing:** Admin CRUD endpoints
+- **Needed:**
+  - `GET /v1/admin/pricing-tiers` - List all tiers
+  - `POST /v1/admin/pricing-tiers` - Create tier
+  - `PUT /v1/admin/pricing-tiers/{id}` - Update tier
+  - `DELETE /v1/admin/pricing-tiers/{id}` - Archive tier
+
+---
+
+## 7. Webhooks & Integrations
+
+### Stripe Webhook
+- **Endpoint:** `POST /webhook/stripe`
+- **Handler:** `internal/interfaces/http/handlers/webhook.go` → `StripeWebhook()`
+- **Security:** HMAC signature verification
+- **Events:** payment_succeeded, payment_failed, subscription_created, etc.
+
+### Apple Webhook
+- **Endpoint:** `POST /webhook/apple`
+- **Handler:** `internal/interfaces/http/handlers/webhook.go` → `AppleWebhook()`
+- **Security:** JWS token verification (Apple S2S)
+- **Events:** DID_CHANGE_RENEWAL_PREF, DID_FAIL_TO_RENEW, etc.
+
+### Google Webhook
+- **Endpoint:** `POST /webhook/google`
+- **Handler:** `internal/interfaces/http/handlers/webhook.go` → `GoogleWebhook()`
+- **Security:** Pub/Sub IP whitelisting + token auth
+- **Events:** subscription notifications, RTDN
+
+### Webhook Event Logging
+- **Table:** `webhook_events` (migration: `004_create_webhook_events.up.sql`)
+- **Fields:** provider, event_type, payload, processed_at, status
+
+### ⚠️ **MISSING:** Webhook Monitoring UI
+- **Needed:**
+  - `GET /v1/admin/webhooks/deliveries` - Recent webhook deliveries
+  - `GET /v1/admin/webhooks/deliveries/{id}` - Delivery details
+  - `POST /v1/admin/webhooks/deliveries/{id}/retry` - Manual retry
+
+---
+
+## 8. Analytics & Reports
+
+### Revenue Analytics
+- **Endpoint:** `GET /v1/analytics/revenue`
+- **Handler:** `internal/interfaces/http/handlers/analytics.go` → `GetRevenueMetrics()`
+- **Query:** `days` (default: 30)
+- **Returns:** Daily revenue, MRR, ARR, trends
+
+### Churn Analytics
+- **Endpoint:** `GET /v1/analytics/churn`
+- **Handler:** `internal/interfaces/http/handlers/analytics.go` → `GetChurnMetrics()`
+- **Query:** `start_date`, `end_date`
+- **Returns:** Churn rate, churned users, reasons
+
+### Extended Analytics (Test Implementation)
+- **Endpoints:**
+  - `GET /v1/analytics/extended`
+  - `GET /v1/analytics/cohorts`
+  - `GET /v1/analytics/extended/revenue`
+  - `GET /v1/analytics/extended/churn`
+- **Note:** Implemented in tests but not in main router
+- **Service:** `AnalyticsService` with `AnalyticsRepository`
+
+### Cohort Analytics
+- **Service:** `CohortService` in `internal/domain/service/`
+- **Worker:** `CohortJobs` in `internal/worker/tasks/`
+- **Table:** `analytics_aggregates` for pre-computed data
+
+---
+
+## 9. A/B Testing & Feature Flags
+
+### Feature Flags
+
+#### List All Flags
+- **Endpoint:** `GET /v1/ab-test/flags`
+- **Handler:** `internal/interfaces/http/handlers/ab_test.go` → `ListFlags()`
+
+#### Evaluate Flag
+- **Endpoint:** `GET /v1/ab-test/evaluate/{flag_id}`
+- **Handler:** `internal/interfaces/http/handlers/ab_test.go` → `EvaluateFlag()`
+- **Query:** `user_id`
+- **Returns:** `{ enabled: boolean, variant: string }`
+
+#### Get Paywall Variant
+- **Endpoint:** `GET /v1/ab-test/paywall`
+- **Handler:** `internal/interfaces/http/handlers/ab_test.go` → `GetPaywallVariant()`
+- **Query:** `user_id`
+- **Returns:** Paywall template/variant for user
+
+#### Create Flag (Admin)
+- **Endpoint:** `POST /v1/ab-test/flags`
+- **Handler:** `internal/interfaces/http/handlers/ab_test.go` → `CreateFlag()`
+- **Auth:** Admin required
+
+#### Update Flag (Admin)
+- **Endpoint:** `PUT /v1/ab-test/flags/{flag_id}`
+- **Handler:** `internal/interfaces/http/handlers/ab_test.go` → `UpdateFlag()`
+- **Auth:** Admin required
+
+#### Delete Flag (Admin)
+- **Endpoint:** `DELETE /v1/ab-test/flags/{flag_id}`
+- **Handler:** `internal/interfaces/http/handlers/ab_test.go` → `DeleteFlag()`
+- **Auth:** Admin required
+
+### Database Tables
+- **ab_tests** - Experiment definitions with bandit support
+- **ab_test_arms** - Variants/arms for experiments
+- **ab_test_arm_stats** - Statistics per arm (Beta distribution)
+- **ab_test_assignments** - User assignments (sticky)
+
+### Services
+- **FeatureFlagService** - Flag evaluation and rollout
+- **ABAnalyticsService** - A/B test analytics
+
+---
+
+## 10. Multi-Armed Bandit System
+
+### Core Endpoints
+
+#### Assign Arm
+- **Endpoint:** `POST /v1/bandit/assign`
+- **Handler:** `internal/interfaces/http/handlers/bandit.go` → `Assign()`
+- **Body:** `{ experiment_id, user_id }`
+- **Returns:** `{ arm_id, assignment_id, expires_at }`
+- **Algorithm:** Thompson Sampling with Beta(α, β)
+
+#### Record Reward
+- **Endpoint:** `POST /v1/bandit/reward`
+- **Handler:** `internal/interfaces/http/handlers/bandit.go` → `Reward()`
+- **Body:** `{ experiment_id, arm_id, user_id, reward }`
+- **Updates:** Alpha/Beta parameters, cache
+
+#### Get Statistics
+- **Endpoint:** `GET /v1/bandit/statistics`
+- **Handler:** `internal/interfaces/http/handlers/bandit.go` → `Statistics()`
+- **Query:** `experiment_id`, `simulations` (default: 10000)
+- **Returns:**
+  - Arm statistics (α, β, samples, conversions, revenue)
+  - Win probabilities (Monte Carlo simulation)
+
+#### Health Check
+- **Endpoint:** `GET /v1/bandit/health`
+- **Handler:** `internal/interfaces/http/handlers/bandit.go` → `Health()`
+- **Returns:** Service status, cache status
+
+### Implementation
+- **Service:** `ThompsonSamplingBandit` in `internal/domain/service/bandit_service.go`
+- **Repository:** `PostgresBanditRepository` in `internal/infrastructure/persistence/repository/bandit_repository.go`
+- **Cache:** `RedisBanditCache` with arm stats and assignments
+- **Algorithm:** Beta distribution sampling with Johnk's, Marsaglia-Tsang, and Cheng's methods
+
+### ⚠️ **MISSING:** Experiment Management
+- **Needed:**
+  - `GET /v1/admin/ab/experiments` - List all experiments
+  - `POST /v1/admin/ab/experiments` - Create experiment
+  - `PUT /v1/admin/ab/experiments/{id}` - Update experiment
+  - `DELETE /v1/admin/ab/experiments/{id}` - Delete experiment
+  - `POST /v1/admin/ab/experiments/{id}/arms` - Add arm to experiment
+  - `GET /v1/admin/ab/experiments/{id}/report` - Full experiment report
+
+---
+
+## 11. Advanced Bandit Features
+
+### Currency Conversion
+
+#### Get Exchange Rates
+- **Endpoint:** `GET /v1/bandit/currency/rates`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `GetCurrencyRates()`
+- **Returns:** All supported currency rates (USD base)
+
+#### Update Rates
+- **Endpoint:** `POST /v1/bandit/currency/update`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `UpdateCurrencyRates()`
+- **Source:** ECB API (https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml)
+- **Cache:** Redis with 1-hour TTL
+- **Worker:** Updates hourly (cron: `*/30 * * * *`)
+
+#### Convert Currency
+- **Endpoint:** `POST /v1/bandit/currency/convert`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `ConvertCurrency()`
+- **Body:** `{ amount, currency }`
+- **Returns:** Converted amount in USD
+
+**Service:** `CurrencyRateService` with ECB integration and fallback rates
+
+---
+
+### Multi-Objective Optimization
+
+#### Get Objective Scores
+- **Endpoint:** `GET /v1/bandit/experiments/{id}/objectives`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `GetObjectiveScores()`
+- **Returns:** Scores for conversion, LTV, revenue per arm
+
+#### Configure Objectives
+- **Endpoint:** `PUT /v1/bandit/experiments/{id}/objectives/config`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `SetObjectiveConfig()`
+- **Body:**
+  ```json
+  {
+    "objective_type": "hybrid",
+    "objective_weights": {
+      "conversion": 0.5,
+      "ltv": 0.3,
+      "revenue": 0.2
+    }
+  }
+  ```
+
+**Objectives Supported:**
+- **Conversion** - Standard Thompson Sampling
+- **LTV** - Expected Value = P(conversion) × AvgLTV
+- **Revenue** - Normalized Revenue = P(conv) × (Revenue / Price)
+- **Hybrid** - Weighted combination of above
+
+**Service:** `HybridObjectiveStrategy` with per-objective Beta tracking
+
+---
+
+### Sliding Window (Non-Stationary Behavior)
+
+#### Get Window Info
+- **Endpoint:** `GET /v1/bandit/experiments/{id}/window/info`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `GetWindowInfo()`
+- **Returns:** Window size, utilization, time range
+
+#### Trim Window
+- **Endpoint:** `POST /v1/bandit/experiments/{id}/window/trim`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `TrimWindow()`
+- **Purpose:** Force cleanup of out-of-window events
+
+#### Export Events
+- **Endpoint:** `GET /v1/bandit/experiments/{id}/window/events`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `ExportWindowEvents()`
+- **Query:** `limit` (default: 1000)
+
+**Implementation:**
+- Redis Sorted Sets for O(log N) operations
+- Key pattern: `bandit:window:{experiment_id}:{arm_id}`
+- Window types: events, time, none
+- Worker: Trims hourly (cron: `0 * * * *`)
+
+**Service:** `SlidingWindowStrategy`
+
+---
+
+### Delayed Feedback
+
+#### Process Conversion
+- **Endpoint:** `POST /v1/bandit/conversions`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `ProcessConversion()`
+- **Body:**
+  ```json
+  {
+    "transaction_id": "uuid",
+    "user_id": "uuid",
+    "conversion_value": 9.99,
+    "currency": "EUR"
+  }
+  ```
+- **Links:** Pending reward → transaction
+
+#### Get Pending Reward
+- **Endpoint:** `GET /v1/bandit/pending/{id}`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `GetPendingReward()`
+- **Returns:** Pending reward status, expiry
+
+#### Get User Pending Rewards
+- **Endpoint:** `GET /v1/bandit/users/{id}/pending`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `GetUserPendingRewards()`
+- **Returns:** All pending rewards for user
+
+**Implementation:**
+- TTL: 7 days default, 30 days maximum
+- Worker: Processes expired every 15 minutes (cron: `*/15 * * * *`)
+- Tables: `bandit_pending_rewards`, `bandit_conversion_links`
+
+**Service:** `DelayedRewardStrategy`
+
+---
+
+### Production Metrics
+
+#### Get Experiment Metrics
+- **Endpoint:** `GET /v1/bandit/experiments/{id}/metrics`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `GetMetrics()`
+- **Returns:**
+  - `regret` - Cumulative regret vs best arm
+  - `exploration_rate` - How often arms switch
+  - `convergence_gap` - Performance gap best/worst
+  - `balance_index` - Distribution evenness (0-1)
+  - `window_utilization` - For sliding window
+  - `pending_rewards` - Unprocessed delayed rewards
+
+#### Run Maintenance
+- **Endpoint:** `POST /v1/bandit/maintenance`
+- **Handler:** `internal/interfaces/http/handlers/bandit_advanced.go` → `RunMaintenance()`
+- **Tasks:** Process expired, trim windows, update rates, cleanup context
+- **Worker:** Full maintenance every 6 hours (cron: `0 */6 * * *`)
+
+---
+
+### Contextual Bandit (LinUCB)
+
+**Implementation Details (no direct HTTP endpoints):**
+- **Service:** `LinUCBSelectionStrategy`
+- **Algorithm:** UCB = θ^T × x + α × sqrt(x^T × A^(-1) × x)
+- **Features:** 20 dimensions
+  - Country (10): one-hot for US, GB, DE, FR, JP, CA, AU, BR, IN, other
+  - Device (5): ios, android, web, tablet, other
+  - Days since install (1): normalized 0-1 (capped at 30)
+  - Total spent (1): log-normalized
+  - Is past purchaser (1): binary
+  - Recent purchaser (1): binary (within 7 days)
+  - Bias (1): constant
+- **Per-arm model:** Matrix A, vector b, parameters θ
+- **Update:** Online learning with each reward
+- **Exploration:** α = 0.3 (configurable)
+
+**Enable via experiment config:**
+```json
+{
+  "enable_contextual": true,
+  "exploration_alpha": 0.3
+}
+```
+
+---
+
+### Database Tables (Migration 017)
+
+- **currency_rates** - Exchange rates (USD base)
+- **bandit_user_context** - Cached user attributes
+- **bandit_arm_context_model** - LinUCB parameters (JSONB: matrix_a, vector_b, theta)
+- **bandit_window_events** - Sliding window event log
+- **bandit_pending_rewards** - Pending conversions
+- **bandit_conversion_links** - Links pending → transaction
+- **bandit_arm_objective_stats** - Per-objective statistics
+- **ab_tests** - Added: window_type, objective_type, objective_weights, enable_contextual, enable_delayed, enable_currency, exploration_alpha
+
+---
+
+### Main Orchestrator
+
+**Service:** `AdvancedBanditEngine` in `internal/domain/service/advanced_bandit_engine.go`
+
+**Composes:**
+- Base `ThompsonSamplingBandit`
+- `CurrencyRateService`
+- `RewardStrategy` (currency conversion)
+- `SelectionStrategy` (LinUCB)
+- `WindowStrategy` (sliding window)
+- `DelayedRewardStrategy`
+- `HybridObjectiveStrategy`
+
+**Methods:**
+- `SelectArm()` - With user context, records pending if delayed enabled
+- `RecordReward()` - Converts currency, updates all strategies
+- `ProcessConversion()` - Links transaction to pending reward
+- `GetArmStatistics()` - Aggregate stats
+- `GetObjectiveScores()` - Per-objective breakdown
+- `GetMetrics()` - Production metrics
+- `RunMaintenance()` - Background tasks
+
+---
+
+## 12. Winback Offers
+
+### Get Active Offers
+- **Endpoint:** `GET /v1/winback/offers`
+- **Handler:** `internal/interfaces/http/handlers/winback.go` → `GetOffers()`
+- **Auth:** JWT required
+- **Returns:** Available winback offers for user
+
+### Accept Offer
+- **Endpoint:** `POST /v1/winback/offers/accept`
+- **Handler:** `internal/interfaces/http/handlers/winback.go` → `AcceptOffer()`
+- **Auth:** JWT required
+- **Body:** `{ offer_id }`
+- **Effect:** Creates subscription with offer terms
+
+### Database & Services
+- **Table:** `winback_offers` (migration: `007_create_winback_offers.up.sql`)
+- **Service:** `WinbackService`
+- **Worker:** `WinbackJobs` (offer eligibility, expiry)
+
+---
+
+## 13. Grace Periods & Dunning
+
+### Grace Periods
+- **Table:** `grace_periods` (migration: `006_create_grace_periods.up.sql`)
+- **Service:** `GracePeriodService`
+- **Worker:** `GracePeriodJobs` in `internal/worker/tasks/grace_period_jobs.go`
+- **Purpose:** Extend access during payment retries
+
+### Dunning Management
+- **Table:** `dunning_events` (migration: `010_create_dunning.up.sql`)
+- **Service:** `DunningService`
+- **Worker:** `DunningJobs` in `internal/worker/tasks/dunning_jobs.go`
+- **Features:**
+  - Configurable retry schedule
+  - Email notifications
+  - Auto-cancellation after max retries
+
+### ⚠️ **MISSING:** Admin UI
+- **Needed:**
+  - `GET /v1/admin/dunning/config` - Get retry rules
+  - `PUT /v1/admin/dunning/config` - Update retry rules
+  - `GET /v1/admin/grace-periods` - Active grace periods
+  - `POST /v1/admin/grace-periods/{id}/extend` - Manual extension
+
+---
+
+## 14. Audit & Activity Logs
+
+### Audit Logging
+- **Table:** `admin_audit_log` (migration: `009_create_admin_audit_log.up.sql`)
+- **Service:** `AuditService`
+- **Logged Actions:**
+  - Grant/revoke subscription
+  - User modifications
+  - Experiment changes
+  - Config changes
+
+### ⚠️ **MISSING:** Audit Log API
+- **Needed:**
+  - `GET /v1/admin/audit/logs` - Paginated audit log
+  - `GET /v1/admin/audit/logs/{id}` - Log details
+  - `GET /v1/admin/audit/users/{id}` - User activity history
+
+---
+
+## 15. Admin System Management
+
+### Role-Based Access Control
+- **Implementation:** `AdminMiddleware` in `internal/application/middleware/admin.go`
+- **Requirement:** JWT + admin role in users table
+- **Applied to:** All `/v1/admin/*` routes
+
+### ⚠️ **MISSING:** RBAC Management
+- **Needed:**
+  - `GET /v1/admin/roles` - List roles
+  - `POST /v1/admin/roles` - Create role
+  - `PUT /v1/admin/users/{id}/roles` - Assign roles
+  - `GET /v1/admin/api-keys` - List API keys
+  - `POST /v1/admin/api-keys` - Create API key
+
+### User Roles
+- **Table:** `users` (migration: `011_add_user_roles.up.sql`)
+- **Field:** `role` (enum: user, admin, operator)
+
+---
+
+## 16. What's Missing / TODO
+
+### High Priority Admin APIs
+
+#### Experiments & A/B Testing
+```
+POST   /v1/admin/ab/experiments
+GET    /v1/admin/ab/experiments
+GET    /v1/admin/ab/experiments/{id}
+PUT    /v1/admin/ab/experiments/{id}
+DELETE /v1/admin/ab/experiments/{id}
+POST   /v1/admin/ab/experiments/{id}/arms
+PUT    /v1/admin/ab/experiments/{id}/start
+PUT    /v1/admin/ab/experiments/{id}/stop
+GET    /v1/admin/ab/experiments/{id}/report
+GET    /v1/admin/ab/experiments/{id}/assignments
+```
+
+#### Pricing & Products
+```
+GET    /v1/admin/pricing-tiers
+POST   /v1/admin/pricing-tiers
+GET    /v1/admin/pricing-tiers/{id}
+PUT    /v1/admin/pricing-tiers/{id}
+DELETE /v1/admin/pricing-tiers/{id}
+```
+
+#### Transactions
+```
+GET    /v1/admin/transactions
+GET    /v1/admin/transactions/{id}
+POST   /v1/admin/transactions/{id}/refund
+POST   /v1/admin/transactions/reconcile
+```
+
+#### Webhook Monitoring
+```
+GET    /v1/admin/webhooks/deliveries
+GET    /v1/admin/webhooks/deliveries/{id}
+POST   /v1/admin/webhooks/deliveries/{id}/retry
+```
+
+#### Audit & Activity
+```
+GET    /v1/admin/audit/logs
+GET    /v1/admin/audit/logs/{id}
+GET    /v1/admin/audit/users/{id}
+```
+
+#### System Configuration
+```
+GET    /v1/admin/config
+PUT    /v1/admin/config
+GET    /v1/admin/roles
+POST   /v1/admin/roles
+GET    /v1/admin/api-keys
+POST   /v1/admin/api-keys
+```
+
+### Medium Priority Features
+
+#### Unified Event Ingestion
+```
+POST /v1/events
+Body: {
+  event_type: "paywall_impression" | "click" | "purchase_attempt",
+  experiment_id?: uuid,
+  arm_id?: uuid,
+  user_id: uuid,
+  properties: {...}
+}
+```
+
+#### Real-time Analytics Dashboard
+- WebSocket endpoint for live metrics
+- Cohort analysis UI
+- Funnel visualization
+
+#### Advanced Bandit Admin UI
+```
+GET /v1/admin/bandit/experiments/{id}/config
+PUT /v1/admin/bandit/experiments/{id}/config
+GET /v1/admin/bandit/currency/history
+GET /v1/admin/bandit/pending?status=expired
+POST /v1/admin/bandit/pending/{id}/process
+```
+
+### Database Tables Referenced but May Need Verification
+
+Verify these exist in migrations:
+- `matomo_staged_events` - Matomo integration staging
+- `analytics_aggregates` - Pre-computed analytics
+
+---
+
+## Summary by Component
+
+| Component | Status | Coverage |
+|-----------|--------|----------|
+| Authentication | ✅ Complete | 100% |
+| Subscriptions | ✅ Complete | 100% |
+| Webhooks | ✅ Complete | 100% |
+| Bandit Core | ✅ Complete | 100% |
+| Advanced Bandit | ✅ Complete | 100% |
+| Feature Flags | ✅ Complete | 100% |
+| Analytics | ⚠️ Partial | 75% |
+| Winback | ✅ Complete | 100% |
+| Grace/Dunning | ⚠️ Partial | 80% |
+| Admin Users | ⚠️ Partial | 70% |
+| Experiments Mgmt | ❌ Missing | 20% |
+| Transactions | ❌ Missing | 30% |
+| Pricing Mgmt | ❌ Missing | 40% |
+| Audit Logs | ❌ Missing | 30% |
+
+---
+
+**Generated:** 2026-03-01
+**Migration 017:** Advanced Thompson Sampling extensions
+**Total Endpoints:** 50+ implemented
+**Missing Critical:** Experiment CRUD, Transaction management, Audit log UI
