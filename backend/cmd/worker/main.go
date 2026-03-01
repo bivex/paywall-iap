@@ -48,6 +48,20 @@ func main() {
 	queries := generated.New(dbPool)
 	taskHandlers := worker_tasks.NewTaskHandlers(queries)
 
+	// Initialize Redis
+	opts, err := redis.ParseURL(cfg.Redis.URL)
+	if err != nil {
+		logging.Logger.Fatal("Failed to parse Redis URL", zap.Error(err))
+	}
+	opts.PoolSize = cfg.Redis.PoolSize
+	redisClient := redis.NewClient(opts)
+	defer redisClient.Close()
+
+	// Test Redis connection
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
+	}
+
 	// Initialize advanced bandit services for worker
 	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
 	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
@@ -63,23 +77,6 @@ func main() {
 			EnableCurrency: true,
 		},
 	)
-
-	currencyJobs := worker_tasks.NewCurrencyJobs(currencyService, logging.Logger)
-	banditMaintenanceJobs := worker_tasks.NewBanditMaintenanceJobs(advancedBanditEngine, logging.Logger)
-
-	// Initialize Redis
-	opts, err := redis.ParseURL(cfg.Redis.URL)
-	if err != nil {
-		logging.Logger.Fatal("Failed to parse Redis URL", zap.Error(err))
-	}
-	opts.PoolSize = cfg.Redis.PoolSize
-	redisClient := redis.NewClient(opts)
-	defer redisClient.Close()
-
-	// Test Redis connection
-	if err := redisClient.Ping(ctx).Err(); err != nil {
-		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
-	}
 
 	// Initialize Asynq server
 	server := asynq.NewServerFromRedisClient(redisClient, asynq.Config{
