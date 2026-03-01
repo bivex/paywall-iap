@@ -22,6 +22,11 @@ type BanditRepository interface {
 	UpdateArmStats(ctx context.Context, stats *ArmStats) error
 	CreateAssignment(ctx context.Context, assignment *Assignment) error
 	GetActiveAssignment(ctx context.Context, experimentID, userID uuid.UUID) (*Assignment, error)
+
+	// Advanced bandit methods
+	GetExperimentConfig(ctx context.Context, experimentID uuid.UUID) (*ExperimentConfig, error)
+	GetUserContext(ctx context.Context, userID uuid.UUID) (*UserContext, error)
+	SetUserContext(ctx context.Context, ctx *UserContext) error
 }
 
 // BanditCache defines the interface for caching bandit state
@@ -62,6 +67,90 @@ type Assignment struct {
 	ArmID        uuid.UUID
 	AssignedAt   time.Time
 	ExpiresAt    time.Time
+}
+
+// =====================================================
+// Advanced Bandit Plugin Interfaces
+// =====================================================
+
+// RewardStrategy defines how rewards are calculated and recorded
+type RewardStrategy interface {
+	CalculateReward(ctx context.Context, baseReward float64, arm Arm, userContext UserContext) (float64, error)
+	GetType() string
+}
+
+// SelectionStrategy defines how arms are selected
+type SelectionStrategy interface {
+	SelectArm(ctx context.Context, arms []Arm, userContext UserContext) (*Arm, error)
+	GetName() string
+}
+
+// WindowStrategy defines how historical data is windowed
+type WindowStrategy interface {
+	GetArmStats(ctx context.Context, armID uuid.UUID) (*ArmStats, error)
+	RecordEvent(ctx context.Context, armID uuid.UUID, event RewardEvent) error
+	GetType() string
+}
+
+// UserContext captures user attributes for contextual bandits
+type UserContext struct {
+	UserID          uuid.UUID
+	Country         string
+	Device          string
+	AppVersion      string
+	DaysSinceInstall int
+	TotalSpent      float64
+	LastPurchaseAt  *time.Time
+	CustomFeatures  map[string]interface{}
+}
+
+// RewardEvent represents a reward event with metadata
+type RewardEvent struct {
+	UserID           uuid.UUID
+	ArmID            uuid.UUID
+	RewardValue      float64
+	Currency         string
+	Timestamp        time.Time
+	ConversionDelay  *time.Duration
+	Metadata         map[string]interface{}
+}
+
+// ObjectiveType defines the optimization objective
+type ObjectiveType string
+
+const (
+	ObjectiveConversion ObjectiveType = "conversion"
+	ObjectiveLTV       ObjectiveType = "ltv"
+	ObjectiveRevenue   ObjectiveType = "revenue"
+	ObjectiveHybrid    ObjectiveType = "hybrid"
+)
+
+// WindowType defines the windowing strategy
+type WindowType string
+
+const (
+	WindowTypeEvents WindowType = "events"
+	WindowTypeTime   WindowType = "time"
+	WindowTypeNone   WindowType = "none"
+)
+
+// WindowConfig configures sliding window behavior
+type WindowConfig struct {
+	Type      WindowType
+	Size      int           // Number of events or seconds
+	MinSamples int          // Minimum samples before using window
+}
+
+// ExperimentConfig defines per-experiment configuration for advanced features
+type ExperimentConfig struct {
+	ID                uuid.UUID
+	ObjectiveType     ObjectiveType
+	ObjectiveWeights  map[string]float64 // For hybrid: {"conversion": 0.5, "ltv": 0.3, "revenue": 0.2}
+	WindowConfig      *WindowConfig
+	EnableContextual  bool
+	EnableDelayed     bool
+	EnableCurrency    bool
+	ExplorationAlpha  float64 // For LinUCB: exploration parameter
 }
 
 // ThompsonSamplingBandit implements the Thompson Sampling algorithm
