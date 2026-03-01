@@ -2,12 +2,10 @@ package handlers
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/bivex/paywall-iap/internal/application/dto"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )

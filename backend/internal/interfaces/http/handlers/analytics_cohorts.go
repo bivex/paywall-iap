@@ -3,37 +3,15 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	matomoClient "github.com/bivex/paywall-iap/internal/infrastructure/external/matomo"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
-
-// AnalyticsHandler handles analytics API endpoints
-type AnalyticsHandler struct {
-	matomoClient *matomoClient.Client
-	redisClient  *redis.Client
-	logger       *zap.Logger
-}
-
-// NewAnalyticsHandler creates a new analytics handler
-func NewAnalyticsHandler(
-	matomoClient *matomoClient.Client,
-	redisClient *redis.Client,
-	logger *zap.Logger,
-) *AnalyticsHandler {
-	return &AnalyticsHandler{
-		matomoClient: matomoClient,
-		redisClient:  redisClient,
-		logger:       logger,
-	}
-}
 
 // GetFunnelsRequest represents the request to get funnel data
 type GetFunnelsRequest struct {
