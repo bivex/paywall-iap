@@ -15083,6 +15083,158 @@
 							"nameLabel": {
 								"$ref": "AAAAAAGcqcAQJqFE0Vk="
 							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcGW/aFM7XE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcGW/aFKjcg="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcGW/aFN6yM=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcGW/aFM7XE="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 7960,
+									"width": 535,
+									"height": 13,
+									"text": "⚙️ 17. Platform Settings",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 7960,
+							"width": 535,
+							"height": 22,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcGW/aFN6yM="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcGXpKFV23I=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcGXpKFTXME="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcGXpKFWnK8=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcGXpKFV23I="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 8910,
+									"width": 535,
+									"height": 13,
+									"text": "📊 19. Sliding Window Analytics",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 8910,
+							"width": 535,
+							"height": 22,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcGXpKFWnK8="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcGYLqFehpg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcGYLqFcsKo="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcGYLqFf+70=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcGYLqFehpg="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 7960,
+									"width": 635,
+									"height": 13,
+									"text": "⏱ 18. Delayed Feedback Monitor",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 7960,
+							"width": 635,
+							"height": 22,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcGYLqFf+70="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcGYuKFnSeo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcGYuKFlbMM="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcGYuKFoLTo=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcGYuKFnSeo="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 8910,
+									"width": 635,
+									"height": 13,
+									"text": "🎯 20. Multi-Objective Config",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 8910,
+							"width": 635,
+							"height": 22,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcGYuKFoLTo="
+							}
 						}
 					]
 				},
@@ -18260,6 +18412,14 @@
 								"$ref": "AAAAAAGcqbzt054OKaA="
 							},
 							"name": "Test Webhook"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcGW/aFKjcg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzt054OKaA="
+							},
+							"name": "⚙️ 17. Platform Settings"
 						}
 					]
 				},
@@ -18422,6 +18582,14 @@
 								"$ref": "AAAAAAGcqbzuXZ4U6sY="
 							},
 							"name": "← 1  2  3 ... 170 →     Showing 1-5 of 847 pending rewards"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcGYLqFcsKo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzuXZ4U6sY="
+							},
+							"name": "⏱ 18. Delayed Feedback Monitor"
 						}
 					]
 				},
@@ -18704,6 +18872,14 @@
 								"$ref": "AAAAAAGcqbzu0J4aw5s="
 							},
 							"name": "Save Config"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcGYuKFlbMM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzu0J4aw5s="
+							},
+							"name": "🎯 20. Multi-Objective Config"
 						}
 					]
 				},
@@ -18842,6 +19018,14 @@
 								"$ref": "AAAAAAGcqbzvOZ4gGl8="
 							},
 							"name": "Export CSV"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcGXpKFTXME=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzvOZ4gGl8="
+							},
+							"name": "📊 19. Sliding Window Analytics"
 						}
 					]
 				}
