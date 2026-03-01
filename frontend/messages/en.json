@@ -1,0 +1,55 @@
+{
+  "nav": {
+    "groups": {
+      "adminDashboard": "Admin Dashboard",
+      "user360": "User 360° Profile",
+      "revenueOps": "Revenue Ops Center",
+      "experimentStudio": "Experiment Studio"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "analyticsReports": "Analytics Reports",
+      "matomoAnalytics": "Matomo Analytics",
+      "platformSettings": "Platform Settings",
+      "userList": "User List",
+      "auditLog": "Audit Log",
+      "overview": "Overview",
+      "subscriptions": "Subscriptions",
+      "transactions": "Transactions",
+      "dunning": "Dunning",
+      "winback": "Winback",
+      "pricingTiers": "Pricing Tiers",
+      "webhooks": "Webhooks",
+      "abTests": "A/B Tests",
+      "studio": "Studio",
+      "banditModel": "Bandit Model",
+      "delayedFeedback": "Delayed Feedback",
+      "slidingWindow": "Sliding Window",
+      "multiObjective": "Multi-Objective"
+    }
+  },
+  "auth": {
+    "title": "Login",
+    "subtitle": "Welcome back. Enter your admin credentials to continue.",
+    "sideTitle": "Hello again",
+    "sideSub": "Login to continue",
+    "email": "Email Address",
+    "password": "Password",
+    "rememberMe": "Remember me for 30 days",
+    "submit": "Login",
+    "submitting": "Signing in…"
+  },
+  "user": {
+    "logout": "Log out",
+    "loggingOut": "Signing out…"
+  },
+  "search": {
+    "placeholder": "Search pages…",
+    "hint": "Type a command or search…",
+    "noResults": "No results found.",
+    "navigation": "Navigation"
+  },
+  "breadcrumb": {
+    "home": "Admin"
+  }
+}

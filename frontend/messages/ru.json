@@ -1,0 +1,55 @@
+{
+  "nav": {
+    "groups": {
+      "adminDashboard": "Панель администратора",
+      "user360": "Профиль пользователя 360°",
+      "revenueOps": "Центр управления доходами",
+      "experimentStudio": "Студия экспериментов"
+    },
+    "items": {
+      "dashboard": "Главная",
+      "analyticsReports": "Отчёты аналитики",
+      "matomoAnalytics": "Matomo аналитика",
+      "platformSettings": "Настройки платформы",
+      "userList": "Список пользователей",
+      "auditLog": "Журнал аудита",
+      "overview": "Обзор",
+      "subscriptions": "Подписки",
+      "transactions": "Транзакции",
+      "dunning": "Управление долгами",
+      "winback": "Возврат клиентов",
+      "pricingTiers": "Тарифные планы",
+      "webhooks": "Вебхуки",
+      "abTests": "A/B тесты",
+      "studio": "Студия",
+      "banditModel": "Бандитская модель",
+      "delayedFeedback": "Отложенная обратная связь",
+      "slidingWindow": "Скользящее окно",
+      "multiObjective": "Мультицелевой"
+    }
+  },
+  "auth": {
+    "title": "Вход",
+    "subtitle": "С возвращением. Введите учётные данные администратора.",
+    "sideTitle": "С возвращением",
+    "sideSub": "Войдите, чтобы продолжить",
+    "email": "Email адрес",
+    "password": "Пароль",
+    "rememberMe": "Запомнить на 30 дней",
+    "submit": "Войти",
+    "submitting": "Вхожу…"
+  },
+  "user": {
+    "logout": "Выйти",
+    "loggingOut": "Выхожу…"
+  },
+  "search": {
+    "placeholder": "Поиск страниц…",
+    "hint": "Введите команду или поиск…",
+    "noResults": "Ничего не найдено.",
+    "navigation": "Навигация"
+  },
+  "breadcrumb": {
+    "home": "Главная"
+  }
+}

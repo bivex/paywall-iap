@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import {
   Activity,
@@ -66,6 +67,7 @@ const searchItems = [
 export function SearchDialog() {
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
+  const t = useTranslations("search");
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -97,9 +99,9 @@ export function SearchDialog() {
         </kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search pages, users, and more…" />
+        <CommandInput placeholder={t("placeholder")} />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>{t("noResults")}</CommandEmpty>
           {[...new Set(searchItems.map((item) => item.group))].map((group, i) => (
             <React.Fragment key={group}>
               {i !== 0 && <CommandSeparator />}

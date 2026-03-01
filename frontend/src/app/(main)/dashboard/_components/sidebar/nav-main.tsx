@@ -23,11 +23,8 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { NavGroup, NavMainItem } from "@/navigation/sidebar/sidebar-items";
-
-interface NavMainProps {
-  readonly items: readonly NavGroup[];
-}
+import type { NavMainItem } from "@/navigation/sidebar/sidebar-items";
+import { useSidebarItems } from "@/navigation/sidebar/use-sidebar-items";
 
 const IsComingSoon = () => (
   <span className="ml-auto rounded-md bg-gray-200 px-2 py-1 text-xs dark:text-gray-800">Soon</span>
@@ -139,7 +136,8 @@ const NavItemCollapsed = ({
   );
 };
 
-export function NavMain({ items }: NavMainProps) {
+export function NavMain() {
+  const items = useSidebarItems();
   const path = usePathname();
   const { state, isMobile } = useSidebar();
 

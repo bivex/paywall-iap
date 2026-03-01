@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import {
   Breadcrumb,
@@ -28,12 +29,13 @@ for (const group of sidebarItems) {
 
 export function DashboardBreadcrumb() {
   const pathname = usePathname();
+  const t = useTranslations("breadcrumb");
 
   const matched = routeMap[pathname];
 
   // Always show: Admin > [Group] > Page  (or just Admin > Page for top-level)
   const crumbs: { label: string; href?: string }[] = [
-    { label: "Admin", href: "/dashboard/default" },
+    { label: t("home"), href: "/dashboard/default" },
   ];
 
   if (matched) {

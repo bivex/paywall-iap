@@ -3,6 +3,7 @@
 import { EllipsisVertical, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { useTranslations } from "next-intl";
 
 import { logoutAction } from "@/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,6 +30,7 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const t = useTranslations("user");
 
   const handleLogout = () =>
     startTransition(async () => {
@@ -77,7 +79,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} disabled={isPending}>
               <LogOut />
-              {isPending ? "Signing out…" : "Log out"}
+              {isPending ? t("loggingOut") : t("logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
