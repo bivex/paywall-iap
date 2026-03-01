@@ -253,3 +253,87 @@ Below are the markdown wireframes for the core screens.
 4.  **Matomo Retry:**
     *   *Trigger:* Automated worker (visible in UI via `status='failed'`).
     *   *UI:* Allows admin to force `status='pending'` and reset `retry_count` for debugging.
+
+Отличная работа! 🎉 4 ключевых экрана с 94 виджетами — это мощный фундамент.
+
+Исходя из вашей схемы `schema_merged.sql` и логики платформы, вот **приоритизированный бэклог оставшихся экранов**:
+
+---
+
+## 🔥 Priority 1: Core Business Flows (Must Have)
+
+| # | Экран | Ключевые компоненты | Связанные таблицы |
+|---|-------|-------------------|------------------|
+| 5 | **Pricing Tiers Manager** | Список тарифов, редактор цен (monthly/annual), toggle features JSONB, preview для iOS/Android/Web, soft-delete | `pricing_tiers` |
+| 6 | **User List + Advanced Filters** | Таблица пользователей, фильтры (platform, role, LTV, subscription_status), bulk actions, export CSV | `users`, `subscriptions`, `idx_users_role` |
+| 7 | **Subscription Management List** | Фильтры по status/source/plan_type, массовые действия (cancel/renew), колонка "Next Billing", индикаторы grace/dunning | `subscriptions`, `grace_periods`, `dunning` |
+| 8 | **Transaction Reconciliation** | Финансовый лог, фильтры по status/currency/date, поиск по receipt_hash/provider_tx_id, кнопка "Refund" | `transactions`, `users` |
+
+---
+
+## 🚀 Priority 2: Growth & Ops (Should Have)
+
+| # | Экран | Ключевые компоненты | Связанные таблицы |
+|---|-------|-------------------|------------------|
+| 9 | **Winback Campaign Builder** | Конструктор кампаний: discount_type/value, таргетинг (churned users), A/B тесты, календарь expires_at | `winback_offers`, `ab_tests` |
+| 10 | **Dunning Campaign Config** | Настройка retry-правил (attempt_count, intervals), шаблоны уведомлений, escalation rules, preview flow | `dunning`, `grace_periods` |
+| 11 | **Analytics Reports Dashboard** | Графики MRR/churn/LTV, drill-down по dimensions JSONB, date range picker, export PNG/PDF | `analytics_aggregates` |
+| 12 | **A/B Test Discovery List** | Карточки экспериментов со статусами, quick stats (winner_confidence, samples), фильтры draft/running/completed | `ab_tests`, `ab_test_arms` |
+
+---
+
+## 🔧 Priority 3: Debug & Advanced (Could Have)
+
+| # | Экран | Ключевые компоненты | Связанные таблицы |
+|---|-------|-------------------|------------------|
+| 13 | **Webhook Event Inspector** | Детальный просмотр payload JSONB, manual replay, idempotency check, error traceback | `webhook_events` |
+| 14 | **Matomo Queue Monitor** | Таблица staged events, фильтры status/retry_count, force retry, error_message tooltip | `matomo_staged_events` |
+| 15 | **Bandit Context Model Inspector** | Визуализация LinUCB матриц (A, b, theta), feature importance, debug context для user_id | `bandit_arm_context_model`, `bandit_user_context` |
+| 16 | **Admin Audit Log Viewer** | Полная история действий, фильтры по admin_id/action/target_type, diff view для details JSONB | `admin_audit_log` |
+
+---
+
+## ⚙️ Priority 4: Settings & Infrastructure (Nice to Have)
+
+| # | Экран | Ключевые компоненты | Связанные таблицы |
+|---|-------|-------------------|------------------|
+| 17 | **Platform Settings** | Currency rates manager (`currency_rates`), bandit algorithm defaults, webhook endpoint config, feature flags | `currency_rates`, `ab_tests` config columns |
+| 18 | **Delayed Feedback Monitor** | Таблица `bandit_pending_rewards`, SLA-метрики конверсии, manual link to transactions | `bandit_pending_rewards`, `bandit_conversion_links` |
+| 19 | **Sliding Window Analytics** | Настройка window_type/size, preview event flow, reset stats | `bandit_window_events`, `ab_tests` window columns |
+| 20 | **Multi-Objective Config** | Редактор objective_weights JSONB, preview hybrid scoring, A/B тест для весов | `bandit_arm_objective_stats`, `ab_tests.objective_weights` |
+
+---
+
+## 🎯 Рекомендация по очередности
+
+```mermaid
+graph LR
+    A[4 готовых экрана] --> B[Pricing Tiers Manager]
+    B --> C[User List + Filters]
+    C --> D[Subscription List]
+    D --> E[Transaction Reconciliation]
+    E --> F[Winback Campaign Builder]
+    F --> G[Analytics Reports]
+```
+
+**Почему такой порядок?**
+1.  **Pricing Tiers** — без управления тарифами невозможно запускать новые продукты
+2.  **User/Subscription Lists** — базовые CRUD-операции для поддержки и ops-команды
+3.  **Transaction Reconciliation** — критично для финансового контроля и refund-запросов
+4.  **Winback + Analytics** — инструменты роста, которые приносят ROI после запуска базового функционала
+
+---
+
+## 💡 Pro Tip: Component Reuse
+
+Многие виджеты с первых 4 экранов можно переиспользовать:
+- **KPI Cards** → для Analytics Reports
+- **Filter Bar** → для User/Subscription/Transaction списков
+- **Status Badge** → универсальный компонент для всех статусных полей
+- **JSONB Editor** → для pricing_tiers.features, webhook payload, objective_weights
+
+Это ускорит разработку оставшихся 16 экранов на ~40%.
+
+---
+
+**Какой экран из Priority 1 начать wireframe-ить следующим?** 🎨
