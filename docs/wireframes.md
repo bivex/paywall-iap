@@ -724,3 +724,100 @@ Verify these exist in migrations:
 **Migration 017:** Advanced Thompson Sampling extensions
 **Total Endpoints:** 50+ implemented
 **Missing Critical:** Experiment CRUD, Transaction management, Audit log UI
+
+---
+
+## StarUML Wireframes
+
+A visual wireframe diagram has been created using StarUML Wireframe extension:
+
+**Diagram:** `Paywall IAP Admin UI`
+**File:** Open in StarUML with Controller extension enabled
+
+### Created Screens (4 frames):
+
+1. **Dashboard - KPI Overview**
+   - Navigation header with logo, nav links, user avatar
+   - 5 KPI cards (Total Users, Active Subscriptions, MRR, Churn Rate, Running Experiments)
+   - Revenue Chart (30 days)
+   - Churn Chart
+   - Recent Activity List
+   - Quick Actions panel
+
+2. **A/B Testing - Experiments List** ⚠️ MISSING API
+   - Page title, search input, filter dropdown
+   - "Create Experiment" button
+   - Experiments table with sortable columns
+   - Pagination controls
+   - **Note:** This UI needs backend implementation (GET/POST/PUT/DELETE /v1/admin/ab/experiments)
+
+3. **Experiment Detail - Configuration** ⚠️ MISSING API
+   - Back button, experiment title, status badge
+   - Tab navigation (Basic Info, Arms, Bandit Config, Objectives)
+   - Basic Info Form (name, description, dates)
+   - Arms List (variants with traffic weights)
+   - Bandit Configuration Panel (algorithm, min samples, confidence threshold)
+   - Objective Settings Panel (multi-objective weights)
+   - Save button
+   - **Note:** This UI needs backend implementation
+
+4. **Advanced Bandit Configuration** ✅ API PARTIAL
+   - Page title
+   - Currency Conversion Panel (enable/disable, rate update button)
+   - Sliding Window Panel (window type, size, trim button)
+   - Contextual Bandit/LinUCB Panel (enable, exploration alpha)
+   - Delayed Feedback Panel (enable, TTL settings)
+   - Multi-Objective Panel (objective type, weights)
+   - Production Metrics Panel (real-time stats display)
+   - Save Changes button
+   - **API Status:** Configuration endpoints exist but need UI binding
+
+### How to View:
+
+1. Open StarUML
+2. Enable Extensions → StarUML → Wireframe
+3. Open project or import the diagram
+4. View 4 desktop frames with all widgets
+
+### Widget Types Used:
+- `WFDesktopFrame` - Screen containers
+- `WFText` - Labels, titles, text content
+- `WFButton` - Primary CTAs, status badges
+- `WFLink` - Navigation links, back button
+- `WFInput` - Search, form inputs
+- `WFDropdown` - Filter/select controls
+- `WFPanel` - Content areas, cards, forms
+- `WFPanel` - KPI cards, chart containers, lists
+- `WFTabList` - Tab navigation
+- `WFAvatar` - User profile image
+
+### Next Steps for UI Implementation:
+
+1. **Implement Missing Experiment CRUD APIs:**
+   - `POST /v1/admin/ab/experiments` - Create
+   - `GET /v1/admin/ab/experiments` - List (with pagination)
+   - `GET /v1/admin/ab/experiments/{id}` - Get details
+   - `PUT /v1/admin/ab/experiments/{id}` - Update
+   - `DELETE /v1/admin/ab/experiments/{id}` - Delete
+
+2. **Implement Arms Management:**
+   - `POST /v1/admin/ab/experiments/{id}/arms` - Add arm
+   - `PUT /v1/admin/ab/arms/{id}` - Update arm
+   - `DELETE /v1/admin/ab/arms/{id}` - Remove arm
+
+3. **Frontend Framework:**
+   - Use wireframes as reference for component structure
+   - Implement React/Vue components matching the layout
+   - Connect to backend APIs
+   - Add real-time updates for metrics
+
+4. **State Management:**
+   - Experiment list state (loading, pagination, filters)
+   - Experiment detail state (form validation, autosave)
+   - Bandit metrics real-time updates
+
+---
+
+**Wireframes Created:** 2026-03-01
+**StarUML Version:** 1.0+
+**Wireframe Extension:** Required
