@@ -44,6 +44,10 @@ migrate:
 migrate-down:
 	go run ./cmd/migrator migrate down 1
 
+seed-admin:
+	@echo "Usage: make seed-admin EMAIL=admin@example.com PASSWORD=secret123"
+	go run ./cmd/seed --email=$(EMAIL) --password=$(PASSWORD)
+
 lint:
 	golangci-lint run
 
