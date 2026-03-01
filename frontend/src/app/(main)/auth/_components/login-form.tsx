@@ -1,10 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { z } from "zod";
 
+import { loginAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,6 +18,9 @@ const FormSchema = z.object({
 });
 
 export function LoginForm() {
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -27,13 +31,14 @@ export function LoginForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    toast("You submitted the following values", {
-      description: (
-        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+    setServerError(null);
+    setIsLoading(true);
+    try {
+      const result = await loginAction(data.email, data.password);
+      if (result?.error) setServerError(result.error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -90,9 +95,10 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button className="w-full" type="submit">
-          Login
+        <Button className="w-full" type="submit" disabled={isLoading}>
+          {isLoading ? "Signing in…" : "Login"}
         </Button>
+        {serverError && <p className="text-center text-destructive text-sm">{serverError}</p>}
       </form>
     </Form>
   );

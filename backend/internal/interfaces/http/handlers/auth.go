@@ -13,13 +13,19 @@ import (
 // AuthHandler handles authentication endpoints
 type AuthHandler struct {
 	registerCmd      *command.RegisterCommand
+	adminLoginCmd    *command.AdminLoginCommand
 	jwtMiddleware    *middleware.JWTMiddleware
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(registerCmd *command.RegisterCommand, jwtMiddleware *middleware.JWTMiddleware) *AuthHandler {
+func NewAuthHandler(
+	registerCmd *command.RegisterCommand,
+	adminLoginCmd *command.AdminLoginCommand,
+	jwtMiddleware *middleware.JWTMiddleware,
+) *AuthHandler {
 	return &AuthHandler{
 		registerCmd:   registerCmd,
+		adminLoginCmd: adminLoginCmd,
 		jwtMiddleware: jwtMiddleware,
 	}
 }
@@ -114,4 +120,62 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		RefreshToken: newRefreshToken,
 		ExpiresIn:    int64(h.jwtMiddleware.AccessTTL().Seconds()),
 	})
+}
+
+// AdminLogin handles admin login with email + password.
+// @Summary Admin login
+// @Tags admin-auth
+// @Accept json
+// @Produce json
+// @Param request body dto.AdminLoginRequest true "Admin login request"
+// @Success 200 {object} response.SuccessResponse{data=dto.AdminLoginResponse}
+// @Failure 401 {object} response.ErrorResponse
+// @Router /admin/auth/login [post]
+func (h *AuthHandler) AdminLogin(c *gin.Context) {
+var req dto.AdminLoginRequest
+if err := c.ShouldBindJSON(&req); err != nil {
+response.BadRequest(c, err.Error())
+return
+}
+
+resp, err := h.adminLoginCmd.Execute(c.Request.Context(), &req)
+if err != nil {
+response.Unauthorized(c, err.Error())
+return
+}
+
+response.OK(c, resp)
+}
+
+// AdminLogout revokes the provided refresh token.
+// @Summary Admin logout
+// @Tags admin-auth
+// @Accept json
+// @Produce json
+// @Param request body dto.AdminLogoutRequest true "Logout request"
+// @Security BearerAuth
+// @Success 200 {object} response.SuccessResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Router /admin/auth/logout [post]
+func (h *AuthHandler) AdminLogout(c *gin.Context) {
+var req dto.AdminLogoutRequest
+if err := c.ShouldBindJSON(&req); err != nil {
+response.BadRequest(c, err.Error())
+return
+}
+
+ctx := c.Request.Context()
+
+claims, err := h.jwtMiddleware.ParseToken(req.RefreshToken)
+if err != nil {
+response.Unauthorized(c, "Invalid refresh token")
+return
+}
+
+remainingTTL := time.Until(claims.ExpiresAt.Time)
+if remainingTTL > 0 {
+_ = h.jwtMiddleware.RevokeToken(ctx, claims.JTI, remainingTTL)
+}
+
+response.OK(c, gin.H{"message": "logged out"})
 }

@@ -71,6 +71,13 @@ type User struct {
 	DeletedAt      *time.Time `json:"deleted_at"`
 }
 
+type AdminCredential struct {
+	UserID       uuid.UUID `json:"user_id"`
+	PasswordHash string    `json:"password_hash"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 type WebhookEvent struct {
 	ID          uuid.UUID  `json:"id"`
 	Provider    string     `json:"provider"`

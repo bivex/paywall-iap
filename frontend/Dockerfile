@@ -32,7 +32,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Copy standalone output (requires output: 'standalone' in next.config.mjs)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static   ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public          ./public
+# public/ may not exist — create it to satisfy Next.js
+RUN mkdir -p ./public
 
 USER nextjs
 

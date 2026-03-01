@@ -2,6 +2,27 @@ package dto
 
 // ========== AUTH DTOs ==========
 
+// AdminLoginRequest represents an admin login via email+password
+type AdminLoginRequest struct {
+	Email    string `json:"email"    binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+// AdminLoginResponse returned on successful admin login
+type AdminLoginResponse struct {
+	UserID       string `json:"user_id"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+}
+
+// AdminLogoutRequest carries the refresh token to revoke on logout
+type AdminLogoutRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
 // RegisterRequest represents a user registration request
 type RegisterRequest struct {
 	PlatformUserID string `json:"platform_user_id" binding:"required"`

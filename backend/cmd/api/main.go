@@ -121,12 +121,15 @@ func main() {
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
 	cancelSubCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
 
+	adminCredRepo := repository.NewAdminCredentialRepository(queries)
+	adminLoginCmd := command.NewAdminLoginCommand(userRepo, adminCredRepo, jwtMiddleware)
+
 	// Initialize queries
 	getSubQuery := query.NewGetSubscriptionQuery(subscriptionRepo)
 	checkAccessQuery := query.NewCheckAccessQuery(subscriptionRepo)
 
 	// Initialize handlers
-	authHandler := app_handler.NewAuthHandler(registerCmd, jwtMiddleware)
+	authHandler := app_handler.NewAuthHandler(registerCmd, adminLoginCmd, jwtMiddleware)
 	subscriptionHandler := app_handler.NewSubscriptionHandler(
 		getSubQuery,
 		checkAccessQuery,
@@ -181,13 +184,23 @@ func main() {
 	// API v1 routes
 	v1 := router.Group("/v1")
 	{
-		// Auth routes
+		// Auth routes (mobile)
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/refresh",
 				rateLimiter.Middleware(middleware.ByIP, middleware.DefaultConfig),
 				authHandler.RefreshToken,
+			)
+		}
+
+		// Admin auth routes (web dashboard)
+		adminAuth := v1.Group("/admin/auth")
+		{
+			adminAuth.POST("/login", authHandler.AdminLogin)
+			adminAuth.POST("/logout",
+				jwtMiddleware.Authenticate(),
+				authHandler.AdminLogout,
 			)
 		}
 

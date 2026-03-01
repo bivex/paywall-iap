@@ -106,6 +106,31 @@ func (j *JWTMiddleware) Authenticate() gin.HandlerFunc {
 	}
 }
 
+// GenerateAccessTokenWithRole creates a new access token that includes the user's role.
+func (j *JWTMiddleware) GenerateAccessTokenWithRole(userID, role string) (string, string, error) {
+	jti := uuid.New().String()
+	now := time.Now()
+
+	claims := &JWTClaims{
+		UserID: userID,
+		JTI:    jti,
+		Role:   role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(j.accessTTL)),
+			Issuer:    "iap-system",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(j.secret)
+	if err != nil {
+		return "", "", err
+	}
+
+	return tokenString, jti, nil
+}
+
 // GenerateAccessToken creates a new access token
 func (j *JWTMiddleware) GenerateAccessToken(userID string) (string, string, error) {
 	jti := uuid.New().String()
