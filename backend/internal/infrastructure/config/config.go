@@ -53,6 +53,7 @@ type IAPConfig struct {
 	StripeWebhookSecret string `mapstructure:"stripe_webhook_secret"`
 	AppleWebhookSecret  string `mapstructure:"apple_webhook_secret"`
 	GoogleWebhookSecret string `mapstructure:"google_webhook_secret"`
+	IsProduction        bool   `mapstructure:"is_production"`
 }
 
 // SentryConfig holds Sentry configuration
@@ -78,6 +79,9 @@ func Load() (*Config, error) {
 	_ = viper.BindEnv("database.max_connections", "DATABASE_MAX_CONNECTIONS")
 	_ = viper.BindEnv("redis.url", "REDIS_URL")
 	_ = viper.BindEnv("jwt.secret", "JWT_SECRET")
+	_ = viper.BindEnv("iap.apple_shared_secret", "APPLE_SHARED_SECRET")
+	_ = viper.BindEnv("iap.google_key_json", "GOOGLE_SERVICE_ACCOUNT_JSON")
+	_ = viper.BindEnv("iap.is_production", "IAP_IS_PRODUCTION")
 
 	// Set defaults
 	setDefaults()

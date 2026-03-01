@@ -4,6 +4,41 @@
 
 ---
 
+## Архитектура верификации
+
+```
+Mobile App
+    │  POST /v1/verify/iap  { platform, receipt_data, product_id }
+    ▼
+IAPHandler  (interfaces/http/handlers/iap.go)
+    │
+    ▼
+VerifyIAPCommand  (application/command/verify_iap.go)
+    │  выбирает верификатор по platform
+    ├─── ios     → AppleVerifierAdapter
+    │                 └── AppleVerifier.VerifyReceipt()
+    │                         └── go-iap → sandbox.itunes.apple.com  (или mock)
+    │
+    └─── android → AndroidVerifierAdapter
+                      └── GoogleVerifier.VerifyReceipt()
+                              └── androidpublisher API  (или mock)
+    │
+    ▼  результат верификации
+    ├── проверка дубликата (hash receipt → transactions)
+    ├── создать / обновить Subscription
+    └── записать Transaction
+```
+
+Оба адаптера (`AppleVerifierAdapter`, `AndroidVerifierAdapter`) живут в  
+`backend/internal/infrastructure/external/iap/adapter.go`  
+и реализуют интерфейс `command.IAPVerifier`.
+
+**Mock-режим** срабатывает автоматически, если переменная окружения пустая:
+- `APPLE_SHARED_SECRET` пустой → `AppleVerifier` возвращает `Valid: true` без HTTP-запроса
+- `GOOGLE_SERVICE_ACCOUNT_JSON` пустой → `GoogleVerifier` возвращает `Valid: true` без HTTP-запроса
+
+---
+
 ## Режимы работы
 
 | Режим | Условие | Поведение |

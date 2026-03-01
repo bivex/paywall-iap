@@ -59,3 +59,5 @@ secrets/
 backend/seed
 
 backend/worker
+
+backend/api

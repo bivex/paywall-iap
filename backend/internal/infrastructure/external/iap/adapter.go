@@ -78,3 +78,29 @@ func (a *IAPAdapter) VerifyGoogleReceipt(ctx context.Context, receiptData string
 		OriginalTxID:  result.OriginalTxID,
 	}, nil
 }
+
+// AppleVerifierAdapter wraps IAPAdapter to implement command.IAPVerifier for iOS
+type AppleVerifierAdapter struct{ adapter *IAPAdapter }
+
+// NewAppleVerifierAdapter creates an adapter that satisfies command.IAPVerifier for iOS
+func NewAppleVerifierAdapter(a *IAPAdapter) *AppleVerifierAdapter {
+	return &AppleVerifierAdapter{adapter: a}
+}
+
+// VerifyReceipt implements command.IAPVerifier
+func (v *AppleVerifierAdapter) VerifyReceipt(ctx context.Context, receiptData string) (*command.IAPVerificationResult, error) {
+	return v.adapter.VerifyAppleReceipt(ctx, receiptData)
+}
+
+// AndroidVerifierAdapter wraps IAPAdapter to implement command.IAPVerifier for Android
+type AndroidVerifierAdapter struct{ adapter *IAPAdapter }
+
+// NewAndroidVerifierAdapter creates an adapter that satisfies command.IAPVerifier for Android
+func NewAndroidVerifierAdapter(a *IAPAdapter) *AndroidVerifierAdapter {
+	return &AndroidVerifierAdapter{adapter: a}
+}
+
+// VerifyReceipt implements command.IAPVerifier
+func (v *AndroidVerifierAdapter) VerifyReceipt(ctx context.Context, receiptData string) (*command.IAPVerificationResult, error) {
+	return v.adapter.VerifyGoogleReceipt(ctx, receiptData)
+}

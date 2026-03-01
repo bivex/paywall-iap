@@ -20,6 +20,7 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/cache"
 	"github.com/bivex/paywall-iap/internal/infrastructure/config"
+	iapext "github.com/bivex/paywall-iap/internal/infrastructure/external/iap"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/pool"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
@@ -80,6 +81,7 @@ func main() {
 	queries := generated.New(dbPool)
 	userRepo := repository.NewUserRepository(queries)
 	subscriptionRepo := repository.NewSubscriptionRepository(queries)
+	transactionRepo := repository.NewTransactionRepository(queries)
 	analyticsRepo := repository.NewAnalyticsRepository(dbPool)
 
 	// Initialize services
@@ -121,6 +123,18 @@ func main() {
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
 	cancelSubCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
 
+	// Initialize IAP verifiers
+	appleVerifier := iapext.NewAppleVerifier(cfg.IAP.AppleSharedSecret, cfg.IAP.IsProduction)
+	googleVerifier := iapext.NewGoogleVerifier(cfg.IAP.GoogleKeyJSON, cfg.IAP.IsProduction)
+	iapAdapter := iapext.NewIAPAdapter(appleVerifier, googleVerifier)
+	verifyIAPCmd := command.NewVerifyIAPCommand(
+		userRepo,
+		subscriptionRepo,
+		transactionRepo,
+		iapext.NewAppleVerifierAdapter(iapAdapter),
+		iapext.NewAndroidVerifierAdapter(iapAdapter),
+	)
+
 	adminCredRepo := repository.NewAdminCredentialRepository(queries)
 	adminLoginCmd := command.NewAdminLoginCommand(userRepo, adminCredRepo, jwtMiddleware)
 
@@ -130,6 +144,7 @@ func main() {
 
 	// Initialize handlers
 	authHandler := app_handler.NewAuthHandler(registerCmd, adminLoginCmd, jwtMiddleware)
+	iapHandler := app_handler.NewIAPHandler(verifyIAPCmd, jwtMiddleware, rateLimiter)
 	subscriptionHandler := app_handler.NewSubscriptionHandler(
 		getSubQuery,
 		checkAccessQuery,
@@ -232,6 +247,9 @@ func main() {
 		protected := v1.Group("")
 		protected.Use(jwtMiddleware.Authenticate())
 		{
+			// IAP verification
+			protected.POST("/verify/iap", iapHandler.VerifyReceipt)
+
 			// Subscription routes
 			subs := protected.Group("/subscription")
 			subs.GET("", subscriptionHandler.GetSubscription)
