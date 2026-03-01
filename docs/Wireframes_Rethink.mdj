@@ -1,0 +1,3717 @@
+{
+	"_type": "Project",
+	"_id": "AAAAAAFF+h6SjaM2Hec=",
+	"name": "Untitled",
+	"ownedElements": [
+		{
+			"_type": "UMLModel",
+			"_id": "AAAAAAFF+qBWK6M3Z8Y=",
+			"_parent": {
+				"$ref": "AAAAAAFF+h6SjaM2Hec="
+			},
+			"name": "Model",
+			"ownedElements": [
+				{
+					"_type": "UMLClassDiagram",
+					"_id": "AAAAAAFF+qBtyKM79qY=",
+					"_parent": {
+						"$ref": "AAAAAAFF+qBWK6M3Z8Y="
+					},
+					"name": "Main",
+					"defaultDiagram": true
+				}
+			]
+		},
+		{
+			"_type": "WFWireframe",
+			"_id": "AAAAAAGcqazLBZJU4KY=",
+			"_parent": {
+				"$ref": "AAAAAAFF+h6SjaM2Hec="
+			},
+			"name": "Wireframe1",
+			"ownedElements": [
+				{
+					"_type": "WFWireframeDiagram",
+					"_id": "AAAAAAGcqazLBZJVKRE=",
+					"_parent": {
+						"$ref": "AAAAAAGcqazLBZJU4KY="
+					},
+					"name": "Wireframes_Rethink",
+					"ownedViews": [
+						{
+							"_type": "WFDesktopFrameView",
+							"_id": "AAAAAAGcqazznpJbvGg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"left": 50,
+							"top": 50,
+							"width": 1054,
+							"height": 910
+						},
+						{
+							"_type": "WFDesktopFrameView",
+							"_id": "AAAAAAGcqazzr5Jh/0k=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"left": 1150,
+							"top": 50,
+							"width": 1000,
+							"height": 900
+						},
+						{
+							"_type": "WFDesktopFrameView",
+							"_id": "AAAAAAGcqazztpJn8/c=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"left": 50,
+							"top": 1000,
+							"width": 1000,
+							"height": 850
+						},
+						{
+							"_type": "WFDesktopFrameView",
+							"_id": "AAAAAAGcqazzv5Jtp3w=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"left": 1150,
+							"top": 1000,
+							"width": 1000,
+							"height": 800
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa1n/5JzJb0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa1n/5JxmJI="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa1n/5J0MFo=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa1n/5JzJb0="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 60,
+									"width": 195,
+									"height": 13,
+									"text": "🏢 RevenueOps Admin",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 60,
+							"width": 195,
+							"height": 22,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa1n/5J0MFo="
+							}
+						},
+						{
+							"_type": "WFAvatarView",
+							"_id": "AAAAAAGcqa1oGJJ8WPs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa1oGJJ62gA="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 960,
+							"top": 57,
+							"width": 30,
+							"height": 30
+						},
+						{
+							"_type": "WFSeparatorView",
+							"_id": "AAAAAAGcqa1oIpKCpOU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa1oIpKAZ7k="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 90,
+							"width": 1000,
+							"height": 8
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqa1oKpKHG8s=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa1oKpKFPW0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa1oKpKIX7U=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa1oKpKHG8s="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1000,
+									"top": 65,
+									"width": 40,
+									"height": 13,
+									"underline": true,
+									"text": "Logout",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1000,
+							"top": 65,
+							"width": 40,
+							"height": 15,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa1oKpKIX7U="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa2bSJKQ2s8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa2bSJKO4ls="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa2bSJKRHQg=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa2bSJKQ2s8="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 60,
+									"top": 100,
+									"width": 160,
+									"height": 13,
+									"text": "NAVIGATION",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 60,
+							"top": 100,
+							"width": 160,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa2bSJKRHQg="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa2bW5KZ7kg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa2bW5KXId0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa2bW5KamvM=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa2bW5KZ7kg="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 55,
+									"top": 130,
+									"width": 170,
+									"height": 13,
+									"text": "▶ Dashboard",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 55,
+							"top": 122,
+							"width": 170,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa2bW5KamvM="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqa2bbZKizJI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa2bbZKgieU="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa2bbZKj7kA=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa2bbZKizJI="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 60,
+									"top": 148,
+									"width": 160,
+									"height": 13,
+									"underline": true,
+									"text": "Users",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 60,
+							"top": 148,
+							"width": 160,
+							"height": 16,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa2bbZKj7kA="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqa2beJKrJFY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa2beJKpyE0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa2beJKskSU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa2beJKrJFY="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 60,
+									"top": 170,
+									"width": 160,
+									"height": 13,
+									"underline": true,
+									"text": "Subscriptions",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 60,
+							"top": 170,
+							"width": 160,
+							"height": 16,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa2beJKskSU="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqa2bg5K0Mus=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa2bg5Ky6Xs="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa2bg5K1ruM=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa2bg5K0Mus="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 60,
+									"top": 192,
+									"width": 160,
+									"height": 13,
+									"underline": true,
+									"text": "Experiments (Bandit)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 60,
+							"top": 192,
+							"width": 160,
+							"height": 16,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa2bg5K1ruM="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqa2bj5K9qyo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa2bj5K7Chs="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa2bj5K+w1E=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa2bj5K9qyo="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 60,
+									"top": 214,
+									"width": 160,
+									"height": 13,
+									"underline": true,
+									"text": "Revenue Ops",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 60,
+							"top": 214,
+							"width": 160,
+							"height": 16,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa2bj5K+w1E="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqa2bmZLG5cw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa2bmZLE+rA="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa2bmZLH5mE=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa2bmZLG5cw="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 60,
+									"top": 236,
+									"width": 160,
+									"height": 13,
+									"underline": true,
+									"text": "Pricing",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 60,
+							"top": 236,
+							"width": 160,
+							"height": 16,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa2bmZLH5mE="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqa2bopLPA/E=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa2bopLN/ZM="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa2bopLQIms=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa2bopLPA/E="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 60,
+									"top": 258,
+									"width": 160,
+									"height": 13,
+									"underline": true,
+									"text": "Settings",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 60,
+							"top": 258,
+							"width": 160,
+							"height": 16,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa2bopLQIms="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa3NZZLYcYI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa3NZZLWm5k="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa3NZZLZgM0=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa3NZZLYcYI="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 245,
+									"top": 100,
+									"width": 355,
+									"height": 13,
+									"text": "DASHBOARD OVERVIEW",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 245,
+							"top": 100,
+							"width": 355,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa3NZZLZgM0="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa3NfZLh+p8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa3NfJLfTpQ="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa3NfZLizqY=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa3NfZLh+p8="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 245,
+									"top": 122,
+									"width": 655,
+									"height": 13,
+									"text": "Last Updated: 2026-03-01 13:45 UTC (Real-time via analytics_aggregates)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 245,
+							"top": 122,
+							"width": 655,
+							"height": 16,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa3NfZLizqY="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa3NhpLqe9Q=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa3NhpLo8/A="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 245,
+							"top": 150,
+							"width": 185,
+							"height": 100
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa3NkZLwCro=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa3NkZLuVKw="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 440,
+							"top": 150,
+							"width": 185,
+							"height": 100
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa3NmpL2fqg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa3NmpL0Qlk="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 635,
+							"top": 150,
+							"width": 185,
+							"height": 100
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa3NoZL8iyc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa3NoZL6rbU="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 830,
+							"top": 150,
+							"width": 210,
+							"height": 100
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa4kJZMCN3I=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kJZMAuXQ="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 245,
+							"top": 265,
+							"width": 310,
+							"height": 245
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa4kOJMIUTg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kOJMGmHI="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa4kOJMJDEc=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa4kOJMIUTg="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 255,
+									"top": 300,
+									"width": 290,
+									"height": 13,
+									"text": "[13:40] Admin_01 updated pricing_tiers",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 255,
+							"top": 300,
+							"width": 290,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa4kOJMJDEc="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa4kQ5MRBf0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kQ5MP3UQ="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa4kQ5MSS98=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa4kQ5MRBf0="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 255,
+									"top": 325,
+									"width": 290,
+									"height": 13,
+									"text": "[13:35] Admin_02 refunded tx_8823",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 255,
+							"top": 325,
+							"width": 290,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa4kQ5MSS98="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa4kU5MaZNY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kU5MY2Oc="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa4kU5Mbtic=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa4kU5MaZNY="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 255,
+									"top": 350,
+									"width": 290,
+									"height": 13,
+									"text": "[13:30] System auto-retry dunning_queue",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 255,
+							"top": 350,
+							"width": 290,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa4kU5Mbtic="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa4kYZMjBlY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kYZMhguk="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 570,
+							"top": 265,
+							"width": 470,
+							"height": 175
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqa4kcpMp/Zg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kcpMnvaQ="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa4kcpMqY/8=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa4kcpMp/Zg="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 255,
+									"top": 490,
+									"width": 175,
+									"height": 13,
+									"underline": true,
+									"text": "View Full Audit Log →",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 255,
+							"top": 490,
+							"width": 175,
+							"height": 16,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa4kcpMqY/8="
+							}
+						},
+						{
+							"_type": "WFSliderView",
+							"_id": "AAAAAAGcqa4kfpMypaA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kfpMw7c0="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 580,
+							"top": 305,
+							"width": 450,
+							"height": 12
+						},
+						{
+							"_type": "WFSliderView",
+							"_id": "AAAAAAGcqa4kipM4FMc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kipM2ptg="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 580,
+							"top": 332,
+							"width": 450,
+							"height": 12
+						},
+						{
+							"_type": "WFSliderView",
+							"_id": "AAAAAAGcqa4kl5M+/oc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kl5M8MJw="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 580,
+							"top": 386,
+							"width": 450,
+							"height": 12
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa4ko5NEDtk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4ko5NCQM8="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 570,
+							"top": 455,
+							"width": 470,
+							"height": 155
+						},
+						{
+							"_type": "WFSliderView",
+							"_id": "AAAAAAGcqa4ks5NKUbM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4ks5NIc/Y="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 580,
+							"top": 359,
+							"width": 450,
+							"height": 12
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa4kwJNQnVY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4kwJNODFU="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa4kwJNRREU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa4kwJNQnVY="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 580,
+									"top": 495,
+									"width": 450,
+									"height": 13,
+									"text": "✅ Stripe    ✅ Apple    ⚠️ Google",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 580,
+							"top": 495,
+							"width": 450,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa4kwJNRREU="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa4ky5NZkbo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa4ky5NXZqk="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa4ky5NagKw=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa4ky5NZkbo="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 580,
+									"top": 520,
+									"width": 220,
+									"height": 13,
+									"text": "0 Unprocessed Events",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 580,
+							"top": 520,
+							"width": 220,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa4ky5NagKw="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa5SsJNiOxY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa5SsJNgtMc="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa5SsJNj328=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa5SsJNiOxY="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 60,
+									"width": 975,
+									"height": 13,
+									"text": "← Back to Users    USER PROFILE: usr_550e8400-e29b...",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 60,
+							"width": 975,
+							"height": 20,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa5SsJNj328="
+							}
+						},
+						{
+							"_type": "WFSeparatorView",
+							"_id": "AAAAAAGcqa5SypNrmeI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa5SypNpYxQ="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 85,
+							"width": 1000,
+							"height": 8
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa5S2JNwl4A=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa5S2JNu5YA="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1645,
+							"top": 95,
+							"width": 490,
+							"height": 115
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa5S5pN2QhU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa5S5pN0VCU="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 95,
+							"width": 465,
+							"height": 115
+						},
+						{
+							"_type": "WFTabView",
+							"_id": "AAAAAAGcqa5/65N8TQk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa5/65N6v0w="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa5/65N95qI=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa5/65N8TQk="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1173,
+									"top": 228,
+									"width": 149,
+									"height": 13,
+									"text": "Subscription",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 220,
+							"width": 165,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa5/65N95qI="
+							}
+						},
+						{
+							"_type": "WFTabView",
+							"_id": "AAAAAAGcqa6AA5OF2X0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa6AA5OD7fA="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa6AA5OGvac=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa6AA5OF2X0="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1343,
+									"top": 228,
+									"width": 149,
+									"height": 13,
+									"text": "Billing History",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1335,
+							"top": 220,
+							"width": 165,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa6AA5OGvac="
+							}
+						},
+						{
+							"_type": "WFTabView",
+							"_id": "AAAAAAGcqa6AEJOO0vk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa6AEJOMf+M="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa6AEJOPqV8=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa6AEJOO0vk="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1513,
+									"top": 228,
+									"width": 129,
+									"height": 13,
+									"text": "Experiments",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1505,
+							"top": 220,
+							"width": 145,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa6AEJOPqV8="
+							}
+						},
+						{
+							"_type": "WFTabView",
+							"_id": "AAAAAAGcqa6AJJOXzHE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa6AJJOVIkg="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa6AJJOY45U=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa6AJJOXzHE="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1663,
+									"top": 228,
+									"width": 159,
+									"height": 13,
+									"text": "Grace & Winback",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1655,
+							"top": 220,
+							"width": 175,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa6AJJOY45U="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa6AMpOgYng=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa6AMpOe01s="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 250,
+							"width": 970,
+							"height": 80
+						},
+						{
+							"_type": "WFTabView",
+							"_id": "AAAAAAGcqa6APpOm2RQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa6APpOkpkI="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa6APpOnNkI=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa6APpOm2RQ="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1843,
+									"top": 228,
+									"width": 99,
+									"height": 13,
+									"text": "Audit",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1835,
+							"top": 220,
+							"width": 115,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa6APpOnNkI="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa7BY5OvHlE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7BY5OtM/A="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 340,
+							"width": 475,
+							"height": 100
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa7BepO1/0E=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7BepOzSlI="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa7BepO2ZUY=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa7BepO1/0E="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 452,
+									"width": 970,
+									"height": 13,
+									"text": "RECENT TRANSACTIONS (transactions)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 452,
+							"width": 970,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa7BepO2ZUY="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa7Bh5O+cg4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7Bh5O8Zh0="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1655,
+							"top": 340,
+							"width": 480,
+							"height": 100
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa7BmJPEQMg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7BmJPCZXs="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 474,
+							"width": 970,
+							"height": 24
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa7BppPK6Q8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7BppPI2wY="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa7BppPLJV0=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa7BppPK6Q8="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 504,
+									"width": 970,
+									"height": 13,
+									"text": "2026-03-01  |  $49.99 USD  |  ✅ Success  |  iOS  |  [Receipt]",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 504,
+							"width": 970,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa7BppPLJV0="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa7BspPTGP0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7BspPRDKs="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa7BspPUY/M=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa7BspPTGP0="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 528,
+									"width": 970,
+									"height": 13,
+									"text": "2025-03-01  |  $49.99 USD  |  ✅ Success  |  iOS  |  [Receipt]",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 528,
+							"width": 970,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa7BspPUY/M="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa7BxZPcCco=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7BxZPadQU="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa7BxZPdrmw=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa7BxZPcCco="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 552,
+									"width": 970,
+									"height": 13,
+									"text": "2025-02-28  |  $49.99 USD  |  ❌ Failed   |  iOS  |  [Retry]",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 552,
+							"width": 970,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa7BxZPdrmw="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa7B1JPlATc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7B1JPjYX8="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 580,
+							"width": 970,
+							"height": 80
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa7hzpPr2CY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7hzZPpOQ0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa7hzpPs+3g=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa7hzpPr2CY="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 888,
+									"width": 145,
+									"height": 13,
+									"text": "Force Cancel",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 880,
+							"width": 145,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa7hzpPs+3g="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa7h7ZP0Y8o=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7h7ZPy4Yk="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa7h7pP1Lwk=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa7h7ZP0Y8o="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1475,
+									"top": 888,
+									"width": 185,
+									"height": 13,
+									"text": "Grant Grace Period",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1475,
+							"top": 880,
+							"width": 185,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa7h7pP1Lwk="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa7h/pP9vmY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7h/pP7ue4="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa7h/pP+5+0=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa7h/pP9vmY="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1320,
+									"top": 888,
+									"width": 145,
+									"height": 13,
+									"text": "Force Renew",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1320,
+							"top": 880,
+							"width": 145,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa7h/pP+5+0="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa7iEZQGkfA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa7iEZQEpsA="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa7iEZQHkIk=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa7iEZQGkfA="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1670,
+									"top": 888,
+									"width": 150,
+									"height": 13,
+									"text": "Impersonate",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1670,
+							"top": 880,
+							"width": 150,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa7iEZQHkIk="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa8xFJQQKnY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xFJQO32I="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa8xFJQRYvU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa8xFJQQKnY="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1010,
+									"width": 975,
+									"height": 13,
+									"text": "← Back    EXPERIMENT: \"Checkout Button Color\" (exp_12345)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1010,
+							"width": 975,
+							"height": 20,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa8xFJQRYvU="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa8xOJQZt8Q=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xOJQXOj8="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1038,
+							"width": 975,
+							"height": 92
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa8xT5QfS+Q=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xT5QdMtY="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa8xT5QgTUY=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa8xT5QfS+Q="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1140,
+									"width": 975,
+									"height": 13,
+									"text": "ARM PERFORMANCE (ab_test_arms + ab_test_arm_stats)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1140,
+							"width": 975,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa8xT5QgTUY="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa8xYpQo1XU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xYpQmLrY="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1162,
+							"width": 975,
+							"height": 24
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa8xfZQur54=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xfZQs3bg="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa8xfZQv328=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa8xfZQur54="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1192,
+									"width": 975,
+									"height": 13,
+									"text": "Control (Blue)    | 40%      | 120/1000    | $5,400.00     | 88%",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1192,
+							"width": 975,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa8xfZQv328="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa8xj5Q3j9A=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xj5Q1n0w="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa8xj5Q4TEY=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa8xj5Q3j9A="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1216,
+									"width": 975,
+									"height": 13,
+									"text": "Variant A (Green) | 35%      | 150/950     | $7,200.00     | 96% ⭐ WINNER",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1216,
+							"width": 975,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa8xj5Q4TEY="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa8xp5RAHKI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xp5Q++EA="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa8xp5RBnVU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa8xp5RAHKI="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1240,
+									"width": 975,
+									"height": 13,
+									"text": "Variant B (Red)   | 25%      | 80/600      | $3,100.00     | 45%",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1240,
+							"width": 975,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa8xp5RBnVU="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa8xuZRJszo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xuZRH+VA="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa8xuZRKF9k=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa8xuZRJszo="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1276,
+									"width": 155,
+									"height": 13,
+									"text": "Edit Weights",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1268,
+							"width": 155,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa8xuZRKF9k="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa8xzJRSlkY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa8xzJRQjGE="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa8xzJRTYvk=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa8xzJRSlkY="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 870,
+									"top": 1276,
+									"width": 170,
+									"height": 13,
+									"text": "Stop Test",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 870,
+							"top": 1268,
+							"width": 170,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa8xzJRTYvk="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa9kBpRbeWc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa9kBpRZOgI="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1305,
+							"width": 475,
+							"height": 125
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa9kKJRhMac=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa9kKJRfHxQ="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa9kKJRiflc=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa9kKJRhMac="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1445,
+									"width": 975,
+									"height": 13,
+									"text": "EVENT LOG (bandit_window_events)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1445,
+							"width": 975,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa9kKJRiflc="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa9kQJRqnk8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa9kQJRo0Fc="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 555,
+							"top": 1305,
+							"width": 485,
+							"height": 125
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa9kWJRwbmY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa9kWJRuI88="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa9kWJRx++8=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa9kWJRwbmY="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1494,
+									"width": 975,
+									"height": 13,
+									"text": "[13:47] usr_... impression on Arm Control",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1494,
+							"width": 975,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa9kWJRx++8="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa9kb5R55Zo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa9kb5R3y1Y="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa9kb5R6eIs=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa9kb5R55Zo="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 65,
+									"top": 1470,
+									"width": 975,
+									"height": 13,
+									"text": "[13:48] usr_... converted on Arm Variant A ($49.99)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 65,
+							"top": 1470,
+							"width": 975,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa9kb5R6eIs="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa+hj5SCFVk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa+hj5SAYus="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa+hj5SDRW0=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa+hj5SCFVk="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 1010,
+									"width": 970,
+									"height": 13,
+									"text": "REVENUE OPS CENTER",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1010,
+							"width": 970,
+							"height": 20,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa+hj5SDRW0="
+							}
+						},
+						{
+							"_type": "WFTabView",
+							"_id": "AAAAAAGcqa+huZSLLgc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa+huZSJYzQ="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa+huZSM0wI=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa+huZSLLgc="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1173,
+									"top": 1046,
+									"width": 189,
+									"height": 13,
+									"text": "Dunning Queue",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1038,
+							"width": 205,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa+huZSM0wI="
+							}
+						},
+						{
+							"_type": "WFTabView",
+							"_id": "AAAAAAGcqa+h0pSUN1U=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa+h0pSSvrE="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa+h0pSVEXo=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa+h0pSUN1U="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1383,
+									"top": 1046,
+									"width": 189,
+									"height": 13,
+									"text": "Webhook Inbox",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1375,
+							"top": 1038,
+							"width": 205,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa+h0pSVEXo="
+							}
+						},
+						{
+							"_type": "WFTabView",
+							"_id": "AAAAAAGcqa+h6JSdWSE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa+h6JSbcDM="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa+h6JSeY74=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa+h6JSdWSE="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1593,
+									"top": 1046,
+									"width": 239,
+									"height": 13,
+									"text": "Event Staging (Matomo)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1585,
+							"top": 1038,
+							"width": 255,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa+h6JSeY74="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa+h/5SmgCo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa+h/5Sk1d4="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa+h/5Sn66k=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa+h/5SmgCo="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 1068,
+									"width": 970,
+									"height": 13,
+									"text": "DUNNING QUEUE (dunning)",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1068,
+							"width": 970,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa+h/5Sn66k="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa+iFpSvoLs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa+iFpStEkY="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa+iFpSwFSw=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa+iFpSvoLs="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 1092,
+									"width": 50,
+									"height": 13,
+									"text": "Filter:",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1092,
+							"width": 50,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa+iFpSwFSw="
+							}
+						},
+						{
+							"_type": "WFDropdownView",
+							"_id": "AAAAAAGcqa+iKZS4f5s=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa+iKZS2UU0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa+iKZS5UqI=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa+iKZS4f5s="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1228,
+									"top": 1096,
+									"width": 184,
+									"height": 13,
+									"text": "Status: In Progress",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1220,
+							"top": 1090,
+							"width": 200,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa+iKZS5UqI="
+							}
+						},
+						{
+							"_type": "WFDropdownView",
+							"_id": "AAAAAAGcqa+iQZTBvGM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa+iQZS/CC4="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa+iQZTCXTg=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa+iQZTBvGM="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1438,
+									"top": 1096,
+									"width": 204,
+									"height": 13,
+									"text": "Next Attempt: Today",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1430,
+							"top": 1090,
+							"width": 220,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa+iQZTCXTg="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqa/WwZTKPuw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa/WwZTIoWM="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1118,
+							"width": 970,
+							"height": 24
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa/W6ZTQVl0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa/W6ZTO6h8="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa/W6ZTRamE=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa/W6ZTQVl0="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 1148,
+									"width": 765,
+									"height": 13,
+									"text": "sub_8821 | user_... (iOS)  | 3 / 5   | 2026-03-01 14:00    |",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1148,
+							"width": 765,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa/W6ZTRamE="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa/XA5TZrAA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa/XA5TX2tM="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa/XA5TaNP0=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa/XA5TZrAA="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1940,
+									"top": 1156,
+									"width": 110,
+									"height": 13,
+									"text": "Retry Now",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1940,
+							"top": 1148,
+							"width": 110,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa/XA5TaNP0="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa/XHZTiulM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa/XHJTgMdg="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa/XHZTjqNQ=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa/XHZTiulM="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1940,
+									"top": 1180,
+									"width": 110,
+									"height": 13,
+									"text": "Grant Grace",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1940,
+							"top": 1172,
+							"width": 110,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa/XHZTjqNQ="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqa/XMpTr9t4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa/XMpTps2Y="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa/XMpTsIBg=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa/XMpTr9t4="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 1198,
+									"width": 765,
+									"height": 13,
+									"text": "sub_9932 | user_... (Web)  | 1 / 5   | 2026-03-02 09:00    |",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1198,
+							"width": 765,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa/XMpTsIBg="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa/XR5T0z8E=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa/XR5TybYM="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa/XR5T1M/k=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa/XR5T0z8E="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1940,
+									"top": 1230,
+									"width": 110,
+									"height": 13,
+									"text": "Cancel Sub",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1940,
+							"top": 1222,
+							"width": 110,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa/XR5T1M/k="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqa/XXpT9/gA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqa/XXpT7uTE="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqa/XXpT+Z1s=",
+									"_parent": {
+										"$ref": "AAAAAAGcqa/XXpT9/gA="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1940,
+									"top": 1206,
+									"width": 110,
+									"height": 13,
+									"text": "Retry Now",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1940,
+							"top": 1198,
+							"width": 110,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqa/XXpT+Z1s="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqbAWvpUG8n8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqbAWvpUE2uU="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqbAWv5UHvRI=",
+									"_parent": {
+										"$ref": "AAAAAAGcqbAWvpUG8n8="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 1256,
+									"width": 970,
+									"height": 13,
+									"text": "WEBHOOK INBOX (webhook_events)&#10;Unprocessed: 12  |  Failed: 0",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1256,
+							"width": 970,
+							"height": 30,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqbAWv5UHvRI="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqbAW6ZUP2mw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqbAW6ZUNFOg="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1292,
+							"width": 970,
+							"height": 24
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqbAXApUV3pQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqbAXApUTl/0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqbAXApUWXso=",
+									"_parent": {
+										"$ref": "AAAAAAGcqbAXApUV3pQ="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 1322,
+									"width": 735,
+									"height": 13,
+									"text": "Stripe  | invoice.payment_failed    | 2026-03-01 13:48  | Pending",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1322,
+							"width": 735,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqbAXApUWXso="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqbAXGJUeKng=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqbAXGJUc21k="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqbAXGJUfvx8=",
+									"_parent": {
+										"$ref": "AAAAAAGcqbAXGJUeKng="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1910,
+									"top": 1330,
+									"width": 145,
+									"height": 13,
+									"text": "Process Manual",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1910,
+							"top": 1322,
+							"width": 145,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqbAXGJUfvx8="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqbAXMZUnQeE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqbAXMZUlph0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqbAXMZUocmQ=",
+									"_parent": {
+										"$ref": "AAAAAAGcqbAXMZUnQeE="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1165,
+									"top": 1348,
+									"width": 735,
+									"height": 13,
+									"text": "Apple   | RENEWAL                  | 2026-03-01 13:45  | ✅ Processed",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1348,
+							"width": 735,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqbAXMZUocmQ="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqbAXRpUw5wQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqbAXRpUuxFs="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqbAXRpUx0wU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqbAXRpUw5wQ="
+									},
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1910,
+									"top": 1356,
+									"width": 145,
+									"height": 13,
+									"text": "View Payload",
+									"wordWrap": true
+								}
+							],
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1910,
+							"top": 1348,
+							"width": 145,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqbAXRpUx0wU="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqbAXXJU5jnM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqbAXXJU3dP8="
+							},
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1165,
+							"top": 1382,
+							"width": 970,
+							"height": 78
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqbAXfJU/osw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqbAXfJU91RU="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqbAXfJVAWYc=",
+									"_parent": {
+										"$ref": "AAAAAAGcqbAXfJU/osw="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1175,
+									"top": 1430,
+									"width": 205,
+									"height": 13,
+									"underline": true,
+									"text": "View Staged Events",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1175,
+							"top": 1430,
+							"width": 205,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqbAXfJVAWYc="
+							}
+						}
+					]
+				},
+				{
+					"_type": "WFDesktopFrame",
+					"_id": "AAAAAAGcqazznZJZSCs=",
+					"_parent": {
+						"$ref": "AAAAAAGcqazLBZJU4KY="
+					},
+					"name": "1. Admin Dashboard",
+					"ownedElements": [
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa1n/5JxmJI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "🏢 RevenueOps Admin"
+						},
+						{
+							"_type": "WFAvatar",
+							"_id": "AAAAAAGcqa1oGJJ62gA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Admin"
+						},
+						{
+							"_type": "WFSeparator",
+							"_id": "AAAAAAGcqa1oIpKAZ7k=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Separator1"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqa1oKpKFPW0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Logout"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa2bSJKO4ls=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "NAVIGATION"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa2bW5KXId0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "▶ Dashboard"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqa2bbZKgieU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Users"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqa2beJKpyE0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Subscriptions"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqa2bg5Ky6Xs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Experiments (Bandit)"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqa2bj5K7Chs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Revenue Ops"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqa2bmZLE+rA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Pricing"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqa2bopLN/ZM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Settings"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa3NZZLWm5k=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "DASHBOARD OVERVIEW"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa3NfJLfTpQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Last Updated: 2026-03-01 13:45 UTC (Real-time via analytics_aggregates)"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa3NhpLo8/A=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "ACTIVE USERS&#10;14,205&#10;▲ 5% vs last wk"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa3NkZLuVKw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "MRR (USD)&#10;$45,230.00&#10;▲ 2% vs last wk"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa3NmpL0Qlk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "ACTIVE SUBS&#10;12,100&#10;▲ 1% vs last wk"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa3NoZL6rbU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "CHURN RISK&#10;345 (Dunning)&#10;⚠ Action Needed"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa4kJZMAuXQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "RECENT ADMIN ACTIONS (admin_audit_log)"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa4kOJMGmHI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "[13:40] Admin_01 updated pricing_tiers"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa4kQ5MP3UQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "[13:35] Admin_02 refunded tx_8823"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa4kU5MY2Oc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "[13:30] System auto-retry dunning_queue"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa4kYZMhguk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "SUBSCRIPTION STATUS DISTRIBUTION (subscriptions.status)"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqa4kcpMnvaQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "View Full Audit Log →"
+						},
+						{
+							"_type": "WFSlider",
+							"_id": "AAAAAAGcqa4kfpMw7c0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Active (85%)     ████████████████████"
+						},
+						{
+							"_type": "WFSlider",
+							"_id": "AAAAAAGcqa4kipM2ptg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Grace Period (5%)  ███"
+						},
+						{
+							"_type": "WFSlider",
+							"_id": "AAAAAAGcqa4kl5M8MJw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Expired (3%)     ██"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa4ko5NCQM8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "WEBHOOK HEALTH (webhook_events)"
+						},
+						{
+							"_type": "WFSlider",
+							"_id": "AAAAAAGcqa4ks5NIc/Y=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "Cancelled (7%)   ████"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa4kwJNODFU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "✅ Stripe    ✅ Apple    ⚠️ Google"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa4ky5NXZqk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "0 Unprocessed Events"
+						}
+					]
+				},
+				{
+					"_type": "WFDesktopFrame",
+					"_id": "AAAAAAGcqazzr5JfPpw=",
+					"_parent": {
+						"$ref": "AAAAAAGcqazLBZJU4KY="
+					},
+					"name": "2. User 360 Profile",
+					"ownedElements": [
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa5SsJNgtMc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "← Back to Users    USER PROFILE: usr_550e8400-e29b..."
+						},
+						{
+							"_type": "WFSeparator",
+							"_id": "AAAAAAGcqa5SypNpYxQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Separator1"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa5S2JNu5YA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "LTV & METRICS (bandit_user_context)&#10;Total LTV: $124.50&#10;Last Updated: 2026-03-01&#10;Days Since Install: 45"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa5S5pN0VCU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "IDENTITY CARD (users)&#10;Platform ID: iOS: orig_tx_998877&#10;Email: user@example.com&#10;Role: user&#10;Device ID: (Analytics Only)"
+						},
+						{
+							"_type": "WFTab",
+							"_id": "AAAAAAGcqa5/65N6v0w=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Subscription"
+						},
+						{
+							"_type": "WFTab",
+							"_id": "AAAAAAGcqa6AA5OD7fA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Billing History"
+						},
+						{
+							"_type": "WFTab",
+							"_id": "AAAAAAGcqa6AEJOMf+M=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Experiments"
+						},
+						{
+							"_type": "WFTab",
+							"_id": "AAAAAAGcqa6AJJOVIkg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Grace & Winback"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa6AMpOe01s=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "CURRENT SUBSCRIPTION (subscriptions)&#10;Status: ACTIVE  |  Source: iOS IAP  |  Plan: Annual&#10;Expires: 2027-03-01  |  Auto-Renew: YES"
+						},
+						{
+							"_type": "WFTab",
+							"_id": "AAAAAAGcqa6APpOkpkI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Audit"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa7BY5OtM/A=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "DUNNING STATUS (dunning)&#10;Status: None&#10;Attempts: 0 / 5&#10;Next Attempt: N/A"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa7BepOzSlI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "RECENT TRANSACTIONS (transactions)"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa7Bh5O8Zh0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "WINBACK OFFERS (winback_offers)&#10;Campaign: \"Spring Sale\"&#10;Discount: 20%&#10;Status: DECLINED"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa7BmJPCZXs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Date              | Amount      | Status   | Source | Action"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa7BppPI2wY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "2026-03-01  |  $49.99 USD  |  ✅ Success  |  iOS  |  [Receipt]"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa7BspPRDKs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "2025-03-01  |  $49.99 USD  |  ✅ Success  |  iOS  |  [Receipt]"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa7BxZPadQU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "2025-02-28  |  $49.99 USD  |  ❌ Failed   |  iOS  |  [Retry]"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa7B1JPjYX8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "ACTIVE EXPERIMENTS (ab_test_assignments)&#10;• \"Pricing Page V2\" → Arm: \"Discount Highlight\" (Expires 12h)&#10;• \"Onboarding Flow\" → Arm: \"Control\""
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa7hzZPpOQ0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Force Cancel"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa7h7ZPy4Yk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Grant Grace Period"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa7h/pP7ue4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Force Renew"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa7iEZQEpsA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "Impersonate"
+						}
+					]
+				},
+				{
+					"_type": "WFDesktopFrame",
+					"_id": "AAAAAAGcqazztpJl7oU=",
+					"_parent": {
+						"$ref": "AAAAAAGcqazLBZJU4KY="
+					},
+					"name": "3. Experiment Studio",
+					"ownedElements": [
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa8xFJQO32I=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "← Back    EXPERIMENT: \"Checkout Button Color\" (exp_12345)"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa8xOJQXOj8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "CONFIGURATION (ab_tests)&#10;Status: RUNNING  |  Algorithm: Thompson Sampling&#10;Objective: Revenue  |  Window: 1000 Events  |  Confidence: 95%&#10;Contextual Bandit: ENABLED (LinUCB)"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa8xT5QdMtY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "ARM PERFORMANCE (ab_test_arms + ab_test_arm_stats)"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa8xYpQmLrY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "ARM NAME          | TRAFFIC% | CONVERSIONS | REVENUE (USD) | CONFIDENCE"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa8xfZQs3bg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "Control (Blue)    | 40%      | 120/1000    | $5,400.00     | 88%"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa8xj5Q1n0w=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "Variant A (Green) | 35%      | 150/950     | $7,200.00     | 96% ⭐ WINNER"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa8xp5Q++EA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "Variant B (Red)   | 25%      | 80/600      | $3,100.00     | 45%"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa8xuZRH+VA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "Edit Weights"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa8xzJRQjGE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "Stop Test"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa9kBpRZOgI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "CONTEXTUAL WEIGHTS (LinUCB Theta Vector)&#10;Country: [US: 0.8] [UK: 0.5]&#10;Device:  [iOS: 0.9] [Web: 0.4]&#10;[Visualize Decision Boundary]"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa9kKJRfHxQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "EVENT LOG (bandit_window_events)"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa9kQJRo0Fc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "DELAYED FEEDBACK QUEUE (bandit_pending_rewards)&#10;45 Users assigned, awaiting tx confirmation&#10;Avg Conversion Time: 15 mins&#10;[Force Process Pending]"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa9kWJRuI88=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "[13:47] usr_... impression on Arm Control"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa9kb5R3y1Y=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "[13:48] usr_... converted on Arm Variant A ($49.99)"
+						}
+					]
+				},
+				{
+					"_type": "WFDesktopFrame",
+					"_id": "AAAAAAGcqazzv5Jr4P8=",
+					"_parent": {
+						"$ref": "AAAAAAGcqazLBZJU4KY="
+					},
+					"name": "4. Revenue Ops Center",
+					"ownedElements": [
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa+hj5SAYus=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "REVENUE OPS CENTER"
+						},
+						{
+							"_type": "WFTab",
+							"_id": "AAAAAAGcqa+huZSJYzQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Dunning Queue"
+						},
+						{
+							"_type": "WFTab",
+							"_id": "AAAAAAGcqa+h0pSSvrE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Webhook Inbox"
+						},
+						{
+							"_type": "WFTab",
+							"_id": "AAAAAAGcqa+h6JSbcDM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Event Staging (Matomo)"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa+h/5Sk1d4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "DUNNING QUEUE (dunning)"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa+iFpStEkY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Filter:"
+						},
+						{
+							"_type": "WFDropdown",
+							"_id": "AAAAAAGcqa+iKZS2UU0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Status: In Progress"
+						},
+						{
+							"_type": "WFDropdown",
+							"_id": "AAAAAAGcqa+iQZS/CC4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Next Attempt: Today"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqa/WwZTIoWM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "SUB ID  | USER           | ATTEMPT | NEXT TRY            | ACTIONS"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa/W6ZTO6h8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "sub_8821 | user_... (iOS)  | 3 / 5   | 2026-03-01 14:00    |"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa/XA5TX2tM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Retry Now"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa/XHJTgMdg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Grant Grace"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqa/XMpTps2Y=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "sub_9932 | user_... (Web)  | 1 / 5   | 2026-03-02 09:00    |"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa/XR5TybYM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Cancel Sub"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqa/XXpT7uTE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Retry Now"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqbAWvpUE2uU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "WEBHOOK INBOX (webhook_events)&#10;Unprocessed: 12  |  Failed: 0"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqbAW6ZUNFOg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "PROVIDER | EVENT TYPE                | RECEIVED          | STATUS    | ACTIONS"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqbAXApUTl/0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Stripe  | invoice.payment_failed    | 2026-03-01 13:48  | Pending"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqbAXGJUc21k=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Process Manual"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqbAXMZUlph0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "Apple   | RENEWAL                  | 2026-03-01 13:45  | ✅ Processed"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqbAXRpUuxFs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "View Payload"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqbAXXJU3dP8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "MATOMO EVENT STAGING (matomo_staged_events)&#10;Queue Depth: 150  |  Failed Retries: 5"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqbAXfJU91RU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "View Staged Events"
+						}
+					]
+				}
+			]
+		}
+	],
+	"documentVersion": 1
+}
