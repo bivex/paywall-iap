@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,6 +13,9 @@ import (
 
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
+
+// ErrNotFound is returned when a cache key is not found
+var ErrNotFound = errors.New("cache key not found")
 
 // RedisBanditCache implements bandit state caching using Redis
 type RedisBanditCache struct {

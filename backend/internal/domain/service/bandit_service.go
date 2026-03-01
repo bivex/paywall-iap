@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -10,6 +11,9 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
+
+// ErrAssignmentNotFound is returned when no active assignment is found for a user
+var ErrAssignmentNotFound = errors.New("assignment not found")
 
 // BanditRepository defines the interface for bandit data persistence
 type BanditRepository interface {
@@ -132,7 +136,7 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 		}
 
 		// Sample from Beta(alpha, beta)
-		sample := b.sampleBeta(stats.Alpha, stats.Beta)
+		sample := b.SampleBeta(stats.Alpha, stats.Beta)
 
 		b.logger.Debug("Arm sample",
 			zap.String("arm_id", arm.ID.String()),
@@ -212,10 +216,10 @@ func (b *ThompsonSamplingBandit) UpdateReward(ctx context.Context, experimentID,
 	return nil
 }
 
-// sampleBeta generates a random sample from Beta(α, β)
+// SampleBeta generates a random sample from Beta(α, β)
 // Uses Marsaglia and Tsang's method for alpha,beta >= 1
 // Falls back to simple uniform for small parameters
-func (b *ThompsonSamplingBandit) sampleBeta(alpha, beta float64) float64 {
+func (b *ThompsonSamplingBandit) SampleBeta(alpha, beta float64) float64 {
 	// Handle edge cases
 	if alpha <= 0 || beta <= 0 {
 		return b.rng.Float64()
@@ -240,12 +244,12 @@ func (b *ThompsonSamplingBandit) sampleBeta(alpha, beta float64) float64 {
 
 	if alpha < 1 {
 		// For alpha < 1, beta >= 1
-		return b.sampleBeta(alpha+1, beta) * math.Pow(b.rng.Float64(), 1/alpha)
+		return b.SampleBeta(alpha+1, beta) * math.Pow(b.rng.Float64(), 1/alpha)
 	}
 
 	if beta < 1 {
 		// For beta < 1, alpha >= 1
-		return b.sampleBeta(alpha, beta+1) * math.Pow(b.rng.Float64(), 1/beta)
+		return b.SampleBeta(alpha, beta+1) * math.Pow(b.rng.Float64(), 1/beta)
 	}
 
 	// Marsaglia-Tsang method for alpha,beta >= 1
@@ -365,7 +369,7 @@ func (b *ThompsonSamplingBandit) CalculateWinProbability(ctx context.Context, ex
 		maxSample := -1.0
 
 		for _, stats := range armStats {
-			sample := b.sampleBeta(stats.Alpha, stats.Beta)
+			sample := b.SampleBeta(stats.Alpha, stats.Beta)
 			if sample > maxSample {
 				maxSample = sample
 				bestArmID = stats.ArmID

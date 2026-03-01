@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	"github.com/bivex/paywall-iap/internal/domain/service"
@@ -173,9 +172,10 @@ func TestSelectArm(t *testing.T) {
 		repo.On("GetArms", ctx, experimentID).Return(arms, nil)
 		repo.On("GetArmStats", ctx, arm1ID).Return(&service.ArmStats{ArmID: arm1ID, Alpha: 1, Beta: 1}, nil)
 
-		armID, err := bandit.SelectArm(ctx, experimentID, userID)
+		selectedArmID, err := bandit.SelectArm(ctx, experimentID, userID)
 
 		assert.NoError(t, err)
+		assert.Equal(t, arm1ID, selectedArmID)
 
 		// Check that assignment was cached
 		assignmentKey := "ab:assign:" + experimentID.String() + ":" + userID.String()
@@ -288,9 +288,7 @@ func TestSampleBeta(t *testing.T) {
 		for _, tc := range testCases {
 			samples := make([]float64, 1000)
 			for i := 0; i < 1000; i++ {
-				// Use reflection or public accessor if sampleBeta is exported
-				// For now, we'll test via UpdateReward which uses it internally
-				sample := bandit.(*service.ThompsonSamplingBandit).SampleBeta(tc.alpha, tc.beta)
+				sample := bandit.SampleBeta(tc.alpha, tc.beta)
 				assert.True(t, sample >= 0 && sample <= 1,
 					"Sample out of range [0,1] for alpha=%f, beta=%f: %f", tc.alpha, tc.beta, sample)
 				samples[i] = sample
