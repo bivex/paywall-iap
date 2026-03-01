@@ -1,86 +1,118 @@
 # IAP System
 
-In-App Purchase system for iOS and Android with Go backend and React Native frontend.
+In-App Purchase system for iOS and Android with Go backend, Next.js admin dashboard, PostgreSQL, and Redis.
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
-# Start local development environment
-make dev-up
+# Start full stack (API + Worker + DB + Redis + Migrator)
+docker compose -f infra/docker-compose/docker-compose.latency-optimized.yml up -d --build
 
-# Run backend tests
-cd backend && make test
+# Start frontend (dev mode — hot reload)
+cd frontend && docker compose -f docker-compose.dev.yml up -d --build
 
-# Run mobile tests
-cd mobile && npm test
+# Or frontend production build
+cd frontend && docker compose up -d --build
 ```
 
-## Architecture
+## 🔐 Admin Panel
 
-Clean Architecture with Go backend API and React Native mobile app.
+**URL:** http://localhost:3000
 
-## Docker Images
+| Field | Value |
+|-------|-------|
+| Email | `admin@paywall.local` |
+| Password | `admin12345` |
+| Role | `superadmin` |
 
-Optimized multi-stage builds with stripped binaries for minimal image size.
+> ⚠️ Change the password before deploying to production.
 
-| Service | Image Size | Compressed | Efficiency |
-|---------|------------|------------|------------|
-| API | 57 MB | 14.5 MB | 99% |
-| Worker | 46 MB | 11.8 MB | 99% |
-| Migrator | 25 MB | 6.9 MB | 98% |
+### Seed first admin (new DB)
 
-**Optimization techniques:**
-- Multi-stage builds (Alpine base)
-- Stripped binaries (`-ldflags="-s -w"` + `strip`)
-- Non-root user execution
-- Layer caching with go.mod/prerequisites
-
-Build locally:
 ```bash
-docker build -t paywall-iap-api:latest -f infra/docker/api/Dockerfile .
-docker build -t paywall-iap-worker:latest -f infra/docker/worker/Dockerfile .
+# Via script (works with Docker DB)
+DB_CONTAINER=docker-compose-db-1 ./scripts/seed_admin.sh admin@paywall.local admin12345
+
+# Or via Go command
+cd backend && go run ./cmd/seed --email=admin@paywall.local --password=admin12345
+
+# Or via Makefile
+cd backend && make seed-admin EMAIL=admin@paywall.local PASSWORD=admin12345
+```
+
+### Auth flow
+
+```
+Browser → POST /auth/v1/login (Next.js server action)
+        → POST /v1/admin/auth/login (Go API, bcrypt verify)
+        → JWT access token (15 min) + refresh token (30 days)
+        → httpOnly cookies set
+        → redirect /dashboard/default
+
+/dashboard/* without cookie → proxy.ts → redirect /auth/v1/login
+```
+
+## 🏗️ Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Frontend | `3000` | Next.js 16 admin dashboard |
+| API | `8080` | Go/Gin REST API |
+| Worker | `8081` | Background jobs (River queue) |
+| PostgreSQL | `5432` | Main database |
+| Redis | `6379` | Cache + JWT blocklist |
+
+## 🗄️ Database
+
+Migrations are applied automatically by the `migrator` container on startup.
+
+```bash
+# Apply migrations manually (if needed)
+for i in backend/migrations/*.up.sql; do
+  docker exec docker-compose-db-1 psql -U postgres -d iap_db < "$i"
+done
+```
+
+## 🐳 Docker Images
+
+| Service | Compressed | Efficiency |
+|---------|-----------|------------|
+| API | 14.5 MB | 99% |
+| Worker | 11.8 MB | 99% |
+| Migrator | 6.9 MB | 98% |
+| Frontend (prod) | 83.8 MB | 99.98% |
+| Frontend (dev) | 460 MB | 100% |
+
+**Build images:**
+```bash
+docker build -t paywall-iap-api:latest     -f infra/docker/api/Dockerfile .
+docker build -t paywall-iap-worker:latest  -f infra/docker/worker/Dockerfile .
 docker build -t paywall-iap-migrator:latest -f infra/docker/migrator/Dockerfile .
 ```
 
-## Performance Optimization
-
-### Minimal Latency Configuration
-
-For ultra-low latency deployments, use the optimized configuration:
+## ⚡ Performance
 
 ```bash
-# Latency-optimized docker compose (20-40% latency reduction)
-docker-compose -f infra/docker-compose/docker-compose.latency-optimized.yml up -d
+# Latency-optimized stack (BBR, TCP tuning, PG async commit)
+docker compose -f infra/docker-compose/docker-compose.latency-optimized.yml up -d
 ```
-
-**Key optimizations:**
-- **BBR congestion control** (vs cubic) -15% latency
-- **TCP buffers tuned** to 256KB - fewer retransmissions
-- **TCP Fast Open** enabled - 1 RTT saved per connection
-- **Slow start disabled** after idle - better burst performance
-- **PostgreSQL async commit** - 40% faster writes (trade data safety)
 
 See [Latency Optimization Guide](docs/operations/latency-optimization.md) for details.
 
-### Docker Images
+## 🌐 Production Deploy
 
-Optimized multi-stage builds with stripped binaries for minimal image size.
+Set these env vars before deploying:
+```bash
+HTTPS=true          # enables Secure flag on cookies
+BACKEND_URL=http://api:8080   # internal Docker network
+NEXT_PUBLIC_API_URL=https://your-domain.com
+```
 
-| Service | Image Size | Compressed | Efficiency |
-|---------|------------|------------|------------|
-| API | 57 MB | 14.5 MB | 99% |
-| Worker | 46 MB | 11.8 MB | 99% |
-| Migrator | 25 MB | 6.9 MB | 98% |
-
-**Optimization techniques:**
-- Multi-stage builds (Alpine base)
-- Stripped binaries (`-ldflags="-s -w"` + `strip`)
-- Non-root user execution
-- Layer caching with go.mod/prerequisites
-
-## Documentation
+## 📚 Documentation
 
 - [API Specification](docs/api/openapi.yaml)
 - [Database Schema](docs/database/schema-erd.md)
 - [Deployment](docs/runbooks/deploy-procedure.md)
 - [Latency Optimization](docs/operations/latency-optimization.md)
+- [Wireframes](docs/Wireframes_Rethink.md)
+
