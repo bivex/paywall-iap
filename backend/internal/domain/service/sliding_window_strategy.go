@@ -61,7 +61,6 @@ func NewSlidingWindowStrategy(
 
 // GetArmStats retrieves arm statistics for the current window
 func (s *SlidingWindowStrategy) GetArmStats(ctx context.Context, armID uuid.UUID) (*ArmStats, error) {
-	windowKey := s.getWindowKey(armID)
 	statsKey := s.getStatsKey(armID)
 
 	// Try to get cached stats first
@@ -266,6 +265,7 @@ func (s *SlidingWindowStrategy) GetWindowInfo(ctx context.Context, armID uuid.UU
 	if err != nil {
 		return nil, fmt.Errorf("failed to get window size: %w", err)
 	}
+	_ = size // reserved for WindowStats.TotalEvents
 
 	// Get time range
 	oldest, err := s.redisClient.ZRange(ctx, windowKey, 0, 0).Result()

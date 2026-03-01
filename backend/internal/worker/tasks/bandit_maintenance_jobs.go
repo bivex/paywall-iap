@@ -30,6 +30,7 @@ type ProcessExpiredPendingRewardsArgs struct {
 	BatchSize int `json:"batch_size"`
 }
 
+func (ProcessExpiredPendingRewardsArgs) Kind() string { return "process_expired_pending_rewards" }
 // ProcessExpiredPendingRewardsResult represents the result of processing expired rewards
 type ProcessExpiredPendingRewardsResult struct {
 	Processed int `json:"processed"`
@@ -41,7 +42,7 @@ func (j *BanditMaintenanceJobs) ProcessExpiredPendingRewards(
 	args *river.Job[ProcessExpiredPendingRewardsArgs],
 ) (ProcessExpiredPendingRewardsResult, error) {
 	batchSize := 100
-	if args.Args != nil && args.Args.BatchSize > 0 {
+	if args.Args.BatchSize > 0 {
 		batchSize = args.Args.BatchSize
 	}
 
@@ -67,6 +68,7 @@ type TrimSlidingWindowsArgs struct {
 	ExperimentID string `json:"experiment_id,omitempty"`
 }
 
+func (TrimSlidingWindowsArgs) Kind() string { return "trim_sliding_windows" }
 // TrimSlidingWindowsResult represents the result of trimming windows
 type TrimSlidingWindowsResult struct {
 	WindowsTrimmed int `json:"windows_trimmed"`
@@ -98,6 +100,7 @@ type CleanupOldContextDataArgs struct {
 	DaysToKeep int `json:"days_to_keep"`
 }
 
+func (CleanupOldContextDataArgs) Kind() string { return "cleanup_old_context_data" }
 // CleanupOldContextDataResult represents the result of cleanup
 type CleanupOldContextDataResult struct {
 	RecordsDeleted int `json:"records_deleted"`
@@ -109,7 +112,7 @@ func (j *BanditMaintenanceJobs) CleanupOldContextData(
 	args *river.Job[CleanupOldContextDataArgs],
 ) (CleanupOldContextDataResult, error) {
 	daysToKeep := 90
-	if args.Args != nil && args.Args.DaysToKeep > 0 {
+	if args.Args.DaysToKeep > 0 {
 		daysToKeep = args.Args.DaysToKeep
 	}
 
@@ -127,8 +130,10 @@ func (j *BanditMaintenanceJobs) CleanupOldContextData(
 // CalculateWinProbabilitiesArgs represents arguments for calculating win probabilities
 type CalculateWinProbabilitiesArgs struct {
 	ExperimentID string `json:"experiment_id"`
-	Simulations  int `json:"simulations"`
+	Simulations  int    `json:"simulations"`
 }
+
+func (CalculateWinProbabilitiesArgs) Kind() string { return "calculate_win_probabilities" }
 
 // CalculateWinProbabilitiesResult represents the result of calculating win probabilities
 type CalculateWinProbabilitiesResult struct {
@@ -140,7 +145,7 @@ func (j *BanditMaintenanceJobs) CalculateWinProbabilities(
 	ctx context.Context,
 	args *river.Job[CalculateWinProbabilitiesArgs],
 ) (CalculateWinProbabilitiesResult, error) {
-	if args.Args == nil {
+	if args.Args.ExperimentID == "" {
 		return CalculateWinProbabilitiesResult{}, nil
 	}
 
@@ -161,6 +166,8 @@ func (j *BanditMaintenanceJobs) CalculateWinProbabilities(
 type RunFullMaintenanceArgs struct {
 	// No arguments needed
 }
+
+func (RunFullMaintenanceArgs) Kind() string { return "run_full_maintenance" }
 
 // RunFullMaintenanceResult represents the result of full maintenance
 type RunFullMaintenanceResult struct {
@@ -196,6 +203,8 @@ func (j *BanditMaintenanceJobs) RunFullMaintenance(
 type SyncObjectiveStatsArgs struct {
 	ExperimentID string `json:"experiment_id"`
 }
+
+func (SyncObjectiveStatsArgs) Kind() string { return "sync_objective_stats" }
 
 // SyncObjectiveStatsResult represents the result of syncing stats
 type SyncObjectiveStatsResult struct {

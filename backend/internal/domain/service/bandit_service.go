@@ -26,7 +26,7 @@ type BanditRepository interface {
 	// Advanced bandit methods
 	GetExperimentConfig(ctx context.Context, experimentID uuid.UUID) (*ExperimentConfig, error)
 	GetUserContext(ctx context.Context, userID uuid.UUID) (*UserContext, error)
-	SetUserContext(ctx context.Context, ctx *UserContext) error
+	SetUserContext(ctx context.Context, uctx *UserContext) error
 }
 
 // BanditCache defines the interface for caching bandit state

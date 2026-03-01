@@ -30,6 +30,8 @@ type UpdateExchangeRatesArgs struct {
 	// No arguments needed for this job
 }
 
+func (UpdateExchangeRatesArgs) Kind() string { return "update_exchange_rates" }
+
 // UpdateExchangeRates updates currency exchange rates from ECB
 func (j *CurrencyJobs) UpdateExchangeRates(ctx context.Context, _ *river.Job[UpdateExchangeRatesArgs]) error {
 	j.logger.Info("Starting currency exchange rate update")
@@ -47,6 +49,8 @@ func (j *CurrencyJobs) UpdateExchangeRates(ctx context.Context, _ *river.Job[Upd
 type GetSupportedCurrenciesArgs struct {
 	// No arguments needed
 }
+
+func (GetSupportedCurrenciesArgs) Kind() string { return "get_supported_currencies" }
 
 // SupportedCurrenciesResult represents the result of getting supported currencies
 type SupportedCurrenciesResult struct {

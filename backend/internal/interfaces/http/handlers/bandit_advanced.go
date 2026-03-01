@@ -174,10 +174,10 @@ func (h *BanditAdvancedHandler) SetObjectiveConfig(w http.ResponseWriter, r *htt
 		return
 	}
 
-	config := &service.ExperimentConfig{
-		ID:               experimentID,
-		ObjectiveType:     req.ObjectiveType,
-		ObjectiveWeights:  req.ObjectiveWeights,
+	_ = &service.ExperimentConfig{
+		ID:              experimentID,
+		ObjectiveType:   req.ObjectiveType,
+		ObjectiveWeights: req.ObjectiveWeights,
 	}
 
 	// Update engine configuration

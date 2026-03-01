@@ -128,7 +128,8 @@ func (s *CurrencyRateService) GetRate(ctx context.Context, currency string) (flo
 		)
 
 		// Use fallback rate
-		rate, ok := s.getFallbackRate(currency)
+		var ok bool
+		rate, ok = s.getFallbackRate(currency)
 		if !ok {
 			return 0, ErrCurrencyRateNotFound
 		}

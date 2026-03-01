@@ -503,16 +503,17 @@ func (r *PostgresBanditRepository) GetUserContext(ctx context.Context, userID uu
 		WHERE user_id = $1
 	`
 
-	var ctx service.UserContext
+	var userCtx service.UserContext
+	var updatedAt time.Time
 	err := r.pool.QueryRow(ctx, query, userID).Scan(
-		&ctx.UserID,
-		&ctx.Country,
-		&ctx.Device,
-		&ctx.AppVersion,
-		&ctx.DaysSinceInstall,
-		&ctx.TotalSpent,
-		&ctx.LastPurchaseAt,
-		&ctx.UpdatedAt, // This field is not in UserContext, so we'll skip it
+		&userCtx.UserID,
+		&userCtx.Country,
+		&userCtx.Device,
+		&userCtx.AppVersion,
+		&userCtx.DaysSinceInstall,
+		&userCtx.TotalSpent,
+		&userCtx.LastPurchaseAt,
+		&updatedAt,
 	)
 
 	if err == pgx.ErrNoRows {
@@ -524,7 +525,7 @@ func (r *PostgresBanditRepository) GetUserContext(ctx context.Context, userID uu
 		return nil, fmt.Errorf("failed to get user context: %w", err)
 	}
 
-	return &ctx, nil
+	return &userCtx, nil
 }
 
 // SetUserContext saves or updates user context

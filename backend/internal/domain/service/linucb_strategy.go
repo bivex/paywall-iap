@@ -187,7 +187,7 @@ func (s *LinUCBSelectionStrategy) calculateUCB(features []float64, model *LinUCB
 // getOrCreateModel retrieves or creates a LinUCB model for an arm
 func (s *LinUCBSelectionStrategy) getOrCreateModel(ctx context.Context, armID uuid.UUID) (*LinUCBModel, error) {
 	// Try to get from cache first
-	cacheKey := fmt.Sprintf("linucb:model:%s", armID.String())
+	_ = fmt.Sprintf("linucb:model:%s", armID.String()) // cacheKey reserved for future use
 
 	// Try repository
 	// Note: This would need to be implemented in the repository
@@ -216,7 +216,7 @@ func (s *LinUCBSelectionStrategy) getOrCreateModel(ctx context.Context, armID uu
 // saveModel saves the model to repository and cache
 func (s *LinUCBSelectionStrategy) saveModel(ctx context.Context, model *LinUCBModel) error {
 	// Save to cache
-	cacheKey := fmt.Sprintf("linucb:model:%s", model.ArmID.String())
+	_ = fmt.Sprintf("linucb:model:%s", model.ArmID.String()) // cacheKey reserved for future use
 	// Cache implementation would go here
 
 	return nil
