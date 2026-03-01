@@ -54,7 +54,7 @@ wait_for_healthy() {
 wait_for_http() {
   local url="$1" label="${2:-$1}" max="${3:-60}" i=0
   info "Waiting for $label..."
-  until curl -sf -o /dev/null "$url"; do
+  until curl -sf -L -o /dev/null "$url"; do
     ((i++))
     [[ $i -ge $max ]] && die "$label not reachable after ${max}s"
     sleep 1
