@@ -1,17 +1,8 @@
-# Next.js Admin Template with TypeScript & Shadcn UI
+# Paywall Admin — Frontend
 
-**Studio Admin** - Includes multiple dashboards, authentication layouts, customizable theme presets, and more.
+**Paywall Admin** — Internal dashboard for managing subscriptions, in-app purchases, A/B experiments, dunning, and revenue operations.
 
-<img src="https://github.com/arhamkhnz/next-shadcn-admin-dashboard/blob/main/media/dashboard.png?version=5" alt="Dashboard Screenshot">
-
-Most admin templates I found, free or paid, felt cluttered, outdated, or too rigid. I built this as a cleaner alternative with features often missing in others, such as theme toggling and layout controls, while keeping the design modern, minimal, and flexible.
-
-I’ve taken design inspiration from various sources. If you’d like credit for something specific, feel free to open an issue or reach out.
-
-> **View demo:** [studio admin](https://next-shadcn-admin-dashboard.vercel.app)
-
-> [!TIP]
-> I’m also working on Nuxt.js, Svelte, and React (Vite + TanStack Router) versions of this dashboard. They’ll be live soon.
+Built with Next.js 16, TypeScript, Tailwind CSS v4, and shadcn/ui.
 
 ## Features
 
