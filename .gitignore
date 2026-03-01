@@ -57,3 +57,5 @@ secrets/
 .worktrees/
 
 backend/seed
+
+backend/worker

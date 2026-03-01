@@ -16,9 +16,6 @@ CREATE INDEX idx_ab_test_arms_experiment ON ab_test_arms(experiment_id);
 -- Index for control arm lookup
 CREATE INDEX idx_ab_test_arms_control ON ab_test_arms(experiment_id, is_control) WHERE is_control = true;
 
--- Ensure traffic_weight is non-negative
-CHECK (traffic_weight >= 0)
-
 -- Comment for documentation
 COMMENT ON TABLE ab_test_arms IS 'Arms (variants) for A/B test experiments';
 COMMENT ON COLUMN ab_test_arms.is_control IS 'True if this is the control/baseline variant';

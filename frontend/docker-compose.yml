@@ -10,6 +10,10 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - BACKEND_URL=${BACKEND_URL:-http://api:8080}
+    networks:
+      - default
+      - docker-compose_internal
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
@@ -17,3 +21,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+
+networks:
+  default: {}
+  docker-compose_internal:
+    external: true
