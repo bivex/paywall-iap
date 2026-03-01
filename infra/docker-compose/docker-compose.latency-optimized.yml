@@ -108,7 +108,7 @@ services:
       - internal
 
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     restart: unless-stopped
     # PostgreSQL latency optimizations
     command:
@@ -148,7 +148,7 @@ services:
           memory: 1G
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     restart: unless-stopped
     # Redis latency optimizations
     command:

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db-test:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     restart: unless-stopped
     ports:
       - "5433:5432"
