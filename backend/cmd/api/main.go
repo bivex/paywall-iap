@@ -91,6 +91,24 @@ func main() {
 	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
 	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
 
+	// Initialize advanced bandit services
+	currencyService := service.NewCurrencyRateService(redisClient, logging.Logger)
+	advancedBanditEngine := service.NewAdvancedBanditEngine(
+		banditService,
+		banditRepo,
+		banditCache,
+		currencyService,
+		logging.Logger,
+		&service.EngineConfig{
+			ExperimentConfig: nil, // Will be configured per experiment
+			EnableCurrency:   true,
+			EnableContextual: true,
+			EnableDelayed:    true,
+			EnableWindow:     true,
+			EnableHybrid:     true,
+		},
+	)
+
 	// Initialize middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(
 		cfg.JWT.Secret,
@@ -134,6 +152,7 @@ func main() {
 
 	// Initialize bandit handler
 	banditHandler := app_handler.NewBanditHandler(banditService)
+	banditAdvancedHandler := app_handler.NewBanditAdvancedHandler(advancedBanditEngine, currencyService, logging.Logger)
 
 	// Setup Gin router
 	if cfg.Sentry.Environment != "development" {
@@ -179,6 +198,21 @@ func main() {
 			bandit.POST("/reward", banditHandler.Reward)
 			bandit.GET("/statistics", banditHandler.Statistics)
 			bandit.GET("/health", banditHandler.Health)
+
+			// Advanced bandit routes
+			bandit.GET("/currency/rates", banditAdvancedHandler.GetCurrencyRates)
+			bandit.POST("/currency/update", banditAdvancedHandler.UpdateCurrencyRates)
+			bandit.POST("/currency/convert", banditAdvancedHandler.ConvertCurrency)
+			bandit.GET("/experiments/:id/objectives", banditAdvancedHandler.GetObjectiveScores)
+			bandit.PUT("/experiments/:id/objectives/config", banditAdvancedHandler.SetObjectiveConfig)
+			bandit.GET("/experiments/:id/window/info", banditAdvancedHandler.GetWindowInfo)
+			bandit.POST("/experiments/:id/window/trim", banditAdvancedHandler.TrimWindow)
+			bandit.GET("/experiments/:id/window/events", banditAdvancedHandler.ExportWindowEvents)
+			bandit.POST("/conversions", banditAdvancedHandler.ProcessConversion)
+			bandit.GET("/pending/:id", banditAdvancedHandler.GetPendingReward)
+			bandit.GET("/users/:id/pending", banditAdvancedHandler.GetUserPendingRewards)
+			bandit.GET("/experiments/:id/metrics", banditAdvancedHandler.GetMetrics)
+			bandit.POST("/maintenance", banditAdvancedHandler.RunMaintenance)
 		}
 
 		// Protected routes (require JWT)

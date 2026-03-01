@@ -12,9 +12,12 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"github.com/bivex/paywall-iap/internal/domain/service"
+	"github.com/bivex/paywall-iap/internal/infrastructure/cache"
 	"github.com/bivex/paywall-iap/internal/infrastructure/config"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/pool"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	worker_tasks "github.com/bivex/paywall-iap/internal/worker/tasks"
 )
@@ -44,6 +47,25 @@ func main() {
 
 	queries := generated.New(dbPool)
 	taskHandlers := worker_tasks.NewTaskHandlers(queries)
+
+	// Initialize advanced bandit services for worker
+	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
+	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
+	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
+	currencyService := service.NewCurrencyRateService(redisClient, logging.Logger)
+	advancedBanditEngine := service.NewAdvancedBanditEngine(
+		banditService,
+		banditRepo,
+		banditCache,
+		currencyService,
+		logging.Logger,
+		&service.EngineConfig{
+			EnableCurrency: true,
+		},
+	)
+
+	currencyJobs := worker_tasks.NewCurrencyJobs(currencyService, logging.Logger)
+	banditMaintenanceJobs := worker_tasks.NewBanditMaintenanceJobs(advancedBanditEngine, logging.Logger)
 
 	// Initialize Redis
 	opts, err := redis.ParseURL(cfg.Redis.URL)
@@ -77,6 +99,10 @@ func main() {
 	mux := asynq.NewServeMux()
 	worker_tasks.RegisterHandlers(mux, taskHandlers)
 
+	// Register advanced bandit worker handlers
+	worker_tasks.RegisterCurrencyTasks(mux, currencyService, logging.Logger)
+	worker_tasks.RegisterBanditMaintenanceTasks(mux, advancedBanditEngine, logging.Logger)
+
 	// Start server in background
 	if err := server.Start(mux); err != nil {
 		logging.Logger.Fatal("Failed to start worker", zap.Error(err))
@@ -85,6 +111,10 @@ func main() {
 	// Register scheduled tasks
 	scheduler := asynq.NewSchedulerFromRedisClient(redisClient, nil)
 	worker_tasks.RegisterScheduledTasks(scheduler)
+
+	// Register advanced bandit scheduled tasks
+	worker_tasks.RegisterCurrencyScheduledTasks(scheduler)
+	worker_tasks.RegisterBanditMaintenanceScheduledTasks(scheduler)
 
 	// Start scheduler
 	if err := scheduler.Start(); err != nil {
