@@ -1,11 +1,10 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
-export async function loginAction(email: string, password: string): Promise<{ error?: string }> {
+export async function loginAction(email: string, password: string): Promise<{ error?: string; redirectTo?: string }> {
   let res: Response;
   try {
     res = await fetch(`${BACKEND_URL}/v1/admin/auth/login`, {
@@ -22,7 +21,8 @@ export async function loginAction(email: string, password: string): Promise<{ er
     return { error: (body as { error?: string }).error ?? "Invalid credentials." };
   }
 
-  const data = (await res.json()) as { access_token: string; refresh_token?: string };
+  const body = await res.json();
+  const data = (body.data ?? body) as { access_token: string; refresh_token?: string };
 
   const cookieStore = await cookies();
   cookieStore.set("admin_access_token", data.access_token, {
@@ -43,7 +43,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
     });
   }
 
-  redirect("/dashboard/default");
+  return { redirectTo: "/dashboard/default" };
 }
 
 export async function logoutAction(): Promise<void> {
