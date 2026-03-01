@@ -49,7 +49,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
   return { redirectTo: "/dashboard/default" };
 }
 
-export async function logoutAction(): Promise<void> {
+export async function logoutAction(): Promise<{ redirectTo: string }> {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_access_token")?.value;
 
@@ -63,5 +63,5 @@ export async function logoutAction(): Promise<void> {
   cookieStore.delete("admin_access_token");
   cookieStore.delete("admin_refresh_token");
 
-  redirect("/auth/v1/login");
+  return { redirectTo: "/auth/v1/login" };
 }

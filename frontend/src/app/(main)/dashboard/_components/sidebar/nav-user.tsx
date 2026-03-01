@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleUser, CreditCard, EllipsisVertical, LogOut, MessageSquareDot } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import { logoutAction } from "@/actions/auth";
@@ -27,9 +28,14 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const handleLogout = () => startTransition(() => logoutAction());
+  const handleLogout = () =>
+    startTransition(async () => {
+      const result = await logoutAction();
+      router.push(result.redirectTo);
+    });
 
   return (
     <SidebarMenu>
