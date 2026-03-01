@@ -16,7 +16,7 @@ This document contains **1** wireframe diagram(s) extracted from the StarUML pro
 
 **Parent Module:** `Wireframe1`
 
-**Element Count:** 468 widgets
+**Element Count:** 508 widgets
 
 ### 2. UI Elements Table
 
@@ -490,6 +490,46 @@ This document contains **1** wireframe diagram(s) extracted from the StarUML pro
 | text_466 | Text | 📊 19. Sliding Window Analytics | (65, 8910) | 535×22 |  |
 | text_467 | Text | ⏱ 18. Delayed Feedback Monitor | (1165, 7960) | 635×22 |  |
 | text_468 | Text | 🎯 20. Multi-Objective Config | (1165, 8910) | 635×22 |  |
+| panel_469 | Panel | 📊 MONITORING   ▶ 🏠 Dashboar... | (50, 100) | 185×390 |  |
+| text_470 | Text | 🏠 Home  ›  📊 Monitoring  › ... | (240, 63) | 600×18 |  |
+| panel_471 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 100) | 185×390 |  |
+| text_472 | Text | 🏠 Home  ›  👥 User Managemen... | (1340, 63) | 600×18 |  |
+| panel_473 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 1050) | 185×390 |  |
+| panel_474 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 1050) | 185×390 |  |
+| text_475 | Text | 🏠 Home  ›  🧪 Experiments  ›... | (240, 1013) | 600×18 |  |
+| text_476 | Text | 🏠 Home  ›  💰 Revenue Ops  ›... | (1340, 1013) | 600×18 |  |
+| panel_477 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 2000) | 185×390 |  |
+| text_478 | Text | 🏠 Home  ›  ⚙️ Config  ›  Pr... | (240, 1963) | 600×18 |  |
+| panel_479 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 2000) | 185×390 |  |
+| text_480 | Text | 🏠 Home  ›  👥 User Managemen... | (1340, 1963) | 600×18 |  |
+| panel_481 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 2950) | 185×390 |  |
+| text_482 | Text | 🏠 Home  ›  💰 Revenue Ops  ›... | (240, 2913) | 600×18 |  |
+| panel_483 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 2950) | 185×390 |  |
+| text_484 | Text | 🏠 Home  ›  💰 Revenue Ops  ›... | (1340, 2913) | 600×18 |  |
+| panel_485 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 4000) | 185×390 |  |
+| text_486 | Text | 🏠 Home  ›  💰 Revenue Ops  ›... | (240, 3963) | 600×18 |  |
+| text_487 | Text | 🏠 Home  ›  💰 Revenue Ops  ›... | (1340, 3963) | 600×18 |  |
+| panel_488 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 4000) | 185×390 |  |
+| panel_489 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 4950) | 185×390 |  |
+| text_490 | Text | 🏠 Home  ›  📊 Monitoring  › ... | (240, 4913) | 600×18 |  |
+| text_491 | Text | 🏠 Home  ›  🧪 Experiments  ›... | (1340, 4913) | 600×18 |  |
+| panel_492 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 4950) | 185×390 |  |
+| panel_493 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 6000) | 185×390 |  |
+| text_494 | Text | 🏠 Home  ›  ⚙️ Config  ›  We... | (240, 5963) | 600×18 |  |
+| text_495 | Text | 🏠 Home  ›  ⚙️ Config  ›  Ma... | (1340, 5963) | 600×18 |  |
+| panel_496 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 6000) | 185×390 |  |
+| panel_497 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 6950) | 185×390 |  |
+| text_498 | Text | 🏠 Home  ›  🧪 Experiments  ›... | (240, 6913) | 600×18 |  |
+| text_499 | Text | 🏠 Home  ›  👥 User Managemen... | (1340, 6913) | 600×18 |  |
+| panel_500 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 6950) | 185×390 |  |
+| panel_501 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 8000) | 185×390 |  |
+| text_502 | Text | 🏠 Home  ›  ⚙️ Config  ›  Pl... | (240, 7963) | 600×18 |  |
+| text_503 | Text | 🏠 Home  ›  ⚙️ Config  ›  De... | (1340, 7963) | 600×18 |  |
+| panel_504 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 8000) | 185×390 |  |
+| panel_505 | Panel | 📊 MONITORING   🏠 Dashboard ... | (50, 8950) | 185×390 |  |
+| panel_506 | Panel | 📊 MONITORING   🏠 Dashboard ... | (1150, 8950) | 185×390 |  |
+| text_507 | Text | 🏠 Home  ›  ⚙️ Config  ›  Mu... | (1340, 8913) | 600×18 |  |
+| text_508 | Text | 🏠 Home  ›  ⚙️ Config  ›  Sl... | (240, 8913) | 600×18 |  |
 
 ### 3. Elements by Type
 
@@ -500,12 +540,12 @@ This document contains **1** wireframe diagram(s) extracted from the StarUML pro
 - **Dropdown**: 24
 - **Input**: 37
 - **Link**: 12
-- **Panel**: 81
+- **Panel**: 101
 - **Separator**: 2
 - **Slider**: 8
 - **Switch**: 9
 - **Tab Bar**: 19
-- **Text**: 191
+- **Text**: 211
 
 ### 4. Layout Positioning
 
@@ -521,929 +561,1009 @@ Elements sorted by visual flow (top-to-bottom, left-to-right):
 
 5.                                                                                                                     **[Text]** ← Back to Users    USER PROFILE: usr_550e8400-e29b...
 
-6.                                                                                                     **[Link]** Logout
+6.                         **[Text]** 🏠 Home  ›  📊 Monitoring  ›  Dashboard
 
-7.                                                                                                                   **[Separator]** Separator1
+7.                                                                                                                                       **[Text]** 🏠 Home  ›  👥 User Management  ›  User 360° Profile
 
-8.     **[Separator]** Separator1
+8.                                                                                                     **[Link]** Logout
 
-9.                                                                                                                     **[Panel]** IDENTITY CARD (users)&#10;Platform ID: iOS: orig_tx_998877&#10;Email: user@example.com&#10;Role: user&#10;Device ID: (Analytics Only)
+9.                                                                                                                   **[Separator]** Separator1
 
-10.                                                                                                                                                                     **[Panel]** LTV & METRICS (bandit_user_context)&#10;Total LTV: $124.50&#10;Last Updated: 2026-03-01&#10;Days Since Install: 45
+10.     **[Separator]** Separator1
 
-11.       **[Text]** NAVIGATION
+11.                                                                                                                     **[Panel]** IDENTITY CARD (users)&#10;Platform ID: iOS: orig_tx_998877&#10;Email: user@example.com&#10;Role: user&#10;Device ID: (Analytics Only)
 
-12.                         **[Text]** DASHBOARD OVERVIEW
+12.                                                                                                                                                                     **[Panel]** LTV & METRICS (bandit_user_context)&#10;Total LTV: $124.50&#10;Last Updated: 2026-03-01&#10;Days Since Install: 45
 
-13.     **[Button]** ▶ Dashboard
+13.     **[Panel]** 📊 MONITORING   ▶ 🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-14.                         **[Text]** Last Updated: 2026-03-01 13:45 UTC (Real-time via analytics_aggregates)
+14.       **[Text]** NAVIGATION
 
-15.       **[Link]** Users
+15.                         **[Text]** DASHBOARD OVERVIEW
 
-16.                         **[Panel]** ACTIVE USERS&#10;14,205&#10;▲ 5% vs last wk
+16.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   ▶ 🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-17.                                             **[Panel]** MRR (USD)&#10;$45,230.00&#10;▲ 2% vs last wk
+17.     **[Button]** ▶ Dashboard
 
-18.                                                               **[Panel]** ACTIVE SUBS&#10;12,100&#10;▲ 1% vs last wk
+18.                         **[Text]** Last Updated: 2026-03-01 13:45 UTC (Real-time via analytics_aggregates)
 
-19.                                                                                   **[Panel]** CHURN RISK&#10;345 (Dunning)&#10;⚠ Action Needed
+19.       **[Link]** Users
 
-20.       **[Link]** Subscriptions
+20.                         **[Panel]** ACTIVE USERS&#10;14,205&#10;▲ 5% vs last wk
 
-21.       **[Link]** Experiments (Bandit)
+21.                                             **[Panel]** MRR (USD)&#10;$45,230.00&#10;▲ 2% vs last wk
 
-22.       **[Link]** Revenue Ops
+22.                                                               **[Panel]** ACTIVE SUBS&#10;12,100&#10;▲ 1% vs last wk
 
-23.                                                                                                                     **[Tab Bar]** Subscription
+23.                                                                                   **[Panel]** CHURN RISK&#10;345 (Dunning)&#10;⚠ Action Needed
 
-24.                                                                                                                                     **[Tab Bar]** Billing History
+24.       **[Link]** Subscriptions
 
-25.                                                                                                                                                       **[Tab Bar]** Experiments
+25.       **[Link]** Experiments (Bandit)
 
-26.                                                                                                                                                                     **[Tab Bar]** Grace & Winback
+26.       **[Link]** Revenue Ops
 
-27.                                                                                                                                                                                       **[Tab Bar]** Audit
+27.                                                                                                                     **[Tab Bar]** Subscription
 
-28.       **[Link]** Pricing
+28.                                                                                                                                     **[Tab Bar]** Billing History
 
-29.                                                                                                                     **[Panel]** CURRENT SUBSCRIPTION (subscriptions)&#10;Status: ACTIVE  \|  Source: iOS IAP  \|  Plan: Annual&#10;Expires: 2027-03-01  \|  Auto-Renew: YES
+29.                                                                                                                                                       **[Tab Bar]** Experiments
 
-30.       **[Link]** Settings
+30.                                                                                                                                                                     **[Tab Bar]** Grace & Winback
 
-31.                         **[Panel]** RECENT ADMIN ACTIONS (admin_audit_log)
+31.                                                                                                                                                                                       **[Tab Bar]** Audit
 
-32.                                                         **[Panel]** SUBSCRIPTION STATUS DISTRIBUTION (subscriptions.status)
+32.       **[Link]** Pricing
 
-33.                         **[Text]** [13:40] Admin_01 updated pricing_tiers
+33.                                                                                                                     **[Panel]** CURRENT SUBSCRIPTION (subscriptions)&#10;Status: ACTIVE  \|  Source: iOS IAP  \|  Plan: Annual&#10;Expires: 2027-03-01  \|  Auto-Renew: YES
 
-34.                                                           **[Slider]** Active (85%)     ████████████████████
+34.       **[Link]** Settings
 
-35.                         **[Text]** [13:35] Admin_02 refunded tx_8823
+35.                         **[Panel]** RECENT ADMIN ACTIONS (admin_audit_log)
 
-36.                                                           **[Slider]** Grace Period (5%)  ███
+36.                                                         **[Panel]** SUBSCRIPTION STATUS DISTRIBUTION (subscriptions.status)
 
-37.                                                                                                                     **[Panel]** DUNNING STATUS (dunning)&#10;Status: None&#10;Attempts: 0 / 5&#10;Next Attempt: N/A
+37.                         **[Text]** [13:40] Admin_01 updated pricing_tiers
 
-38.                                                                                                                                                                     **[Panel]** WINBACK OFFERS (winback_offers)&#10;Campaign: "Spring Sale"&#10;Discount: 20%&#10;Status: DECLINED
+38.                                                           **[Slider]** Active (85%)     ████████████████████
 
-39.                         **[Text]** [13:30] System auto-retry dunning_queue
+39.                         **[Text]** [13:35] Admin_02 refunded tx_8823
 
-40.                                                           **[Slider]** Cancelled (7%)   ████
+40.                                                           **[Slider]** Grace Period (5%)  ███
 
-41.                                                           **[Slider]** Expired (3%)     ██
+41.                                                                                                                     **[Panel]** DUNNING STATUS (dunning)&#10;Status: None&#10;Attempts: 0 / 5&#10;Next Attempt: N/A
 
-42.                                                                                                                     **[Text]** RECENT TRANSACTIONS (transactions)
+42.                                                                                                                                                                     **[Panel]** WINBACK OFFERS (winback_offers)&#10;Campaign: "Spring Sale"&#10;Discount: 20%&#10;Status: DECLINED
 
-43.                                                         **[Panel]** WEBHOOK HEALTH (webhook_events)
+43.                         **[Text]** [13:30] System auto-retry dunning_queue
 
-44.                                                                                                                     **[Panel]** Date              \| Amount      \| Status   \| Source \| Action
+44.                                                           **[Slider]** Cancelled (7%)   ████
 
-45.                         **[Link]** View Full Audit Log →
+45.                                                           **[Slider]** Expired (3%)     ██
 
-46.                                                           **[Text]** ✅ Stripe    ✅ Apple    ⚠️ Google
+46.                                                                                                                     **[Text]** RECENT TRANSACTIONS (transactions)
 
-47.                                                                                                                     **[Text]** 2026-03-01  \|  $49.99 USD  \|  ✅ Success  \|  iOS  \|  [Receipt]
+47.                                                         **[Panel]** WEBHOOK HEALTH (webhook_events)
 
-48.                                                           **[Text]** 0 Unprocessed Events
+48.                                                                                                                     **[Panel]** Date              \| Amount      \| Status   \| Source \| Action
 
-49.                                                                                                                     **[Text]** 2025-03-01  \|  $49.99 USD  \|  ✅ Success  \|  iOS  \|  [Receipt]
+49.                         **[Link]** View Full Audit Log →
 
-50.                                                                                                                     **[Text]** 2025-02-28  \|  $49.99 USD  \|  ❌ Failed   \|  iOS  \|  [Retry]
+50.                                                           **[Text]** ✅ Stripe    ✅ Apple    ⚠️ Google
 
-51.                                                                                                                     **[Panel]** ACTIVE EXPERIMENTS (ab_test_assignments)&#10;• "Pricing Page V2" → Arm: "Discount Highlight" (Expires 12h)&#10;• "Onboarding Flow" → Arm: "Control"
+51.                                                                                                                     **[Text]** 2026-03-01  \|  $49.99 USD  \|  ✅ Success  \|  iOS  \|  [Receipt]
 
-52.                                                                                                                     **[Button]** Force Cancel
+52.                                                           **[Text]** 0 Unprocessed Events
 
-53.                                                                                                                                     **[Button]** Force Renew
+53.                                                                                                                     **[Text]** 2025-03-01  \|  $49.99 USD  \|  ✅ Success  \|  iOS  \|  [Receipt]
 
-54.                                                                                                                                                   **[Button]** Grant Grace Period
+54.                                                                                                                     **[Text]** 2025-02-28  \|  $49.99 USD  \|  ❌ Failed   \|  iOS  \|  [Retry]
 
-55.                                                                                                                                                                       **[Button]** Impersonate
+55.                                                                                                                     **[Panel]** ACTIVE EXPERIMENTS (ab_test_assignments)&#10;• "Pricing Page V2" → Arm: "Discount Highlight" (Expires 12h)&#10;• "Onboarding Flow" → Arm: "Control"
 
-56.     **[Desktop Frame]** 3. Experiment Studio
+56.                                                                                                                     **[Button]** Force Cancel
 
-57.                                                                                                                   **[Desktop Frame]** 4. Revenue Ops Center
+57.                                                                                                                                     **[Button]** Force Renew
 
-58.       **[Text]** ← Back    EXPERIMENT: "Checkout Button Color" (exp_12345)
+58.                                                                                                                                                   **[Button]** Grant Grace Period
 
-59.                                                                                                                     **[Text]** REVENUE OPS CENTER
+59.                                                                                                                                                                       **[Button]** Impersonate
 
-60.       **[Panel]** CONFIGURATION (ab_tests)&#10;Status: RUNNING  \|  Algorithm: Thompson Sampling&#10;Objective: Revenue  \|  Window: 1000 Events  \|  Confidence: 95%&#10;Contextual Bandit: ENABLED (LinUCB)
+60.     **[Desktop Frame]** 3. Experiment Studio
 
-61.                                                                                                                     **[Tab Bar]** Dunning Queue
+61.                                                                                                                   **[Desktop Frame]** 4. Revenue Ops Center
 
-62.                                                                                                                                         **[Tab Bar]** Webhook Inbox
+62.       **[Text]** ← Back    EXPERIMENT: "Checkout Button Color" (exp_12345)
 
-63.                                                                                                                                                               **[Tab Bar]** Event Staging (Matomo)
+63.                                                                                                                     **[Text]** REVENUE OPS CENTER
 
-64.                                                                                                                     **[Text]** DUNNING QUEUE (dunning)
+64.                         **[Text]** 🏠 Home  ›  🧪 Experiments  ›  Experiment Studio
 
-65.                                                                                                                           **[Dropdown]** Status: In Progress
+65.                                                                                                                                       **[Text]** 🏠 Home  ›  💰 Revenue Ops  ›  Revenue Ops Center
 
-66.                                                                                                                                               **[Dropdown]** Next Attempt: Today
+66.       **[Panel]** CONFIGURATION (ab_tests)&#10;Status: RUNNING  \|  Algorithm: Thompson Sampling&#10;Objective: Revenue  \|  Window: 1000 Events  \|  Confidence: 95%&#10;Contextual Bandit: ENABLED (LinUCB)
 
-67.                                                                                                                     **[Text]** Filter:
+67.                                                                                                                     **[Tab Bar]** Dunning Queue
 
-68.                                                                                                                     **[Panel]** SUB ID  \| USER           \| ATTEMPT \| NEXT TRY            \| ACTIONS
+68.                                                                                                                                         **[Tab Bar]** Webhook Inbox
 
-69.       **[Text]** ARM PERFORMANCE (ab_test_arms + ab_test_arm_stats)
+69.                                                                                                                                                               **[Tab Bar]** Event Staging (Matomo)
 
-70.                                                                                                                     **[Text]** sub_8821 \| user_... (iOS)  \| 3 / 5   \| 2026-03-01 14:00    \|
+70.     **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ▶ ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-71.                                                                                                                                                                                                   **[Button]** Retry Now
+71.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── ▶ 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-72.       **[Panel]** ARM NAME          \| TRAFFIC% \| CONVERSIONS \| REVENUE (USD) \| CONFIDENCE
+72.                                                                                                                     **[Text]** DUNNING QUEUE (dunning)
 
-73.                                                                                                                                                                                                   **[Button]** Grant Grace
+73.                                                                                                                           **[Dropdown]** Status: In Progress
 
-74.       **[Text]** Control (Blue)    \| 40%      \| 120/1000    \| $5,400.00     \| 88%
+74.                                                                                                                                               **[Dropdown]** Next Attempt: Today
 
-75.                                                                                                                     **[Text]** sub_9932 \| user_... (Web)  \| 1 / 5   \| 2026-03-02 09:00    \|
+75.                                                                                                                     **[Text]** Filter:
 
-76.                                                                                                                                                                                                   **[Button]** Retry Now
+76.                                                                                                                     **[Panel]** SUB ID  \| USER           \| ATTEMPT \| NEXT TRY            \| ACTIONS
 
-77.       **[Text]** Variant A (Green) \| 35%      \| 150/950     \| $7,200.00     \| 96% ⭐ WINNER
+77.       **[Text]** ARM PERFORMANCE (ab_test_arms + ab_test_arm_stats)
 
-78.                                                                                                                                                                                                   **[Button]** Cancel Sub
+78.                                                                                                                     **[Text]** sub_8821 \| user_... (iOS)  \| 3 / 5   \| 2026-03-01 14:00    \|
 
-79.       **[Text]** Variant B (Red)   \| 25%      \| 80/600      \| $3,100.00     \| 45%
+79.                                                                                                                                                                                                   **[Button]** Retry Now
 
-80.                                                                                                                     **[Text]** WEBHOOK INBOX (webhook_events)&#10;Unprocessed: 12  \|  Failed: 0
+80.       **[Panel]** ARM NAME          \| TRAFFIC% \| CONVERSIONS \| REVENUE (USD) \| CONFIDENCE
 
-81.       **[Button]** Edit Weights
+81.                                                                                                                                                                                                   **[Button]** Grant Grace
 
-82.                                                                                       **[Button]** Stop Test
+82.       **[Text]** Control (Blue)    \| 40%      \| 120/1000    \| $5,400.00     \| 88%
 
-83.                                                                                                                     **[Panel]** PROVIDER \| EVENT TYPE                \| RECEIVED          \| STATUS    \| ACTIONS
+83.                                                                                                                     **[Text]** sub_9932 \| user_... (Web)  \| 1 / 5   \| 2026-03-02 09:00    \|
 
-84.       **[Panel]** CONTEXTUAL WEIGHTS (LinUCB Theta Vector)&#10;Country: [US: 0.8] [UK: 0.5]&#10;Device:  [iOS: 0.9] [Web: 0.4]&#10;[Visualize Decision Boundary]
+84.                                                                                                                                                                                                   **[Button]** Retry Now
 
-85.                                                       **[Panel]** DELAYED FEEDBACK QUEUE (bandit_pending_rewards)&#10;45 Users assigned, awaiting tx confirmation&#10;Avg Conversion Time: 15 mins&#10;[Force Process Pending]
+85.       **[Text]** Variant A (Green) \| 35%      \| 150/950     \| $7,200.00     \| 96% ⭐ WINNER
 
-86.                                                                                                                     **[Text]** Stripe  \| invoice.payment_failed    \| 2026-03-01 13:48  \| Pending
+86.                                                                                                                                                                                                   **[Button]** Cancel Sub
 
-87.                                                                                                                                                                                               **[Button]** Process Manual
+87.       **[Text]** Variant B (Red)   \| 25%      \| 80/600      \| $3,100.00     \| 45%
 
-88.                                                                                                                     **[Text]** Apple   \| RENEWAL                  \| 2026-03-01 13:45  \| ✅ Processed
+88.                                                                                                                     **[Text]** WEBHOOK INBOX (webhook_events)&#10;Unprocessed: 12  \|  Failed: 0
 
-89.                                                                                                                                                                                               **[Button]** View Payload
+89.       **[Button]** Edit Weights
 
-90.                                                                                                                     **[Panel]** MATOMO EVENT STAGING (matomo_staged_events)&#10;Queue Depth: 150  \|  Failed Retries: 5
+90.                                                                                       **[Button]** Stop Test
 
-91.                                                                                                                     **[Link]** View Staged Events
+91.                                                                                                                     **[Panel]** PROVIDER \| EVENT TYPE                \| RECEIVED          \| STATUS    \| ACTIONS
 
-92.       **[Text]** EVENT LOG (bandit_window_events)
+92.       **[Panel]** CONTEXTUAL WEIGHTS (LinUCB Theta Vector)&#10;Country: [US: 0.8] [UK: 0.5]&#10;Device:  [iOS: 0.9] [Web: 0.4]&#10;[Visualize Decision Boundary]
 
-93.       **[Text]** [13:48] usr_... converted on Arm Variant A ($49.99)
+93.                                                       **[Panel]** DELAYED FEEDBACK QUEUE (bandit_pending_rewards)&#10;45 Users assigned, awaiting tx confirmation&#10;Avg Conversion Time: 15 mins&#10;[Force Process Pending]
 
-94.       **[Text]** [13:47] usr_... impression on Arm Control
+94.                                                                                                                     **[Text]** Stripe  \| invoice.payment_failed    \| 2026-03-01 13:48  \| Pending
 
-95.     **[Desktop Frame]** 5. Pricing Tiers Manager
+95.                                                                                                                                                                                               **[Button]** Process Manual
 
-96.                                                                                                                   **[Desktop Frame]** 6. User List + Advanced Filters
+96.                                                                                                                     **[Text]** Apple   \| RENEWAL                  \| 2026-03-01 13:45  \| ✅ Processed
 
-97.                                                                                         **[Button]** + Add New Tier
+97.                                                                                                                                                                                               **[Button]** View Payload
 
-98.                                                                                                                                                                                                           **[Button]** Export CSV
+98.                                                                                                                     **[Panel]** MATOMO EVENT STAGING (matomo_staged_events)&#10;Queue Depth: 150  \|  Failed Retries: 5
 
-99.       **[Text]** PRICING TIERS MANAGER
+99.                                                                                                                     **[Link]** View Staged Events
 
-100.                                                                                                                     **[Text]** USER LIST
+100.       **[Text]** EVENT LOG (bandit_window_events)
 
-101.                                                                                                                     **[Input]** Search by email / platform_user_id...
+101.       **[Text]** [13:48] usr_... converted on Arm Variant A ($49.99)
 
-102.                                                                                                                                                           **[Dropdown]** Platform: All
+102.       **[Text]** [13:47] usr_... impression on Arm Control
 
-103.                                                                                                                                                                             **[Dropdown]** Role: All
+103.     **[Desktop Frame]** 5. Pricing Tiers Manager
 
-104.                                                                                                                                                                                           **[Dropdown]** Sub Status: All
+104.                                                                                                                   **[Desktop Frame]** 6. User List + Advanced Filters
 
-105.       **[Panel]** BASIC&#10;Monthly: $9.99&#10;Annual: $99.99&#10;─────────────&#10;✓ 5 Projects&#10;✓ Email Support&#10;✗ API Access&#10;✗ Analytics&#10;─────────────&#10;Status: ACTIVE
+105.                                                                                         **[Button]** + Add New Tier
 
-106.                                     **[Panel]** PRO ⭐&#10;Monthly: $29.99&#10;Annual: $299.99&#10;─────────────&#10;✓ Unlimited Projects&#10;✓ Priority Support&#10;✓ API Access&#10;✗ Custom Analytics&#10;─────────────&#10;Status: ACTIVE
+106.                                                                                                                                                                                                           **[Button]** Export CSV
 
-107.                                                                   **[Panel]** ENTERPRISE&#10;Monthly: $99.99&#10;Annual: $999.99&#10;─────────────&#10;✓ All Pro Features&#10;✓ Dedicated Support&#10;✓ Custom Analytics&#10;✓ SLA 99.99%&#10;─────────────&#10;Status: ACTIVE
+107.       **[Text]** PRICING TIERS MANAGER
 
-108.                                                                                                                     **[Input]** LTV Min $
+108.                                                                                                                     **[Text]** USER LIST
 
-109.                                                                                                                                   **[Input]** LTV Max $
+109.                         **[Text]** 🏠 Home  ›  ⚙️ Config  ›  Pricing Tiers
 
-110.                                                                                                                     **[Button]** Bulk: Cancel Subscriptions
+110.                                                                                                                                       **[Text]** 🏠 Home  ›  👥 User Management  ›  User List
 
-111.                                                                                                                                               **[Button]** Bulk: Grant Grace
+111.                                                                                                                     **[Input]** Search by email / platform_user_id...
 
-112.                                                                                                                     **[Panel]** ☐ \| Email              \| Platform \| Role  \| LTV($) \| Sub Status \| Created    \| Actions
+112.                                                                                                                                                           **[Dropdown]** Platform: All
 
-113.                                                                                                                     **[Text]** ☐ \| alice@ex.com       \| iOS      \| user  \| $124.5 \| ✅ Active  \| 2025-01-15 \| [View]
+113.                                                                                                                                                                             **[Dropdown]** Role: All
 
-114.                                                                                                                     **[Text]** ☐ \| bob@ex.com         \| Android  \| user  \| $48.00 \| 🔶 Grace   \| 2025-03-01 \| [View]
+114.                                                                                                                                                                                           **[Dropdown]** Sub Status: All
 
-115.                                                                                                                     **[Text]** ☐ \| carol@ex.com       \| iOS      \| admin \| $890.0 \| ✅ Active  \| 2024-11-05 \| [View]
+115.       **[Panel]** BASIC&#10;Monthly: $9.99&#10;Annual: $99.99&#10;─────────────&#10;✓ 5 Projects&#10;✓ Email Support&#10;✗ API Access&#10;✗ Analytics&#10;─────────────&#10;Status: ACTIVE
 
-116.       **[Button]** Edit
+116.                                     **[Panel]** PRO ⭐&#10;Monthly: $29.99&#10;Annual: $299.99&#10;─────────────&#10;✓ Unlimited Projects&#10;✓ Priority Support&#10;✓ API Access&#10;✗ Custom Analytics&#10;─────────────&#10;Status: ACTIVE
 
-117.                   **[Button]** Soft Delete
+117.                                                                   **[Panel]** ENTERPRISE&#10;Monthly: $99.99&#10;Annual: $999.99&#10;─────────────&#10;✓ All Pro Features&#10;✓ Dedicated Support&#10;✓ Custom Analytics&#10;✓ SLA 99.99%&#10;─────────────&#10;Status: ACTIVE
 
-118.                                     **[Button]** Edit
+118.     **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   ▶ 💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-119.                                                     **[Button]** Soft Delete
+119.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   ▶ 👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-120.                                                                   **[Button]** Edit
+120.                                                                                                                     **[Input]** LTV Min $
 
-121.                                                                                   **[Button]** Soft Delete
+121.                                                                                                                                   **[Input]** LTV Max $
 
-122.                                                                                                                     **[Text]** ☐ \| dave@ex.com        \| Android  \| user  \| $0.00  \| ❌ Expired \| 2025-06-20 \| [View]
+122.                                                                                                                     **[Button]** Bulk: Cancel Subscriptions
 
-123.                                                                                                                     **[Text]** ☐ \| eve@ex.com         \| iOS      \| user  \| $210.0 \| ⚠ Dunning  \| 2025-02-10 \| [View]
+123.                                                                                                                                               **[Button]** Bulk: Grant Grace
 
-124.       **[Text]** EDIT TIER (pricing_tiers)
+124.                                                                                                                     **[Panel]** ☐ \| Email              \| Platform \| Role  \| LTV($) \| Sub Status \| Created    \| Actions
 
-125.       **[Input]** Tier Name
+125.                                                                                                                     **[Text]** ☐ \| alice@ex.com       \| iOS      \| user  \| $124.5 \| ✅ Active  \| 2025-01-15 \| [View]
 
-126.                                                   **[Input]** Description
+126.                                                                                                                     **[Text]** ☐ \| bob@ex.com         \| Android  \| user  \| $48.00 \| 🔶 Grace   \| 2025-03-01 \| [View]
 
-127.                                                                                                                     **[Text]** ← 1  2  3 ... 142 →     Showing 1-5 of 14,205 users
+127.                                                                                                                     **[Text]** ☐ \| carol@ex.com       \| iOS      \| admin \| $890.0 \| ✅ Active  \| 2024-11-05 \| [View]
 
-128.       **[Input]** Monthly Price ($)
+128.       **[Button]** Edit
 
-129.                                 **[Input]** Annual Price ($)
+129.                   **[Button]** Soft Delete
 
-130.                                                         **[Dropdown]** USD
+130.                                     **[Button]** Edit
 
-131.                                                                         **[Switch]** Active
+131.                                                     **[Button]** Soft Delete
 
-132.       **[Panel]** Features (JSONB)&#10;{ "projects": 5, "api_access": false, "analytics": false }
+132.                                                                   **[Button]** Edit
 
-133.       **[Tab Bar]** PREVIEW: iOS
+133.                                                                                   **[Button]** Soft Delete
 
-134.                         **[Tab Bar]** Android
+134.                                                                                                                     **[Text]** ☐ \| dave@ex.com        \| Android  \| user  \| $0.00  \| ❌ Expired \| 2025-06-20 \| [View]
 
-135.                                             **[Tab Bar]** Web
+135.                                                                                                                     **[Text]** ☐ \| eve@ex.com         \| iOS      \| user  \| $210.0 \| ⚠ Dunning  \| 2025-02-10 \| [View]
 
-136.       **[Button]** Save Changes
+136.       **[Text]** EDIT TIER (pricing_tiers)
 
-137.                           **[Button]** Cancel
+137.       **[Input]** Tier Name
 
-138.     **[Desktop Frame]** 7. Subscription Management List
+138.                                                   **[Input]** Description
 
-139.                                                                                                                   **[Desktop Frame]** 8. Transaction Reconciliation
+139.                                                                                                                     **[Text]** ← 1  2  3 ... 142 →     Showing 1-5 of 14,205 users
 
-140.       **[Text]** SUBSCRIPTION MANAGEMENT
+140.       **[Input]** Monthly Price ($)
 
-141.                                                                                                                     **[Text]** TRANSACTION RECONCILIATION
+141.                                 **[Input]** Annual Price ($)
 
-142.       **[Dropdown]** Status: All
+142.                                                         **[Dropdown]** USD
 
-143.                         **[Dropdown]** Source: All
+143.                                                                         **[Switch]** Active
 
-144.                                         **[Dropdown]** Plan: All
+144.       **[Panel]** Features (JSONB)&#10;{ "projects": 5, "api_access": false, "analytics": false }
 
-145.                                                         **[Input]** Expires from
+145.       **[Tab Bar]** PREVIEW: iOS
 
-146.                                                                           **[Input]** Expires to
+146.                         **[Tab Bar]** Android
 
-147.                                                                                                                     **[Input]** Status ($) \| receipt_hash / provider_tx_id...
+147.                                             **[Tab Bar]** Web
 
-148.                                                                                                                                                             **[Dropdown]** Status: All
+148.       **[Button]** Save Changes
 
-149.                                                                                                                                                                             **[Dropdown]** Currency: All
+149.                           **[Button]** Cancel
 
-150.                                                                                                                                                                                             **[Input]** Date from
+150.     **[Desktop Frame]** 7. Subscription Management List
 
-151.                                                                                                                                                                                                           **[Input]** Date to
+151.                                                                                                                   **[Desktop Frame]** 8. Transaction Reconciliation
 
-152.       **[Button]** Bulk: Cancel
+152.       **[Text]** SUBSCRIPTION MANAGEMENT
 
-153.                         **[Button]** Bulk: Renew
+153.                                                                                                                     **[Text]** TRANSACTION RECONCILIATION
 
-154.                                                                                                                     **[Panel]** TOTAL: $48,234 \| ✅ Success: 1,021 \| ❌ Failed: 43 \| 🔄 Refunded: 12
+154.                         **[Text]** 🏠 Home  ›  💰 Revenue Ops  ›  Subscriptions
 
-155.       **[Panel]** ☐ \| User \| Status \| Source \| Plan \| Expires \| Next Billing \| Grace/Dunning \| Actions
+155.                                                                                                                                       **[Text]** 🏠 Home  ›  💰 Revenue Ops  ›  Transactions
 
-156.                                                                                                                     **[Panel]** Date       \| User          \| Amount  \| Currency \| Status     \| Source \| Actions
+156.       **[Dropdown]** Status: All
 
-157.       **[Text]** ☐ \| alice@ex.com \| ✅ Active  \| apple  \| Pro Annual  \| 2026-01-15 \| 2026-01-15 \| —           \| [Manage]
+157.                         **[Dropdown]** Source: All
 
-158.                                                                                                                     **[Text]** 2025-07-01 \| alice@ex.com  \| $9.99   \| USD      \| ✅ success  \| apple  \| [Refund]
+158.                                         **[Dropdown]** Plan: All
 
-159.       **[Text]** ☐ \| bob@ex.com   \| 🔶 Grace   \| google \| Basic Month \| 2025-07-01 \| Retry 3    \| Grace 5d    \| [Manage]
+159.                                                         **[Input]** Expires from
 
-160.                                                                                                                     **[Text]** 2025-06-28 \| bob@ex.com    \| $29.99  \| USD      \| ❌ failed   \| google \| [Retry]
+160.                                                                           **[Input]** Expires to
 
-161.       **[Text]** ☐ \| carol@ex.com \| ⚠ Dunning  \| web    \| Pro Month   \| 2025-06-15 \| Retry 1    \| Dunning 2/5 \| [Manage]
+161.                                                                                                                     **[Input]** Status ($) \| receipt_hash / provider_tx_id...
 
-162.                                                                                                                     **[Text]** 2025-06-25 \| carol@ex.com  \| $99.99  \| USD      \| 🔄 refunded \| apple  \| [View]
+162.                                                                                                                                                             **[Dropdown]** Status: All
 
-163.       **[Text]** ☐ \| dave@ex.com  \| ❌ Expired \| apple  \| Basic Month \| 2025-05-01 \| —          \| —           \| [Manage]
+163.                                                                                                                                                                             **[Dropdown]** Currency: All
 
-164.                                                                                                                     **[Text]** 2025-06-20 \| dave@ex.com   \| $9.99   \| USD      \| ❌ failed   \| web    \| [Retry]
+164.                                                                                                                                                                                             **[Input]** Date from
 
-165.       **[Text]** ☐ \| eve@ex.com   \| 🔶 Grace   \| google \| Ent Annual  \| 2025-08-20 \| Retry 2    \| Grace 3d    \| [Manage]
+165.                                                                                                                                                                                                           **[Input]** Date to
 
-166.                                                                                                                     **[Text]** 2025-06-18 \| eve@ex.com    \| $299.99 \| USD      \| ✅ success  \| apple  \| [Refund]
+166.     **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   ▶ 💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-167.       **[Text]** ← 1  2  3 ... 89 →     Showing 1-5 of 4,427 subscriptions
+167.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   ▶ 💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-168.                                                                                                                     **[Text]** ← 1  2  3 ... 217 →     Showing 1-5 of 1,076 transactions
+168.       **[Button]** Bulk: Cancel
 
-169.     **[Desktop Frame]** 9. WINBACK CAMPAIGN BUILDER
+169.                         **[Button]** Bulk: Renew
 
-170.                                                                                                                   **[Desktop Frame]** 10. DUNNING CAMPAIGN CONFIG
+170.                                                                                                                     **[Panel]** TOTAL: $48,234 \| ✅ Success: 1,021 \| ❌ Failed: 43 \| 🔄 Refunded: 12
 
-171.                                                                                         **[Button]** + New Campaign
+171.       **[Panel]** ☐ \| User \| Status \| Source \| Plan \| Expires \| Next Billing \| Grace/Dunning \| Actions
 
-172.                                                                                                                                                                                                       **[Button]** + Add Retry Rule
+172.                                                                                                                     **[Panel]** Date       \| User          \| Amount  \| Currency \| Status     \| Source \| Actions
 
-173.       **[Text]** WINBACK CAMPAIGN BUILDER
+173.       **[Text]** ☐ \| alice@ex.com \| ✅ Active  \| apple  \| Pro Annual  \| 2026-01-15 \| 2026-01-15 \| —           \| [Manage]
 
-174.                                                                                                                     **[Text]** DUNNING CAMPAIGN CONFIG
+174.                                                                                                                     **[Text]** 2025-07-01 \| alice@ex.com  \| $9.99   \| USD      \| ✅ success  \| apple  \| [Refund]
 
-175.       **[Panel]** CAMPAIGNS LIST
+175.       **[Text]** ☐ \| bob@ex.com   \| 🔶 Grace   \| google \| Basic Month \| 2025-07-01 \| Retry 3    \| Grace 5d    \| [Manage]
 
-176.                                       **[Panel]** EDIT CAMPAIGN
+176.                                                                                                                     **[Text]** 2025-06-28 \| bob@ex.com    \| $29.99  \| USD      \| ❌ failed   \| google \| [Retry]
 
-177.                                                                                                                     **[Text]** RETRY RULES  (dunning table)
+177.       **[Text]** ☐ \| carol@ex.com \| ⚠ Dunning  \| web    \| Pro Month   \| 2025-06-15 \| Retry 1    \| Dunning 2/5 \| [Manage]
 
-178.       **[Text]** 🟢 Summer Winback 2025
+178.                                                                                                                     **[Text]** 2025-06-25 \| carol@ex.com  \| $99.99  \| USD      \| 🔄 refunded \| apple  \| [View]
 
-179.                                         **[Input]** Campaign Name
+179.       **[Text]** ☐ \| dave@ex.com  \| ❌ Expired \| apple  \| Basic Month \| 2025-05-01 \| —          \| —           \| [Manage]
 
-180.                                                                                                                     **[Panel]** Attempt \| Interval (days) \| Action          \| Notification Template \| Edit
+180.                                                                                                                     **[Text]** 2025-06-20 \| dave@ex.com   \| $9.99   \| USD      \| ❌ failed   \| web    \| [Retry]
 
-181.       **[Text]** 30% off · Expires 2025-09-01
+181.       **[Text]** ☐ \| eve@ex.com   \| 🔶 Grace   \| google \| Ent Annual  \| 2025-08-20 \| Retry 2    \| Grace 3d    \| [Manage]
 
-182.                                         **[Dropdown]** Discount Type: percentage
+182.                                                                                                                     **[Text]** 2025-06-18 \| eve@ex.com    \| $299.99 \| USD      \| ✅ success  \| apple  \| [Refund]
 
-183.                                                               **[Input]** Value: 30
+183.       **[Text]** ← 1  2  3 ... 89 →     Showing 1-5 of 4,427 subscriptions
 
-184.                                                                                                                     **[Text]** 1       \| 1                \| retry_charge    \| payment_failed_1.html \| [Edit]
+184.                                                                                                                     **[Text]** ← 1  2  3 ... 217 →     Showing 1-5 of 1,076 transactions
 
-185.       **[Text]** 🟡 Q2 Re-Engage
+185.     **[Desktop Frame]** 9. WINBACK CAMPAIGN BUILDER
 
-186.                                                                                                                     **[Text]** 2       \| 3                \| retry_charge    \| payment_failed_2.html \| [Edit]
+186.                                                                                                                   **[Desktop Frame]** 10. DUNNING CAMPAIGN CONFIG
 
-187.                                         **[Text]** TARGETING: Churned Users
+187.                                                                                         **[Button]** + New Campaign
 
-188.       **[Text]** $5 fixed · Draft
+188.                                                                                                                                                                                                       **[Button]** + Add Retry Rule
 
-189.                                         **[Input]** Churned days ago min
+189.       **[Text]** WINBACK CAMPAIGN BUILDER
 
-190.                                                             **[Input]** Churned days ago max
+190.                                                                                                                     **[Text]** DUNNING CAMPAIGN CONFIG
 
-191.                                                                                   **[Dropdown]** Platform filter: All
+191.                         **[Text]** 🏠 Home  ›  💰 Revenue Ops  ›  Winback Campaigns
 
-192.                                                                                                                     **[Text]** 3       \| 7                \| retry_charge    \| payment_failed_3.html \| [Edit]
+192.                                                                                                                                       **[Text]** 🏠 Home  ›  💰 Revenue Ops  ›  Dunning Campaign Config
 
-193.       **[Text]** ⚫ Holiday 2024
+193.       **[Panel]** CAMPAIGNS LIST
 
-194.                                                                                                                     **[Text]** 4       \| 14               \| cancel_sub      \| final_notice.html     \| [Edit]
+194.                                       **[Panel]** EDIT CAMPAIGN
 
-195.                                         **[Input]** Expires At
+195.                                                                                                                     **[Text]** RETRY RULES  (dunning table)
 
-196.                                                               **[Switch]** Enable A/B Test
+196.     **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   ▶ 🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-197.       **[Text]** 50% off · Ended 2025-01-01
+197.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ▶ ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-198.                                                                                                                     **[Text]** GRACE PERIOD CONFIG  (grace_periods table)
+198.       **[Text]** 🟢 Summer Winback 2025
 
-199.                                         **[Panel]** A/B TEST CONFIG
+199.                                         **[Input]** Campaign Name
 
-200.                                         **[Text]** Arm A: 30% off (control) — 50%
+200.                                                                                                                     **[Panel]** Attempt \| Interval (days) \| Action          \| Notification Template \| Edit
 
-201.                                                                                                                     **[Input]** Grace Duration (days): 7
+201.       **[Text]** 30% off · Expires 2025-09-01
 
-202.                                                                                                                                             **[Input]** Max grace periods: 2
+202.                                         **[Dropdown]** Discount Type: percentage
 
-203.                                                                                                                                                                     **[Switch]** Notify on grace start
+203.                                                               **[Input]** Value: 30
 
-204.                                         **[Text]** Arm B: 50% off (variant) — 50%
+204.                                                                                                                     **[Text]** 1       \| 1                \| retry_charge    \| payment_failed_1.html \| [Edit]
 
-205.                                                                                                                     **[Text]** ESCALATION RULES
+205.       **[Text]** 🟡 Q2 Re-Engage
 
-206.                                         **[Input]** winner_confidence threshold: 0.95
+206.                                                                                                                     **[Text]** 2       \| 3                \| retry_charge    \| payment_failed_2.html \| [Edit]
 
-207.                                                                                                                     **[Text]** After 4 failed attempts → winback_offer (auto)
+207.                                         **[Text]** TARGETING: Churned Users
 
-208.                                                                                                                     **[Text]** After grace end → admin_alert + cancel
+208.       **[Text]** $5 fixed · Draft
 
-209.                                         **[Panel]** PREVIEW CARD
+209.                                         **[Input]** Churned days ago min
 
-210.                                                                                                                     **[Panel]** FLOW PREVIEW
+210.                                                             **[Input]** Churned days ago max
 
-211.                                         **[Text]** 📱 We miss you! Get 30% back
+211.                                                                                   **[Dropdown]** Platform filter: All
 
-212.                                                                                                                     **[Text]** ❌ Payment fails  →  Day +1: Retry #1  →  Day +3: Retry #2
+212.                                                                                                                     **[Text]** 3       \| 7                \| retry_charge    \| payment_failed_3.html \| [Edit]
 
-213.                                         **[Button]** Subscribe for $6.99/mo (was $9.99)
+213.       **[Text]** ⚫ Holiday 2024
 
-214.                                                                                                                     **[Text]** → Day +7: Retry #3  →  Day +14: Cancel  →  Winback offer sent
+214.                                                                                                                     **[Text]** 4       \| 14               \| cancel_sub      \| final_notice.html     \| [Edit]
 
-215.                                         **[Text]** Eligible users: ~1,247  \|  Est. conversions: 87
+215.                                         **[Input]** Expires At
 
-216.                                                                                                                     **[Panel]** CURRENTLY IN DUNNING: 43 users  \|  Grace: 28 users
+216.                                                               **[Switch]** Enable A/B Test
 
-217.                                                                                                                     **[Button]** Save Config
+217.       **[Text]** 50% off · Ended 2025-01-01
 
-218.                                                                                                                                           **[Button]** Preview Email Template
+218.                                                                                                                     **[Text]** GRACE PERIOD CONFIG  (grace_periods table)
 
-219.                                         **[Button]** Save Campaign
+219.                                         **[Panel]** A/B TEST CONFIG
 
-220.                                                               **[Button]** Launch Now
+220.                                         **[Text]** Arm A: 30% off (control) — 50%
 
-221.                                                                                   **[Button]** Cancel
+221.                                                                                                                     **[Input]** Grace Duration (days): 7
 
-222.     **[Desktop Frame]** 11. ANALYTICS REPORTS DASHBOARD
+222.                                                                                                                                             **[Input]** Max grace periods: 2
 
-223.                                                                                                                   **[Desktop Frame]** 12. A/B TEST DISCOVERY LIST
+223.                                                                                                                                                                     **[Switch]** Notify on grace start
 
-224.                                                                                                                                                                                                       **[Button]** + New Test
+224.                                         **[Text]** Arm B: 50% off (variant) — 50%
 
-225.       **[Text]** ANALYTICS REPORTS DASHBOARD
+225.                                                                                                                     **[Text]** ESCALATION RULES
 
-226.                                                                                                                     **[Text]** A/B TEST DISCOVERY LIST
+226.                                         **[Input]** winner_confidence threshold: 0.95
 
-227.       **[Dropdown]** Date Range: Last 30 days
+227.                                                                                                                     **[Text]** After 4 failed attempts → winback_offer (auto)
 
-228.                                   **[Dropdown]** Dimension: All
+228.                                                                                                                     **[Text]** After grace end → admin_alert + cancel
 
-229.                                                                                 **[Button]** Export PNG
+229.                                         **[Panel]** PREVIEW CARD
 
-230.                                                                                             **[Button]** Export PDF
+230.                                                                                                                     **[Panel]** FLOW PREVIEW
 
-231.                                                                                                                     **[Tab Bar]** All
+231.                                         **[Text]** 📱 We miss you! Get 30% back
 
-232.                                                                                                                                 **[Tab Bar]** 🟢 Running (3)
+232.                                                                                                                     **[Text]** ❌ Payment fails  →  Day +1: Retry #1  →  Day +3: Retry #2
 
-233.                                                                                                                                                   **[Tab Bar]** 🟡 Draft (2)
+233.                                         **[Button]** Subscribe for $6.99/mo (was $9.99)
 
-234.                                                                                                                                                                 **[Tab Bar]** ⚫ Completed (7)
+234.                                                                                                                     **[Text]** → Day +7: Retry #3  →  Day +14: Cancel  →  Winback offer sent
 
-235.       **[Panel]** MRR: $12,450  ▲ +8.3%
+235.                                         **[Text]** Eligible users: ~1,247  \|  Est. conversions: 87
 
-236.                             **[Panel]** Churn Rate: 2.1%  ▼ -0.4%
+236.                                                                                                                     **[Panel]** CURRENTLY IN DUNNING: 43 users  \|  Grace: 28 users
 
-237.                                                   **[Panel]** LTV: $184.2  ▲ +12.1%
+237.                                                                                                                     **[Button]** Save Config
 
-238.                                                                           **[Panel]** New Subs: 412  ▲ +5.7%
+238.                                                                                                                                           **[Button]** Preview Email Template
 
-239.                                                                                                                     **[Panel]** Pricing A/B: Pro Annual vs Monthly Push
+239.                                         **[Button]** Save Campaign
 
-240.                                                                                                                     **[Text]** 🟢 Running  \|  Type: pricing  \|  Arms: 2  \|  Samples: 1,204
+240.                                                               **[Button]** Launch Now
 
-241.                                                                                                                     **[Text]** Confidence: 0.87 / 0.95 threshold  \|  Started: 2025-06-01
+241.                                                                                   **[Button]** Cancel
 
-242.                                                                                                                     **[Link]** View Details
+242.     **[Desktop Frame]** 11. ANALYTICS REPORTS DASHBOARD
 
-243.                                                                                                                                     **[Button]** Stop Test
+243.                                                                                                                   **[Desktop Frame]** 12. A/B TEST DISCOVERY LIST
 
-244.       **[Panel]** MRR TREND  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+244.                                                                                                                                                                                                       **[Button]** + New Test
 
-245.       **[Text]** $10k ─────────────────────────────────────
+245.       **[Text]** ANALYTICS REPORTS DASHBOARD
 
-246.                                                                                                                     **[Panel]** Winback Discount: 30% vs 50%
+246.                                                                                                                     **[Text]** A/B TEST DISCOVERY LIST
 
-247.       **[Text]** $8k  ─────────────────────────────────────
+247.                         **[Text]** 🏠 Home  ›  📊 Monitoring  ›  Analytics Reports
 
-248.                                                                                                                     **[Text]** 🟢 Running  \|  Type: winback  \|  Arms: 2  \|  Samples: 632
+248.                                                                                                                                       **[Text]** 🏠 Home  ›  🧪 Experiments  ›  A/B Test Discovery
 
-249.                                                                                                                     **[Text]** Confidence: 0.71 / 0.95 threshold  \|  Started: 2025-06-15
+249.       **[Dropdown]** Date Range: Last 30 days
 
-250.                                                                                                                     **[Link]** View Details
+250.                                   **[Dropdown]** Dimension: All
 
-251.                                                                                                                                     **[Button]** Stop Test
+251.                                                                                 **[Button]** Export PNG
 
-252.       **[Text]** Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
+252.                                                                                             **[Button]** Export PDF
 
-253.       **[Panel]** CHURN BY PLATFORM
+253.                                                                                                                     **[Tab Bar]** All
 
-254.                                                       **[Panel]** REVENUE BY PLAN
+254.                                                                                                                                 **[Tab Bar]** 🟢 Running (3)
 
-255.                                                                                                                     **[Panel]** Onboarding CTA: Modal vs Inline
+255.                                                                                                                                                   **[Tab Bar]** 🟡 Draft (2)
 
-256.                                                                                                                     **[Text]** 🟡 Draft   \|  Type: paywall   \|  Arms: 2  \|  Samples: —
+256.                                                                                                                                                                 **[Tab Bar]** ⚫ Completed (7)
 
-257.       **[Text]** iOS     ████████████ 1.8%
+257.     **[Panel]** 📊 MONITORING   🏠 Dashboard   ▶ 📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-258.                                                         **[Text]** Pro Annual    $7,200  (58%)
+258.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   ▶ 🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-259.                                                                                                                     **[Text]** Not started  \|  Created: 2025-07-01
+259.       **[Panel]** MRR: $12,450  ▲ +8.3%
 
-260.       **[Text]** Android ████████████████ 2.4%
+260.                             **[Panel]** Churn Rate: 2.1%  ▼ -0.4%
 
-261.                                                         **[Text]** Basic Monthly $3,100  (25%)
+261.                                                   **[Panel]** LTV: $184.2  ▲ +12.1%
 
-262.                                                                                                                     **[Link]** Edit Draft
+262.                                                                           **[Panel]** New Subs: 412  ▲ +5.7%
 
-263.                                                                                                                                   **[Button]** Launch
+263.                                                                                                                     **[Panel]** Pricing A/B: Pro Annual vs Monthly Push
 
-264.       **[Text]** Web     ██████████ 1.5%
+264.                                                                                                                     **[Text]** 🟢 Running  \|  Type: pricing  \|  Arms: 2  \|  Samples: 1,204
 
-265.                                                         **[Text]** Enterprise    $2,150  (17%)
+265.                                                                                                                     **[Text]** Confidence: 0.87 / 0.95 threshold  \|  Started: 2025-06-01
 
-266.                                                                                                                     **[Text]** ← 1  2  3 →     Showing 1-3 of 12 tests
+266.                                                                                                                     **[Link]** View Details
 
-267.       **[Panel]** period \| metric \| value \| dimensions \| [Drill]
+267.                                                                                                                                     **[Button]** Stop Test
 
-268.       **[Text]** 2025-06 \| mrr        \| 12450 \| {plan:pro}   \| [Drill]
+268.       **[Panel]** MRR TREND  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-269.       **[Text]** 2025-06 \| churn_rate \| 0.021 \| {platform:ios}\| [Drill]
+269.       **[Text]** $10k ─────────────────────────────────────
 
-270.     **[Desktop Frame]** 13. WEBHOOK EVENT INSPECTOR
+270.                                                                                                                     **[Panel]** Winback Discount: 30% vs 50%
 
-271.                                                                                                                   **[Desktop Frame]** 14. MATOMO QUEUE MONITOR
+271.       **[Text]** $8k  ─────────────────────────────────────
 
-272.       **[Text]** WEBHOOK EVENT INSPECTOR
+272.                                                                                                                     **[Text]** 🟢 Running  \|  Type: winback  \|  Arms: 2  \|  Samples: 632
 
-273.                                                                                                                     **[Text]** MATOMO QUEUE MONITOR
+273.                                                                                                                     **[Text]** Confidence: 0.71 / 0.95 threshold  \|  Started: 2025-06-15
 
-274.       **[Panel]** EVENT LIST
+274.                                                                                                                     **[Link]** View Details
 
-275.                                           **[Panel]** EVENT DETAIL
+275.                                                                                                                                     **[Button]** Stop Test
 
-276.                                                                                                                     **[Panel]** ⏳ Pending: 312  \|  ⚙ Processing: 8  \|  ❌ Failed: 27  \|  ✅ Done: 14,821
+276.       **[Text]** Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
 
-277.       **[Input]** Search event_type / idempotency_key...
+277.       **[Panel]** CHURN BY PLATFORM
 
-278.                                           **[Text]** ID: evt_abc123  \|  Type: PAYMENT_FAILED  \|  Provider: google
+278.                                                       **[Panel]** REVENUE BY PLAN
 
-279.                                                                                                                     **[Dropdown]** Status: All
+279.                                                                                                                     **[Panel]** Onboarding CTA: Modal vs Inline
 
-280.                                                                                                                                       **[Input]** retry_count ≥
+280.                                                                                                                     **[Text]** 🟡 Draft   \|  Type: paywall   \|  Arms: 2  \|  Samples: —
 
-281.                                                                                                                                                       **[Input]** Date from
+281.       **[Text]** iOS     ████████████ 1.8%
 
-282.                                           **[Text]** Status: ❌ failed  \|  retry_count: 2  \|  Received: 2025-07-01 12:15:44
+282.                                                         **[Text]** Pro Annual    $7,200  (58%)
 
-283.       **[Dropdown]** Status: All
+283.                                                                                                                     **[Text]** Not started  \|  Created: 2025-07-01
 
-284.                         **[Dropdown]** Provider: All
+284.       **[Text]** Android ████████████████ 2.4%
 
-285.                                           **[Text]** Idempotency Key: goog-pay-fail-u8821-1751371344
+285.                                                         **[Text]** Basic Monthly $3,100  (25%)
 
-286.                                                                                                                     **[Button]** Force Retry Selected
+286.                                                                                                                     **[Link]** Edit Draft
 
-287.                                                                                                                                           **[Button]** Delete Failed
+287.                                                                                                                                   **[Button]** Launch
 
-288.       **[Text]** ✅ SUBSCRIPTION_RENEWED · apple
+288.       **[Text]** Web     ██████████ 1.5%
 
-289.                                           **[Text]** Error: payment_method_declined — card ending 4242
+289.                                                         **[Text]** Enterprise    $2,150  (17%)
 
-290.                                                                                                                     **[Panel]** ☐ \| user_id      \| action_name          \| status  \| retries \| error_message           \| created_at  \| Act
+290.                                                                                                                     **[Text]** ← 1  2  3 →     Showing 1-3 of 12 tests
 
-291.       **[Text]** 2025-07-01 14:23:01
+291.       **[Panel]** period \| metric \| value \| dimensions \| [Drill]
 
-292.                                           **[Panel]** PAYLOAD (JSONB)
+292.       **[Text]** 2025-06 \| mrr        \| 12450 \| {plan:pro}   \| [Drill]
 
-293.                                             **[Text]** {
+293.       **[Text]** 2025-06 \| churn_rate \| 0.021 \| {platform:ios}\| [Drill]
 
-294.       **[Text]** ❌ PAYMENT_FAILED · google
+294.     **[Desktop Frame]** 13. WEBHOOK EVENT INSPECTOR
 
-295.                                                                                                                     **[Text]** ☐ \| usr_alice  \| PaywallView          \| ✅ done  \| 0       \| —                       \| 07-01 14:20 \| [Del]
+295.                                                                                                                   **[Desktop Frame]** 14. MATOMO QUEUE MONITOR
 
-296.                                             **[Text]**   "subscription_id": "sub_xyz789",
+296.       **[Text]** WEBHOOK EVENT INSPECTOR
 
-297.       **[Text]** 2025-07-01 12:15:44  retry: 2
+297.                                                                                                                     **[Text]** MATOMO QUEUE MONITOR
 
-298.                                                                                                                     **[Text]** ☐ \| usr_bob    \| SubscriptionPurchase \| ❌ failed \| 3       \| connection_timeout      \| 07-01 12:10 \| [Retry]
+298.                         **[Text]** 🏠 Home  ›  ⚙️ Config  ›  Webhook Inspector
 
-299.                                             **[Text]**   "user_id": "usr_bob456",
+299.                                                                                                                                       **[Text]** 🏠 Home  ›  ⚙️ Config  ›  Matomo Queue Monitor
 
-300.       **[Text]** ⏳ SUBSCRIPTION_STARTED · apple
+300.       **[Panel]** EVENT LIST
 
-301.                                                                                                                     **[Text]** ☐ \| usr_carol  \| ExperimentExposure   \| ⚙ proc   \| 1       \| —                       \| 07-01 11:55 \| [View]
+301.                                           **[Panel]** EVENT DETAIL
 
-302.                                             **[Text]**   "amount": 29.99,  "currency": "USD",
+302.                                                                                                                     **[Panel]** ⏳ Pending: 312  \|  ⚙ Processing: 8  \|  ❌ Failed: 27  \|  ✅ Done: 14,821
 
-303.       **[Text]** 2025-07-01 11:02:18  pending
+303.     **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   ▶ 📡 Webhook ⚠️12   🚩 Feature Flags
 
-304.                                                                                                                     **[Text]** ☐ \| usr_dave   \| PaywallView          \| ❌ failed \| 5       \| matomo_api_unreachable  \| 07-01 09:30 \| [Retry]
+304.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags   ▶ 📋 Matomo Queue
 
-305.                                             **[Text]**   "error_code": "payment_method_declined",
+305.       **[Input]** Search event_type / idempotency_key...
 
-306.       **[Text]** ✅ REFUND_ISSUED · web
+306.                                           **[Text]** ID: evt_abc123  \|  Type: PAYMENT_FAILED  \|  Provider: google
 
-307.                                                                                                                     **[Text]** ☐ \| usr_eve    \| GoalConversion       \| ⏳ pending\| 0       \| —                       \| 07-01 08:15 \| [View]
+307.                                                                                                                     **[Dropdown]** Status: All
 
-308.                                             **[Text]**   "provider_tx_id": "goog_tx_9912345"
+308.                                                                                                                                       **[Input]** retry_count ≥
 
-309.       **[Text]** 2025-06-30 22:45:09
+309.                                                                                                                                                       **[Input]** Date from
 
-310.                                                                                                                     **[Panel]** SLA HEALTH
+310.                                           **[Text]** Status: ❌ failed  \|  retry_count: 2  \|  Received: 2025-07-01 12:15:44
 
-311.                                             **[Text]** }
+311.       **[Dropdown]** Status: All
 
-312.                                                                                                                     **[Text]** Avg processing time: 0.8s  \|  P95: 2.3s  \|  Error rate: 0.18%
+312.                         **[Dropdown]** Provider: All
 
-313.                                                                                                                     **[Text]** Queue backlog trend ▓▓▓▓▓░░░░░░░░  (last 24h)
+313.                                           **[Text]** Idempotency Key: goog-pay-fail-u8821-1751371344
 
-314.                                                                                                                     **[Text]** ← 1  2  3 ... 67 →     Showing 1-5 of 335 staged events
+314.                                                                                                                     **[Button]** Force Retry Selected
 
-315.                                           **[Button]** Manual Replay
+315.                                                                                                                                           **[Button]** Delete Failed
 
-316.                                                               **[Button]** Mark Processed
+316.       **[Text]** ✅ SUBSCRIPTION_RENEWED · apple
 
-317.                                                                                   **[Button]** Check Idempotency
+317.                                           **[Text]** Error: payment_method_declined — card ending 4242
 
-318.     **[Desktop Frame]** 15. BANDIT CONTEXT MODEL INSPECTOR
+318.                                                                                                                     **[Panel]** ☐ \| user_id      \| action_name          \| status  \| retries \| error_message           \| created_at  \| Act
 
-319.                                                                                                                   **[Desktop Frame]** 16. ADMIN AUDIT LOG VIEWER
+319.       **[Text]** 2025-07-01 14:23:01
 
-320.       **[Text]** BANDIT CONTEXT MODEL INSPECTOR
+320.                                           **[Panel]** PAYLOAD (JSONB)
 
-321.                                                                                                                     **[Text]** ADMIN AUDIT LOG VIEWER
+321.                                             **[Text]** {
 
-322.       **[Input]** User ID
+322.       **[Text]** ❌ PAYMENT_FAILED · google
 
-323.                                                             **[Button]** Load Context
+323.                                                                                                                     **[Text]** ☐ \| usr_alice  \| PaywallView          \| ✅ done  \| 0       \| —                       \| 07-01 14:20 \| [Del]
 
-324.                                                                               **[Dropdown]** Select Arm
+324.                                             **[Text]**   "subscription_id": "sub_xyz789",
 
-325.                                                                                                                     **[Input]** Search by admin / target_id...
+325.       **[Text]** 2025-07-01 12:15:44  retry: 2
 
-326.                                                                                                                                                           **[Dropdown]** Action: All
+326.                                                                                                                     **[Text]** ☐ \| usr_bob    \| SubscriptionPurchase \| ❌ failed \| 3       \| connection_timeout      \| 07-01 12:10 \| [Retry]
 
-327.                                                                                                                                                                           **[Dropdown]** Target: All
+327.                                             **[Text]**   "user_id": "usr_bob456",
 
-328.                                                                                                                                                                                             **[Input]** Date from
+328.       **[Text]** ⏳ SUBSCRIPTION_STARTED · apple
 
-329.                                                                                                                                                                                                           **[Input]** Date to
+329.                                                                                                                     **[Text]** ☐ \| usr_carol  \| ExperimentExposure   \| ⚙ proc   \| 1       \| —                       \| 07-01 11:55 \| [View]
 
-330.       **[Panel]** USER CONTEXT FEATURES  (bandit_user_context)
+330.                                             **[Text]**   "amount": 29.99,  "currency": "USD",
 
-331.                                                   **[Panel]** FEATURE IMPORTANCE (theta vector)
+331.       **[Text]** 2025-07-01 11:02:18  pending
 
-332.                                                                                                                     **[Panel]** created_at   \| admin          \| action             \| target_type  \| target_id  \| ip_address  \| Details
+332.                                                                                                                     **[Text]** ☐ \| usr_dave   \| PaywallView          \| ❌ failed \| 5       \| matomo_api_unreachable  \| 07-01 09:30 \| [Retry]
 
-333.       **[Text]** platform:        ios
+333.                                             **[Text]**   "error_code": "payment_method_declined",
 
-334.                                                     **[Text]** ltv_bucket       ████████████ 0.82
+334.       **[Text]** ✅ REFUND_ISSUED · web
 
-335.                                                                                                                     **[Text]** 07-01 14:30 \| admin@co.com  \| cancel_subscription \| subscription \| sub_xyz \| 192.168.1.1 \| [Diff]
+335.                                                                                                                     **[Text]** ☐ \| usr_eve    \| GoalConversion       \| ⏳ pending\| 0       \| —                       \| 07-01 08:15 \| [View]
 
-336.       **[Text]** ltv_bucket:      high
+336.                                             **[Text]**   "provider_tx_id": "goog_tx_9912345"
 
-337.                                                     **[Text]** days_since_churn ████████ 0.61
+337.       **[Text]** 2025-06-30 22:45:09
 
-338.                                                                                                                     **[Text]** 07-01 13:15 \| admin@co.com  \| update_pricing_tier \| pricing_tier \| tier_pro \| 192.168.1.1 \| [Diff]
+338.                                                                                                                     **[Panel]** SLA HEALTH
 
-339.       **[Text]** days_since_churn: 12
+339.                                             **[Text]** }
 
-340.                                                     **[Text]** platform         █████ 0.44
+340.                                                                                                                     **[Text]** Avg processing time: 0.8s  \|  P95: 2.3s  \|  Error rate: 0.18%
 
-341.                                                                                                                     **[Text]** 07-01 11:00 \| ops@co.com    \| grant_grace_period  \| subscription \| sub_abc \| 10.0.0.5    \| [Diff]
+341.                                                                                                                     **[Text]** Queue backlog trend ▓▓▓▓▓░░░░░░░░  (last 24h)
 
-342.       **[Text]** country:         US
+342.                                                                                                                     **[Text]** ← 1  2  3 ... 67 →     Showing 1-5 of 335 staged events
 
-343.                                                     **[Text]** country          ███ 0.28
+343.                                           **[Button]** Manual Replay
 
-344.                                                                                                                     **[Text]** 07-01 09:45 \| admin@co.com  \| issue_refund        \| transaction  \| tx_890  \| 192.168.1.1 \| [Diff]
+344.                                                               **[Button]** Mark Processed
 
-345.       **[Text]** plan_history:    [pro, basic]
+345.                                                                                   **[Button]** Check Idempotency
 
-346.                                                     **[Text]** plan_history     ██ 0.19
+346.     **[Desktop Frame]** 15. BANDIT CONTEXT MODEL INSPECTOR
 
-347.       **[Text]** last_updated:    2025-07-01 13:42
+347.                                                                                                                   **[Desktop Frame]** 16. ADMIN AUDIT LOG VIEWER
 
-348.                                                                                                                     **[Text]** 07-01 08:20 \| ops@co.com    \| launch_ab_test      \| ab_test      \| test_42 \| 10.0.0.5    \| [Diff]
+348.       **[Text]** BANDIT CONTEXT MODEL INSPECTOR
 
-349.                                                                                                                     **[Panel]** DIFF VIEW (details JSONB)
+349.                                                                                                                     **[Text]** ADMIN AUDIT LOG VIEWER
 
-350.                                                                                                                     **[Text]** Action: cancel_subscription · admin@co.com · 07-01 14:30
+350.                         **[Text]** 🏠 Home  ›  🧪 Experiments  ›  Bandit Context Inspector
 
-351.                                                                                                                     **[Text]** - status: active      + status: cancelled
+351.                                                                                                                                       **[Text]** 🏠 Home  ›  👥 User Management  ›  Admin Audit Log
 
-352.                                                                                                                     **[Text]** - cancelled_at: null  + cancelled_at: 2025-07-01T14:30:00Z
+352.       **[Input]** User ID
 
-353.                                                                                                                     **[Text]** reason: admin_cancelled_on_request
+353.                                                             **[Button]** Load Context
 
-354.       **[Panel]** MODEL MATRICES  (bandit_arm_context_model)
+354.                                                                               **[Dropdown]** Select Arm
 
-355.       **[Text]** A matrix (5×5): [[1.2, 0.1, ...], [0.1, 0.9, ...], ...]
+355.                                                                                                                     **[Input]** Search by admin / target_id...
 
-356.       **[Text]** b vector (5×1): [0.74, 0.52, 0.31, 0.18, 0.09]
+356.                                                                                                                                                           **[Dropdown]** Action: All
 
-357.       **[Text]** θ = A⁻¹b:        [0.59, 0.49, 0.39, 0.26, 0.14]
+357.                                                                                                                                                                           **[Dropdown]** Target: All
 
-358.                                                                                                                     **[Text]** ← 1  2  3 ... 45 →     Showing 1-5 of 2,241 audit entries
+358.                                                                                                                                                                                             **[Input]** Date from
 
-359.       **[Panel]** DEBUG: Expected reward for this user = 0.724  (UCB score: 0.891)
+359.                                                                                                                                                                                                           **[Input]** Date to
 
-360.       **[Button]** Export Model JSON
+360.     **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   ▶ 🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-361.                             **[Button]** Reset Model (arm)
+361.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   ▶ 📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-362.     **[Desktop Frame]** 17. Platform Settings
+362.       **[Panel]** USER CONTEXT FEATURES  (bandit_user_context)
 
-363.                                                                                                                   **[Desktop Frame]** 18. Delayed Feedback Monitor
+363.                                                   **[Panel]** FEATURE IMPORTANCE (theta vector)
 
-364.       **[Text]** ⚙️ 17. Platform Settings
+364.                                                                                                                     **[Panel]** created_at   \| admin          \| action             \| target_type  \| target_id  \| ip_address  \| Details
 
-365.                                                                                                                     **[Text]** ⏱ 18. Delayed Feedback Monitor
+365.       **[Text]** platform:        ios
 
-366.       **[Tab Bar]** Currency Rates
+366.                                                     **[Text]** ltv_bucket       ████████████ 0.82
 
-367.                           **[Tab Bar]** Bandit Config
+367.                                                                                                                     **[Text]** 07-01 14:30 \| admin@co.com  \| cancel_subscription \| subscription \| sub_xyz \| 192.168.1.1 \| [Diff]
 
-368.                                                 **[Tab Bar]** Webhooks
+368.       **[Text]** ltv_bucket:      high
 
-369.                                                                       **[Tab Bar]** Feature Flags
+369.                                                     **[Text]** days_since_churn ████████ 0.61
 
-370.                                                                                                                     **[Panel]** ⏳ Pending: 847  \|  🔗 Linked: 3,214  \|  ⌛ Expired: 52  \|  Total: 4,113
+370.                                                                                                                     **[Text]** 07-01 13:15 \| admin@co.com  \| update_pricing_tier \| pricing_tier \| tier_pro \| 192.168.1.1 \| [Diff]
 
-371.       **[Panel]** CURRENCY RATES  (currency_rates)
+371.       **[Text]** days_since_churn: 12
 
-372.                                                                                                                     **[Dropdown]** Status: All
+372.                                                     **[Text]** platform         █████ 0.44
 
-373.                                                                                                                                         **[Input]** Days pending ≥
+373.                                                                                                                     **[Text]** 07-01 11:00 \| ops@co.com    \| grant_grace_period  \| subscription \| sub_abc \| 10.0.0.5    \| [Diff]
 
-374.                                                                                                                                                             **[Dropdown]** Event type: All
+374.       **[Text]** country:         US
 
-375.                                                                                                                     **[Panel]** reward_id   \| user_id   \| arm_id    \| event_type    \| status   \| days \| Actions
+375.                                                     **[Text]** country          ███ 0.28
 
-376.       **[Panel]** code \| rate   \| base \| updated_at          \| Actions
+376.                                                                                                                     **[Text]** 07-01 09:45 \| admin@co.com  \| issue_refund        \| transaction  \| tx_890  \| 192.168.1.1 \| [Diff]
 
-377.                                                                                                                     **[Text]** rwd_001 \| usr_alice \| arm_pro_m \| subscription  \| ⏳ pending \| 3d  \| [Link] [Expire]
+377.       **[Text]** plan_history:    [pro, basic]
 
-378.       **[Text]** USD  \| 1.0000 \| USD  \| 2025-03-01 00:00    \| [Edit]
+378.                                                     **[Text]** plan_history     ██ 0.19
 
-379.                                                                                                                     **[Text]** rwd_002 \| usr_bob   \| arm_basic \| purchase      \| 🔗 linked  \| 1d  \| [View Link]
+379.       **[Text]** last_updated:    2025-07-01 13:42
 
-380.       **[Text]** EUR  \| 0.9248 \| USD  \| 2025-03-01 00:00    \| [Edit]
+380.                                                                                                                     **[Text]** 07-01 08:20 \| ops@co.com    \| launch_ab_test      \| ab_test      \| test_42 \| 10.0.0.5    \| [Diff]
 
-381.                                                                                                                     **[Text]** rwd_003 \| usr_carol \| arm_pro_a \| winback       \| ⌛ expired  \| 8d  \| [Delete]
+381.                                                                                                                     **[Panel]** DIFF VIEW (details JSONB)
 
-382.       **[Text]** GBP  \| 0.7912 \| USD  \| 2025-03-01 00:00    \| [Edit]
+382.                                                                                                                     **[Text]** Action: cancel_subscription · admin@co.com · 07-01 14:30
 
-383.                                                                                                                     **[Text]** rwd_004 \| usr_dave  \| arm_pro_m \| subscription  \| ⏳ pending \| 5d  \| [Link] [Expire]
+383.                                                                                                                     **[Text]** - status: active      + status: cancelled
 
-384.       **[Text]** JPY  \| 151.20 \| USD  \| 2025-03-01 00:00    \| [Edit]
+384.                                                                                                                     **[Text]** - cancelled_at: null  + cancelled_at: 2025-07-01T14:30:00Z
 
-385.                                                                                                                     **[Text]** rwd_005 \| usr_eve   \| arm_basic \| purchase      \| 🔗 linked  \| 0d  \| [View Link]
+385.                                                                                                                     **[Text]** reason: admin_cancelled_on_request
 
-386.       **[Text]** CAD  \| 1.3640 \| USD  \| 2025-03-01 00:00    \| [Edit]
+386.       **[Panel]** MODEL MATRICES  (bandit_arm_context_model)
 
-387.                                                                                                                     **[Panel]** SLA METRICS  (bandit_conversion_links)
+387.       **[Text]** A matrix (5×5): [[1.2, 0.1, ...], [0.1, 0.9, ...], ...]
 
-388.       **[Button]** + Add Currency
+388.       **[Text]** b vector (5×1): [0.74, 0.52, 0.31, 0.18, 0.09]
 
-389.                         **[Button]** Sync from ECB
+389.       **[Text]** θ = A⁻¹b:        [0.59, 0.49, 0.39, 0.26, 0.14]
 
-390.                                                                                                                     **[Text]** Avg feedback delay:  2.4 days   \|  P95 delay: 6.1 days
+390.                                                                                                                     **[Text]** ← 1  2  3 ... 45 →     Showing 1-5 of 2,241 audit entries
 
-391.       **[Panel]** BANDIT ALGORITHM DEFAULTS
+391.       **[Panel]** DEBUG: Expected reward for this user = 0.724  (UCB score: 0.891)
 
-392.                                                                                                                     **[Text]** Expiry rate: 6.3%   \|  Link success rate: 79.1%
+392.       **[Button]** Export Model JSON
 
-393.       **[Input]** Exploration alpha (α)
+393.                             **[Button]** Reset Model (arm)
 
-394.                                   **[Input]** Update frequency (hrs)
+394.     **[Desktop Frame]** 17. Platform Settings
 
-395.                                                               **[Input]** Min samples / arm
+395.                                                                                                                   **[Desktop Frame]** 18. Delayed Feedback Monitor
 
-396.                                                                                                                     **[Text]** Delay trend (7d): 2.1 → 2.0 → 2.3 → 2.8 → 2.5 → 2.2 → 2.4
+396.       **[Text]** ⚙️ 17. Platform Settings
 
-397.                                                                                                                     **[Panel]** MANUAL LINK REWARD TO TRANSACTION
+397.                                                                                                                     **[Text]** ⏱ 18. Delayed Feedback Monitor
 
-398.       **[Panel]** WEBHOOK ENDPOINTS
+398.                         **[Text]** 🏠 Home  ›  ⚙️ Config  ›  Platform Settings
 
-399.                                                                                                                     **[Input]** Reward ID
+399.                                                                                                                                       **[Text]** 🏠 Home  ›  ⚙️ Config  ›  Delayed Feedback Monitor
 
-400.                                                                                                                                                           **[Input]** Transaction ID
+400.       **[Tab Bar]** Currency Rates
 
-401.                                                                                                                                                                                               **[Button]** Link
+401.                           **[Tab Bar]** Bandit Config
 
-402.       **[Input]** Endpoint URL
+402.                                                 **[Tab Bar]** Webhooks
 
-403.                                                                               **[Input]** Secret
+403.                                                                       **[Tab Bar]** Feature Flags
 
-404.                                                                                                                     **[Text]** ← 1  2  3 ... 170 →     Showing 1-5 of 847 pending rewards
+404.                                                                                                                     **[Panel]** ⏳ Pending: 847  \|  🔗 Linked: 3,214  \|  ⌛ Expired: 52  \|  Total: 4,113
 
-405.       **[Checkbox]** subscription.created
+405.     **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   ▶ 🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags
 
-406.                                   **[Checkbox]** transaction.refunded
+406.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags   ▶ ⏱ Delayed Feedback
 
-407.                                                               **[Checkbox]** dunning.failed
+407.       **[Panel]** CURRENCY RATES  (currency_rates)
 
-408.       **[Panel]** FEATURE FLAGS
+408.                                                                                                                     **[Dropdown]** Status: All
 
-409.       **[Switch]** enable_bandit_algorithm
+409.                                                                                                                                         **[Input]** Days pending ≥
 
-410.                                             **[Switch]** enable_matomo_tracking
+410.                                                                                                                                                             **[Dropdown]** Event type: All
 
-411.       **[Switch]** enable_winback_campaigns
+411.                                                                                                                     **[Panel]** reward_id   \| user_id   \| arm_id    \| event_type    \| status   \| days \| Actions
 
-412.                                             **[Switch]** enable_delayed_feedback
+412.       **[Panel]** code \| rate   \| base \| updated_at          \| Actions
 
-413.       **[Button]** Save All Settings
+413.                                                                                                                     **[Text]** rwd_001 \| usr_alice \| arm_pro_m \| subscription  \| ⏳ pending \| 3d  \| [Link] [Expire]
 
-414.                                   **[Button]** Test Webhook
+414.       **[Text]** USD  \| 1.0000 \| USD  \| 2025-03-01 00:00    \| [Edit]
 
-415.     **[Desktop Frame]** 19. Sliding Window Analytics
+415.                                                                                                                     **[Text]** rwd_002 \| usr_bob   \| arm_basic \| purchase      \| 🔗 linked  \| 1d  \| [View Link]
 
-416.                                                                                                                   **[Desktop Frame]** 20. Multi-Objective Config
+416.       **[Text]** EUR  \| 0.9248 \| USD  \| 2025-03-01 00:00    \| [Edit]
 
-417.       **[Text]** 📊 19. Sliding Window Analytics
+417.                                                                                                                     **[Text]** rwd_003 \| usr_carol \| arm_pro_a \| winback       \| ⌛ expired  \| 8d  \| [Delete]
 
-418.                                                                                                                     **[Text]** 🎯 20. Multi-Objective Config
+418.       **[Text]** GBP  \| 0.7912 \| USD  \| 2025-03-01 00:00    \| [Edit]
 
-419.       **[Panel]** WINDOW CONFIGURATION  (bandit_window_events)
+419.                                                                                                                     **[Text]** rwd_004 \| usr_dave  \| arm_pro_m \| subscription  \| ⏳ pending \| 5d  \| [Link] [Expire]
 
-420.                                                                                                                     **[Panel]** OBJECTIVE WEIGHTS  (ab_tests.objective_weights JSONB)
+420.       **[Text]** JPY  \| 151.20 \| USD  \| 2025-03-01 00:00    \| [Edit]
 
-421.       **[Dropdown]** Window type: tumbling
+421.                                                                                                                     **[Text]** rwd_005 \| usr_eve   \| arm_basic \| purchase      \| 🔗 linked  \| 0d  \| [View Link]
 
-422.                                   **[Input]** Window size (hrs)
+422.       **[Text]** CAD  \| 1.3640 \| USD  \| 2025-03-01 00:00    \| [Edit]
 
-423.                                                           **[Input]** Slide interval (hrs)
+423.                                                                                                                     **[Panel]** SLA METRICS  (bandit_conversion_links)
 
-424.                                                                                 **[Button]** Apply Config
+424.       **[Button]** + Add Currency
 
-425.                                                                                                                     **[Text]** revenue_weight
+425.                         **[Button]** Sync from ECB
 
-426.                                                                                                                                               **[Slider]** 0.50
+426.                                                                                                                     **[Text]** Avg feedback delay:  2.4 days   \|  P95 delay: 6.1 days
 
-427.                                                                                                                     **[Text]** retention_weight
+427.       **[Panel]** BANDIT ALGORITHM DEFAULTS
 
-428.                                                                                                                                               **[Slider]** 0.30
+428.                                                                                                                     **[Text]** Expiry rate: 6.3%   \|  Link success rate: 79.1%
 
-429.       **[Panel]** EVENT FLOW PREVIEW  (tumbling, 24h windows)
+429.       **[Input]** Exploration alpha (α)
 
-430.       **[Text]** [W1: 00:00–24:00]──[W2: 24:00–48:00]──[W3: 48:00–72:00]──▶
+430.                                   **[Input]** Update frequency (hrs)
 
-431.                                                                                                                     **[Text]** engagement_weight
+431.                                                               **[Input]** Min samples / arm
 
-432.                                                                                                                                               **[Slider]** 0.20
+432.                                                                                                                     **[Text]** Delay trend (7d): 2.1 → 2.0 → 2.3 → 2.8 → 2.5 → 2.2 → 2.4
 
-433.                                                                                                                                               **[Slider]** 0.20
+433.                                                                                                                     **[Panel]** MANUAL LINK REWARD TO TRANSACTION
 
-434.       **[Text]** Events: 1,240 ev    Events: 1,087 ev    Events: 1,314 ev
+434.       **[Panel]** WEBHOOK ENDPOINTS
 
-435.                                                                                                                     **[Panel]** ✅ Total: 1.00  (weights must sum to 1.0)
+435.                                                                                                                     **[Input]** Reward ID
 
-436.                                                                                                                     **[Panel]** ✅ Total: 1.00  (weights must sum to 1.0)
+436.                                                                                                                                                           **[Input]** Transaction ID
 
-437.       **[Text]** Reward: 0.72        Reward: 0.68        Reward: 0.74
+437.                                                                                                                                                                                               **[Button]** Link
 
-438.                                                                                                                     **[Panel]** HYBRID SCORING PREVIEW
+438.       **[Input]** Endpoint URL
 
-439.                                                                                                                     **[Panel]** HYBRID SCORING PREVIEW
+439.                                                                               **[Input]** Secret
 
-440.                                                                                                                     **[Text]** hybrid = 0.50×revenue + 0.30×retention + 0.20×engagement
+440.                                                                                                                     **[Text]** ← 1  2  3 ... 170 →     Showing 1-5 of 847 pending rewards
 
-441.                                                                                                                     **[Text]** hybrid = 0.50×revenue + 0.30×retention + 0.20×engagement
+441.       **[Checkbox]** subscription.created
 
-442.                                                                                                                     **[Text]** arm_pro_m:  0.50×0.81 + 0.30×0.74 + 0.20×0.66 = 0.759 🏆
+442.                                   **[Checkbox]** transaction.refunded
 
-443.                                                                                                                     **[Text]** arm_pro_m:  0.50×0.81 + 0.30×0.74 + 0.20×0.66 = 0.759 🏆
+443.                                                               **[Checkbox]** dunning.failed
 
-444.       **[Panel]** WINDOW STATS TABLE  (bandit_window_events)
+444.       **[Panel]** FEATURE FLAGS
 
-445.                                                                                                                     **[Text]** arm_pro_a:  0.50×0.75 + 0.30×0.79 + 0.20×0.58 = 0.728
+445.       **[Switch]** enable_bandit_algorithm
 
-446.                                                                                                                     **[Text]** arm_pro_a:  0.50×0.75 + 0.30×0.79 + 0.20×0.58 = 0.728
+446.                                             **[Switch]** enable_matomo_tracking
 
-447.       **[Panel]** arm_id      \| window_start    \| window_end      \| events \| reward_sum \| avg_reward
+447.       **[Switch]** enable_winback_campaigns
 
-448.                                                                                                                     **[Panel]** PER-ARM OBJECTIVE STATS  (bandit_arm_objective_stats)
+448.                                             **[Switch]** enable_delayed_feedback
 
-449.                                                                                                                     **[Panel]** PER-ARM OBJECTIVE STATS  (bandit_arm_objective_stats)
+449.       **[Button]** Save All Settings
 
-450.       **[Text]** arm_pro_m   \| 2025-03-01 00:00 \| 2025-03-02 00:00 \| 1,240  \| 892.8      \| 0.720
+450.                                   **[Button]** Test Webhook
 
-451.                                                                                                                     **[Panel]** arm_id    \| revenue_score \| retention_score \| engagement_score \| hybrid_score
+451.     **[Desktop Frame]** 19. Sliding Window Analytics
 
-452.                                                                                                                     **[Panel]** arm_id    \| revenue_score \| retention_score \| engagement_score \| hybrid_score
+452.                                                                                                                   **[Desktop Frame]** 20. Multi-Objective Config
 
-453.       **[Text]** arm_pro_a   \| 2025-03-01 00:00 \| 2025-03-02 00:00 \| 1,087  \| 739.2      \| 0.680
+453.       **[Text]** 📊 19. Sliding Window Analytics
 
-454.                                                                                                                     **[Text]** arm_pro_m \| 0.810         \| 0.740           \| 0.660            \| 0.759 🏆
+454.                                                                                                                     **[Text]** 🎯 20. Multi-Objective Config
 
-455.                                                                                                                     **[Text]** arm_pro_m \| 0.810         \| 0.740           \| 0.660            \| 0.759 🏆
+455.                         **[Text]** 🏠 Home  ›  ⚙️ Config  ›  Sliding Window Analytics
 
-456.       **[Text]** arm_basic   \| 2025-03-01 00:00 \| 2025-03-02 00:00 \| 963    \| 588.4      \| 0.611
+456.                                                                                                                                       **[Text]** 🏠 Home  ›  ⚙️ Config  ›  Multi-Objective Config
 
-457.                                                                                                                     **[Text]** arm_pro_a \| 0.750         \| 0.790           \| 0.580            \| 0.728
+457.       **[Panel]** WINDOW CONFIGURATION  (bandit_window_events)
 
-458.                                                                                                                     **[Text]** arm_pro_a \| 0.750         \| 0.790           \| 0.580            \| 0.728
+458.                                                                                                                     **[Panel]** OBJECTIVE WEIGHTS  (ab_tests.objective_weights JSONB)
 
-459.       **[Button]** Reset All Window Stats
+459.     **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags   ▶ 📊 Sliding Window
 
-460.                                   **[Button]** Export CSV
+460.                                                                                                                   **[Panel]** 📊 MONITORING   🏠 Dashboard   📈 Analytics Reports   🔔 Alert Center ───────────────── 👥 USER MANAGEMENT   👥 User List   🔍 User 360°   📋 Audit Log ───────────────── 💰 REVENUE OPS   💳 Subscriptions   💸 Transactions   ⚠️ Dunning 🔴3   🎁 Winback ───────────────── 🧪 EXPERIMENTS   🧪 A/B Tests 🟢2   ⚙️ Exp Studio   🧠 Bandit ───────────────── ⚙️ CONFIG   💰 Pricing Tiers   🌐 Platform   📡 Webhook ⚠️12   🚩 Feature Flags   ▶ 🎯 Multi-Objective
 
-461.                                                                                                                     **[Text]** arm_basic \| 0.620         \| 0.680           \| 0.720            \| 0.660
+461.       **[Dropdown]** Window type: tumbling
 
-462.                                                                                                                     **[Text]** arm_basic \| 0.620         \| 0.680           \| 0.720            \| 0.660
+462.                                   **[Input]** Window size (hrs)
 
-463.                                                                                                                     **[Switch]** A/B Test for weights
+463.                                                           **[Input]** Slide interval (hrs)
 
-464.                                                                                                                     **[Switch]** A/B Test for weights
+464.                                                                                 **[Button]** Apply Config
 
-465.                                                                                                                     **[Button]** Save Config
+465.                                                                                                                     **[Text]** revenue_weight
 
-466.                                                                                                                     **[Button]** Save Config
+466.                                                                                                                                               **[Slider]** 0.50
 
-467.                                                                                                                                             **[Button]** Reset to Defaults
+467.                                                                                                                     **[Text]** retention_weight
 
-468.                                                                                                                                             **[Button]** Reset to Defaults
+468.                                                                                                                                               **[Slider]** 0.30
+
+469.       **[Panel]** EVENT FLOW PREVIEW  (tumbling, 24h windows)
+
+470.       **[Text]** [W1: 00:00–24:00]──[W2: 24:00–48:00]──[W3: 48:00–72:00]──▶
+
+471.                                                                                                                     **[Text]** engagement_weight
+
+472.                                                                                                                                               **[Slider]** 0.20
+
+473.                                                                                                                                               **[Slider]** 0.20
+
+474.       **[Text]** Events: 1,240 ev    Events: 1,087 ev    Events: 1,314 ev
+
+475.                                                                                                                     **[Panel]** ✅ Total: 1.00  (weights must sum to 1.0)
+
+476.                                                                                                                     **[Panel]** ✅ Total: 1.00  (weights must sum to 1.0)
+
+477.       **[Text]** Reward: 0.72        Reward: 0.68        Reward: 0.74
+
+478.                                                                                                                     **[Panel]** HYBRID SCORING PREVIEW
+
+479.                                                                                                                     **[Panel]** HYBRID SCORING PREVIEW
+
+480.                                                                                                                     **[Text]** hybrid = 0.50×revenue + 0.30×retention + 0.20×engagement
+
+481.                                                                                                                     **[Text]** hybrid = 0.50×revenue + 0.30×retention + 0.20×engagement
+
+482.                                                                                                                     **[Text]** arm_pro_m:  0.50×0.81 + 0.30×0.74 + 0.20×0.66 = 0.759 🏆
+
+483.                                                                                                                     **[Text]** arm_pro_m:  0.50×0.81 + 0.30×0.74 + 0.20×0.66 = 0.759 🏆
+
+484.       **[Panel]** WINDOW STATS TABLE  (bandit_window_events)
+
+485.                                                                                                                     **[Text]** arm_pro_a:  0.50×0.75 + 0.30×0.79 + 0.20×0.58 = 0.728
+
+486.                                                                                                                     **[Text]** arm_pro_a:  0.50×0.75 + 0.30×0.79 + 0.20×0.58 = 0.728
+
+487.       **[Panel]** arm_id      \| window_start    \| window_end      \| events \| reward_sum \| avg_reward
+
+488.                                                                                                                     **[Panel]** PER-ARM OBJECTIVE STATS  (bandit_arm_objective_stats)
+
+489.                                                                                                                     **[Panel]** PER-ARM OBJECTIVE STATS  (bandit_arm_objective_stats)
+
+490.       **[Text]** arm_pro_m   \| 2025-03-01 00:00 \| 2025-03-02 00:00 \| 1,240  \| 892.8      \| 0.720
+
+491.                                                                                                                     **[Panel]** arm_id    \| revenue_score \| retention_score \| engagement_score \| hybrid_score
+
+492.                                                                                                                     **[Panel]** arm_id    \| revenue_score \| retention_score \| engagement_score \| hybrid_score
+
+493.       **[Text]** arm_pro_a   \| 2025-03-01 00:00 \| 2025-03-02 00:00 \| 1,087  \| 739.2      \| 0.680
+
+494.                                                                                                                     **[Text]** arm_pro_m \| 0.810         \| 0.740           \| 0.660            \| 0.759 🏆
+
+495.                                                                                                                     **[Text]** arm_pro_m \| 0.810         \| 0.740           \| 0.660            \| 0.759 🏆
+
+496.       **[Text]** arm_basic   \| 2025-03-01 00:00 \| 2025-03-02 00:00 \| 963    \| 588.4      \| 0.611
+
+497.                                                                                                                     **[Text]** arm_pro_a \| 0.750         \| 0.790           \| 0.580            \| 0.728
+
+498.                                                                                                                     **[Text]** arm_pro_a \| 0.750         \| 0.790           \| 0.580            \| 0.728
+
+499.       **[Button]** Reset All Window Stats
+
+500.                                   **[Button]** Export CSV
+
+501.                                                                                                                     **[Text]** arm_basic \| 0.620         \| 0.680           \| 0.720            \| 0.660
+
+502.                                                                                                                     **[Text]** arm_basic \| 0.620         \| 0.680           \| 0.720            \| 0.660
+
+503.                                                                                                                     **[Switch]** A/B Test for weights
+
+504.                                                                                                                     **[Switch]** A/B Test for weights
+
+505.                                                                                                                     **[Button]** Save Config
+
+506.                                                                                                                     **[Button]** Save Config
+
+507.                                                                                                                                             **[Button]** Reset to Defaults
+
+508.                                                                                                                                             **[Button]** Reset to Defaults
 

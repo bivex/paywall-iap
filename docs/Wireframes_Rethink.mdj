@@ -15235,6 +15235,1186 @@
 							"nameLabel": {
 								"$ref": "AAAAAAGcqcGYuKFoLTo="
 							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqcnFzKFwelc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcnFzKFukyE="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 100,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcnG3qF483g=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcnG3qF2y1Y="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcnG3qF5oQo=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcnG3qF483g="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 63,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  📊 Monitoring  ›  Dashboard",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 63,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcnG3qF5oQo="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqctXraGCX9I=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctXraGAROM="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 100,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqctYnKGKL0k=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctYnKGIxA0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqctYnKGLetU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqctYnKGKL0k="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 63,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  👥 User Management  ›  User 360° Profile",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 63,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqctYnKGLetU="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqctZSaGUTiE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctZSaGSY4I="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 1050,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqctaGqGc/Lg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctaGqGaVH8="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 1050,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcta6qGkjBE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcta6qGivB8="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcta6qGl7H8=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcta6qGkjBE="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 1013,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  🧪 Experiments  ›  Experiment Studio",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 1013,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcta6qGl7H8="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqctbnKGuzMk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctbnKGsMuY="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqctbnKGv0Nw=",
+									"_parent": {
+										"$ref": "AAAAAAGcqctbnKGuzMk="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 1013,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  💰 Revenue Ops  ›  Revenue Ops Center",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 1013,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqctbnKGv0Nw="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqctcVKG49Bk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctcVKG2jvU="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 2000,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqctdL6HA7Qk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctdL6G+Wzo="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqctdL6HBFZE=",
+									"_parent": {
+										"$ref": "AAAAAAGcqctdL6HA7Qk="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 1963,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  ⚙️ Config  ›  Pricing Tiers",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 1963,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqctdL6HBFZE="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqctd5qHKwII=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctd5qHI2vg="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 2000,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqctevKHSPIE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqctevKHQNIs="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqctevKHTDTE=",
+									"_parent": {
+										"$ref": "AAAAAAGcqctevKHSPIE="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 1963,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  👥 User Management  ›  User List",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 1963,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqctevKHTDTE="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqcxPdaHcMbI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxPdaHatoo="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 2950,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcxQeaHkPYI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxQeaHiZgo="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcxQeaHlP9w=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcxQeaHkPYI="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 2913,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  💰 Revenue Ops  ›  Subscriptions",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 2913,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcxQeaHlP9w="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqcxRNaHuf+Q=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxRNaHsz5c="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 2950,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcxSDqH2tpY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxSDqH0nN4="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcxSD6H3Gzw=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcxSDqH2tpY="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 2913,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  💰 Revenue Ops  ›  Transactions",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 2913,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcxSD6H3Gzw="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqcxSxqIAuaM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxSxqH+1Ik="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 4000,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcxTsaIIhMw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxTsaIGNGM="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcxTsaIJOg8=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcxTsaIIhMw="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 3963,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  💰 Revenue Ops  ›  Winback Campaigns",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 3963,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcxTsaIJOg8="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcxUaKISy+w=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxUaKIQiS8="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcxUaKITI/I=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcxUaKISy+w="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 3963,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  💰 Revenue Ops  ›  Dunning Campaign Config",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 3963,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcxUaKITI/I="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqcxVJaIcSd4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxVJaIaZ9Y="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 4000,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqcxWBaIkjk8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxWBaIiniI="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 4950,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqcxW7aIskvg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqcxW7aIqwqc="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqcxW7aItrzk=",
+									"_parent": {
+										"$ref": "AAAAAAGcqcxW7aIskvg="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 4913,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  📊 Monitoring  ›  Analytics Reports",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 4913,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqcxW7aItrzk="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqczSTKI2q28=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczSTKI0Cqc="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqczSTKI3uis=",
+									"_parent": {
+										"$ref": "AAAAAAGcqczSTKI2q28="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 4913,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  🧪 Experiments  ›  A/B Test Discovery",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 4913,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqczSTKI3uis="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqczTK6JARfo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczTK6I+GZE="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 4950,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqczUHKJI22M=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczUHKJGxpY="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 6000,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqczVBaJQh8I=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczVBKJOfcw="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqczVBaJROcw=",
+									"_parent": {
+										"$ref": "AAAAAAGcqczVBaJQh8I="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 5963,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  ⚙️ Config  ›  Webhook Inspector",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 5963,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqczVBaJROcw="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqczVyKJaDD4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczVyKJYeFs="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqczVyKJbeDY=",
+									"_parent": {
+										"$ref": "AAAAAAGcqczVyKJaDD4="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 5963,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  ⚙️ Config  ›  Matomo Queue Monitor",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 5963,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqczVyKJbeDY="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqczWhaJkJIA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczWhaJiH8Y="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 6000,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqczXbKJsawM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczXbKJqxic="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 6950,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqczYXKJ0UR4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczYWaJyVe0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqczYXKJ1c4w=",
+									"_parent": {
+										"$ref": "AAAAAAGcqczYXKJ0UR4="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 6913,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  🧪 Experiments  ›  Bandit Context Inspector",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 6913,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqczYXKJ1c4w="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqczZEqJ+Yzw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczZEqJ8T2A="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqczZEqJ/wSM=",
+									"_parent": {
+										"$ref": "AAAAAAGcqczZEqJ+Yzw="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 6913,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  👥 User Management  ›  Admin Audit Log",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 6913,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqczZEqJ/wSM="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqczZzqKIYGU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqczZzqKGFy8="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 6950,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqc054KKQyW0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqc054KKOEYA="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 8000,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqc06+KKYKOs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqc06+KKWV9s="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqc06+KKZ80E=",
+									"_parent": {
+										"$ref": "AAAAAAGcqc06+KKYKOs="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 7963,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  ⚙️ Config  ›  Platform Settings",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 7963,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqc06+KKZ80E="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqc07s6KivSI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqc07s6KgIIg="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqc07s6KjFIY=",
+									"_parent": {
+										"$ref": "AAAAAAGcqc07s6KivSI="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 7963,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  ⚙️ Config  ›  Delayed Feedback Monitor",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 7963,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqc07s6KjFIY="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqc08ZqKs3vw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqc08ZqKqkDk="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 8000,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqc09SaK0dqc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqc09SKKyrGM="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 50,
+							"top": 8950,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqc0+J6K8gy0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqc0+J6K6QZU="
+							},
+							"lineColor": "#DEE2E6",
+							"fillColor": "#F8F9FA",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1150,
+							"top": 8950,
+							"width": 185,
+							"height": 390
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqc0/BKLE8xI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqc0/BKLCI/Y="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqc0/BKLFGpU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqc0/BKLE8xI="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 1340,
+									"top": 8913,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  ⚙️ Config  ›  Multi-Objective Config",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 1340,
+							"top": 8913,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqc0/BKLFGpU="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqc0/xqLOrN8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazLBZJVKRE="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqc0/xqLMOWE="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqc0/xqLP6UU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqc0/xqLOrN8="
+									},
+									"fontColor": "#6C757D",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 240,
+									"top": 8913,
+									"width": 600,
+									"height": 13,
+									"text": "🏠 Home  ›  ⚙️ Config  ›  Sliding Window Analytics",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#6C757D",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 240,
+							"top": 8913,
+							"width": 600,
+							"height": 18,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqc0/xqLP6UU="
+							}
 						}
 					]
 				},
@@ -15493,6 +16673,22 @@
 								"$ref": "AAAAAAGcqazznZJZSCs="
 							},
 							"name": "0 Unprocessed Events"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqcnFzKFukyE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "📊 MONITORING\n  ▶ 🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcnG3qF2y1Y=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazznZJZSCs="
+							},
+							"name": "🏠 Home  ›  📊 Monitoring  ›  Dashboard"
 						}
 					]
 				},
@@ -15679,6 +16875,22 @@
 								"$ref": "AAAAAAGcqazzr5JfPpw="
 							},
 							"name": "Impersonate"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqctXraGAROM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  ▶ 🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqctYnKGIxA0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzr5JfPpw="
+							},
+							"name": "🏠 Home  ›  👥 User Management  ›  User 360° Profile"
 						}
 					]
 				},
@@ -15801,6 +17013,22 @@
 								"$ref": "AAAAAAGcqazztpJl7oU="
 							},
 							"name": "[13:48] usr_... converted on Arm Variant A ($49.99)"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqctZSaGSY4I=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ▶ ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcta6qGivB8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazztpJl7oU="
+							},
+							"name": "🏠 Home  ›  🧪 Experiments  ›  Experiment Studio"
 						}
 					]
 				},
@@ -15995,6 +17223,22 @@
 								"$ref": "AAAAAAGcqazzv5Jr4P8="
 							},
 							"name": "View Staged Events"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqctaGqGaVH8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n▶ 💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqctbnKGsMuY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqazzv5Jr4P8="
+							},
+							"name": "🏠 Home  ›  💰 Revenue Ops  ›  Revenue Ops Center"
 						}
 					]
 				},
@@ -16198,6 +17442,22 @@
 								"$ref": "AAAAAAGcqbLUMpVHuKU="
 							},
 							"name": "Cancel"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqctcVKG2jvU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbLUMpVHuKU="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  ▶ 💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqctdL6G+Wzo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbLUMpVHuKU="
+							},
+							"name": "🏠 Home  ›  ⚙️ Config  ›  Pricing Tiers"
 						}
 					]
 				},
@@ -16344,6 +17604,22 @@
 								"$ref": "AAAAAAGcqbLUX5VNWrM="
 							},
 							"name": "← 1  2  3 ... 142 →     Showing 1-5 of 14,205 users"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqctd5qHI2vg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbLUX5VNWrM="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  ▶ 👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqctevKHQNIs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbLUX5VNWrM="
+							},
+							"name": "🏠 Home  ›  👥 User Management  ›  User List"
 						}
 					]
 				},
@@ -16466,6 +17742,22 @@
 								"$ref": "AAAAAAGcqbLUhpVTR8A="
 							},
 							"name": "← 1  2  3 ... 217 →     Showing 1-5 of 1,076 transactions"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqcxRNaHsz5c=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbLUhpVTR8A="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  ▶ 💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcxSDqH0nN4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbLUhpVTR8A="
+							},
+							"name": "🏠 Home  ›  💰 Revenue Ops  ›  Transactions"
 						}
 					]
 				},
@@ -16596,6 +17888,22 @@
 								"$ref": "AAAAAAGcqbLUq5VZVew="
 							},
 							"name": "← 1  2  3 ... 89 →     Showing 1-5 of 4,427 subscriptions"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqcxPdaHatoo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbLUq5VZVew="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  ▶ 💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcxQeaHiZgo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbLUq5VZVew="
+							},
+							"name": "🏠 Home  ›  💰 Revenue Ops  ›  Subscriptions"
 						}
 					]
 				},
@@ -16846,6 +18154,22 @@
 								"$ref": "AAAAAAGcqbXLuJe7aUQ="
 							},
 							"name": "Cancel"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqcxSxqH+1Ik=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbXLuJe7aUQ="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  ▶ 🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcxTsaIGNGM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbXLuJe7aUQ="
+							},
+							"name": "🏠 Home  ›  💰 Revenue Ops  ›  Winback Campaigns"
 						}
 					]
 				},
@@ -17025,6 +18349,22 @@
 								"$ref": "AAAAAAGcqbXMCpfBSGE="
 							},
 							"name": "Preview Email Template"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcxUaKIQiS8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbXMCpfBSGE="
+							},
+							"name": "🏠 Home  ›  💰 Revenue Ops  ›  Dunning Campaign Config"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqcxVJaIaZ9Y=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbXMCpfBSGE="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ▶ ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
 						}
 					]
 				},
@@ -17227,6 +18567,22 @@
 								"$ref": "AAAAAAGcqbXMOpfHa7k="
 							},
 							"name": "2025-06 | churn_rate | 0.021 | {platform:ios}| [Drill]"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqcxWBaIiniI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbXMOpfHa7k="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  ▶ 📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqcxW7aIqwqc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbXMOpfHa7k="
+							},
+							"name": "🏠 Home  ›  📊 Monitoring  ›  Analytics Reports"
 						}
 					]
 				},
@@ -17413,6 +18769,22 @@
 								"$ref": "AAAAAAGcqbXMbZfNRnQ="
 							},
 							"name": "← 1  2  3 →     Showing 1-3 of 12 tests"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqczSTKI0Cqc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbXMbZfNRnQ="
+							},
+							"name": "🏠 Home  ›  🧪 Experiments  ›  A/B Test Discovery"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqczTK6I+GZE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbXMbZfNRnQ="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  ▶ 🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
 						}
 					]
 				},
@@ -17655,6 +19027,22 @@
 								"$ref": "AAAAAAGcqbmXbJsCvZg="
 							},
 							"name": "Check Idempotency"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqczUHKJGxpY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbmXbJsCvZg="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  ▶ 📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqczVBKJOfcw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbmXbJsCvZg="
+							},
+							"name": "🏠 Home  ›  ⚙️ Config  ›  Webhook Inspector"
 						}
 					]
 				},
@@ -17857,6 +19245,22 @@
 								"$ref": "AAAAAAGcqbmX1JsIgNo="
 							},
 							"name": "Reset Model (arm)"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqczXbKJqxic=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbmX1JsIgNo="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  ▶ 🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqczYWaJyVe0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbmX1JsIgNo="
+							},
+							"name": "🏠 Home  ›  🧪 Experiments  ›  Bandit Context Inspector"
 						}
 					]
 				},
@@ -18003,6 +19407,22 @@
 								"$ref": "AAAAAAGcqbmYIZsOK/0="
 							},
 							"name": "Queue backlog trend ▓▓▓▓▓░░░░░░░░  (last 24h)"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqczVyKJYeFs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbmYIZsOK/0="
+							},
+							"name": "🏠 Home  ›  ⚙️ Config  ›  Matomo Queue Monitor"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqczWhaJiH8Y=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbmYIZsOK/0="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags\n  ▶ 📋 Matomo Queue"
 						}
 					]
 				},
@@ -18157,6 +19577,22 @@
 								"$ref": "AAAAAAGcqbmYaJsUgxw="
 							},
 							"name": "← 1  2  3 ... 45 →     Showing 1-5 of 2,241 audit entries"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqczZEqJ8T2A=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbmYaJsUgxw="
+							},
+							"name": "🏠 Home  ›  👥 User Management  ›  Admin Audit Log"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqczZzqKGFy8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbmYaJsUgxw="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  ▶ 📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
 						}
 					]
 				},
@@ -18420,6 +19856,22 @@
 								"$ref": "AAAAAAGcqbzt054OKaA="
 							},
 							"name": "⚙️ 17. Platform Settings"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqc054KKOEYA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzt054OKaA="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  ▶ 🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqc06+KKWV9s=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzt054OKaA="
+							},
+							"name": "🏠 Home  ›  ⚙️ Config  ›  Platform Settings"
 						}
 					]
 				},
@@ -18590,6 +20042,22 @@
 								"$ref": "AAAAAAGcqbzuXZ4U6sY="
 							},
 							"name": "⏱ 18. Delayed Feedback Monitor"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqc07s6KgIIg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzuXZ4U6sY="
+							},
+							"name": "🏠 Home  ›  ⚙️ Config  ›  Delayed Feedback Monitor"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqc08ZqKqkDk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzuXZ4U6sY="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags\n  ▶ ⏱ Delayed Feedback"
 						}
 					]
 				},
@@ -18880,6 +20348,22 @@
 								"$ref": "AAAAAAGcqbzu0J4aw5s="
 							},
 							"name": "🎯 20. Multi-Objective Config"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqc0+J6K6QZU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzu0J4aw5s="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags\n  ▶ 🎯 Multi-Objective"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqc0/BKLCI/Y=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzu0J4aw5s="
+							},
+							"name": "🏠 Home  ›  ⚙️ Config  ›  Multi-Objective Config"
 						}
 					]
 				},
@@ -19026,6 +20510,22 @@
 								"$ref": "AAAAAAGcqbzvOZ4gGl8="
 							},
 							"name": "📊 19. Sliding Window Analytics"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqc09SKKyrGM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzvOZ4gGl8="
+							},
+							"name": "📊 MONITORING\n  🏠 Dashboard\n  📈 Analytics Reports\n  🔔 Alert Center\n─────────────────\n👥 USER MANAGEMENT\n  👥 User List\n  🔍 User 360°\n  📋 Audit Log\n─────────────────\n💰 REVENUE OPS\n  💳 Subscriptions\n  💸 Transactions\n  ⚠️ Dunning 🔴3\n  🎁 Winback\n─────────────────\n🧪 EXPERIMENTS\n  🧪 A/B Tests 🟢2\n  ⚙️ Exp Studio\n  🧠 Bandit\n─────────────────\n⚙️ CONFIG\n  💰 Pricing Tiers\n  🌐 Platform\n  📡 Webhook ⚠️12\n  🚩 Feature Flags\n  ▶ 📊 Sliding Window"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqc0/xqLMOWE=",
+							"_parent": {
+								"$ref": "AAAAAAGcqbzvOZ4gGl8="
+							},
+							"name": "🏠 Home  ›  ⚙️ Config  ›  Sliding Window Analytics"
 						}
 					]
 				}
