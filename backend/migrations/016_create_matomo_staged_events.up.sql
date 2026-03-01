@@ -22,18 +22,18 @@ CREATE TABLE matomo_staged_events (
 
 -- Index for processing pending events
 CREATE INDEX idx_matomo_staged_events_pending ON matomo_staged_events(status, next_retry_at)
-    WHERE status = 'pending' AND next_retry_at <= now();
+    WHERE status = 'pending';
 
 -- Index for user's events
 CREATE INDEX idx_matomo_staged_events_user ON matomo_staged_events(user_id, created_at DESC);
 
 -- Index for cleanup of old sent events
 CREATE INDEX idx_matomo_staged_events_cleanup ON matomo_staged_events(status, sent_at)
-    WHERE status = 'sent' AND sent_at < NOW() - INTERVAL '30 days';
+    WHERE status = 'sent';
 
 -- Index for failed events (for fallback storage)
 CREATE INDEX idx_matomo_staged_events_failed ON matomo_staged_events(status, failed_at)
-    WHERE status = 'failed' AND retry_count >= max_retries;
+    WHERE status = 'failed';
 
 -- Comment for documentation
 COMMENT ON TABLE matomo_staged_events IS 'Staged Matomo events for async delivery with retry support';

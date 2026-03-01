@@ -9,9 +9,8 @@ CREATE TABLE ab_test_assignments (
     assigned_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at      TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '24 hours'),
 
-    -- Ensure one active assignment per user per experiment
-    CONSTRAINT unique_active_assignment UNIQUE (experiment_id, user_id)
-        WHERE expires_at > now()
+    -- One assignment record per user per experiment (enforced uniquely below)
+    CONSTRAINT unique_assignment UNIQUE (experiment_id, user_id)
 );
 
 -- Index for active assignment lookup
