@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -5,100 +6,101 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const t = await getTranslations("settings");
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Admin Settings & Config</h1>
+      <h1 className="text-2xl font-semibold">{t("title")}</h1>
       <Tabs defaultValue="general">
         <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="general">{t("tabs.general")}</TabsTrigger>
+          <TabsTrigger value="integrations">{t("tabs.integrations")}</TabsTrigger>
+          <TabsTrigger value="notifications">{t("tabs.notifications")}</TabsTrigger>
+          <TabsTrigger value="security">{t("tabs.security")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Platform Config</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("general.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <div><p className="text-xs font-medium mb-1">Platform Name</p><Input defaultValue="Paywall SaaS" /></div>
-              <div><p className="text-xs font-medium mb-1">Support Email</p><Input defaultValue="support@paywall.local" type="email" /></div>
-              <div><p className="text-xs font-medium mb-1">Default Currency</p><Input defaultValue="USD" className="w-24" /></div>
-              <div className="flex items-center gap-2"><Switch id="dark-mode" /><label htmlFor="dark-mode" className="text-sm">Dark Mode Default</label></div>
-              <Button size="sm">Save General</Button>
+              <div><p className="text-xs font-medium mb-1">{t("general.platformName")}</p><Input defaultValue="Paywall SaaS" /></div>
+              <div><p className="text-xs font-medium mb-1">{t("general.supportEmail")}</p><Input defaultValue="support@paywall.local" type="email" /></div>
+              <div><p className="text-xs font-medium mb-1">{t("general.defaultCurrency")}</p><Input defaultValue="USD" className="w-24" /></div>
+              <div className="flex items-center gap-2"><Switch id="dark-mode" /><label htmlFor="dark-mode" className="text-sm">{t("general.darkMode")}</label></div>
+              <Button size="sm">{t("general.save")}</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="integrations" className="mt-4 space-y-3">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Stripe</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("stripe.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <Input placeholder="Stripe API Key (sk_...)" type="password" />
-              <Input placeholder="Stripe Webhook Secret (whsec_...)" type="password" />
-              <div className="flex items-center gap-2"><Switch id="stripe-test" /><label htmlFor="stripe-test" className="text-sm">Test Mode</label></div>
-              <Button size="sm">Save Stripe</Button>
+              <Input placeholder={t("stripe.apiKey")} type="password" />
+              <Input placeholder={t("stripe.webhookSecret")} type="password" />
+              <div className="flex items-center gap-2"><Switch id="stripe-test" /><label htmlFor="stripe-test" className="text-sm">{t("stripe.testMode")}</label></div>
+              <Button size="sm">{t("stripe.save")}</Button>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Apple In-App</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("apple.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <Input placeholder="App Store Issuer ID" />
-              <Input placeholder="Bundle ID (com.yourapp)" />
-              <Button size="sm">Save Apple</Button>
+              <Input placeholder={t("apple.issuerId")} />
+              <Input placeholder={t("apple.bundleId")} />
+              <Button size="sm">{t("apple.save")}</Button>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Google Play</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("google.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <Input placeholder="Service Account JSON" />
-              <Input placeholder="Package Name" />
-              <Button size="sm">Save Google</Button>
+              <Input placeholder={t("google.serviceAccount")} />
+              <Input placeholder={t("google.packageName")} />
+              <Button size="sm">{t("google.save")}</Button>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Matomo</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("matomo.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <Input placeholder="Matomo URL (https://...)" />
-              <Input placeholder="Site ID" className="w-32" />
-              <Input placeholder="Auth Token" type="password" />
-              <Button size="sm">Save Matomo</Button>
+              <Input placeholder={t("matomo.url")} />
+              <Input placeholder={t("matomo.siteId")} className="w-32" />
+              <Input placeholder={t("matomo.authToken")} type="password" />
+              <Button size="sm">{t("matomo.save")}</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Email Notifications</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("notifications.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-2">
               {[
-                "New subscription",
-                "Payment failed",
-                "Subscription cancelled",
-                "Refund issued",
-                "Webhook failed",
-                "Dunning started",
+                { key: "newSubscription", label: t("notifications.newSubscription") },
+                { key: "paymentFailed", label: t("notifications.paymentFailed") },
+                { key: "subscriptionCancelled", label: t("notifications.subscriptionCancelled") },
+                { key: "refundIssued", label: t("notifications.refundIssued") },
+                { key: "webhookFailed", label: t("notifications.webhookFailed") },
+                { key: "dunningStarted", label: t("notifications.dunningStarted") },
               ].map((n) => (
-                <div key={n} className="flex items-center gap-2"><Switch id={n} defaultChecked /><label htmlFor={n} className="text-sm">{n}</label></div>
+                <div key={n.key} className="flex items-center gap-2"><Switch id={n.key} defaultChecked /><label htmlFor={n.key} className="text-sm">{n.label}</label></div>
               ))}
-              <Button size="sm" className="mt-2">Save Notifications</Button>
+              <Button size="sm" className="mt-2">{t("notifications.save")}</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="security" className="mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Access & Auth</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("security.title")}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <div><p className="text-xs font-medium mb-1">JWT Expiry (hours)</p><Input defaultValue="24" className="w-28" /></div>
-              <div className="flex items-center gap-2"><Switch id="mfa" /><label htmlFor="mfa" className="text-sm">Require MFA for admin</label></div>
-              <div className="flex items-center gap-2"><Switch id="ip-whitelist" /><label htmlFor="ip-whitelist" className="text-sm">Enable IP Allowlist</label></div>
+              <div><p className="text-xs font-medium mb-1">{t("security.jwtExpiry")}</p><Input defaultValue="24" className="w-28" /></div>
+              <div className="flex items-center gap-2"><Switch id="mfa" /><label htmlFor="mfa" className="text-sm">{t("security.mfa")}</label></div>
+              <div className="flex items-center gap-2"><Switch id="ip-whitelist" /><label htmlFor="ip-whitelist" className="text-sm">{t("security.ipAllowlist")}</label></div>
               <Separator />
-              <p className="text-xs font-medium">Change Admin Password</p>
-              <Input placeholder="Current password" type="password" />
-              <Input placeholder="New password" type="password" />
-              <Input placeholder="Confirm new password" type="password" />
-              <Button size="sm" variant="destructive">Update Password</Button>
+              <p className="text-xs font-medium">{t("security.changePassword")}</p>
+              <Input placeholder={t("security.currentPassword")} type="password" />
+              <Input placeholder={t("security.newPassword")} type="password" />
+              <Input placeholder={t("security.confirmPassword")} type="password" />
+              <Button size="sm" variant="destructive">{t("security.updatePassword")}</Button>
             </CardContent>
           </Card>
         </TabsContent>

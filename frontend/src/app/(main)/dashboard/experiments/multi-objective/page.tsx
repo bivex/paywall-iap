@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,13 +13,14 @@ const objectives = [
   { name: "Churn Rate", weight: 25, direction: "minimize", current: 1.9, baseline: 2.1 },
 ];
 
-export default function MultiObjectivePage() {
+export default async function MultiObjectivePage() {
+  const t = await getTranslations("multiObjective");
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Multi-Objective Optimization</h1>
+      <h1 className="text-2xl font-semibold">{t("title")}</h1>
 
       <Card>
-        <CardHeader><CardTitle className="text-sm">Objectives & Weights</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("card.title")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {objectives.map((o) => (
             <div key={o.name} className="space-y-1">
@@ -32,8 +34,8 @@ export default function MultiObjectivePage() {
               </div>
               <Progress value={o.weight} className="h-1.5" />
               <div className="flex gap-4 text-xs text-muted-foreground">
-                <span>Current: <span className="font-mono text-foreground">{o.current}</span></span>
-                <span>Baseline: <span className="font-mono text-foreground">{o.baseline}</span></span>
+                <span>{t("current")} <span className="font-mono text-foreground">{o.current}</span></span>
+                <span>{t("baseline")} <span className="font-mono text-foreground">{o.baseline}</span></span>
                 <span className={o.direction === "maximize" ? (o.current > o.baseline ? "text-green-600" : "text-red-600") : (o.current < o.baseline ? "text-green-600" : "text-red-600")}>
                   {o.direction === "maximize" ? (o.current > o.baseline ? "▲" : "▼") : (o.current < o.baseline ? "▲" : "▼")} {Math.abs(o.current - o.baseline).toFixed(2)}
                 </span>
@@ -42,9 +44,9 @@ export default function MultiObjectivePage() {
           ))}
 
           <Separator />
-          <p className="text-sm font-medium">Pareto Front Variants</p>
+          <p className="text-sm font-medium">{t("paretoFront.title")}</p>
           <Table>
-            <TableHeader><TableRow><TableHead>Variant</TableHead><TableHead>Conv%</TableHead><TableHead>Rev/User</TableHead><TableHead>Churn%</TableHead><TableHead>Pareto Score</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>{t("table.variant")}</TableHead><TableHead>{t("table.conv")}</TableHead><TableHead>{t("table.revUser")}</TableHead><TableHead>{t("table.churn")}</TableHead><TableHead>{t("table.paretoScore")}</TableHead></TableRow></TableHeader>
             <TableBody>
               <TableRow><TableCell>Pro Annual $79.99</TableCell><TableCell className="font-mono">7.2%</TableCell><TableCell className="font-mono">$9.14</TableCell><TableCell className="font-mono">1.9%</TableCell><TableCell className="font-bold text-green-600">0.82</TableCell></TableRow>
               <TableRow><TableCell>Pro Annual $69.99</TableCell><TableCell className="font-mono">8.4%</TableCell><TableCell className="font-mono">$8.22</TableCell><TableCell className="font-mono">2.0%</TableCell><TableCell className="font-bold">0.74</TableCell></TableRow>
@@ -52,10 +54,10 @@ export default function MultiObjectivePage() {
             </TableBody>
           </Table>
 
-          <div className="flex items-center gap-2"><Switch id="auto-select" /><label htmlFor="auto-select" className="text-sm">Auto-select Pareto winner on threshold</label></div>
+          <div className="flex items-center gap-2"><Switch id="auto-select" /><label htmlFor="auto-select" className="text-sm">{t("autoSelect")}</label></div>
           <div className="flex gap-2">
-            <Button size="sm">Save Config</Button>
-            <Button size="sm" variant="outline">Run Analysis</Button>
+            <Button size="sm">{t("saveConfig")}</Button>
+            <Button size="sm" variant="outline">{t("runAnalysis")}</Button>
           </div>
         </CardContent>
       </Card>

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,10 +14,10 @@ const events = [
   { id: "wh_005", provider: "Apple", type: "DID_FAIL_TO_RENEW", received: "2026-03-01 13:10", status: "pending", preview: '{"notification_type":"DID_FAIL..."}' },
 ];
 
-const statusMap: Record<string, { label: string; className: string }> = {
-  pending: { label: "⏳ Pending", className: "bg-yellow-100 text-yellow-800" },
-  processed: { label: "✅ Processed", className: "bg-green-100 text-green-800" },
-  failed: { label: "❌ Failed", className: "bg-red-100 text-red-800" },
+const statusClassMap: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800",
+  processed: "bg-green-100 text-green-800",
+  failed: "bg-red-100 text-red-800",
 };
 
 const providerMap: Record<string, string> = {
@@ -25,28 +26,29 @@ const providerMap: Record<string, string> = {
   Google: "bg-emerald-100 text-emerald-800",
 };
 
-export default function WebhooksPage() {
+export default async function WebhooksPage() {
+  const t = await getTranslations("webhooks");
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Webhook Event Inspector</h1>
+      <h1 className="text-2xl font-semibold">{t("title")}</h1>
       <Card>
         <CardContent className="pt-4 space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Select><SelectTrigger className="w-36"><SelectValue placeholder="Provider: All" /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="stripe">Stripe</SelectItem><SelectItem value="apple">Apple</SelectItem><SelectItem value="google">Google</SelectItem></SelectContent></Select>
-            <Input placeholder="Event type..." className="w-52" />
-            <Select><SelectTrigger className="w-36"><SelectValue placeholder="Status: All" /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="processed">Processed</SelectItem><SelectItem value="failed">Failed</SelectItem></SelectContent></Select>
+            <Select><SelectTrigger className="w-36"><SelectValue placeholder={t("filter.providerPlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.providerAll")}</SelectItem><SelectItem value="stripe">Stripe</SelectItem><SelectItem value="apple">Apple</SelectItem><SelectItem value="google">Google</SelectItem></SelectContent></Select>
+            <Input placeholder={t("filter.eventTypePlaceholder")} className="w-52" />
+            <Select><SelectTrigger className="w-36"><SelectValue placeholder={t("filter.statusPlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.statusAll")}</SelectItem><SelectItem value="pending">{t("filter.statusPending")}</SelectItem><SelectItem value="processed">{t("filter.statusProcessed")}</SelectItem><SelectItem value="failed">{t("filter.statusFailed")}</SelectItem></SelectContent></Select>
             <Input type="date" className="w-40" />
             <Input type="date" className="w-40" />
           </div>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Provider</TableHead>
-                <TableHead>Event Type</TableHead>
-                <TableHead>Received</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payload Preview</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t("table.provider")}</TableHead>
+                <TableHead>{t("table.eventType")}</TableHead>
+                <TableHead>{t("table.received")}</TableHead>
+                <TableHead>{t("table.status")}</TableHead>
+                <TableHead>{t("table.payloadPreview")}</TableHead>
+                <TableHead>{t("table.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -55,19 +57,19 @@ export default function WebhooksPage() {
                   <TableCell><Badge className={providerMap[e.provider] ?? ""}>{e.provider}</Badge></TableCell>
                   <TableCell className="font-mono text-xs">{e.type}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{e.received}</TableCell>
-                  <TableCell><Badge className={statusMap[e.status].className}>{statusMap[e.status].label}</Badge></TableCell>
+                  <TableCell><Badge className={statusClassMap[e.status]}>{t(`status.${e.status}`)}</Badge></TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground max-w-xs truncate">{e.preview}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="outline" size="sm">View</Button>
-                      <Button variant="outline" size="sm">Replay</Button>
+                      <Button variant="outline" size="sm">{t("actions.view")}</Button>
+                      <Button variant="outline" size="sm">{t("actions.replay")}</Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          <p className="text-xs text-muted-foreground">← 1  2  3 ... 28 →  &nbsp; Showing 1–5 of 140 events</p>
+          <p className="text-xs text-muted-foreground">← 1  2  3 ... 28 →  &nbsp; {t("pagination")}</p>
         </CardContent>
       </Card>
     </div>

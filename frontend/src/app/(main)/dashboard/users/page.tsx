@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,35 +15,36 @@ const users = [
   { id: "usr_005", email: "eve@example.com", platform: "Web", ltv: "$220.00", status: "active", role: "admin" },
 ];
 
-const statusMap: Record<string, { label: string; className: string }> = {
-  active: { label: "✅ Active", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" },
-  grace: { label: "🔶 Grace", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" },
-  dunning: { label: "⚠️ Dunning", className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200" },
-  expired: { label: "❌ Expired", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" },
+const statusClassMap: Record<string, string> = {
+  active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  grace: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  dunning: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  expired: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
 };
 
-export default function UsersPage() {
+export default async function UsersPage() {
+  const t = await getTranslations("users");
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">User List</h1>
-        <Button variant="outline" size="sm">Export CSV</Button>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+        <Button variant="outline" size="sm">{t("exportCsv")}</Button>
       </div>
 
       <Card>
         <CardContent className="pt-4 space-y-4">
           {/* Filters */}
           <div className="flex flex-wrap gap-2">
-            <Input placeholder="Search by email / platform_user_id / device_id..." className="max-w-sm" />
-            <Select><SelectTrigger className="w-36"><SelectValue placeholder="Platform: All" /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="ios">iOS</SelectItem><SelectItem value="android">Android</SelectItem><SelectItem value="web">Web</SelectItem></SelectContent></Select>
-            <Select><SelectTrigger className="w-32"><SelectValue placeholder="Role: All" /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="user">User</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent></Select>
-            <Select><SelectTrigger className="w-40"><SelectValue placeholder="Sub Status: All" /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="grace">Grace</SelectItem><SelectItem value="dunning">Dunning</SelectItem><SelectItem value="expired">Expired</SelectItem></SelectContent></Select>
-            <Input placeholder="LTV Min $" className="w-28" />
-            <Input placeholder="LTV Max $" className="w-28" />
+            <Input placeholder={t("filter.searchPlaceholder")} className="max-w-sm" />
+            <Select><SelectTrigger className="w-36"><SelectValue placeholder={t("filter.platformPlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.platformAll")}</SelectItem><SelectItem value="ios">{t("filter.platformIos")}</SelectItem><SelectItem value="android">{t("filter.platformAndroid")}</SelectItem><SelectItem value="web">{t("filter.platformWeb")}</SelectItem></SelectContent></Select>
+            <Select><SelectTrigger className="w-32"><SelectValue placeholder={t("filter.rolePlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.roleAll")}</SelectItem><SelectItem value="user">{t("filter.roleUser")}</SelectItem><SelectItem value="admin">{t("filter.roleAdmin")}</SelectItem></SelectContent></Select>
+            <Select><SelectTrigger className="w-40"><SelectValue placeholder={t("filter.subStatusPlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.subStatusAll")}</SelectItem><SelectItem value="active">{t("filter.subStatusActive")}</SelectItem><SelectItem value="grace">{t("filter.subStatusGrace")}</SelectItem><SelectItem value="dunning">{t("filter.subStatusDunning")}</SelectItem><SelectItem value="expired">{t("filter.subStatusExpired")}</SelectItem></SelectContent></Select>
+            <Input placeholder={t("filter.ltvMin")} className="w-28" />
+            <Input placeholder={t("filter.ltvMax")} className="w-28" />
           </div>
           <div className="flex gap-2">
-            <Button variant="destructive" size="sm">Bulk: Cancel Subscriptions</Button>
-            <Button variant="outline" size="sm">Bulk: Grant Grace</Button>
+            <Button variant="destructive" size="sm">{t("bulkCancel")}</Button>
+            <Button variant="outline" size="sm">{t("bulkGrace")}</Button>
           </div>
 
           {/* Table */}
@@ -50,12 +52,12 @@ export default function UsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-8"><input type="checkbox" /></TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Platform</TableHead>
-                <TableHead>LTV</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>{t("table.email")}</TableHead>
+                <TableHead>{t("table.platform")}</TableHead>
+                <TableHead>{t("table.ltv")}</TableHead>
+                <TableHead>{t("table.status")}</TableHead>
+                <TableHead>{t("table.role")}</TableHead>
+                <TableHead>{t("table.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -65,14 +67,14 @@ export default function UsersPage() {
                   <TableCell className="font-medium">{u.email}</TableCell>
                   <TableCell>{u.platform}</TableCell>
                   <TableCell>{u.ltv}</TableCell>
-                  <TableCell><Badge className={statusMap[u.status].className}>{statusMap[u.status].label}</Badge></TableCell>
+                  <TableCell><Badge className={statusClassMap[u.status]}>{t(`status.${u.status}`)}</Badge></TableCell>
                   <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
-                  <TableCell><Link href={`/dashboard/users/${u.id}`} className="text-primary text-sm hover:underline">View Profile →</Link></TableCell>
+                  <TableCell><Link href={`/dashboard/users/${u.id}`} className="text-primary text-sm hover:underline">{t("viewProfile")}</Link></TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          <p className="text-xs text-muted-foreground">← 1  2  3 ... 576 →  &nbsp; Showing 1–5 of 2,876 users</p>
+          <p className="text-xs text-muted-foreground">← 1  2  3 ... 576 →  &nbsp; {t("pagination")}</p>
         </CardContent>
       </Card>
     </div>

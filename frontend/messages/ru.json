@@ -51,5 +51,630 @@
   },
   "breadcrumb": {
     "home": "Главная"
+  },
+  "common": {
+    "comingSoon": "Скоро"
+  },
+  "dashboard": {
+    "title": "Панель",
+    "lastUpdated": "Последнее обновление:",
+    "kpi": {
+      "activeUsers": "Активные пользователи",
+      "mrrUsd": "MRR (USD)",
+      "activeSubs": "Активные подписки",
+      "churnRisk": "Риск оттока",
+      "vsLastMonth": "к прошлому месяцу",
+      "dunningInProgress": "Dunning в процессе"
+    },
+    "recentActions": {
+      "title": "Последние действия администратора",
+      "viewFullLog": "Открыть журнал аудита →"
+    },
+    "subStatusDist": {
+      "title": "Распределение по статусам подписок",
+      "active": "Активна",
+      "gracePeriod": "Льготный период",
+      "cancelled": "Отменена",
+      "expired": "Истекла"
+    },
+    "webhookHealth": {
+      "title": "Состояние вебхуков",
+      "googleFailed": "Google (2 ошибки, повтор)",
+      "unprocessed": "0 необработанных событий"
+    }
+  },
+  "analytics": {
+    "title": "Панель аналитики",
+    "filter": {
+      "dateRangePlaceholder": "Период: Последние 30 дней",
+      "last30": "Последние 30 дней",
+      "last90": "Последние 90 дней",
+      "last12m": "Последние 12 месяцев",
+      "dimensionPlaceholder": "Измерение: Все",
+      "all": "Все",
+      "platform": "Платформа",
+      "plan": "Тариф"
+    },
+    "exportPng": "Экспорт PNG",
+    "exportPdf": "Экспорт PDF",
+    "kpi": {
+      "mrr": "MRR",
+      "churnRate": "Отток",
+      "ltv": "LTV",
+      "newSubs": "Новые подписки"
+    },
+    "mrrTrend": {
+      "title": "Динамика MRR (последние 6 месяцев)"
+    },
+    "churnByPlatform": {
+      "title": "Отток по платформам"
+    },
+    "revenueByPlan": {
+      "title": "Выручка по тарифам"
+    },
+    "rawMetrics": {
+      "title": "Таблица показателей",
+      "period": "Период",
+      "metric": "Метрика",
+      "value": "Значение",
+      "delta": "Изменение"
+    }
+  },
+  "auditLog": {
+    "title": "Просмотр журнала аудита",
+    "exportCsv": "Экспорт CSV",
+    "filter": {
+      "searchPlaceholder": "Поиск по администратору или цели...",
+      "actionAll": "Действие: Все",
+      "allActions": "Все действия"
+    },
+    "table": {
+      "timestamp": "Время",
+      "admin": "Администратор",
+      "action": "Действие",
+      "target": "Цель",
+      "ipAddress": "IP-адрес",
+      "detail": "Детали"
+    },
+    "pagination": "Показано 1–6 из 842 записей"
+  },
+  "dunning": {
+    "title": "Настройка dunning-кампании",
+    "retryRules": {
+      "title": "Правила повторных попыток",
+      "attempt": "Попытка",
+      "interval": "Интервал (дней)",
+      "action": "Действие",
+      "notification": "Уведомление"
+    },
+    "gracePeriod": {
+      "title": "Настройка льготного периода",
+      "durationPlaceholder": "Длительность льготного периода (дней): 7",
+      "maxPlaceholder": "Макс. льготных периодов: 2",
+      "notifyOnStart": "Уведомлять при начале льготного периода"
+    },
+    "escalation": {
+      "title": "Правила эскалации",
+      "rule1": "• После 4 неудачных попыток → запуск кампании возврата",
+      "rule2": "• После окончания льготного периода → admin_alert + отмена подписки"
+    },
+    "flowPreview": {
+      "title": "Предпросмотр процесса"
+    },
+    "currentlyInDunning": "Сейчас в dunning:",
+    "currentlyInDunningUsers": "43 пользователя",
+    "saveConfig": "Сохранить настройки",
+    "previewEmailTemplate": "Предпросмотр шаблона письма"
+  },
+  "experiments": {
+    "title": "Обзор A/B тестов",
+    "newTest": "+ Новый тест",
+    "tabs": {
+      "all": "Все",
+      "running": "🟢 Запущен",
+      "draft": "🟡 Черновик",
+      "completed": "⚫ Завершён"
+    },
+    "card": {
+      "type": "Тип:",
+      "arms": "Ветви:",
+      "confidence": "Уверенность:",
+      "threshold": "Порог:",
+      "notStarted": "Не запущен",
+      "viewDetails": "Подробнее",
+      "stopTest": "Остановить тест",
+      "editDraft": "Редактировать черновик",
+      "launch": "Запустить"
+    },
+    "status": {
+      "running": "🟢 Запущен",
+      "draft": "🟡 Черновик",
+      "completed": "⚫ Завершён"
+    },
+    "completedArchive": "7 завершённых тестов — обратитесь к команде разработки для доступа к архиву.",
+    "pagination": "Показано 1–5 из 12"
+  },
+  "experimentStudio": {
+    "title": "Студия A/B тестов",
+    "backToExperiments": "← Назад к экспериментам",
+    "config": {
+      "title": "Конфигурация теста",
+      "testName": "Название теста",
+      "testNamePlaceholder": "напр. Ценообразование A/B: Pro Annual vs Monthly",
+      "testType": "Тип теста",
+      "selectType": "Выберите тип",
+      "typePricing": "Ценообразование",
+      "typeWinback": "Возврат",
+      "typePaywall": "Paywall",
+      "typeOnboarding": "Онбординг",
+      "trafficSplit": "Распределение трафика (%)",
+      "confidenceThreshold": "Порог уверенности (%)"
+    },
+    "control": {
+      "title": "Контроль (A)",
+      "variantName": "Название варианта: Контроль",
+      "planKey": "Тариф / ключ конфига",
+      "priceOverride": "Переопределение цены (необязательно)"
+    },
+    "variant": {
+      "title": "Вариант (B)",
+      "variantName": "Название варианта: Вариант A",
+      "planKey": "Тариф / ключ конфига",
+      "priceOverride": "Переопределение цены (необязательно)"
+    },
+    "targeting": {
+      "title": "Таргетинг",
+      "platformAll": "Платформа: Все",
+      "countryCode": "Код страны (необязательно)",
+      "newUsersOnly": "Только новые пользователи: дней с регистрации ≤",
+      "holdout": "Включить holdout-группу (5%)",
+      "all": "Все",
+      "ios": "iOS",
+      "android": "Android",
+      "web": "Web"
+    },
+    "saveDraft": "Сохранить черновик",
+    "launchTest": "Запустить тест",
+    "cancel": "Отмена"
+  },
+  "bandit": {
+    "title": "Настройка бандитского алгоритма",
+    "statusRunning": "🟢 Запущен",
+    "card": {
+      "title": "Бандит: Оптимизация цен (Thompson Sampling)"
+    },
+    "algorithmPlaceholder": "Алгоритм: Thompson Sampling",
+    "algorithmThompson": "Thompson Sampling",
+    "algorithmUcb1": "UCB1",
+    "algorithmEpsilon": "ε-Жадный",
+    "explorationRate": "Коэффициент исследования ε",
+    "minPulls": "Мин. попыток на ветку",
+    "armPerformance": "Производительность веток",
+    "pause": "Пауза",
+    "stopBandit": "Остановить бандита",
+    "saveConfig": "Сохранить настройки"
+  },
+  "feedback": {
+    "title": "Конструктор форм обратной связи",
+    "previewForm": "Предпросмотр формы",
+    "addQuestion": "+ Добавить вопрос",
+    "formSettings": {
+      "title": "Настройки формы",
+      "formName": "Название формы",
+      "trigger": "Триггер",
+      "displayDelay": "Задержка отображения (сек)"
+    },
+    "question": "Вопрос",
+    "saveForm": "Сохранить форму",
+    "cancel": "Отмена"
+  },
+  "slidingWindow": {
+    "title": "Настройка теста скользящего окна",
+    "params": {
+      "title": "Параметры окна",
+      "windowSize": "Размер окна (дней)",
+      "stepSize": "Шаг (дней)",
+      "minObservations": "Мин. наблюдений",
+      "significance": "Значимость α"
+    },
+    "autoStop": "Авто-остановка при достижении значимости",
+    "driftDetect": "Включить обнаружение дрейфа",
+    "currentProgress": {
+      "title": "Прогресс текущего окна",
+      "observations": "Наблюдения",
+      "pValue": "p-значение",
+      "winner": "Лидер пока"
+    },
+    "saveConfig": "Сохранить настройки",
+    "resetWindow": "Сбросить окно"
+  },
+  "multiObjective": {
+    "title": "Мультицелевая оптимизация",
+    "card": {
+      "title": "Цели и веса"
+    },
+    "current": "Текущее:",
+    "baseline": "Базовое:",
+    "paretoFront": {
+      "title": "Варианты на фронте Парето"
+    },
+    "table": {
+      "variant": "Вариант",
+      "conv": "Конв.%",
+      "revUser": "Выр./польз.",
+      "churn": "Отток%",
+      "paretoScore": "Оценка Парето"
+    },
+    "autoSelect": "Авто-выбор победителя Парето по порогу",
+    "saveConfig": "Сохранить настройки",
+    "runAnalysis": "Запустить анализ"
+  },
+  "matomo": {
+    "title": "Аналитика Matomo",
+    "dateRangePlaceholder": "Период: Последние 30 дней",
+    "last7": "Последние 7 дней",
+    "last30": "Последние 30 дней",
+    "last90": "Последние 90 дней",
+    "openMatomo": "Открыть Matomo",
+    "kpi": {
+      "uniqueVisitors": "Уникальные посетители",
+      "pageViews": "Просмотры страниц",
+      "avgSession": "Ср. сессия",
+      "bounceRate": "Отказы"
+    },
+    "embed": {
+      "title": "Встроенная панель Matomo",
+      "envHint": "Укажите MATOMO_URL + MATOMO_SITE_ID в env для включения iframe",
+      "iframeLabel": "📊 Matomo Iframe",
+      "notConfigured": "MATOMO_URL не настроен",
+      "configure": "Настроить Matomo"
+    },
+    "topPages": {
+      "title": "Топ страниц"
+    },
+    "trafficSources": {
+      "title": "Источники трафика",
+      "direct": "Прямой",
+      "organic": "Органический поиск",
+      "referral": "Реферальный",
+      "social": "Социальные сети"
+    }
+  },
+  "pricing": {
+    "title": "Редактор тарифных планов",
+    "newPlan": "+ Новый тариф",
+    "plans": {
+      "title": "Тарифы"
+    },
+    "table": {
+      "name": "Название",
+      "price": "Цена",
+      "interval": "Интервал",
+      "trial": "Пробный",
+      "activeSubs": "Активные подписки",
+      "status": "Статус",
+      "actions": "Действия",
+      "days": "дней"
+    },
+    "status": {
+      "active": "Активен",
+      "inactive": "Неактивен"
+    },
+    "edit": "Редактировать",
+    "deactivate": "Деактивировать",
+    "activate": "Активировать",
+    "editPlan": {
+      "title": "Редактировать тариф: Pro Monthly",
+      "planName": "Название тарифа",
+      "price": "Цена",
+      "currency": "Валюта",
+      "interval": "Интервал",
+      "trialDays": "Пробных дней",
+      "gracePeriodEnabled": "Льготный период включён",
+      "graceDuration": "Длительность льготного периода (дней)",
+      "save": "Сохранить тариф",
+      "cancel": "Отмена"
+    },
+    "intervals": {
+      "monthly": "Ежемесячно",
+      "annual": "Ежегодно",
+      "weekly": "Еженедельно"
+    }
+  },
+  "revenueOps": {
+    "title": "Центр управления доходами",
+    "tabs": {
+      "dunning": "Очередь dunning (43)",
+      "webhooks": "Входящие вебхуки (12)",
+      "matomo": "Обзор Matomo"
+    },
+    "dunning": {
+      "title": "Активные dunning-кейсы",
+      "searchPlaceholder": "Поиск пользователя...",
+      "attemptPlaceholder": "Попытка: Все",
+      "all": "Все",
+      "attempt1": "Попытка 1",
+      "attempt2": "Попытка 2",
+      "attempt3": "Попытка 3",
+      "table": {
+        "user": "Пользователь",
+        "plan": "Тариф",
+        "attempt": "Попытка",
+        "nextRetry": "Следующий повтор",
+        "amount": "Сумма",
+        "actions": "Действия"
+      },
+      "retryNow": "Повторить сейчас",
+      "skip": "Пропустить",
+      "viewUser": "Профиль пользователя",
+      "showing": "Показано 3 из 43 —",
+      "viewAllLink": "Все в настройках Dunning →"
+    },
+    "webhooks": {
+      "title": "Необработанные вебхук-события",
+      "table": {
+        "provider": "Провайдер",
+        "event": "Событие",
+        "received": "Получено",
+        "status": "Статус",
+        "actions": "Действия"
+      },
+      "view": "Просмотр",
+      "replay": "Повторить",
+      "showing": "Показано 3 из 12 необработанных —",
+      "viewAllLink": "Все в инспекторе вебхуков →"
+    },
+    "matomo": {
+      "kpi": {
+        "uniqueVisitors": "Уникальные посетители",
+        "pageViews": "Просмотры страниц",
+        "avgSession": "Ср. сессия",
+        "bounceRate": "Отказы"
+      },
+      "topPage": "Топ страница:",
+      "topSource": "Топ источник: Прямой (38%)",
+      "views": "просм.",
+      "openFull": "Открыть полную панель Matomo →"
+    }
+  },
+  "settings": {
+    "title": "Настройки администратора",
+    "tabs": {
+      "general": "Общие",
+      "integrations": "Интеграции",
+      "notifications": "Уведомления",
+      "security": "Безопасность"
+    },
+    "general": {
+      "title": "Конфигурация платформы",
+      "platformName": "Название платформы",
+      "supportEmail": "Email поддержки",
+      "defaultCurrency": "Валюта по умолчанию",
+      "darkMode": "Тёмная тема по умолчанию",
+      "save": "Сохранить общие"
+    },
+    "stripe": {
+      "title": "Stripe",
+      "apiKey": "API-ключ Stripe (sk_...)",
+      "webhookSecret": "Webhook-секрет Stripe (whsec_...)",
+      "testMode": "Тестовый режим",
+      "save": "Сохранить Stripe"
+    },
+    "apple": {
+      "title": "Apple In-App",
+      "issuerId": "Issuer ID App Store",
+      "bundleId": "Bundle ID (com.yourapp)",
+      "save": "Сохранить Apple"
+    },
+    "google": {
+      "title": "Google Play",
+      "serviceAccount": "Service Account JSON",
+      "packageName": "Имя пакета",
+      "save": "Сохранить Google"
+    },
+    "matomo": {
+      "title": "Matomo",
+      "url": "URL Matomo (https://...)",
+      "siteId": "ID сайта",
+      "authToken": "Токен авторизации",
+      "save": "Сохранить Matomo"
+    },
+    "notifications": {
+      "title": "Email-уведомления",
+      "newSubscription": "Новая подписка",
+      "paymentFailed": "Ошибка оплаты",
+      "subscriptionCancelled": "Подписка отменена",
+      "refundIssued": "Возврат выполнен",
+      "webhookFailed": "Ошибка вебхука",
+      "dunningStarted": "Dunning запущен",
+      "save": "Сохранить уведомления"
+    },
+    "security": {
+      "title": "Доступ и аутентификация",
+      "jwtExpiry": "Срок действия JWT (часов)",
+      "mfa": "Требовать MFA для администратора",
+      "ipAllowlist": "Включить белый список IP",
+      "changePassword": "Изменить пароль администратора",
+      "currentPassword": "Текущий пароль",
+      "newPassword": "Новый пароль",
+      "confirmPassword": "Подтвердите новый пароль",
+      "updatePassword": "Обновить пароль"
+    }
+  },
+  "subscriptions": {
+    "title": "Управление подписками",
+    "filter": {
+      "statusPlaceholder": "Статус: Все",
+      "statusAll": "Все",
+      "statusActive": "Активна",
+      "statusGrace": "Льготный",
+      "statusDunning": "Dunning",
+      "statusExpired": "Истекла",
+      "sourcePlaceholder": "Источник: Все",
+      "sourceAll": "Все",
+      "planPlaceholder": "Тариф: Все",
+      "planAll": "Все",
+      "planBasic": "Basic",
+      "planPro": "Pro",
+      "planEnterprise": "Enterprise"
+    },
+    "bulkCancel": "Массово: Отменить",
+    "bulkRenew": "Массово: Продлить",
+    "table": {
+      "user": "Пользователь",
+      "status": "Статус",
+      "source": "Источник",
+      "plan": "Тариф",
+      "expires": "Истекает",
+      "ltv": "LTV",
+      "actions": "Действия"
+    },
+    "status": {
+      "active": "✅ Активна",
+      "grace": "🔶 Льготный",
+      "dunning": "⚠️ Dunning",
+      "expired": "❌ Истекла"
+    },
+    "pagination": "Показано 1–5 из 445"
+  },
+  "transactions": {
+    "title": "Сверка транзакций",
+    "filter": {
+      "searchPlaceholder": "receipt_hash / email пользователя...",
+      "statusPlaceholder": "Статус: Все",
+      "statusAll": "Все",
+      "statusSuccess": "Успешно",
+      "statusFailed": "Ошибка",
+      "statusRefunded": "Возврат",
+      "currencyPlaceholder": "Валюта: Все",
+      "currencyAll": "Все"
+    },
+    "summary": {
+      "success": "успешно",
+      "failed": "ошибок",
+      "refunded": "возвратов"
+    },
+    "table": {
+      "date": "Дата",
+      "user": "Пользователь",
+      "amount": "Сумма",
+      "currency": "Валюта",
+      "status": "Статус",
+      "source": "Источник",
+      "receipt": "Чек"
+    },
+    "status": {
+      "success": "✅ Успешно",
+      "failed": "❌ Ошибка",
+      "refunded": "↩️ Возврат"
+    },
+    "pagination": "Показано 1–5 из 1 085 транзакций"
+  },
+  "users": {
+    "title": "Пользователи",
+    "exportCsv": "Экспорт CSV",
+    "filter": {
+      "searchPlaceholder": "Поиск по email / platform_user_id / device_id...",
+      "platformPlaceholder": "Платформа: Все",
+      "platformAll": "Все",
+      "platformIos": "iOS",
+      "platformAndroid": "Android",
+      "platformWeb": "Web",
+      "rolePlaceholder": "Роль: Все",
+      "roleAll": "Все",
+      "roleUser": "Пользователь",
+      "roleAdmin": "Администратор",
+      "subStatusPlaceholder": "Статус подписки: Все",
+      "subStatusAll": "Все",
+      "subStatusActive": "Активна",
+      "subStatusGrace": "Льготный",
+      "subStatusDunning": "Dunning",
+      "subStatusExpired": "Истекла",
+      "ltvMin": "LTV от $",
+      "ltvMax": "LTV до $"
+    },
+    "bulkCancel": "Массово: Отменить подписки",
+    "bulkGrace": "Массово: Дать льготный период",
+    "table": {
+      "email": "Email",
+      "platform": "Платформа",
+      "ltv": "LTV",
+      "status": "Статус",
+      "role": "Роль",
+      "actions": "Действия"
+    },
+    "status": {
+      "active": "✅ Активна",
+      "grace": "🔶 Льготный",
+      "dunning": "⚠️ Dunning",
+      "expired": "❌ Истекла"
+    },
+    "viewProfile": "Профиль →",
+    "pagination": "Показано 1–5 из 2 876 пользователей"
+  },
+  "webhooks": {
+    "title": "Инспектор вебхук-событий",
+    "filter": {
+      "providerPlaceholder": "Провайдер: Все",
+      "providerAll": "Все",
+      "eventTypePlaceholder": "Тип события...",
+      "statusPlaceholder": "Статус: Все",
+      "statusAll": "Все",
+      "statusPending": "Ожидает",
+      "statusProcessed": "Обработан",
+      "statusFailed": "Ошибка"
+    },
+    "table": {
+      "provider": "Провайдер",
+      "eventType": "Тип события",
+      "received": "Получено",
+      "status": "Статус",
+      "payloadPreview": "Предпросмотр",
+      "actions": "Действия"
+    },
+    "actions": {
+      "view": "Просмотр",
+      "replay": "Повторить"
+    },
+    "status": {
+      "pending": "⏳ Ожидает",
+      "processed": "✅ Обработан",
+      "failed": "❌ Ошибка"
+    },
+    "pagination": "Показано 1–5 из 140 событий"
+  },
+  "winback": {
+    "title": "Конструктор кампаний возврата",
+    "newCampaign": "+ Новая кампания",
+    "campaigns": {
+      "title": "Кампании"
+    },
+    "editCampaign": {
+      "title": "Редактировать кампанию: Summer Winback 2025",
+      "namePlaceholder": "Название кампании",
+      "discountTypePlaceholder": "Тип скидки: процент",
+      "percentage": "Процент (%)",
+      "fixed": "Фиксированная ($)",
+      "valuePlaceholder": "Значение: 30"
+    },
+    "targeting": {
+      "title": "Таргетинг: Ушедшие пользователи",
+      "churnedMin": "Мин. дней с оттока",
+      "churnedMax": "Макс. дней с оттока",
+      "platformPlaceholder": "Платформа: Все",
+      "all": "Все",
+      "ios": "iOS",
+      "android": "Android",
+      "expiresAt": "Дата истечения",
+      "enableAbTest": "Включить A/B тест"
+    },
+    "preview": {
+      "title": "Предпросмотр",
+      "message": "📱 Мы скучаем! Получите скидку 30% на подписку.",
+      "eligibleUsers": "Подходящих пользователей: ~1 247  ·  Предложение истекает: 01.09.2025"
+    },
+    "saveCampaign": "Сохранить кампанию",
+    "launchNow": "Запустить сейчас",
+    "cancel": "Отмена"
   }
 }

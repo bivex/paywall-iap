@@ -51,5 +51,630 @@
   },
   "breadcrumb": {
     "home": "Admin"
+  },
+  "common": {
+    "comingSoon": "Soon"
+  },
+  "dashboard": {
+    "title": "Admin Dashboard",
+    "lastUpdated": "Last Updated:",
+    "kpi": {
+      "activeUsers": "Active Users",
+      "mrrUsd": "MRR (USD)",
+      "activeSubs": "Active Subs",
+      "churnRisk": "Churn Risk",
+      "vsLastMonth": "vs last month",
+      "dunningInProgress": "Dunning in progress"
+    },
+    "recentActions": {
+      "title": "Recent Admin Actions",
+      "viewFullLog": "View Full Audit Log →"
+    },
+    "subStatusDist": {
+      "title": "Subscription Status Distribution",
+      "active": "Active",
+      "gracePeriod": "Grace Period",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    },
+    "webhookHealth": {
+      "title": "Webhook Health",
+      "googleFailed": "Google (2 failed, retrying)",
+      "unprocessed": "0 Unprocessed Events"
+    }
+  },
+  "analytics": {
+    "title": "Analytics Reports Dashboard",
+    "filter": {
+      "dateRangePlaceholder": "Date Range: Last 30 days",
+      "last30": "Last 30 days",
+      "last90": "Last 90 days",
+      "last12m": "Last 12 months",
+      "dimensionPlaceholder": "Dimension: All",
+      "all": "All",
+      "platform": "Platform",
+      "plan": "Plan"
+    },
+    "exportPng": "Export PNG",
+    "exportPdf": "Export PDF",
+    "kpi": {
+      "mrr": "MRR",
+      "churnRate": "Churn Rate",
+      "ltv": "LTV",
+      "newSubs": "New Subs"
+    },
+    "mrrTrend": {
+      "title": "MRR Trend (Last 6 months)"
+    },
+    "churnByPlatform": {
+      "title": "Churn by Platform"
+    },
+    "revenueByPlan": {
+      "title": "Revenue by Plan"
+    },
+    "rawMetrics": {
+      "title": "Raw Metrics Table",
+      "period": "Period",
+      "metric": "Metric",
+      "value": "Value",
+      "delta": "Delta"
+    }
+  },
+  "auditLog": {
+    "title": "Audit Log Viewer",
+    "exportCsv": "Export CSV",
+    "filter": {
+      "searchPlaceholder": "Search admin or target...",
+      "actionAll": "Action: All",
+      "allActions": "All Actions"
+    },
+    "table": {
+      "timestamp": "Timestamp",
+      "admin": "Admin",
+      "action": "Action",
+      "target": "Target",
+      "ipAddress": "IP Address",
+      "detail": "Detail"
+    },
+    "pagination": "Showing 1–6 of 842 entries"
+  },
+  "dunning": {
+    "title": "Dunning Campaign Config",
+    "retryRules": {
+      "title": "Retry Rules",
+      "attempt": "Attempt",
+      "interval": "Interval (days)",
+      "action": "Action",
+      "notification": "Notification"
+    },
+    "gracePeriod": {
+      "title": "Grace Period Config",
+      "durationPlaceholder": "Grace Duration (days): 7",
+      "maxPlaceholder": "Max grace periods: 2",
+      "notifyOnStart": "Notify on grace start"
+    },
+    "escalation": {
+      "title": "Escalation Rules",
+      "rule1": "• After 4 failed attempts → winback campaign trigger",
+      "rule2": "• After grace end → admin_alert + subscription cancel"
+    },
+    "flowPreview": {
+      "title": "Flow Preview"
+    },
+    "currentlyInDunning": "Currently in Dunning:",
+    "currentlyInDunningUsers": "43 users",
+    "saveConfig": "Save Config",
+    "previewEmailTemplate": "Preview Email Template"
+  },
+  "experiments": {
+    "title": "A/B Test Discovery",
+    "newTest": "+ New Test",
+    "tabs": {
+      "all": "All",
+      "running": "🟢 Running",
+      "draft": "🟡 Draft",
+      "completed": "⚫ Completed"
+    },
+    "card": {
+      "type": "Type:",
+      "arms": "Arms:",
+      "confidence": "Confidence:",
+      "threshold": "Threshold:",
+      "notStarted": "Not started",
+      "viewDetails": "View Details",
+      "stopTest": "Stop Test",
+      "editDraft": "Edit Draft",
+      "launch": "Launch"
+    },
+    "status": {
+      "running": "🟢 Running",
+      "draft": "🟡 Draft",
+      "completed": "⚫ Completed"
+    },
+    "completedArchive": "7 completed tests — contact engineering for archive access.",
+    "pagination": "Showing 1–5 of 12"
+  },
+  "experimentStudio": {
+    "title": "A/B Test Studio",
+    "backToExperiments": "← Back to Experiments",
+    "config": {
+      "title": "Test Configuration",
+      "testName": "Test Name",
+      "testNamePlaceholder": "e.g. Pricing A/B: Pro Annual vs Monthly",
+      "testType": "Test Type",
+      "selectType": "Select type",
+      "typePricing": "Pricing",
+      "typeWinback": "Winback",
+      "typePaywall": "Paywall",
+      "typeOnboarding": "Onboarding",
+      "trafficSplit": "Traffic Split (%)",
+      "confidenceThreshold": "Confidence Threshold (%)"
+    },
+    "control": {
+      "title": "Control (A)",
+      "variantName": "Variant name: Control",
+      "planKey": "Plan / config key",
+      "priceOverride": "Price override (optional)"
+    },
+    "variant": {
+      "title": "Variant (B)",
+      "variantName": "Variant name: Variant A",
+      "planKey": "Plan / config key",
+      "priceOverride": "Price override (optional)"
+    },
+    "targeting": {
+      "title": "Targeting",
+      "platformAll": "Platform: All",
+      "countryCode": "Country code (optional)",
+      "newUsersOnly": "New users only: days since reg ≤",
+      "holdout": "Enable holdout group (5%)",
+      "all": "All",
+      "ios": "iOS",
+      "android": "Android",
+      "web": "Web"
+    },
+    "saveDraft": "Save Draft",
+    "launchTest": "Launch Test",
+    "cancel": "Cancel"
+  },
+  "bandit": {
+    "title": "Bandit Algorithm Config",
+    "statusRunning": "🟢 Running",
+    "card": {
+      "title": "Bandit: Pricing Optimization (Thompson Sampling)"
+    },
+    "algorithmPlaceholder": "Algorithm: Thompson Sampling",
+    "algorithmThompson": "Thompson Sampling",
+    "algorithmUcb1": "UCB1",
+    "algorithmEpsilon": "ε-Greedy",
+    "explorationRate": "Exploration rate ε",
+    "minPulls": "Min pulls per arm",
+    "armPerformance": "Arm Performance",
+    "pause": "Pause",
+    "stopBandit": "Stop Bandit",
+    "saveConfig": "Save Config"
+  },
+  "feedback": {
+    "title": "Feedback Form Builder",
+    "previewForm": "Preview Form",
+    "addQuestion": "+ Add Question",
+    "formSettings": {
+      "title": "Form Settings",
+      "formName": "Form Name",
+      "trigger": "Trigger",
+      "displayDelay": "Display Delay (sec)"
+    },
+    "question": "Question",
+    "saveForm": "Save Form",
+    "cancel": "Cancel"
+  },
+  "slidingWindow": {
+    "title": "Sliding Window Test Config",
+    "params": {
+      "title": "Window Parameters",
+      "windowSize": "Window Size (days)",
+      "stepSize": "Step Size (days)",
+      "minObservations": "Min Observations",
+      "significance": "Significance α"
+    },
+    "autoStop": "Auto-stop when significance reached",
+    "driftDetect": "Enable drift detection",
+    "currentProgress": {
+      "title": "Current Window Progress",
+      "observations": "Observations",
+      "pValue": "p-value",
+      "winner": "Winner so far"
+    },
+    "saveConfig": "Save Config",
+    "resetWindow": "Reset Window"
+  },
+  "multiObjective": {
+    "title": "Multi-Objective Optimization",
+    "card": {
+      "title": "Objectives & Weights"
+    },
+    "current": "Current:",
+    "baseline": "Baseline:",
+    "paretoFront": {
+      "title": "Pareto Front Variants"
+    },
+    "table": {
+      "variant": "Variant",
+      "conv": "Conv%",
+      "revUser": "Rev/User",
+      "churn": "Churn%",
+      "paretoScore": "Pareto Score"
+    },
+    "autoSelect": "Auto-select Pareto winner on threshold",
+    "saveConfig": "Save Config",
+    "runAnalysis": "Run Analysis"
+  },
+  "matomo": {
+    "title": "Matomo Web Analytics",
+    "dateRangePlaceholder": "Date Range: Last 30 days",
+    "last7": "Last 7 days",
+    "last30": "Last 30 days",
+    "last90": "Last 90 days",
+    "openMatomo": "Open Matomo",
+    "kpi": {
+      "uniqueVisitors": "Unique Visitors",
+      "pageViews": "Page Views",
+      "avgSession": "Avg Session",
+      "bounceRate": "Bounce Rate"
+    },
+    "embed": {
+      "title": "Matomo Dashboard Embed",
+      "envHint": "Set MATOMO_URL + MATOMO_SITE_ID in env to enable live iframe embed",
+      "iframeLabel": "📊 Matomo Iframe",
+      "notConfigured": "MATOMO_URL not configured",
+      "configure": "Configure Matomo"
+    },
+    "topPages": {
+      "title": "Top Pages"
+    },
+    "trafficSources": {
+      "title": "Traffic Sources",
+      "direct": "Direct",
+      "organic": "Organic Search",
+      "referral": "Referral",
+      "social": "Social"
+    }
+  },
+  "pricing": {
+    "title": "Pricing Plan Editor",
+    "newPlan": "+ New Plan",
+    "plans": {
+      "title": "Plans"
+    },
+    "table": {
+      "name": "Name",
+      "price": "Price",
+      "interval": "Interval",
+      "trial": "Trial",
+      "activeSubs": "Active Subs",
+      "status": "Status",
+      "actions": "Actions",
+      "days": "days"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "edit": "Edit",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "editPlan": {
+      "title": "Edit Plan: Pro Monthly",
+      "planName": "Plan Name",
+      "price": "Price",
+      "currency": "Currency",
+      "interval": "Interval",
+      "trialDays": "Trial Days",
+      "gracePeriodEnabled": "Grace Period Enabled",
+      "graceDuration": "Grace Duration (days)",
+      "save": "Save Plan",
+      "cancel": "Cancel"
+    },
+    "intervals": {
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "weekly": "Weekly"
+    }
+  },
+  "revenueOps": {
+    "title": "Revenue Ops Center",
+    "tabs": {
+      "dunning": "Dunning Queue (43)",
+      "webhooks": "Webhook Inbox (12)",
+      "matomo": "Matomo Overview"
+    },
+    "dunning": {
+      "title": "Active Dunning Cases",
+      "searchPlaceholder": "Search user...",
+      "attemptPlaceholder": "Attempt: All",
+      "all": "All",
+      "attempt1": "Attempt 1",
+      "attempt2": "Attempt 2",
+      "attempt3": "Attempt 3",
+      "table": {
+        "user": "User",
+        "plan": "Plan",
+        "attempt": "Attempt",
+        "nextRetry": "Next Retry",
+        "amount": "Amount",
+        "actions": "Actions"
+      },
+      "retryNow": "Retry Now",
+      "skip": "Skip",
+      "viewUser": "View User",
+      "showing": "Showing 3 of 43 —",
+      "viewAllLink": "View All in Dunning Config →"
+    },
+    "webhooks": {
+      "title": "Unprocessed Webhook Events",
+      "table": {
+        "provider": "Provider",
+        "event": "Event",
+        "received": "Received",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "view": "View",
+      "replay": "Replay",
+      "showing": "Showing 3 of 12 unprocessed —",
+      "viewAllLink": "View All in Webhook Inspector →"
+    },
+    "matomo": {
+      "kpi": {
+        "uniqueVisitors": "Unique Visitors",
+        "pageViews": "Page Views",
+        "avgSession": "Avg Session",
+        "bounceRate": "Bounce Rate"
+      },
+      "topPage": "Top page:",
+      "topSource": "Top source: Direct (38%)",
+      "views": "views",
+      "openFull": "Open Full Matomo Dashboard →"
+    }
+  },
+  "settings": {
+    "title": "Admin Settings & Config",
+    "tabs": {
+      "general": "General",
+      "integrations": "Integrations",
+      "notifications": "Notifications",
+      "security": "Security"
+    },
+    "general": {
+      "title": "Platform Config",
+      "platformName": "Platform Name",
+      "supportEmail": "Support Email",
+      "defaultCurrency": "Default Currency",
+      "darkMode": "Dark Mode Default",
+      "save": "Save General"
+    },
+    "stripe": {
+      "title": "Stripe",
+      "apiKey": "Stripe API Key (sk_...)",
+      "webhookSecret": "Stripe Webhook Secret (whsec_...)",
+      "testMode": "Test Mode",
+      "save": "Save Stripe"
+    },
+    "apple": {
+      "title": "Apple In-App",
+      "issuerId": "App Store Issuer ID",
+      "bundleId": "Bundle ID (com.yourapp)",
+      "save": "Save Apple"
+    },
+    "google": {
+      "title": "Google Play",
+      "serviceAccount": "Service Account JSON",
+      "packageName": "Package Name",
+      "save": "Save Google"
+    },
+    "matomo": {
+      "title": "Matomo",
+      "url": "Matomo URL (https://...)",
+      "siteId": "Site ID",
+      "authToken": "Auth Token",
+      "save": "Save Matomo"
+    },
+    "notifications": {
+      "title": "Email Notifications",
+      "newSubscription": "New subscription",
+      "paymentFailed": "Payment failed",
+      "subscriptionCancelled": "Subscription cancelled",
+      "refundIssued": "Refund issued",
+      "webhookFailed": "Webhook failed",
+      "dunningStarted": "Dunning started",
+      "save": "Save Notifications"
+    },
+    "security": {
+      "title": "Access & Auth",
+      "jwtExpiry": "JWT Expiry (hours)",
+      "mfa": "Require MFA for admin",
+      "ipAllowlist": "Enable IP Allowlist",
+      "changePassword": "Change Admin Password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "updatePassword": "Update Password"
+    }
+  },
+  "subscriptions": {
+    "title": "Subscription Management",
+    "filter": {
+      "statusPlaceholder": "Status: All",
+      "statusAll": "All",
+      "statusActive": "Active",
+      "statusGrace": "Grace",
+      "statusDunning": "Dunning",
+      "statusExpired": "Expired",
+      "sourcePlaceholder": "Source: All",
+      "sourceAll": "All",
+      "planPlaceholder": "Plan: All",
+      "planAll": "All",
+      "planBasic": "Basic",
+      "planPro": "Pro",
+      "planEnterprise": "Enterprise"
+    },
+    "bulkCancel": "Bulk: Cancel",
+    "bulkRenew": "Bulk: Renew",
+    "table": {
+      "user": "User",
+      "status": "Status",
+      "source": "Source",
+      "plan": "Plan",
+      "expires": "Expires",
+      "ltv": "LTV",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "✅ Active",
+      "grace": "🔶 Grace",
+      "dunning": "⚠️ Dunning",
+      "expired": "❌ Expired"
+    },
+    "pagination": "Showing 1–5 of 445"
+  },
+  "transactions": {
+    "title": "Transaction Reconciliation",
+    "filter": {
+      "searchPlaceholder": "receipt_hash / user email...",
+      "statusPlaceholder": "Status: All",
+      "statusAll": "All",
+      "statusSuccess": "Success",
+      "statusFailed": "Failed",
+      "statusRefunded": "Refunded",
+      "currencyPlaceholder": "Currency: All",
+      "currencyAll": "All"
+    },
+    "summary": {
+      "success": "success",
+      "failed": "failed",
+      "refunded": "refunded"
+    },
+    "table": {
+      "date": "Date",
+      "user": "User",
+      "amount": "Amount",
+      "currency": "Currency",
+      "status": "Status",
+      "source": "Source",
+      "receipt": "Receipt"
+    },
+    "status": {
+      "success": "✅ Success",
+      "failed": "❌ Failed",
+      "refunded": "↩️ Refunded"
+    },
+    "pagination": "Showing 1–5 of 1,085 transactions"
+  },
+  "users": {
+    "title": "User List",
+    "exportCsv": "Export CSV",
+    "filter": {
+      "searchPlaceholder": "Search by email / platform_user_id / device_id...",
+      "platformPlaceholder": "Platform: All",
+      "platformAll": "All",
+      "platformIos": "iOS",
+      "platformAndroid": "Android",
+      "platformWeb": "Web",
+      "rolePlaceholder": "Role: All",
+      "roleAll": "All",
+      "roleUser": "User",
+      "roleAdmin": "Admin",
+      "subStatusPlaceholder": "Sub Status: All",
+      "subStatusAll": "All",
+      "subStatusActive": "Active",
+      "subStatusGrace": "Grace",
+      "subStatusDunning": "Dunning",
+      "subStatusExpired": "Expired",
+      "ltvMin": "LTV Min $",
+      "ltvMax": "LTV Max $"
+    },
+    "bulkCancel": "Bulk: Cancel Subscriptions",
+    "bulkGrace": "Bulk: Grant Grace",
+    "table": {
+      "email": "Email",
+      "platform": "Platform",
+      "ltv": "LTV",
+      "status": "Status",
+      "role": "Role",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "✅ Active",
+      "grace": "🔶 Grace",
+      "dunning": "⚠️ Dunning",
+      "expired": "❌ Expired"
+    },
+    "viewProfile": "View Profile →",
+    "pagination": "Showing 1–5 of 2,876 users"
+  },
+  "webhooks": {
+    "title": "Webhook Event Inspector",
+    "filter": {
+      "providerPlaceholder": "Provider: All",
+      "providerAll": "All",
+      "eventTypePlaceholder": "Event type...",
+      "statusPlaceholder": "Status: All",
+      "statusAll": "All",
+      "statusPending": "Pending",
+      "statusProcessed": "Processed",
+      "statusFailed": "Failed"
+    },
+    "table": {
+      "provider": "Provider",
+      "eventType": "Event Type",
+      "received": "Received",
+      "status": "Status",
+      "payloadPreview": "Payload Preview",
+      "actions": "Actions"
+    },
+    "actions": {
+      "view": "View",
+      "replay": "Replay"
+    },
+    "status": {
+      "pending": "⏳ Pending",
+      "processed": "✅ Processed",
+      "failed": "❌ Failed"
+    },
+    "pagination": "Showing 1–5 of 140 events"
+  },
+  "winback": {
+    "title": "Winback Campaign Builder",
+    "newCampaign": "+ New Campaign",
+    "campaigns": {
+      "title": "Campaigns"
+    },
+    "editCampaign": {
+      "title": "Edit Campaign: Summer Winback 2025",
+      "namePlaceholder": "Campaign Name",
+      "discountTypePlaceholder": "Discount Type: percentage",
+      "percentage": "Percentage (%)",
+      "fixed": "Fixed ($)",
+      "valuePlaceholder": "Value: 30"
+    },
+    "targeting": {
+      "title": "Targeting: Churned Users",
+      "churnedMin": "Churned days min",
+      "churnedMax": "Churned days max",
+      "platformPlaceholder": "Platform: All",
+      "all": "All",
+      "ios": "iOS",
+      "android": "Android",
+      "expiresAt": "Expires At",
+      "enableAbTest": "Enable A/B Test"
+    },
+    "preview": {
+      "title": "Preview Card",
+      "message": "📱 We miss you! Get 30% back on your subscription.",
+      "eligibleUsers": "Eligible users: ~1,247  ·  Offer expires: 2025-09-01"
+    },
+    "saveCampaign": "Save Campaign",
+    "launchNow": "Launch Now",
+    "cancel": "Cancel"
   }
 }

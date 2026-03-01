@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,65 +13,68 @@ const tests = [
   { id: "test_005", name: "Price Point: $9.99 vs $7.99", status: "draft", type: "pricing", confidence: 0, threshold: 95, arms: "Control vs Variant" },
 ];
 
-const statusMap: Record<string, { label: string; className: string }> = {
-  running: { label: "🟢 Running", className: "bg-green-100 text-green-800" },
-  draft: { label: "🟡 Draft", className: "bg-yellow-100 text-yellow-800" },
-  completed: { label: "⚫ Completed", className: "bg-gray-100 text-gray-700" },
+const statusClassMap: Record<string, string> = {
+  running: "bg-green-100 text-green-800",
+  draft: "bg-yellow-100 text-yellow-800",
+  completed: "bg-gray-100 text-gray-700",
 };
 
-function TestCard({ test }: { test: typeof tests[0] }) {
+type TranslationFn = (key: string) => string;
+
+function TestCard({ test, t }: { test: (typeof tests)[0]; t: TranslationFn }) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-sm font-medium">{test.name}</CardTitle>
-          <Badge className={statusMap[test.status].className}>{statusMap[test.status].label}</Badge>
+          <Badge className={statusClassMap[test.status]}>{t(`status.${test.status}`)}</Badge>
         </div>
-        <p className="text-xs text-muted-foreground">Type: {test.type} · Arms: {test.arms}</p>
+        <p className="text-xs text-muted-foreground">{t("card.type")} {test.type} · {t("card.arms")} {test.arms}</p>
       </CardHeader>
       <CardContent className="space-y-2">
         {test.status === "running" && (
           <>
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Confidence: {test.confidence}%</span>
-              <span>Threshold: {test.threshold}%</span>
+              <span>{t("card.confidence")} {test.confidence}%</span>
+              <span>{t("card.threshold")} {test.threshold}%</span>
             </div>
             <Progress value={test.confidence} className="h-2" />
           </>
         )}
-        {test.status === "draft" && <p className="text-xs text-muted-foreground">Not started</p>}
+        {test.status === "draft" && <p className="text-xs text-muted-foreground">{t("card.notStarted")}</p>}
         <div className="flex gap-2 pt-1">
-          {test.status === "running" && <><Button variant="outline" size="sm">View Details</Button><Button variant="destructive" size="sm">Stop Test</Button></>}
-          {test.status === "draft" && <><Button variant="outline" size="sm">Edit Draft</Button><Button size="sm">Launch</Button></>}
+          {test.status === "running" && <><Button variant="outline" size="sm">{t("card.viewDetails")}</Button><Button variant="destructive" size="sm">{t("card.stopTest")}</Button></>}
+          {test.status === "draft" && <><Button variant="outline" size="sm">{t("card.editDraft")}</Button><Button size="sm">{t("card.launch")}</Button></>}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-export default function ExperimentsPage() {
+export default async function ExperimentsPage() {
+  const t = await getTranslations("experiments");
   const running = tests.filter((t) => t.status === "running");
   const drafts = tests.filter((t) => t.status === "draft");
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">A/B Test Discovery</h1>
-        <Button size="sm">+ New Test</Button>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+        <Button size="sm">{t("newTest")}</Button>
       </div>
       <Tabs defaultValue="all">
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="running">🟢 Running ({running.length})</TabsTrigger>
-          <TabsTrigger value="draft">🟡 Draft ({drafts.length})</TabsTrigger>
-          <TabsTrigger value="completed">⚫ Completed (7)</TabsTrigger>
+          <TabsTrigger value="all">{t("tabs.all")}</TabsTrigger>
+          <TabsTrigger value="running">{t("tabs.running")} ({running.length})</TabsTrigger>
+          <TabsTrigger value="draft">{t("tabs.draft")} ({drafts.length})</TabsTrigger>
+          <TabsTrigger value="completed">{t("tabs.completed")} (7)</TabsTrigger>
         </TabsList>
-        <TabsContent value="all" className="mt-4 space-y-3">{tests.map((t) => <TestCard key={t.id} test={t} />)}</TabsContent>
-        <TabsContent value="running" className="mt-4 space-y-3">{running.map((t) => <TestCard key={t.id} test={t} />)}</TabsContent>
-        <TabsContent value="draft" className="mt-4 space-y-3">{drafts.map((t) => <TestCard key={t.id} test={t} />)}</TabsContent>
-        <TabsContent value="completed" className="mt-4"><Card><CardContent className="pt-4 text-sm text-muted-foreground">7 completed tests — contact engineering for archive access.</CardContent></Card></TabsContent>
+        <TabsContent value="all" className="mt-4 space-y-3">{tests.map((test) => <TestCard key={test.id} test={test} t={t as unknown as TranslationFn} />)}</TabsContent>
+        <TabsContent value="running" className="mt-4 space-y-3">{running.map((test) => <TestCard key={test.id} test={test} t={t as unknown as TranslationFn} />)}</TabsContent>
+        <TabsContent value="draft" className="mt-4 space-y-3">{drafts.map((test) => <TestCard key={test.id} test={test} t={t as unknown as TranslationFn} />)}</TabsContent>
+        <TabsContent value="completed" className="mt-4"><Card><CardContent className="pt-4 text-sm text-muted-foreground">{t("completedArchive")}</CardContent></Card></TabsContent>
       </Tabs>
-      <p className="text-xs text-muted-foreground">← 1  2  3 →  &nbsp; Showing 1–5 of 12</p>
+      <p className="text-xs text-muted-foreground">← 1  2  3 →  &nbsp; {t("pagination")}</p>
     </div>
   );
 }

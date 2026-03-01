@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { ChevronRight } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -26,9 +27,12 @@ import {
 import type { NavMainItem } from "@/navigation/sidebar/sidebar-items";
 import { useSidebarItems } from "@/navigation/sidebar/use-sidebar-items";
 
-const IsComingSoon = () => (
-  <span className="ml-auto rounded-md bg-gray-200 px-2 py-1 text-xs dark:text-gray-800">Soon</span>
-);
+const IsComingSoon = () => {
+  const t = useTranslations("common");
+  return (
+    <span className="ml-auto rounded-md bg-gray-200 px-2 py-1 text-xs dark:text-gray-800">{t("comingSoon")}</span>
+  );
+};
 
 const NavItemExpanded = ({
   item,

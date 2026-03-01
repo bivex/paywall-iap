@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,24 +13,25 @@ const arms = [
   { name: "Pro Annual $89.99", pulls: 640, conversions: 31, rate: 4.84, weight: 20 },
 ];
 
-export default function BanditPage() {
+export default async function BanditPage() {
+  const t = await getTranslations("bandit");
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Bandit Algorithm Config</h1>
-        <Badge className="bg-green-100 text-green-800">🟢 Running</Badge>
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+        <Badge className="bg-green-100 text-green-800">{t("statusRunning")}</Badge>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-sm">Bandit: Pricing Optimization (Thompson Sampling)</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("card.title")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-3">
-            <Select><SelectTrigger className="w-52"><SelectValue placeholder="Algorithm: Thompson Sampling" /></SelectTrigger><SelectContent><SelectItem value="thompson">Thompson Sampling</SelectItem><SelectItem value="ucb1">UCB1</SelectItem><SelectItem value="epsilon">ε-Greedy</SelectItem></SelectContent></Select>
-            <Input placeholder="Exploration rate ε" defaultValue="0.1" className="w-36 font-mono" />
-            <Input placeholder="Min pulls per arm" defaultValue="100" className="w-36 font-mono" />
+            <Select><SelectTrigger className="w-52"><SelectValue placeholder={t("algorithmPlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="thompson">{t("algorithmThompson")}</SelectItem><SelectItem value="ucb1">{t("algorithmUcb1")}</SelectItem><SelectItem value="epsilon">{t("algorithmEpsilon")}</SelectItem></SelectContent></Select>
+            <Input placeholder={t("explorationRate")} defaultValue="0.1" className="w-36 font-mono" />
+            <Input placeholder={t("minPulls")} defaultValue="100" className="w-36 font-mono" />
           </div>
           <Separator />
-          <p className="text-sm font-medium">Arm Performance</p>
+          <p className="text-sm font-medium">{t("armPerformance")}</p>
           {arms.map((a) => (
             <div key={a.name} className="space-y-1">
               <div className="flex items-center justify-between text-sm">
@@ -44,9 +46,9 @@ export default function BanditPage() {
           ))}
           <Separator />
           <div className="flex gap-2">
-            <Button size="sm" variant="outline">Pause</Button>
-            <Button size="sm" variant="destructive">Stop Bandit</Button>
-            <Button size="sm">Save Config</Button>
+            <Button size="sm" variant="outline">{t("pause")}</Button>
+            <Button size="sm" variant="destructive">{t("stopBandit")}</Button>
+            <Button size="sm">{t("saveConfig")}</Button>
           </div>
         </CardContent>
       </Card>

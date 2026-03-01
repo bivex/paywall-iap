@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,52 +25,53 @@ const provColors: Record<string, string> = {
   Google: "bg-emerald-100 text-emerald-800",
 };
 
-const whStatus: Record<string, string> = {
+const whStatusClass: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
   failed: "bg-red-100 text-red-800",
 };
 
-export default function RevenueOpsPage() {
+export default async function RevenueOpsPage() {
+  const t = await getTranslations("revenueOps");
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Revenue Ops Center</h1>
+      <h1 className="text-2xl font-semibold">{t("title")}</h1>
       <Tabs defaultValue="dunning">
         <TabsList>
-          <TabsTrigger value="dunning">Dunning Queue (43)</TabsTrigger>
-          <TabsTrigger value="webhooks">Webhook Inbox (12)</TabsTrigger>
-          <TabsTrigger value="matomo">Matomo Overview</TabsTrigger>
+          <TabsTrigger value="dunning">{t("tabs.dunning")}</TabsTrigger>
+          <TabsTrigger value="webhooks">{t("tabs.webhooks")}</TabsTrigger>
+          <TabsTrigger value="matomo">{t("tabs.matomo")}</TabsTrigger>
         </TabsList>
 
         {/* DUNNING QUEUE */}
         <TabsContent value="dunning" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Active Dunning Cases</CardTitle>
+              <CardTitle className="text-sm">{t("dunning.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex gap-2">
-                <Input placeholder="Search user..." className="w-52" />
+                <Input placeholder={t("dunning.searchPlaceholder")} className="w-52" />
                 <Select>
                   <SelectTrigger className="w-36">
-                    <SelectValue placeholder="Attempt: All" />
+                    <SelectValue placeholder={t("dunning.attemptPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="1">Attempt 1</SelectItem>
-                    <SelectItem value="2">Attempt 2</SelectItem>
-                    <SelectItem value="3">Attempt 3</SelectItem>
+                    <SelectItem value="all">{t("dunning.all")}</SelectItem>
+                    <SelectItem value="1">{t("dunning.attempt1")}</SelectItem>
+                    <SelectItem value="2">{t("dunning.attempt2")}</SelectItem>
+                    <SelectItem value="3">{t("dunning.attempt3")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Attempt</TableHead>
-                    <TableHead>Next Retry</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t("dunning.table.user")}</TableHead>
+                    <TableHead>{t("dunning.table.plan")}</TableHead>
+                    <TableHead>{t("dunning.table.attempt")}</TableHead>
+                    <TableHead>{t("dunning.table.nextRetry")}</TableHead>
+                    <TableHead>{t("dunning.table.amount")}</TableHead>
+                    <TableHead>{t("dunning.table.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -84,9 +86,9 @@ export default function RevenueOpsPage() {
                       <TableCell className="font-mono">${d.amount.toFixed(2)}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="outline" size="sm">Retry Now</Button>
-                          <Button variant="outline" size="sm">Skip</Button>
-                          <Button variant="ghost" size="sm">View User</Button>
+                          <Button variant="outline" size="sm">{t("dunning.retryNow")}</Button>
+                          <Button variant="outline" size="sm">{t("dunning.skip")}</Button>
+                          <Button variant="ghost" size="sm">{t("dunning.viewUser")}</Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -94,9 +96,9 @@ export default function RevenueOpsPage() {
                 </TableBody>
               </Table>
               <p className="text-xs text-muted-foreground">
-                Showing 3 of 43 —{" "}
+                {t("dunning.showing")}{" "}
                 <Button variant="link" size="sm" className="h-auto p-0 text-xs">
-                  View All in Dunning Config →
+                  {t("dunning.viewAllLink")}
                 </Button>
               </p>
             </CardContent>
@@ -107,17 +109,17 @@ export default function RevenueOpsPage() {
         <TabsContent value="webhooks" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Unprocessed Webhook Events</CardTitle>
+              <CardTitle className="text-sm">{t("webhooks.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Received</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t("webhooks.table.provider")}</TableHead>
+                    <TableHead>{t("webhooks.table.event")}</TableHead>
+                    <TableHead>{t("webhooks.table.received")}</TableHead>
+                    <TableHead>{t("webhooks.table.status")}</TableHead>
+                    <TableHead>{t("webhooks.table.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -129,12 +131,12 @@ export default function RevenueOpsPage() {
                       <TableCell className="font-mono text-xs">{w.type}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{w.ts}</TableCell>
                       <TableCell>
-                        <Badge className={whStatus[w.status]}>{w.status}</Badge>
+                        <Badge className={whStatusClass[w.status]}>{w.status}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="outline" size="sm">View</Button>
-                          <Button variant="outline" size="sm">Replay</Button>
+                          <Button variant="outline" size="sm">{t("webhooks.view")}</Button>
+                          <Button variant="outline" size="sm">{t("webhooks.replay")}</Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -142,9 +144,9 @@ export default function RevenueOpsPage() {
                 </TableBody>
               </Table>
               <p className="text-xs text-muted-foreground">
-                Showing 3 of 12 unprocessed —{" "}
+                {t("webhooks.showing")}{" "}
                 <Button variant="link" size="sm" className="h-auto p-0 text-xs">
-                  View All in Webhook Inspector →
+                  {t("webhooks.viewAllLink")}
                 </Button>
               </p>
             </CardContent>
@@ -156,10 +158,10 @@ export default function RevenueOpsPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {[
-                { label: "Unique Visitors", value: "18,432" },
-                { label: "Page Views", value: "74,112" },
-                { label: "Avg Session", value: "3m 24s" },
-                { label: "Bounce Rate", value: "34.2%" },
+                { label: t("matomo.kpi.uniqueVisitors"), value: "18,432" },
+                { label: t("matomo.kpi.pageViews"), value: "74,112" },
+                { label: t("matomo.kpi.avgSession"), value: "3m 24s" },
+                { label: t("matomo.kpi.bounceRate"), value: "34.2%" },
               ].map((k) => (
                 <Card key={k.label}>
                   <CardHeader className="pb-2">
@@ -176,12 +178,12 @@ export default function RevenueOpsPage() {
             <Card>
               <CardContent className="pt-4 space-y-2 text-sm text-muted-foreground">
                 <p>
-                  Top page:{" "}
-                  <span className="font-mono text-foreground">/pricing</span> — 12,340 views
+                  {t("matomo.topPage")}{" "}
+                  <span className="font-mono text-foreground">/pricing</span> — 12,340 {t("matomo.views")}
                 </p>
-                <p>Top source: Direct (38%)</p>
+                <p>{t("matomo.topSource")}</p>
                 <Button variant="outline" size="sm" className="mt-2">
-                  Open Full Matomo Dashboard →
+                  {t("matomo.openFull")}
                 </Button>
               </CardContent>
             </Card>

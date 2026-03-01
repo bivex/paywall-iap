@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,17 +13,18 @@ const retryRules = [
   { attempt: 4, interval: 14, action: "Escalate to grace", notification: "Email: grace_start" },
 ];
 
-export default function DunningPage() {
+export default async function DunningPage() {
+  const t = await getTranslations("dunning");
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">Dunning Campaign Config</h1>
+      <h1 className="text-2xl font-semibold">{t("title")}</h1>
 
       {/* Retry Rules */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Retry Rules</CardTitle><p className="text-xs text-muted-foreground">dunning table</p></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("retryRules.title")}</CardTitle><p className="text-xs text-muted-foreground">dunning table</p></CardHeader>
         <CardContent>
           <Table>
-            <TableHeader><TableRow><TableHead>Attempt</TableHead><TableHead>Interval (days)</TableHead><TableHead>Action</TableHead><TableHead>Notification</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>{t("retryRules.attempt")}</TableHead><TableHead>{t("retryRules.interval")}</TableHead><TableHead>{t("retryRules.action")}</TableHead><TableHead>{t("retryRules.notification")}</TableHead></TableRow></TableHeader>
             <TableBody>
               {retryRules.map((r) => (
                 <TableRow key={r.attempt}>
@@ -39,28 +41,28 @@ export default function DunningPage() {
 
       {/* Grace Period Config */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Grace Period Config</CardTitle><p className="text-xs text-muted-foreground">grace_periods table</p></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("gracePeriod.title")}</CardTitle><p className="text-xs text-muted-foreground">grace_periods table</p></CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-3 items-center">
-            <Input placeholder="Grace Duration (days): 7" defaultValue="7" className="w-52" />
-            <Input placeholder="Max grace periods: 2" defaultValue="2" className="w-52" />
-            <div className="flex items-center gap-2"><Switch id="notify-grace" defaultChecked /><label htmlFor="notify-grace" className="text-sm">Notify on grace start</label></div>
+            <Input placeholder={t("gracePeriod.durationPlaceholder")} defaultValue="7" className="w-52" />
+            <Input placeholder={t("gracePeriod.maxPlaceholder")} defaultValue="2" className="w-52" />
+            <div className="flex items-center gap-2"><Switch id="notify-grace" defaultChecked /><label htmlFor="notify-grace" className="text-sm">{t("gracePeriod.notifyOnStart")}</label></div>
           </div>
         </CardContent>
       </Card>
 
       {/* Escalation Rules */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Escalation Rules</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("escalation.title")}</CardTitle></CardHeader>
         <CardContent className="space-y-1 text-sm">
-          <p>• After 4 failed attempts → winback campaign trigger</p>
-          <p>• After grace end → admin_alert + subscription cancel</p>
+          <p>{t("escalation.rule1")}</p>
+          <p>{t("escalation.rule2")}</p>
         </CardContent>
       </Card>
 
       {/* Flow Preview */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Flow Preview</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("flowPreview.title")}</CardTitle></CardHeader>
         <CardContent className="font-mono text-xs space-y-1 text-muted-foreground">
           <p>❌ Payment fails  →  Day +1: Retry #1  →  Day +3: Retry #2</p>
           <p>→ Day +7: Retry #3  →  Day +14: Grace Period Starts (7 days)</p>
@@ -69,9 +71,9 @@ export default function DunningPage() {
       </Card>
 
       <div className="flex items-center gap-4">
-        <Card className="flex-1"><CardContent className="pt-4 text-sm font-medium">Currently in Dunning: <span className="text-orange-600 font-bold">43 users</span></CardContent></Card>
-        <Button size="sm">Save Config</Button>
-        <Button size="sm" variant="outline">Preview Email Template</Button>
+        <Card className="flex-1"><CardContent className="pt-4 text-sm font-medium">{t("currentlyInDunning")} <span className="text-orange-600 font-bold">{t("currentlyInDunningUsers")}</span></CardContent></Card>
+        <Button size="sm">{t("saveConfig")}</Button>
+        <Button size="sm" variant="outline">{t("previewEmailTemplate")}</Button>
       </div>
     </div>
   );
