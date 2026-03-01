@@ -36,7 +36,7 @@ export function LoginForm() {
     setServerError(null);
     setIsLoading(true);
     try {
-      const result = await loginAction(data.email, data.password);
+      const result = await loginAction(data.email, data.password, data.remember ?? false);
       if (result?.error) {
         setServerError(result.error);
       } else if (result?.redirectTo) {

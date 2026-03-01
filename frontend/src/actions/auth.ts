@@ -6,7 +6,11 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 // Cookies are secure only when served over HTTPS (set HTTPS=true in production with TLS)
 const SECURE_COOKIES = process.env.HTTPS === "true";
 
-export async function loginAction(email: string, password: string): Promise<{ error?: string; redirectTo?: string }> {
+export async function loginAction(
+  email: string,
+  password: string,
+  remember = false,
+): Promise<{ error?: string; redirectTo?: string }> {
   let res: Response;
   try {
     res = await fetch(`${BACKEND_URL}/v1/admin/auth/login`, {
@@ -26,13 +30,15 @@ export async function loginAction(email: string, password: string): Promise<{ er
   const body = await res.json();
   const data = (body.data ?? body) as { access_token: string; refresh_token?: string; email?: string; role?: string };
 
+  const THIRTY_DAYS = 60 * 60 * 24 * 30;
   const cookieStore = await cookies();
   cookieStore.set("admin_access_token", data.access_token, {
     httpOnly: true,
     secure: SECURE_COOKIES,
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 15, // 15 min (matches backend access token TTL)
+    // remember=true → persist 30 days; false → session cookie (expires on browser close)
+    ...(remember ? { maxAge: THIRTY_DAYS } : {}),
   });
 
   const bodyData = data;
@@ -42,7 +48,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
       secure: SECURE_COOKIES,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+      ...(remember ? { maxAge: THIRTY_DAYS } : {}),
     });
   }
   if (bodyData.role) {
@@ -51,7 +57,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
       secure: SECURE_COOKIES,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+      ...(remember ? { maxAge: THIRTY_DAYS } : {}),
     });
   }
 
@@ -61,7 +67,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
       secure: SECURE_COOKIES,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      ...(remember ? { maxAge: THIRTY_DAYS } : {}),
     });
   }
 
