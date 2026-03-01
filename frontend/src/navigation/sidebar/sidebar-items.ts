@@ -3,21 +3,21 @@ import {
   AlertTriangle,
   BarChart2,
   Brain,
+  ChartNoAxesCombined,
   CreditCard,
   DollarSign,
   FlaskConical,
-  Flag,
   Gift,
-  Globe,
   LayoutDashboard,
   Layers,
   type LucideIcon,
+  ScrollText,
+  Settings,
   Settings2,
   Tag,
   Target,
   TrendingUp,
   Users,
-  ClipboardList,
   Webhook,
 } from "lucide-react";
 
@@ -53,6 +53,7 @@ export const sidebarItems: NavGroup[] = [
     items: [
       { title: "Dashboard", url: "/dashboard/default", icon: LayoutDashboard },
       { title: "Analytics Reports", url: "/dashboard/analytics", icon: TrendingUp },
+      { title: "Matomo Analytics", url: "/dashboard/matomo", icon: ChartNoAxesCombined },
     ],
   },
   {
@@ -60,18 +61,20 @@ export const sidebarItems: NavGroup[] = [
     label: "User Management",
     items: [
       { title: "User List", url: "/dashboard/users", icon: Users },
-      { title: "Audit Log", url: "/dashboard/audit-log", icon: ClipboardList },
+      { title: "Audit Log", url: "/dashboard/audit-log", icon: ScrollText },
     ],
   },
   {
     id: 3,
     label: "Revenue Ops",
     items: [
+      { title: "Revenue Ops Center", url: "/dashboard/revenue-ops", icon: Layers },
       { title: "Subscriptions", url: "/dashboard/subscriptions", icon: CreditCard },
       { title: "Transactions", url: "/dashboard/transactions", icon: DollarSign },
-      { title: "Revenue Ops Center", url: "/dashboard/revenue-ops", icon: Layers },
       { title: "Dunning", url: "/dashboard/dunning", icon: AlertTriangle },
       { title: "Winback", url: "/dashboard/winback", icon: Gift },
+      { title: "Pricing Tiers", url: "/dashboard/pricing", icon: Tag },
+      { title: "Webhooks", url: "/dashboard/webhooks", icon: Webhook },
     ],
   },
   {
@@ -90,10 +93,7 @@ export const sidebarItems: NavGroup[] = [
     id: 5,
     label: "Config",
     items: [
-      { title: "Pricing Tiers", url: "/dashboard/pricing", icon: Tag },
-      { title: "Platform Settings", url: "/dashboard/settings", icon: Globe },
-      { title: "Webhooks", url: "/dashboard/webhooks", icon: Webhook },
-      { title: "Feature Flags", url: "/dashboard/settings", icon: Flag },
+      { title: "Platform Settings", url: "/dashboard/settings", icon: Settings },
     ],
   },
 ];
