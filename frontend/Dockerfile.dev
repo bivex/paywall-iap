@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Dev image: mounts source via volume, runs `next dev` for hot reload
 
-FROM node:22-alpine
+FROM node:24-alpine
 WORKDIR /app
 
 ENV NODE_ENV=development
