@@ -1,8 +1,11 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
+// Cookies are secure only when served over HTTPS (set HTTPS=true in production with TLS)
+const SECURE_COOKIES = process.env.HTTPS === "true";
 
 export async function loginAction(email: string, password: string): Promise<{ error?: string; redirectTo?: string }> {
   let res: Response;
@@ -27,7 +30,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
   const cookieStore = await cookies();
   cookieStore.set("admin_access_token", data.access_token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: SECURE_COOKIES,
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 15, // 15 min (matches backend access token TTL)
@@ -36,7 +39,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
   if (data.refresh_token) {
     cookieStore.set("admin_refresh_token", data.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: SECURE_COOKIES,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 days
