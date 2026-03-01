@@ -103,13 +103,63 @@ GitHub Copilot Chat Assistant
   - Assignment inspection: GET /v1/admin/ab/assignments?experiment_id=...
   - Reports: GET /v1/admin/ab/:id/report (or reuse bandit/statistics)
 
-13) Events ingestion (paywall impressions, clicks, purchases)
-- Events ingestion endpoint referenced in docs: POST /api/v1/events or /api/v1/ab/..reward etc.
-- Current concrete event points:
-  - bandit/reward for revenue events
-  - verify IAP endpoint (POST /v1/verify/iap) used in mobile flows to register purchases
-  - analytics endpoints ingest/serve metrics are partially implemented
-- Рекомендация: унифицировать event ingestion endpoint (POST /v1/events) to accept paywall_impression, click, purchase_attempt, purchase_success with experiment_id/arm_id fields.
+13) Advanced Thompson Sampling (Currency, Contextual, Sliding Window, Delayed Feedback, Multi-Objective)
+- Реализованные расширения bandit (новые endpoints):
+  - Currency management:
+    - GET /v1/bandit/currency/rates — текущие курсы валют (USD base)
+    - POST /v1/bandit/currency/update — обновить курсы с ECB API
+    - POST /v1/bandit/currency/convert — конвертировать сумму в USD
+    - Где: backend/internal/interfaces/http/handlers/bandit_advanced.go
+    - Worker: автоматическое обновление каждый час (currency_asynq.go)
+  - Objective configuration (multi-objective optimization):
+    - GET /v1/bandit/experiments/:id/objectives — счета целей (conversion/ltv/revenue/hybrid)
+    - PUT /v1/bandit/experiments/:id/objectives/config — настроить веса целей
+    - Supports: conversion rate optimization, LTV maximization, revenue optimization, hybrid (weighted combination)
+  - Sliding window management:
+    - GET /v1/bandit/experiments/:id/window/info — статистика окна
+    - POST /v1/bandit/experiments/:id/window/trim — очистить старые события
+    - GET /v1/bandit/experiments/:id/window/events — экспорт событий
+    - Redis Sorted Sets для O(log N) операций
+  - Delayed feedback (отложенные конверсии):
+    - POST /v1/bandit/conversions — обработка конверсии (link к pending reward)
+    - GET /v1/bandit/pending/:id — данные pending reward
+    - GET /v1/bandit/users/:id/pending — список pending rewards пользователя
+    - Worker: обработка истёкших pending каждые 15 минут
+  - Metrics & maintenance:
+    - GET /v1/bandit/experiments/:id/metrics — метрики эксперимента (balance index, pending rewards, etc.)
+    - POST /v1/bandit/maintenance — запустить обслуживание вручную
+- Contextual bandit (LinUCB):
+  - Персонализация на основе: country, device, app_version, days_since_install, total_spent, last_purchase_at
+  - Feature vector: 20 dimensions (one-hot country, device, numeric features, bias)
+  - UCB = theta^T * x + alpha * sqrt(x^T * A^(-1) * x)
+  - Модель обновляется с каждым reward (online learning)
+- DB schema (migration 017):
+  - currency_rates — курсы валют (base=USD)
+  - bandit_user_context — кеш атрибутов пользователя
+  - bandit_arm_context_model — LinUCB параметры (matrix_a, vector_b, theta)
+  - bandit_window_events — события для sliding window
+  - bandit_pending_rewards — отложенные конверсии
+  - bandit_conversion_links — связь pending → transaction
+  - bandit_arm_objective_stats — статистика по objectives
+  - ab_tests — новые колонки: window_type, objective_type, enable_contextual, enable_delayed, enable_currency, exploration_alpha
+- Services:
+  - CurrencyRateService — ECB API integration + Redis cache + fallback rates
+  - LinUCBSelectionStrategy — contextual arm selection
+  - SlidingWindowStrategy — non-stationary behavior handling
+  - DelayedRewardStrategy — delayed feedback processing
+  - HybridObjectiveStrategy — multi-objective optimization
+  - AdvancedBanditEngine — главный оркестратор (композиция всех стратегий)
+- Mapping к UI:
+  - Эксперименты → добавить настройки: objective type, weights, window config, contextual/delayed/currency toggles
+  - Конверсии → автоматически link через pending rewards (transaction_id → pending_id)
+  - Dashboard → новые метрики: currency conversion stats, objective scores, window utilization, pending rewards count
+- Рекомендация: UI для управления:
+  - GET /v1/admin/ab/experiments/:id/config — редактор конфигурации (objectives, window, features)
+  - GET /v1/admin/bandit/currency/history — история курсов валют
+  - GET /v1/admin/bandit/pending?status=expired — список истёкших pending для ручной обработки
+  - GET /v1/admin/bandit/metrics/:id — детализированные метрики (regret, convergence, balance)
+
+14) Events ingestion (paywall impressions, clicks, purchases)
 
 14) DB / data model (что уже есть)
 - Subscriptions, transactions tables exist (backend/migrations/002_create_subscriptions.up.sql)
