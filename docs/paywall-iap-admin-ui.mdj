@@ -4190,6 +4190,772 @@
 							"top": 1190,
 							"width": 26,
 							"height": 16
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqRVlXch0BYc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVlXchykeM="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVlXch1Pms=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVlXch0BYc="
+									},
+									"fillColor": "#4CAF50",
+									"fontColor": "#FFFFFF",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 180,
+									"top": 183,
+									"width": 60.814453125,
+									"height": 13,
+									"text": "↑ 12.5%",
+									"wordWrap": true
+								}
+							],
+							"fillColor": "#4CAF50",
+							"fontColor": "#FFFFFF",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 180,
+							"top": 175,
+							"width": 60.814453125,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVlXch1Pms="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqRVlm8h/iMo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVlm8h9jDI="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVlm8iAsyI=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVlm8h/iMo="
+									},
+									"fillColor": "#4CAF50",
+									"fontColor": "#FFFFFF",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 380,
+									"top": 183,
+									"width": 60.814453125,
+									"height": 13,
+									"text": "↑ 8.3%",
+									"wordWrap": true
+								}
+							],
+							"fillColor": "#4CAF50",
+							"fontColor": "#FFFFFF",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 380,
+							"top": 175,
+							"width": 60.814453125,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVlm8iAsyI="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqRVlyMiKclg=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVlyMiIxTU="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVlyMiLZWY=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVlyMiKclg="
+									},
+									"fillColor": "#4CAF50",
+									"fontColor": "#FFFFFF",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 580,
+									"top": 183,
+									"width": 60.814453125,
+									"height": 13,
+									"text": "↑ 15.2%",
+									"wordWrap": true
+								}
+							],
+							"fillColor": "#4CAF50",
+							"fontColor": "#FFFFFF",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 580,
+							"top": 175,
+							"width": 60.814453125,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVlyMiLZWY="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqRVmCsiVQAk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVmCsiTtgY="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVmCsiWqjs=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVmCsiVQAk="
+									},
+									"fillColor": "#F44336",
+									"fontColor": "#FFFFFF",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 780,
+									"top": 183,
+									"width": 60.814453125,
+									"height": 13,
+									"text": "↓ 0.8%",
+									"wordWrap": true
+								}
+							],
+							"fillColor": "#F44336",
+							"fontColor": "#FFFFFF",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 780,
+							"top": 175,
+							"width": 60.814453125,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVmCsiWqjs="
+							}
+						},
+						{
+							"_type": "WFButtonView",
+							"_id": "AAAAAAGcqRVmOcigFrs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVmOcieI0E="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVmOcihSL4=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVmOcigFrs="
+									},
+									"fillColor": "#FF9800",
+									"fontColor": "#FFFFFF",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 960,
+									"top": 183,
+									"width": 60.814453125,
+									"height": 13,
+									"text": "→ 0%",
+									"wordWrap": true
+								}
+							],
+							"fillColor": "#FF9800",
+							"fontColor": "#FFFFFF",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 960,
+							"top": 175,
+							"width": 60.814453125,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVmOcihSL4="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqRVmacir9mk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVmacip5HM="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVmacisYLY=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVmacir9mk="
+									},
+									"fontColor": "#666666",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 90,
+									"top": 260,
+									"width": 160,
+									"height": 13,
+									"text": "This Month",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#666666",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 90,
+							"top": 260,
+							"width": 160,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVmacisYLY="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqRVnBMi1klY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVnBMizKlA="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVnBMi2Jto=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVnBMi1klY="
+									},
+									"fontColor": "#999999",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 450,
+									"top": 500,
+									"width": 90,
+									"height": 13,
+									"text": "2 min ago",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#999999",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 450,
+							"top": 500,
+							"width": 90,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVnBMi2Jto="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqRVnLMi/lS8=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVnLMi9Z6Q="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVnLMjA73I=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVnLMi/lS8="
+									},
+									"fontColor": "#999999",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 450,
+									"top": 535,
+									"width": 90,
+									"height": 13,
+									"text": "15 min ago",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#999999",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 450,
+							"top": 535,
+							"width": 90,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVnLMjA73I="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqRVnRcjJbhk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVnRcjHXMc="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVnRcjKaXs=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVnRcjJbhk="
+									},
+									"fontColor": "#999999",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 450,
+									"top": 570,
+									"width": 90,
+									"height": 13,
+									"text": "1 hour ago",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#999999",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 450,
+							"top": 570,
+							"width": 90,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVnRcjKaXs="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqRVnasjTZ3g=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVnasjRemw="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVnasjU948=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVnasjTZ3g="
+									},
+									"fontColor": "#999999",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 450,
+									"top": 605,
+									"width": 90,
+									"height": 13,
+									"text": "3 hours ago",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#999999",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 450,
+							"top": 605,
+							"width": 90,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVnasjU948="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqRVnf8jddJI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVnf8jbvH0="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVnf8jeMNU=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVnf8jddJI="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 80,
+									"top": 680,
+									"width": 220,
+									"height": 13,
+									"underline": true,
+									"text": "View All Activity",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 80,
+							"top": 680,
+							"width": 220,
+							"height": 30,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVnf8jeMNU="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqRVnoMjmShU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVnoMjk4qk="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVnoMjn+jE=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVnoMjmShU="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 810,
+									"top": 500,
+									"width": 190,
+									"height": 13,
+									"underline": true,
+									"text": "Users",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 810,
+							"top": 500,
+							"width": 190,
+							"height": 30,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVnoMjn+jE="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqRVnucjv/uY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVnucjtYrs="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVnucjwu90=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVnucjv/uY="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 810,
+									"top": 555,
+									"width": 190,
+									"height": 13,
+									"underline": true,
+									"text": "Subscriptions",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 810,
+							"top": 555,
+							"width": 190,
+							"height": 30,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVnucjwu90="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqRVn8cj4eBI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVn8cj2owo="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVn8cj5JGI=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVn8cj4eBI="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 810,
+									"top": 610,
+									"width": 190,
+									"height": 13,
+									"underline": true,
+									"text": "Reports",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 810,
+							"top": 610,
+							"width": 190,
+							"height": 30,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVn8cj5JGI="
+							}
+						},
+						{
+							"_type": "WFLinkView",
+							"_id": "AAAAAAGcqRVoCMkBcZ0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRVoCMj//cI="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRVoCMkCYY4=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRVoCMkBcZ0="
+									},
+									"fontColor": "#2b71ff",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 810,
+									"top": 665,
+									"width": 190,
+									"height": 13,
+									"underline": true,
+									"text": "Settings",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2b71ff",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 810,
+							"top": 665,
+							"width": 190,
+							"height": 30,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRVoCMkCYY4="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqRWF9MkKPTA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRWF9MkIAMQ="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRWF9MkLf7o=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRWF9MkKPTA="
+									},
+									"fontColor": "#2196F3",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 90,
+									"top": 300,
+									"width": 160,
+									"height": 13,
+									"text": "$148,200",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#2196F3",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 90,
+							"top": 300,
+							"width": 160,
+							"height": 50,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRWF9MkLf7o="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqRWGJ8kUFPA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRWGJ8kSUq4="
+							},
+							"fillColor": "#2196F3",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 260,
+							"top": 300,
+							"width": 270,
+							"height": 50
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqRWGTckbFzc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRWGTckZILk="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRWGTckcqxE=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRWGTckbFzc="
+									},
+									"fontColor": "#666666",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 590,
+									"top": 260,
+									"width": 160,
+									"height": 13,
+									"text": "Last 7 Days",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#666666",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 590,
+							"top": 260,
+							"width": 160,
+							"height": 25,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRWGTckcqxE="
+							}
+						},
+						{
+							"_type": "WFTextView",
+							"_id": "AAAAAAGcqRWGcskllUA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRWGcskjnyA="
+							},
+							"subViews": [
+								{
+									"_type": "LabelView",
+									"_id": "AAAAAAGcqRWGcskmV1Y=",
+									"_parent": {
+										"$ref": "AAAAAAGcqRWGcskllUA="
+									},
+									"fontColor": "#F44336",
+									"font": "Arial;13;0",
+									"parentStyle": true,
+									"left": 590,
+									"top": 300,
+									"width": 160,
+									"height": 13,
+									"text": "2.1% → 2.4%",
+									"horizontalAlignment": 0,
+									"wordWrap": true
+								}
+							],
+							"fontColor": "#F44336",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 590,
+							"top": 300,
+							"width": 160,
+							"height": 30,
+							"nameLabel": {
+								"$ref": "AAAAAAGcqRWGcskmV1Y="
+							}
+						},
+						{
+							"_type": "WFPanelView",
+							"_id": "AAAAAAGcqRWGiskvQM4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+Uw8RKVfk="
+							},
+							"model": {
+								"$ref": "AAAAAAGcqRWGisktEok="
+							},
+							"fillColor": "#F44336",
+							"font": "Arial;13;0",
+							"parentStyle": false,
+							"containerChangeable": true,
+							"left": 760,
+							"top": 300,
+							"width": 250,
+							"height": 50
 						}
 					]
 				},
@@ -4424,6 +5190,166 @@
 								"$ref": "AAAAAAGcqQ+rjsROn9g="
 							},
 							"name": "Sliding window trimmed: 1,234 events"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqRVlXchykeM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "↑ 12.5%"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqRVlm8h9jDI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "↑ 8.3%"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqRVlyMiIxTU=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "↑ 15.2%"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqRVmCsiTtgY=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "↓ 0.8%"
+						},
+						{
+							"_type": "WFButton",
+							"_id": "AAAAAAGcqRVmOcieI0E=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "→ 0%"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqRVmacip5HM=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "This Month"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqRVnBMizKlA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "2 min ago"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqRVnLMi9Z6Q=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "15 min ago"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqRVnRcjHXMc=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "1 hour ago"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqRVnasjRemw=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "3 hours ago"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqRVnf8jbvH0=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "View All Activity"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqRVnoMjk4qk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "Users"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqRVnucjtYrs=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "Subscriptions"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqRVn8cj2owo=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "Reports"
+						},
+						{
+							"_type": "WFLink",
+							"_id": "AAAAAAGcqRVoCMj//cI=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "Settings"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqRWF9MkIAMQ=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "$148,200"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqRWGJ8kSUq4=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "Chart Area"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqRWGTckZILk=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "Last 7 Days"
+						},
+						{
+							"_type": "WFText",
+							"_id": "AAAAAAGcqRWGcskjnyA=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "2.1% → 2.4%"
+						},
+						{
+							"_type": "WFPanel",
+							"_id": "AAAAAAGcqRWGisktEok=",
+							"_parent": {
+								"$ref": "AAAAAAGcqQ+rjsROn9g="
+							},
+							"name": "Ch Trend"
 						}
 					]
 				},
