@@ -37,7 +37,7 @@ export function DashboardBreadcrumb() {
   ];
 
   if (matched) {
-    if (matched.groupLabel && matched.groupLabel !== "Monitoring") {
+    if (matched.groupLabel && matched.groupLabel !== "Admin Dashboard") {
       crumbs.push({ label: matched.groupLabel });
     }
     crumbs.push({ label: matched.title });

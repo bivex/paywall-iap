@@ -49,16 +49,17 @@ export interface NavGroup {
 export const sidebarItems: NavGroup[] = [
   {
     id: 1,
-    label: "Monitoring",
+    label: "Admin Dashboard",
     items: [
       { title: "Dashboard", url: "/dashboard/default", icon: LayoutDashboard },
       { title: "Analytics Reports", url: "/dashboard/analytics", icon: TrendingUp },
       { title: "Matomo Analytics", url: "/dashboard/matomo", icon: ChartNoAxesCombined },
+      { title: "Platform Settings", url: "/dashboard/settings", icon: Settings },
     ],
   },
   {
     id: 2,
-    label: "User Management",
+    label: "User 360° Profile",
     items: [
       { title: "User List", url: "/dashboard/users", icon: Users },
       { title: "Audit Log", url: "/dashboard/audit-log", icon: ScrollText },
@@ -66,9 +67,9 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 3,
-    label: "Revenue Ops",
+    label: "Revenue Ops Center",
     items: [
-      { title: "Revenue Ops Center", url: "/dashboard/revenue-ops", icon: Layers },
+      { title: "Overview", url: "/dashboard/revenue-ops", icon: Layers },
       { title: "Subscriptions", url: "/dashboard/subscriptions", icon: CreditCard },
       { title: "Transactions", url: "/dashboard/transactions", icon: DollarSign },
       { title: "Dunning", url: "/dashboard/dunning", icon: AlertTriangle },
@@ -79,21 +80,14 @@ export const sidebarItems: NavGroup[] = [
   },
   {
     id: 4,
-    label: "Experiments",
+    label: "Experiment Studio",
     items: [
       { title: "A/B Tests", url: "/dashboard/experiments", icon: FlaskConical },
-      { title: "Experiment Studio", url: "/dashboard/experiments/studio", icon: Settings2 },
+      { title: "Studio", url: "/dashboard/experiments/studio", icon: Settings2 },
       { title: "Bandit Model", url: "/dashboard/experiments/bandit", icon: Brain },
       { title: "Delayed Feedback", url: "/dashboard/experiments/feedback", icon: Activity },
       { title: "Sliding Window", url: "/dashboard/experiments/sliding-window", icon: BarChart2 },
       { title: "Multi-Objective", url: "/dashboard/experiments/multi-objective", icon: Target },
-    ],
-  },
-  {
-    id: 5,
-    label: "Config",
-    items: [
-      { title: "Platform Settings", url: "/dashboard/settings", icon: Settings },
     ],
   },
 ];
