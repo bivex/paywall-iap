@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 // Cookies are secure only when served over HTTPS (set HTTPS=true in production with TLS)
@@ -25,7 +24,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
   }
 
   const body = await res.json();
-  const data = (body.data ?? body) as { access_token: string; refresh_token?: string };
+  const data = (body.data ?? body) as { access_token: string; refresh_token?: string; email?: string; role?: string };
 
   const cookieStore = await cookies();
   cookieStore.set("admin_access_token", data.access_token, {
@@ -35,6 +34,26 @@ export async function loginAction(email: string, password: string): Promise<{ er
     path: "/",
     maxAge: 60 * 15, // 15 min (matches backend access token TTL)
   });
+
+  const bodyData = data;
+  if (bodyData.email) {
+    cookieStore.set("admin_email", bodyData.email, {
+      httpOnly: false,
+      secure: SECURE_COOKIES,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+  }
+  if (bodyData.role) {
+    cookieStore.set("admin_role", bodyData.role, {
+      httpOnly: false,
+      secure: SECURE_COOKIES,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+  }
 
   if (data.refresh_token) {
     cookieStore.set("admin_refresh_token", data.refresh_token, {
@@ -62,6 +81,8 @@ export async function logoutAction(): Promise<{ redirectTo: string }> {
 
   cookieStore.delete("admin_access_token");
   cookieStore.delete("admin_refresh_token");
+  cookieStore.delete("admin_email");
+  cookieStore.delete("admin_role");
 
   return { redirectTo: "/auth/v1/login" };
 }
