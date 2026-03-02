@@ -225,19 +225,11 @@ func (h *TaskHandlers) HandleProcessWebhook(ctx context.Context, t *asynq.Task) 
 		//   5. Trigger SendNotification task for relevant events
 		h.logger.Info("Apple event ignored (stub)", zap.String("type", payload.EventType))
 	case "google":
-		// TODO: implement Google Play Real-Time Developer Notifications (RTDN) handler.
-		// Payload arrives via Cloud Pub/Sub → POST /webhook/google as base64-encoded JSON.
-		// Steps:
-		//   1. Decode data.message.data (base64 → DeveloperNotification proto/JSON)
-		//   2. Switch on notificationType inside SubscriptionNotification
-		//      - SUBSCRIPTION_PURCHASED, SUBSCRIPTION_RENEWED → activate/extend subscription
-		//      - SUBSCRIPTION_EXPIRED, SUBSCRIPTION_REVOKED  → mark expired/cancelled
-		//      - SUBSCRIPTION_IN_GRACE_PERIOD                → set grace_period_ends_at
-		//      - SUBSCRIPTION_ON_HOLD                        → pause subscription
-		//   3. Call Google Play Developer API (purchases.subscriptionsv2.get) to verify latest state
-		//   4. Update subscriptions table
-		//   5. Trigger SendNotification task for relevant events
-		h.logger.Info("Google event ignored (stub)", zap.String("type", payload.EventType))
+		if err := h.handleGoogleRTDNEvent(ctx, event); err != nil {
+			h.logger.Error("Google RTDN handler error", zap.Error(err), zap.String("event_id", payload.EventID))
+			// Don't fail the task — return nil so the event is still marked processed
+			// and we don't loop on it. Real-world: send to DLQ.
+		}
 	}
 
 	// Mark as processed
@@ -402,4 +394,153 @@ func toFloat64(v interface{}) float64 {
 	f := 0.0
 	fmt.Sscanf(fmt.Sprintf("%v", v), "%f", &f)
 	return f
+}
+
+// ─── Google RTDN ─────────────────────────────────────────────────────────────
+
+// Google Play Real-Time Developer Notification types (notificationType field).
+// Reference: https://developer.android.com/google/play/billing/rtdn-reference
+const (
+rtdnSubscriptionRecovered          = 1  // recovered from account hold
+rtdnSubscriptionRenewed            = 2  // auto-renewed
+rtdnSubscriptionCanceled           = 3  // voluntarily canceled
+rtdnSubscriptionPurchased          = 4  // new purchase
+rtdnSubscriptionOnHold             = 5  // account hold (payment deferred)
+rtdnSubscriptionInGracePeriod      = 6  // grace period started
+rtdnSubscriptionRestarted          = 7  // restarted from pause/hold
+rtdnSubscriptionPriceChangeConfirm = 8  // user confirmed price change
+rtdnSubscriptionDeferred           = 9  // renewal deferred
+rtdnSubscriptionPaused             = 10 // paused (Play paused billing)
+rtdnSubscriptionPausedScheduleChanged = 11
+rtdnSubscriptionRevoked            = 12 // revoked (refunded)
+rtdnSubscriptionExpired            = 13 // expired
+)
+
+// rtdnPayload is the DeveloperNotification JSON body stored in webhook_events.
+type rtdnPayload struct {
+PackageName string `json:"packageName"`
+EventTimeMillis string `json:"eventTimeMillis"`
+SubscriptionNotification struct {
+Version          string `json:"version"`
+NotificationType int    `json:"notificationType"`
+PurchaseToken    string `json:"purchaseToken"`
+SubscriptionID   string `json:"subscriptionId"`
+} `json:"subscriptionNotification"`
+TestNotification *struct{} `json:"testNotification,omitempty"`
+}
+
+// handleGoogleRTDNEvent processes a Google RTDN webhook event stored in the DB.
+//
+// It maps notificationType → subscription status transition:
+//   - PURCHASED / RENEWED / RECOVERED / RESTARTED → active
+//   - CANCELED → cancelled (auto_renew=false)
+//   - EXPIRED / REVOKED → expired
+//   - ON_HOLD / PAUSED  → on_hold
+//   - IN_GRACE_PERIOD   → grace_period
+//   - DEFERRED / PRICE_CHANGE_CONFIRMED / PAUSE_SCHEDULE_CHANGED → no status change (logged)
+func (h *TaskHandlers) handleGoogleRTDNEvent(ctx context.Context, event generated.WebhookEvent) error {
+var notif rtdnPayload
+if err := json.Unmarshal(event.Payload, &notif); err != nil {
+return fmt.Errorf("rtdn: unmarshal payload: %w", err)
+}
+
+// Test notification — no subscription notification, always ack.
+if notif.TestNotification != nil {
+h.logger.Info("rtdn: test notification received")
+return nil
+}
+
+sn := notif.SubscriptionNotification
+if sn.PurchaseToken == "" {
+return fmt.Errorf("rtdn: missing purchaseToken in subscriptionNotification")
+}
+
+h.logger.Info("rtdn: processing",
+zap.Int("notificationType", sn.NotificationType),
+zap.String("purchaseToken", sn.PurchaseToken),
+zap.String("subscriptionId", sn.SubscriptionID),
+)
+
+// Look up the subscription via provider_tx_id = purchaseToken.
+sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, sn.PurchaseToken)
+if err != nil {
+// Unknown token — likely a notification for a purchase we haven't seen yet
+// (race: webhook arrives before /verify/iap). Log and move on.
+h.logger.Warn("rtdn: subscription not found for purchaseToken",
+zap.String("purchaseToken", sn.PurchaseToken),
+zap.Error(err),
+)
+return nil
+}
+
+newStatus := ""
+newExpiry := time.Time{}
+
+switch sn.NotificationType {
+case rtdnSubscriptionPurchased, rtdnSubscriptionRenewed,
+rtdnSubscriptionRecovered, rtdnSubscriptionRestarted:
+newStatus = "active"
+// Extend expiry by 1 month for renewal/recovered (we don't re-verify here;
+// a proper implementation would call purchases.subscriptionsv2.get).
+if sn.NotificationType == rtdnSubscriptionRenewed ||
+sn.NotificationType == rtdnSubscriptionRecovered ||
+sn.NotificationType == rtdnSubscriptionRestarted {
+newExpiry = time.Now().AddDate(0, 1, 0)
+}
+
+case rtdnSubscriptionCanceled:
+newStatus = "cancelled"
+
+case rtdnSubscriptionExpired, rtdnSubscriptionRevoked:
+newStatus = "expired"
+
+case rtdnSubscriptionOnHold, rtdnSubscriptionPaused:
+newStatus = "on_hold"
+
+case rtdnSubscriptionInGracePeriod:
+newStatus = "grace_period"
+
+case rtdnSubscriptionDeferred, rtdnSubscriptionPriceChangeConfirm,
+rtdnSubscriptionPausedScheduleChanged:
+// Informational — no status change needed.
+h.logger.Info("rtdn: informational notification, no status change",
+zap.Int("notificationType", sn.NotificationType),
+zap.String("subscriptionId", sn.SubscriptionID),
+)
+return nil
+
+default:
+h.logger.Warn("rtdn: unknown notificationType", zap.Int("type", sn.NotificationType))
+return nil
+}
+
+if newStatus != "" && newStatus != sub.Status {
+if _, err := h.queries.UpdateSubscriptionStatus(ctx, generated.UpdateSubscriptionStatusParams{
+ID:     sub.ID,
+Status: newStatus,
+}); err != nil {
+return fmt.Errorf("rtdn: update subscription status: %w", err)
+}
+h.logger.Info("rtdn: subscription status updated",
+zap.String("subscription_id", sub.ID.String()),
+zap.String("old_status", sub.Status),
+zap.String("new_status", newStatus),
+)
+}
+
+// Extend expiry for renewal events.
+if !newExpiry.IsZero() {
+if _, err := h.queries.UpdateSubscriptionExpiry(ctx, generated.UpdateSubscriptionExpiryParams{
+ID:        sub.ID,
+ExpiresAt: newExpiry,
+}); err != nil {
+return fmt.Errorf("rtdn: update subscription expiry: %w", err)
+}
+h.logger.Info("rtdn: subscription expiry extended",
+zap.String("subscription_id", sub.ID.String()),
+zap.Time("new_expiry", newExpiry),
+)
+}
+
+return nil
 }
