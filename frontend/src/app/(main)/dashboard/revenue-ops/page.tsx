@@ -106,11 +106,12 @@ function PaginationBar({
 export default async function RevenueOpsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ wh_page?: string; wh_sort?: string }>;
+  searchParams: Promise<{ wh_page?: string; wh_sort?: string; wh_pending?: string }>;
 }) {
   const sp = await searchParams;
   const whPage = Math.max(1, parseInt(sp.wh_page ?? "1", 10) || 1);
-  const whSort = (sp.wh_sort as "status" | "provider" | "event_type" | "created_at" | undefined);
+  const whSort = (sp.wh_sort as "status" | "provider" | "event_type" | "created_at" | "actions" | undefined);
+  const whPending = sp.wh_pending === "1";
 
   const report = await getRevenueOps(whPage);
 
@@ -145,7 +146,7 @@ export default async function RevenueOpsPage({
           )}
           {webhooks.unprocessed > 0 && (
             <Badge variant="outline" className="text-xs text-red-600 border-red-500/40 bg-red-500/5 cursor-pointer" asChild>
-              <Link href={`?wh_page=${whPage}&wh_sort=status#webhooks`}>
+              <Link href={`?wh_page=${whPage}&wh_sort=status&wh_pending=1#webhooks`}>
                 <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5 inline-block animate-pulse" />
                 {webhooks.unprocessed} webhook{webhooks.unprocessed > 1 ? "s" : ""} pending
               </Link>
@@ -236,7 +237,7 @@ export default async function RevenueOpsPage({
               </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-0">
-              <WebhookTable rows={webhooks.events} initialSort={whSort} />
+              <WebhookTable rows={webhooks.events} initialSort={whSort} initialFilterPending={whPending} />
               <PaginationBar
                 page={webhooks.page}
                 totalPages={webhooks.total_pages}
