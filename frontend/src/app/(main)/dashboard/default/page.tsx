@@ -10,11 +10,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { getDashboardMetrics } from "@/actions/dashboard";
 
 import { MrrTrendChart } from "./_components/mrr-trend-chart";
 import { SubStatusChart } from "./_components/sub-status-chart";
+import { AuditLogTable } from "./_components/audit-log-table";
 
 // Fallback values when the API is unavailable (e.g. first load before backend starts)
 const FALLBACK = {
@@ -25,7 +25,7 @@ const FALLBACK = {
   churn_risk: 0,
   mrr_trend: [] as import("@/actions/dashboard").MonthlyMRR[],
   status_counts: { Active: 0, Grace: 0, Cancelled: 0, Expired: 0 },
-  audit_log: [],
+  audit_log: [] as import("@/actions/dashboard").AuditLogEntry[],
   webhook_health: [],
   last_updated: new Date().toISOString(),
 } as const;
@@ -141,27 +141,8 @@ export default async function DashboardPage() {
             <CardTitle className="text-sm">{t("recentActions.title")}</CardTitle>
             <CardDescription>admin_audit_log</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-0">
-            {d.audit_log.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-2">No recent actions.</p>
-            ) : (
-              d.audit_log.map((entry, i) => (
-                <div key={i}>
-                  <div className="flex items-start gap-2 py-2 text-sm">
-                    <span className="text-muted-foreground tabular-nums shrink-0">
-                      [{new Date(entry.Time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}]
-                    </span>
-                    <div>
-                      <span className="font-medium capitalize">{entry.Action.replace(/_/g, " ")}</span>
-                      {entry.Detail && (
-                        <span className="text-muted-foreground"> · {entry.Detail}</span>
-                      )}
-                    </div>
-                  </div>
-                  {i < d.audit_log.length - 1 && <Separator />}
-                </div>
-              ))
-            )}
+          <CardContent className="p-0 px-2 pb-2">
+            <AuditLogTable entries={d.audit_log} />
           </CardContent>
           <CardFooter>
             <a
