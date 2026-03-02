@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/application/dto"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
@@ -48,23 +52,44 @@ func (h *IAPHandler) VerifyReceipt(c *gin.Context) {
 		return
 	}
 
+	// Enforce max body size: 64 KB to prevent oversized receipts
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 65536)
+
 	var req dto.VerifyIAPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if err.Error() == "http: request body too large" {
+			response.BadRequest(c, "receipt_data exceeds maximum allowed size (64 KB)")
+			return
+		}
 		response.BadRequest(c, "Invalid request format: "+err.Error())
 		return
 	}
 
 	resp, err := h.verifyIAPCmd.Execute(c.Request.Context(), userID, &req)
 	if err != nil {
-		// Handle specific errors
-		if err.Error() == "receipt already processed" {
-			// Return the existing subscription (idempotency)
+		switch {
+		case isValidationError(err):
+			response.BadRequest(c, err.Error())
+		case isDuplicateReceiptError(err):
 			response.OK(c, resp)
-			return
+		default:
+			response.UnprocessableEntity(c, err.Error())
 		}
-		response.UnprocessableEntity(c, err.Error())
 		return
 	}
 
 	response.OK(c, resp)
+}
+
+func isValidationError(err error) bool {
+msg := err.Error()
+return strings.HasPrefix(msg, "validation failed") ||
+strings.HasPrefix(msg, "invalid input") ||
+strings.Contains(msg, domainErrors.ErrInvalidReceipt.Error()) ||
+strings.Contains(msg, domainErrors.ErrInvalidInput.Error())
+}
+
+func isDuplicateReceiptError(err error) bool {
+return strings.Contains(err.Error(), "receipt already processed") ||
+strings.Contains(err.Error(), domainErrors.ErrDuplicateReceipt.Error())
 }

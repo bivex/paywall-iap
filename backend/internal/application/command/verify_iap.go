@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bivex/paywall-iap/internal/application/dto"
@@ -65,6 +67,11 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.
 	// Get user (validates existence)
 	if _, err := c.userRepo.GetByID(ctx, userUUID); err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Validate request fields
+	if err := validateIAPRequest(req); err != nil {
+		return nil, err
 	}
 
 	// Select verifier based on platform
@@ -170,7 +177,71 @@ func hashReceipt(receiptData string) string {
 }
 
 func containsIgnoreCase(s, substr string) bool {
-	// Simple case-insensitive contains check
-	// In production, use strings.Contains(strings.ToLower(s), substr)
-	return len(s) >= len(substr) && s[:len(substr)] == substr
+	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
+}
+
+// validateIAPRequest validates the IAP request fields before sending to verifier.
+func validateIAPRequest(req *dto.VerifyIAPRequest) error {
+	// product_id: min 3 chars, max 200, must be reverse-domain format (contains dot)
+	if len(req.ProductID) < 3 {
+		return domainErrors.NewValidationError("product_id", "must be at least 3 characters")
+	}
+	if len(req.ProductID) > 200 {
+		return domainErrors.NewValidationError("product_id", "must not exceed 200 characters")
+	}
+	if !strings.Contains(req.ProductID, ".") {
+		return domainErrors.NewValidationError("product_id", "must be in reverse-domain notation (e.g. com.app.product)")
+	}
+
+	// receipt_data: max 64 KB (belt-and-suspenders, handler already enforces body limit)
+	if len(req.ReceiptData) > 65536 {
+		return domainErrors.NewValidationError("receipt_data", "exceeds maximum allowed size (64 KB)")
+	}
+
+	// Android-specific: receipt_data must be valid JSON with required fields
+	if req.Platform == "android" {
+		if err := validateAndroidReceipt(req.ReceiptData, req.ProductID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// androidReceiptPayload mirrors the expected JSON structure of receipt_data for Android.
+type androidReceiptPayload struct {
+	PackageName   string `json:"packageName"`
+	ProductID     string `json:"productId"`
+	PurchaseToken string `json:"purchaseToken"`
+	Type          string `json:"type"`
+}
+
+// validateAndroidReceipt checks that receipt_data is valid JSON, has required fields,
+// matches the product_id in the request, and has a non-empty purchaseToken.
+func validateAndroidReceipt(receiptData, requestProductID string) error {
+	var payload androidReceiptPayload
+	if err := json.Unmarshal([]byte(receiptData), &payload); err != nil {
+		return domainErrors.NewValidationError("receipt_data", "must be valid JSON for Android platform")
+	}
+	if payload.PackageName == "" {
+		return domainErrors.NewValidationError("receipt_data", "missing required field: packageName")
+	}
+	if payload.ProductID == "" {
+		return domainErrors.NewValidationError("receipt_data", "missing required field: productId")
+	}
+	if payload.PurchaseToken == "" {
+		return domainErrors.NewValidationError("receipt_data", "missing required field: purchaseToken")
+	}
+	if payload.Type == "" {
+		return domainErrors.NewValidationError("receipt_data", "missing required field: type")
+	}
+	if payload.Type != "subscription" && payload.Type != "inapp" {
+		return domainErrors.NewValidationError("receipt_data", `field "type" must be "subscription" or "inapp"`)
+	}
+	// Cross-check: productId in receipt must match product_id in request
+	if !strings.EqualFold(payload.ProductID, requestProductID) {
+		return domainErrors.NewValidationError("product_id",
+			fmt.Sprintf("mismatch: request has %q but receipt_data.productId is %q", requestProductID, payload.ProductID))
+	}
+	return nil
 }
