@@ -130,25 +130,30 @@ export function WebhookEventsTable({
       {/* Table card */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between">
-            <CardTitle className="text-base">Event Log</CardTitle>
-            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-              <div className="relative flex-1 sm:flex-initial">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Event Log</CardTitle>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Search event ID or type…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-full sm:w-[240px]"
+                  className="pl-9 pr-8 w-full"
                 />
                 {search && (
-                  <button className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setSearch("")}>
-                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  <button
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setSearch("")}
+                  >
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
               <Select value={provider} onValueChange={setProvider}>
-                <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectTrigger className="w-full sm:w-[150px] shrink-0">
                   <SelectValue placeholder="Provider" />
                 </SelectTrigger>
                 <SelectContent>
@@ -159,7 +164,7 @@ export function WebhookEventsTable({
                 </SelectContent>
               </Select>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectTrigger className="w-full sm:w-[140px] shrink-0">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -217,7 +222,7 @@ export function WebhookEventsTable({
                             </button>
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(event.created_at)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>{fmt(event.created_at)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`${statusColor[statusKey]} text-xs`}>
                             <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${statusKey === "pending" ? "bg-yellow-500 animate-pulse" : "bg-green-500"}`} />
@@ -306,13 +311,13 @@ export function WebhookEventsTable({
 
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Received</span>
-                  <span className="text-sm">{fmt(selected.created_at)}</span>
+                  <span className="text-sm" suppressHydrationWarning>{fmt(selected.created_at)}</span>
                 </div>
 
                 {selected.processed_at && (
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Processed At</span>
-                    <span className="text-sm">{fmt(selected.processed_at)}</span>
+                    <span className="text-sm" suppressHydrationWarning>{fmt(selected.processed_at)}</span>
                   </div>
                 )}
 
