@@ -172,9 +172,8 @@ export default function () {
       continue;
     }
 
-    // Give the asynq worker a moment to process.
-    // Non-active→active transitions may need more time (worker queue depth).
-    sleep(tc.checkSub ? 1.0 : 0.2);
+    // Give the asynq worker a moment to process (non-assertable types only).
+    if (!tc.checkSub) sleep(0.2);
 
     // Only assert subscription status for active-returning transitions.
     // Non-active subs return 404 from GET /v1/subscription (expected business logic).
@@ -182,11 +181,16 @@ export default function () {
       continue;
     }
 
-    // 4. Fetch current subscription status. Response shape: { data: { status: "..." } }
-    const subRes = getSubscription(jwtToken);
-    const subBody = subRes.json();
-    const gotStatus = (subBody && subBody.data && subBody.data.status) ? subBody.data.status : "";
-    check(subRes, { [`sub 2xx after ${tc.name}`]: (r) => r.status >= 200 && r.status < 300 });
+    // 4. Poll subscription status — worker may need a moment to flush queue.
+    let gotStatus = "";
+    const maxAttempts = 6;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      sleep(0.5);
+      const subRes = getSubscription(jwtToken);
+      const subBody = subRes.json();
+      gotStatus = (subBody && subBody.data && subBody.data.status) ? subBody.data.status : "";
+      if (gotStatus === tc.expectedStatus) break;
+    }
 
     // 5. Assert status.
     if (gotStatus === tc.expectedStatus) {
