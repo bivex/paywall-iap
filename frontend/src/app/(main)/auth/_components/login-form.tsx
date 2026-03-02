@@ -106,6 +106,21 @@ export function LoginForm() {
         <Button className="w-full" type="submit" disabled={isLoading}>
           {isLoading ? t("submitting") : t("submit")}
         </Button>
+        {process.env.NODE_ENV !== "production" && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full text-muted-foreground"
+            disabled={isLoading}
+            onClick={() => {
+              form.setValue("email", "admin@paywall.local");
+              form.setValue("password", "admin12345");
+              form.handleSubmit(onSubmit)();
+            }}
+          >
+            ⚡ Fast login (dev)
+          </Button>
+        )}
         {serverError && <p className="text-center text-destructive text-sm">{serverError}</p>}
       </form>
     </Form>
