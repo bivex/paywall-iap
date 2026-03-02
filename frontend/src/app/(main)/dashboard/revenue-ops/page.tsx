@@ -13,6 +13,7 @@ import { getRevenueOps } from "@/actions/revenue-ops";
 import type { DunningRow, WebhookRow } from "@/actions/revenue-ops";
 import { ReplayWebhookButton } from "./_components/replay-webhook-button";
 import { WebhookTable, PendingWebhookTable } from "./_components/webhook-table";
+import { SortHeader } from "@/components/ui/sort-header";
 
 /* ─── helpers ─────────────────────────────────────────── */
 function fmtDate(iso: string | null) {
@@ -108,12 +109,13 @@ function PaginationBar({
 export default async function RevenueOpsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ wh_page?: string; wh_sort?: string; wh_pending?: string }>;
+  searchParams: Promise<{ wh_page?: string; wh_sort?: string; wh_pending?: string; dunning_sort?: string }>;
 }) {
   const sp = await searchParams;
   const whPage = Math.max(1, parseInt(sp.wh_page ?? "1", 10) || 1);
   const whSort = (sp.wh_sort as "status" | "provider" | "event_type" | "created_at" | "actions" | undefined);
   const whPending = sp.wh_pending === "1";
+  const dunningSort = sp.dunning_sort ?? "date_desc"; // newest first
 
   const report = await getRevenueOps(whPage);
 
@@ -128,6 +130,23 @@ export default async function RevenueOpsPage({
 
   const { dunning, webhooks, matomo } = report;
   const activeDunning = dunning.stats.pending + dunning.stats.in_progress;
+
+  // Sort dunning queue by next_attempt_at
+  const sortedDunning = [...dunning.queue].sort((a, b) => {
+    const ta = a.next_attempt_at ? new Date(a.next_attempt_at).getTime() : 0;
+    const tb = b.next_attempt_at ? new Date(b.next_attempt_at).getTime() : 0;
+    return dunningSort === "date_asc" ? ta - tb : tb - ta;
+  });
+
+  const buildDunningSortUrl = (s: string) => {
+    const qs = new URLSearchParams();
+    if (sp.wh_page && sp.wh_page !== "1") qs.set("wh_page", sp.wh_page);
+    if (sp.wh_sort) qs.set("wh_sort", sp.wh_sort);
+    if (sp.wh_pending) qs.set("wh_pending", sp.wh_pending);
+    if (s !== "date_desc") qs.set("dunning_sort", s);
+    const str = qs.toString();
+    return str ? `?${str}#dunning` : "?#dunning";
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -287,7 +306,7 @@ export default async function RevenueOpsPage({
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <DunningTable rows={dunning.queue} />
+              <DunningTable rows={sortedDunning} sort={dunningSort} buildSortUrl={buildDunningSortUrl} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -333,7 +352,7 @@ export default async function RevenueOpsPage({
 /* ─── sub-components ──────────────────────────────────── */
 // WebhookTable is a client component in _components/webhook-table.tsx (sortable)
 
-function DunningTable({ rows }: { rows: DunningRow[] }) {
+function DunningTable({ rows, sort, buildSortUrl }: { rows: DunningRow[]; sort?: string; buildSortUrl?: (s: string) => string }) {
   if (rows.length === 0) {
     return (
       <div className="py-12 text-center">
@@ -350,7 +369,11 @@ function DunningTable({ rows }: { rows: DunningRow[] }) {
           <TableHead>Plan</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Attempt</TableHead>
-          <TableHead>Next Retry</TableHead>
+          <TableHead>
+            {sort && buildSortUrl ? (
+              <SortHeader label="Next Retry" sortKey="date" currentSort={sort} ascHref={buildSortUrl("date_asc")} descHref={buildSortUrl("date_desc")} />
+            ) : "Next Retry"}
+          </TableHead>
           <TableHead>Last Attempt</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
