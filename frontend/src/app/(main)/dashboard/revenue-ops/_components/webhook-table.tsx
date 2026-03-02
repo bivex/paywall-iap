@@ -31,9 +31,9 @@ function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
     : <ArrowDown className="ml-1 h-3 w-3 inline-block" />;
 }
 
-export function WebhookTable({ rows }: { rows: WebhookRow[] }) {
-  // default: pending first
-  const [sortKey, setSortKey] = useState<SortKey>("status");
+export function WebhookTable({ rows, initialSort }: { rows: WebhookRow[]; initialSort?: SortKey }) {
+  // default: pending first; override via initialSort (e.g. from badge click)
+  const [sortKey, setSortKey] = useState<SortKey>(initialSort ?? "status");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   function handleSort(key: SortKey) {
