@@ -7,19 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
+import type { TrendPoint } from "@/actions/analytics";
 
-const data = [
-  { month: "Aug", mrr: 8100,  churn: 2.4, ltv: 140, new_subs: 312 },
-  { month: "Sep", mrr: 8920,  churn: 2.2, ltv: 152, new_subs: 345 },
-  { month: "Oct", mrr: 9750,  churn: 2.1, ltv: 161, new_subs: 368 },
-  { month: "Nov", mrr: 10800, churn: 2.0, ltv: 170, new_subs: 390 },
-  { month: "Dec", mrr: 11430, churn: 1.9, ltv: 178, new_subs: 402 },
-  { month: "Jan", mrr: 12450, churn: 1.8, ltv: 184, new_subs: 412 },
-];
+type MetricKey = "mrr" | "new_subs" | "active_count";
 
-type MetricKey = "mrr" | "churn" | "ltv" | "new_subs";
-
-const metrics: {
+interface KpiDef {
   key: MetricKey;
   label: string;
   value: string;
@@ -27,110 +19,152 @@ const metrics: {
   up: boolean;
   format: (v: number) => string;
   color: string;
-}[] = [
-  { key: "mrr",      label: "MRR",        value: "$12,450", delta: "+8.3%",  up: true,  format: (v) => `$${v.toLocaleString("en-US")}`, color: "var(--chart-1)" },
-  { key: "churn",    label: "Churn Rate", value: "1.8%",    delta: "-0.6pp", up: true,  format: (v) => `${v}%`,                          color: "var(--chart-2)" },
-  { key: "ltv",      label: "Avg LTV",    value: "$184",    delta: "+31.4%", up: true,  format: (v) => `$${v}`,                           color: "var(--chart-3)" },
-  { key: "new_subs", label: "New Subs",   value: "412",     delta: "+32%",   up: true,  format: (v) => String(v),                         color: "var(--chart-4)" },
-];
+}
 
 const chartConfig: ChartConfig = {
-  mrr:      { label: "MRR (USD)",    color: "var(--chart-1)" },
-  churn:    { label: "Churn Rate %", color: "var(--chart-2)" },
-  ltv:      { label: "Avg LTV",      color: "var(--chart-3)" },
-  new_subs: { label: "New Subs",     color: "var(--chart-4)" },
+  mrr:          { label: "MRR (USD)",   color: "var(--chart-1)" },
+  new_subs:     { label: "New Subs",    color: "var(--chart-2)" },
+  active_count: { label: "Active Subs", color: "var(--chart-3)" },
 };
 
-export function KpiAreaChart() {
+interface Props {
+  trend: TrendPoint[];
+  mrr: number;
+  ltv: number;
+  churnRate: number;
+  newSubsMonth: number;
+}
+
+function pctDelta(trend: TrendPoint[], key: MetricKey): number | null {
+  const first = trend[0];
+  const last  = trend[trend.length - 1];
+  if (!first || !last || first[key] === 0) return null;
+  return ((last[key] - first[key]) / first[key]) * 100;
+}
+
+function fmtDelta(pct: number | null) {
+  if (pct == null) return "—";
+  return `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+}
+
+export function KpiAreaChart({ trend, mrr, ltv, churnRate, newSubsMonth }: Props) {
   const [active, setActive] = React.useState<MetricKey>("mrr");
-  const m = metrics.find((x) => x.key === active)!;
+
+  const kpis: KpiDef[] = [
+    {
+      key: "mrr",
+      label: "MRR",
+      value: `$${mrr.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      delta: fmtDelta(pctDelta(trend, "mrr")),
+      up: (pctDelta(trend, "mrr") ?? 0) >= 0,
+      format: (v) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      color: "var(--chart-1)",
+    },
+    {
+      key: "active_count",
+      label: "Active Subs",
+      value: String(trend[trend.length - 1]?.active_count ?? 0),
+      delta: fmtDelta(pctDelta(trend, "active_count")),
+      up: (pctDelta(trend, "active_count") ?? 0) >= 0,
+      format: (v) => String(v),
+      color: "var(--chart-3)",
+    },
+    {
+      key: "new_subs",
+      label: "New / Month",
+      value: String(newSubsMonth),
+      delta: fmtDelta(pctDelta(trend, "new_subs")),
+      up: (pctDelta(trend, "new_subs") ?? 0) >= 0,
+      format: (v) => String(v),
+      color: "var(--chart-2)",
+    },
+  ];
+
+  const m = kpis.find((x) => x.key === active)!;
 
   return (
-    <Card>
-      {/* KPI selector row */}
-      <CardHeader className="p-0 border-b">
-        <div className="grid grid-cols-2 lg:grid-cols-4">
-          {metrics.map((metric) => (
-            <button
-              key={metric.key}
-              onClick={() => setActive(metric.key)}
-              data-active={active === metric.key}
-              className={cn(
-                "flex flex-col gap-1 p-5 text-left border-r last:border-r-0 transition-colors",
-                "hover:bg-muted/40",
-                "data-[active=true]:bg-muted/60"
-              )}
-            >
-              <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-                {metric.label}
-              </span>
-              <span className="text-2xl font-bold">{metric.value}</span>
-              <span className={cn(
-                "text-xs flex items-center gap-1",
-                metric.up ? "text-emerald-600" : "text-red-500"
-              )}>
-                {metric.up
-                  ? <TrendingUp className="h-3 w-3" />
-                  : <TrendingDown className="h-3 w-3" />}
-                {metric.delta} vs 6 mo ago
-              </span>
-              {active === metric.key && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                  style={{ background: metric.color }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-      </CardHeader>
+    <div className="space-y-4">
+      {/* KPI summary row */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: "MRR",        value: `$${mrr.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, muted: false },
+          { label: "ARR",        value: `$${(mrr * 12).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, muted: false },
+          { label: "Avg LTV",    value: `$${ltv.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, muted: false },
+          { label: "Churn Rate", value: `${churnRate.toLocaleString("en-US")}%`, muted: churnRate >= 5 },
+        ].map((k) => (
+          <Card key={k.label} className="py-4">
+            <CardContent className="px-4 py-0">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">{k.label}</p>
+              <p className={cn("text-xl font-bold", k.muted && "text-red-500")}>{k.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      <CardContent className="pt-6 px-2 sm:px-6">
-        <div className="mb-3 flex items-center gap-2">
-          <CardTitle className="text-sm">{m.label} Trend</CardTitle>
-          <Badge
-            variant="outline"
-            className={cn(
-              "text-xs",
-              m.up ? "text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30" : "text-red-500"
-            )}
-          >
-            {m.up ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-            {m.delta}
-          </Badge>
-          <CardDescription className="ml-auto text-xs">Aug – Jan 2026</CardDescription>
-        </div>
-
-        <ChartContainer config={chartConfig} className="aspect-auto h-[260px] w-full">
-          <AreaChart data={data} margin={{ left: 12, right: 12 }}>
-            <defs>
-              <linearGradient id={`grad-${active}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor={m.color} stopOpacity={0.35} />
-                <stop offset="95%" stopColor={m.color} stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-            <YAxis hide />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => [m.format(Number(value)), m.label]}
-                />
-              }
-            />
-            <Area
-              dataKey={active}
-              type="monotone"
-              stroke={m.color}
-              strokeWidth={2}
-              fill={`url(#grad-${active})`}
-              dot={{ r: 4, fill: m.color, strokeWidth: 0 }}
-              activeDot={{ r: 6 }}
-            />
-          </AreaChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+      {/* Chart with metric selector */}
+      <Card>
+        <CardHeader className="p-0 border-b">
+          <div className="flex divide-x">
+            {kpis.map((metric) => (
+              <button
+                key={metric.key}
+                onClick={() => setActive(metric.key)}
+                data-active={active === metric.key}
+                className={cn(
+                  "relative flex-1 flex flex-col gap-0.5 px-5 py-4 text-left transition-colors",
+                  "hover:bg-muted/30 data-[active=true]:bg-muted/50"
+                )}
+              >
+                <span className="text-xs text-muted-foreground font-medium">{metric.label}</span>
+                <span className="text-lg font-bold">{metric.value}</span>
+                <span className={cn("text-xs flex items-center gap-1", metric.up ? "text-emerald-600" : "text-red-500")}>
+                  {metric.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {metric.delta} vs 6 mo
+                </span>
+                {active === metric.key && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: metric.color }} />
+                )}
+              </button>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4 px-2 sm:px-4">
+          <div className="flex items-center gap-2 mb-3 px-2">
+            <CardTitle className="text-sm">{m.label} Trend</CardTitle>
+            <Badge variant="outline" className={cn(
+              "text-xs border-none",
+              m.up ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30" : "text-red-500 bg-red-50"
+            )}>
+              {m.up ? <TrendingUp className="h-3 w-3 mr-1 inline" /> : <TrendingDown className="h-3 w-3 mr-1 inline" />}
+              {m.delta}
+            </Badge>
+            <CardDescription className="ml-auto text-xs">Real DB data</CardDescription>
+          </div>
+          <ChartContainer config={chartConfig} className="aspect-auto h-[240px] w-full">
+            <AreaChart data={trend} margin={{ left: 8, right: 8 }}>
+              <defs>
+                <linearGradient id={`grad-${active}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor={m.color} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={m.color} stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
+              <YAxis hide />
+              <ChartTooltip content={<ChartTooltipContent formatter={(v) => [m.format(Number(v)), m.label]} />} />
+              <Area
+                dataKey={active}
+                type="monotone"
+                stroke={m.color}
+                strokeWidth={2}
+                fill={`url(#grad-${active})`}
+                dot={{ r: 3.5, fill: m.color, strokeWidth: 0 }}
+                activeDot={{ r: 5 }}
+              />
+            </AreaChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
