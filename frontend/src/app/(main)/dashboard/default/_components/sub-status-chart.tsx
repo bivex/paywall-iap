@@ -1,18 +1,3 @@
-/**
- * Copyright (c) 2026 Bivex
- *
- * Author: Bivex
- * Available for contact via email: support@b-b.top
- * For up-to-date contact information:
- * https://github.com/bivex
- *
- * Created: 2026-03-02 03:35
- * Last Updated: 2026-03-02 03:35
- *
- * Licensed under the MIT License.
- * Commercial licensing available upon request.
- */
-
 "use client";
 
 import { Label, Pie, PieChart, Sector } from "recharts";
@@ -32,13 +17,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import type { SubscriptionStatusCounts } from "@/actions/dashboard";
 
-const chartData = [
-  { status: "active", count: 10285, fill: "var(--color-active)" },
-  { status: "grace", count: 605, fill: "var(--color-grace)" },
-  { status: "cancelled", count: 847, fill: "var(--color-cancelled)" },
-  { status: "expired", count: 363, fill: "var(--color-expired)" },
-];
+interface SubStatusChartProps {
+  counts: SubscriptionStatusCounts;
+}
 
 const chartConfig = {
   count: { label: "Subscriptions" },
@@ -48,7 +31,13 @@ const chartConfig = {
   expired: { label: "Expired", color: "var(--chart-4)" },
 } satisfies ChartConfig;
 
-export function SubStatusChart() {
+export function SubStatusChart({ counts }: SubStatusChartProps) {
+  const chartData = [
+    { status: "active",    count: counts.Active,    fill: "var(--color-active)" },
+    { status: "grace",     count: counts.Grace,     fill: "var(--color-grace)" },
+    { status: "cancelled", count: counts.Cancelled, fill: "var(--color-cancelled)" },
+    { status: "expired",   count: counts.Expired,   fill: "var(--color-expired)" },
+  ];
   const total = chartData.reduce((acc, d) => acc + d.count, 0);
 
   return (
@@ -119,10 +108,12 @@ export function SubStatusChart() {
                 className="inline-block h-2 w-2 rounded-full"
                 style={{ backgroundColor: d.fill }}
               />
-              <span className="text-muted-foreground capitalize">{d.status === "grace" ? "Grace Period" : d.status}</span>
+              <span className="text-muted-foreground capitalize">
+                {d.status === "grace" ? "Grace Period" : d.status}
+              </span>
             </div>
             <span className="font-medium tabular-nums">
-              {((d.count / total) * 100).toFixed(0)}%
+              {total > 0 ? ((d.count / total) * 100).toFixed(0) : 0}%
             </span>
           </div>
         ))}

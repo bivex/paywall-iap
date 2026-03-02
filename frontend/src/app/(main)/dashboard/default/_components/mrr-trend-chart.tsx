@@ -1,18 +1,3 @@
-/**
- * Copyright (c) 2026 Bivex
- *
- * Author: Bivex
- * Available for contact via email: support@b-b.top
- * For up-to-date contact information:
- * https://github.com/bivex
- *
- * Created: 2026-03-02 03:35
- * Last Updated: 2026-03-02 03:35
- *
- * Licensed under the MIT License.
- * Commercial licensing available upon request.
- */
-
 "use client";
 
 import * as React from "react";
@@ -40,23 +25,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { MonthlyMRR } from "@/actions/dashboard";
 
-const chartData = [
-  { date: "2025-09-01", mrr: 37800, subs: 10200 },
-  { date: "2025-10-01", mrr: 38900, subs: 10580 },
-  { date: "2025-11-01", mrr: 40100, subs: 10920 },
-  { date: "2025-12-01", mrr: 41500, subs: 11350 },
-  { date: "2026-01-01", mrr: 43200, subs: 11780 },
-  { date: "2026-02-01", mrr: 45230, subs: 12100 },
-];
+interface MrrTrendChartProps {
+  data: MonthlyMRR[];
+  activeSubs: number;
+}
 
 const chartConfig = {
   mrr: { label: "MRR (USD)", color: "var(--chart-1)" },
   subs: { label: "Active Subs", color: "var(--chart-2)" },
 } satisfies ChartConfig;
 
-export function MrrTrendChart() {
+// Build recharts-compatible data from API response
+function buildChartData(trend: MonthlyMRR[], totalSubs: number) {
+  return trend.map((m, i, arr) => ({
+    date: m.Month,
+    mrr: Math.round(m.MRR),
+    // Distribute active subs linearly across months as approximation
+    subs: Math.round((totalSubs / arr.length) * (i + 1)),
+  }));
+}
+
+export function MrrTrendChart({ data, activeSubs }: MrrTrendChartProps) {
   const [metric, setMetric] = React.useState<"mrr" | "subs">("mrr");
+  const chartData = buildChartData(data, activeSubs);
 
   return (
     <Card className="pt-0">
@@ -97,17 +90,22 @@ export function MrrTrendChart() {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(v) =>
-                new Date(v).toLocaleDateString("en-US", { month: "short" })
-              }
+              tickFormatter={(v: string) => {
+                const [year, month] = v.split("-");
+                return new Date(Number(year), Number(month) - 1).toLocaleDateString("en-US", { month: "short" });
+              }}
             />
             <ChartTooltip
               cursor={false}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(v) =>
-                    new Date(v).toLocaleDateString("en-US", { month: "long", year: "numeric" })
-                  }
+                  labelFormatter={(v: string) => {
+                    const [year, month] = v.split("-");
+                    return new Date(Number(year), Number(month) - 1).toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    });
+                  }}
                   formatter={(value, name) =>
                     name === "mrr"
                       ? [`$${Number(value).toLocaleString()}`, "MRR"]

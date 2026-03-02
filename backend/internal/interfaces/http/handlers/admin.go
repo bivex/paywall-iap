@@ -239,29 +239,84 @@ func (h *AdminHandler) GetHealth(c *gin.Context) {
 	})
 }
 
-// GetDashboardMetrics returns aggregate metrics for the dashboard
+// GetDashboardMetrics returns comprehensive aggregate metrics for the admin dashboard.
 // @Summary Admin dashboard metrics
 // @Tags admin
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} response.SuccessResponse{data=object}
 // @Router /admin/dashboard/metrics [get]
 func (h *AdminHandler) GetDashboardMetrics(c *gin.Context) {
-	end := time.Now()
-	start := end.AddDate(0, 0, -30)
+	ctx := c.Request.Context()
+	now := time.Now()
+	monthAgo := now.AddDate(0, -1, 0)
 
-	revenue, err := h.analyticsService.CalculateRevenueMetrics(c.Request.Context(), start, end)
+	// Active user count
+	activeUsers, err := h.queries.CountUsers(ctx)
+	if err != nil {
+		response.InternalError(c, "Failed to count users")
+		return
+	}
+
+	// Active subscription count
+	activeSubs, err := h.queries.GetActiveSubscriptionCount(ctx)
+	if err != nil {
+		response.InternalError(c, "Failed to count subscriptions")
+		return
+	}
+
+	// Revenue metrics (MRR / ARR)
+	revenue, err := h.analyticsService.CalculateRevenueMetrics(ctx, monthAgo, now)
 	if err != nil {
 		response.InternalError(c, "Failed to calculate revenue")
 		return
 	}
 
-	churn, err := h.analyticsService.CalculateChurnMetrics(c.Request.Context(), start, end)
+	// Churn risk (grace-period subscriptions)
+	churnRisk, err := h.analyticsService.GetChurnRiskCount(ctx)
 	if err != nil {
-		response.InternalError(c, "Failed to calculate churn")
+		response.InternalError(c, "Failed to calculate churn risk")
+		return
+	}
+
+	// MRR trend — last 6 months
+	mrrTrend, err := h.analyticsService.GetMRRTrend(ctx, 6)
+	if err != nil {
+		response.InternalError(c, "Failed to calculate MRR trend")
+		return
+	}
+
+	// Subscription status breakdown
+	statusCounts, err := h.analyticsService.GetSubscriptionStatusCounts(ctx)
+	if err != nil {
+		response.InternalError(c, "Failed to get subscription status counts")
+		return
+	}
+
+	// Recent audit log (last 5 entries)
+	auditLog, err := h.analyticsService.GetRecentAuditLog(ctx, 5)
+	if err != nil {
+		response.InternalError(c, "Failed to get audit log")
+		return
+	}
+
+	// Webhook health per provider
+	webhookHealth, err := h.analyticsService.GetWebhookHealthByProvider(ctx)
+	if err != nil {
+		response.InternalError(c, "Failed to get webhook health")
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"revenue":      revenue,
-		"churn":        churn,
-		"last_updated": time.Now(),
+		"active_users":  activeUsers,
+		"active_subs":   activeSubs,
+		"mrr":           revenue.MRR,
+		"arr":           revenue.ARR,
+		"churn_risk":    churnRisk,
+		"mrr_trend":     mrrTrend,
+		"status_counts": statusCounts,
+		"audit_log":     auditLog,
+		"webhook_health": webhookHealth,
+		"last_updated":  now,
 	})
 }

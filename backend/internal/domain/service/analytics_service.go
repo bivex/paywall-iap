@@ -85,3 +85,29 @@ func (s *AnalyticsService) CalculateChurnMetrics(ctx context.Context, start, end
 		Period:             start.Format("2006-01-02") + " to " + end.Format("2006-01-02"),
 	}, nil
 }
+
+// GetMRRTrend delegates to the repository.
+func (s *AnalyticsService) GetMRRTrend(ctx context.Context, months int) ([]repository.MonthlyMRR, error) {
+	return s.repo.GetMRRTrend(ctx, months)
+}
+
+// GetSubscriptionStatusCounts delegates to the repository.
+func (s *AnalyticsService) GetSubscriptionStatusCounts(ctx context.Context) (*repository.SubscriptionStatusCounts, error) {
+	return s.repo.GetSubscriptionStatusCounts(ctx)
+}
+
+// GetChurnRiskCount delegates to the repository.
+func (s *AnalyticsService) GetChurnRiskCount(ctx context.Context) (int, error) {
+	return s.repo.GetChurnRiskCount(ctx)
+}
+
+// GetWebhookHealthByProvider delegates to the repository.
+func (s *AnalyticsService) GetWebhookHealthByProvider(ctx context.Context) ([]repository.WebhookProviderHealth, error) {
+	return s.repo.GetWebhookHealthByProvider(ctx)
+}
+
+// GetRecentAuditLog delegates to the repository.
+func (s *AnalyticsService) GetRecentAuditLog(ctx context.Context, limit int) ([]repository.AuditLogEntry, error) {
+	return s.repo.GetRecentAuditLog(ctx, limit)
+}
+

@@ -11,55 +11,75 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { getDashboardMetrics } from "@/actions/dashboard";
 
 import { MrrTrendChart } from "./_components/mrr-trend-chart";
 import { SubStatusChart } from "./_components/sub-status-chart";
 
-const kpiData = [
-  {
-    key: "activeUsers",
-    value: "14,205",
-    trend: "+2.1%",
-    positive: true,
-    trendLabel: "vsLastMonth",
-  },
-  {
-    key: "mrrUsd",
-    value: "$45,230",
-    trend: "+8.3%",
-    positive: true,
-    trendLabel: "vsLastMonth",
-  },
-  {
-    key: "activeSubs",
-    value: "12,100",
-    trend: "+5.2%",
-    positive: true,
-    trendLabel: "vsLastMonth",
-  },
-  {
-    key: "churnRisk",
-    value: "345",
-    trend: null,
-    positive: false,
-    trendLabel: "dunningInProgress",
-  },
-];
+// Fallback values when the API is unavailable (e.g. first load before backend starts)
+const FALLBACK = {
+  active_users: 0,
+  active_subs: 0,
+  mrr: 0,
+  arr: 0,
+  churn_risk: 0,
+  mrr_trend: [] as import("@/actions/dashboard").MonthlyMRR[],
+  status_counts: { Active: 0, Grace: 0, Cancelled: 0, Expired: 0 },
+  audit_log: [],
+  webhook_health: [],
+  last_updated: new Date().toISOString(),
+} as const;
 
-const auditLog = [
-  { time: "13:40", actor: "Admin_01", action: "updated pricing tier", detail: "Pro Annual → $39.99" },
-  { time: "13:35", actor: "Admin_02", action: "refunded transaction", detail: "txn_8821 · $49.99" },
-  { time: "13:30", actor: "System", action: "auto-retry dunning", detail: "sub_3341 · attempt 2/4" },
-];
+function fmt(n: number) {
+  return n.toLocaleString("en-US");
+}
 
-const webhookProviders = [
-  { name: "Stripe", ok: true },
-  { name: "Apple", ok: true },
-  { name: "Google", ok: false, detail: "2 failed, retrying" },
-];
+function fmtUSD(n: number) {
+  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
 
 export default async function DashboardPage() {
-  const t = await getTranslations("dashboard");
+  const [t, metrics] = await Promise.all([
+    getTranslations("dashboard"),
+    getDashboardMetrics(),
+  ]);
+
+  const d = metrics ?? FALLBACK;
+
+  const kpiCards = [
+    {
+      key: "activeUsers",
+      value: fmt(d.active_users),
+      badge: null,
+      trend: null,
+    },
+    {
+      key: "mrrUsd",
+      value: fmtUSD(d.mrr),
+      badge: null,
+      trend: null,
+    },
+    {
+      key: "activeSubs",
+      value: fmt(d.active_subs),
+      badge: null,
+      trend: null,
+    },
+    {
+      key: "churnRisk",
+      value: fmt(d.churn_risk),
+      badge: "orange",
+      trend: null,
+    },
+  ] as const;
+
+  const lastUpdated = new Date(d.last_updated).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
@@ -67,37 +87,37 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">
-          {t("lastUpdated")} 2026-03-01 13:40 UTC
+          {t("lastUpdated")} {lastUpdated}
         </p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {kpiData.map((kpi) => (
-          <Card key={kpi.key} className="@container/card">
+        {kpiCards.map(({ key, value, badge }) => (
+          <Card key={key} className="@container/card">
             <CardHeader className="pb-2">
               <CardDescription className="text-xs font-medium uppercase tracking-wide">
-                {t(`kpi.${kpi.key}`)}
+                {t(`kpi.${key}`)}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{kpi.value}</div>
+              <div className="text-2xl font-bold">{value}</div>
             </CardContent>
             <CardFooter className="pt-0">
-              {kpi.trend ? (
-                <Badge
-                  variant="outline"
-                  className="gap-1 text-xs text-green-600 border-green-200 bg-green-50"
-                >
-                  <TrendingUp className="h-3 w-3" />
-                  {kpi.trend} {t("kpi.vsLastMonth")}
-                </Badge>
-              ) : (
+              {badge === "orange" ? (
                 <Badge
                   variant="outline"
                   className="text-xs text-orange-600 border-orange-200 bg-orange-50"
                 >
                   {t("kpi.dunningInProgress")}
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="gap-1 text-xs text-green-600 border-green-200 bg-green-50"
+                >
+                  <TrendingUp className="h-3 w-3" />
+                  {t("kpi.vsLastMonth")}
                 </Badge>
               )}
             </CardFooter>
@@ -108,9 +128,9 @@ export default async function DashboardPage() {
       {/* Charts row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <MrrTrendChart />
+          <MrrTrendChart data={d.mrr_trend} activeSubs={d.active_subs} />
         </div>
-        <SubStatusChart />
+        <SubStatusChart counts={d.status_counts} />
       </div>
 
       {/* Bottom row */}
@@ -122,21 +142,26 @@ export default async function DashboardPage() {
             <CardDescription>admin_audit_log</CardDescription>
           </CardHeader>
           <CardContent className="space-y-0">
-            {auditLog.map((entry, i) => (
-              <div key={i}>
-                <div className="flex items-start gap-2 py-2 text-sm">
-                  <span className="text-muted-foreground tabular-nums shrink-0">
-                    [{entry.time}]
-                  </span>
-                  <div>
-                    <span className="font-medium">{entry.actor}</span>{" "}
-                    <span className="text-muted-foreground">{entry.action}</span>{" "}
-                    <span className="font-medium">{entry.detail}</span>
+            {d.audit_log.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">No recent actions.</p>
+            ) : (
+              d.audit_log.map((entry, i) => (
+                <div key={i}>
+                  <div className="flex items-start gap-2 py-2 text-sm">
+                    <span className="text-muted-foreground tabular-nums shrink-0">
+                      [{new Date(entry.Time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}]
+                    </span>
+                    <div>
+                      <span className="font-medium capitalize">{entry.Action.replace(/_/g, " ")}</span>
+                      {entry.Detail && (
+                        <span className="text-muted-foreground"> · {entry.Detail}</span>
+                      )}
+                    </div>
                   </div>
+                  {i < d.audit_log.length - 1 && <Separator />}
                 </div>
-                {i < auditLog.length - 1 && <Separator />}
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
           <CardFooter>
             <a
@@ -155,37 +180,45 @@ export default async function DashboardPage() {
             <CardDescription>webhook_events</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {webhookProviders.map((p) => (
-              <div key={p.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  {p.ok ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                  )}
-                  {p.name}
-                </div>
-                {p.ok ? (
-                  <Badge
-                    variant="outline"
-                    className="text-xs text-green-600 border-green-200 bg-green-50"
-                  >
-                    Healthy
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="text-xs text-yellow-600 border-yellow-200 bg-yellow-50"
-                  >
-                    {p.detail}
-                  </Badge>
-                )}
-              </div>
-            ))}
+            {d.webhook_health.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No webhook events recorded.</p>
+            ) : (
+              d.webhook_health.map((p) => {
+                const ok = p.Unprocessed === 0;
+                return (
+                  <div key={p.Provider} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm font-medium capitalize">
+                      {ok ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      )}
+                      {p.Provider}
+                    </div>
+                    {ok ? (
+                      <Badge
+                        variant="outline"
+                        className="text-xs text-green-600 border-green-200 bg-green-50"
+                      >
+                        Healthy
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="text-xs text-yellow-600 border-yellow-200 bg-yellow-50"
+                      >
+                        {p.Unprocessed} pending
+                      </Badge>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </CardContent>
           <CardFooter>
             <p className="text-xs text-muted-foreground">
-              0 {t("webhookHealth.unprocessed")}
+              {d.webhook_health.reduce((a, p) => a + p.Unprocessed, 0)}{" "}
+              {t("webhookHealth.unprocessed")}
             </p>
           </CardFooter>
         </Card>
