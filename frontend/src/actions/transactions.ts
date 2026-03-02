@@ -17,6 +17,7 @@ export interface TransactionRow {
   source: string;
   platform: string;
   plan_type: string;
+  subscription_id: string;
 }
 
 export interface TransactionSummary {
@@ -75,6 +76,47 @@ export async function getTransactions(
     );
     if (!res.ok) return null;
     return (await res.json()) as TransactionsResponse;
+  } catch {
+    return null;
+  }
+}
+
+export interface TransactionDetail {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  provider_tx_id: string;
+  receipt_hash: string;
+  created_at: string;
+  user: {
+    id: string;
+    email: string;
+    ltv: number;
+    created_at: string;
+  };
+  subscription: {
+    id: string;
+    status: string;
+    source: string;
+    platform: string;
+    plan_type: string;
+    expires_at: string;
+    created_at: string;
+  };
+}
+
+export async function getTransactionDetail(id: string): Promise<TransactionDetail | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("admin_access_token")?.value;
+  if (!token) return null;
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/transactions/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as TransactionDetail;
   } catch {
     return null;
   }

@@ -14,6 +14,7 @@ import type { TransactionsParams, TransactionSummary } from "@/actions/transacti
 import { formatSource } from "@/lib/subscriptions/format";
 import { TransactionsFilters } from "./_components/transactions-filters";
 import { CopyTxId } from "./_components/copy-tx-id";
+import { TxRow } from "./_components/tx-row";
 
 const PAGE_SIZE = 20;
 
@@ -185,7 +186,7 @@ export default async function TransactionsPage({ searchParams }: Props) {
                 </TableRow>
               ) : (
                 transactions.map((tx) => (
-                  <TableRow key={tx.id} className="hover:bg-muted/30">
+                  <TxRow key={tx.id} tx={tx}>
                     <TableCell className="text-muted-foreground whitespace-nowrap">{fmt(tx.created_at)}</TableCell>
                     <TableCell className="font-medium">{tx.email || tx.user_id.slice(0, 8) + "…"}</TableCell>
                     <TableCell>
@@ -208,7 +209,7 @@ export default async function TransactionsPage({ searchParams }: Props) {
                     <TableCell>
                       {tx.provider_tx_id ? <CopyTxId txId={tx.provider_tx_id} /> : <span className="text-muted-foreground">—</span>}
                     </TableCell>
-                  </TableRow>
+                  </TxRow>
                 ))
               )}
             </TableBody>

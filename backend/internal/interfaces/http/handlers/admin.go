@@ -1554,7 +1554,85 @@ c.JSON(http.StatusOK, gin.H{
 })
 }
 
-// ListTransactions returns a paginated, filterable list of all transactions for reconciliation.
+// GetTransactionDetail returns full detail for a single transaction: tx data + user + subscription.
+// GET /admin/transactions/:id
+func (h *AdminHandler) GetTransactionDetail(c *gin.Context) {
+	ctx := c.Request.Context()
+	txIDStr := c.Param("id")
+	if txIDStr == "" {
+		c.JSON(400, gin.H{"error": "missing id"})
+		return
+	}
+	txID, err := uuid.Parse(txIDStr)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid id"})
+		return
+	}
+
+	type UserSnap struct {
+		ID        string  `json:"id"`
+		Email     string  `json:"email"`
+		LTV       float64 `json:"ltv"`
+		CreatedAt string  `json:"created_at"`
+	}
+	type SubSnap struct {
+		ID        string `json:"id"`
+		Status    string `json:"status"`
+		Source    string `json:"source"`
+		Platform  string `json:"platform"`
+		PlanType  string `json:"plan_type"`
+		ExpiresAt string `json:"expires_at"`
+		CreatedAt string `json:"created_at"`
+	}
+	type Detail struct {
+		ID           string   `json:"id"`
+		Amount       float64  `json:"amount"`
+		Currency     string   `json:"currency"`
+		Status       string   `json:"status"`
+		ProviderTxID string   `json:"provider_tx_id"`
+		ReceiptHash  string   `json:"receipt_hash"`
+		CreatedAt    string   `json:"created_at"`
+		User         UserSnap `json:"user"`
+		Subscription SubSnap  `json:"subscription"`
+	}
+
+	var d Detail
+	var uID, subID uuid.UUID
+	var tCreatedAt, uCreatedAt, sExpiresAt, sCreatedAt time.Time
+
+	err = h.dbPool.QueryRow(ctx, `
+		SELECT
+		  t.id, t.amount, t.currency, t.status,
+		  COALESCE(t.provider_tx_id,''), COALESCE(t.receipt_hash,''), t.created_at,
+		  u.id, COALESCE(u.email,''), COALESCE(u.ltv,0), u.created_at,
+		  s.id, s.status, s.source, s.platform, s.plan_type, s.expires_at, s.created_at
+		FROM transactions t
+		JOIN users u ON u.id = t.user_id
+		JOIN subscriptions s ON s.id = t.subscription_id
+		WHERE t.id = $1
+	`, txID).Scan(
+		&txID, &d.Amount, &d.Currency, &d.Status,
+		&d.ProviderTxID, &d.ReceiptHash, &tCreatedAt,
+		&uID, &d.User.Email, &d.User.LTV, &uCreatedAt,
+		&subID, &d.Subscription.Status, &d.Subscription.Source,
+		&d.Subscription.Platform, &d.Subscription.PlanType,
+		&sExpiresAt, &sCreatedAt,
+	)
+	if err != nil {
+		c.JSON(404, gin.H{"error": "transaction not found"})
+		return
+	}
+
+	d.ID = txID.String()
+	d.CreatedAt = tCreatedAt.Format(time.RFC3339)
+	d.User.ID = uID.String()
+	d.User.CreatedAt = uCreatedAt.Format(time.RFC3339)
+	d.Subscription.ID = subID.String()
+	d.Subscription.ExpiresAt = sExpiresAt.Format(time.RFC3339)
+	d.Subscription.CreatedAt = sCreatedAt.Format(time.RFC3339)
+
+	c.JSON(200, d)
+}
 // GET /admin/transactions?page=1&limit=20&status=success&source=iap&platform=ios&search=email&date_from=2024-01-01&date_to=2024-12-31
 func (h *AdminHandler) ListTransactions(c *gin.Context) {
 ctx := c.Request.Context()
@@ -1657,7 +1735,8 @@ COALESCE(t.provider_tx_id, '') AS provider_tx_id,
 COALESCE(t.receipt_hash, '') AS receipt_hash,
 t.created_at,
 u.id AS user_id, COALESCE(u.email, '') AS email,
-s.source, s.platform, s.plan_type
+s.source, s.platform, s.plan_type,
+s.id AS subscription_id
 %s
 ORDER BY t.created_at DESC
 LIMIT $%d OFFSET $%d`, baseQ, idx, idx+1)
@@ -1682,24 +1761,26 @@ Email       string  `json:"email"`
 Source      string  `json:"source"`
 Platform    string  `json:"platform"`
 PlanType    string  `json:"plan_type"`
+SubscriptionID string `json:"subscription_id"`
 }
 
 result := make([]TxRow, 0, limit)
 for rows.Next() {
 var r TxRow
-var txID, userID uuid.UUID
+var txID, userID, subScanID uuid.UUID
 var createdAt time.Time
 if err := rows.Scan(
 &txID, &r.Amount, &r.Currency, &r.Status,
 &r.ProviderTxID, &r.ReceiptHash, &createdAt,
 &userID, &r.Email,
-&r.Source, &r.Platform, &r.PlanType,
+&r.Source, &r.Platform, &r.PlanType, &subScanID,
 ); err != nil {
 response.InternalError(c, "Failed to scan transaction row")
 return
 }
 r.ID = txID.String()
 r.UserID = userID.String()
+r.SubscriptionID = subScanID.String()
 r.CreatedAt = createdAt.Format(time.RFC3339)
 result = append(result, r)
 }
