@@ -6,13 +6,13 @@
 #   DATABASE_URL=postgres://... ./scripts/seed_admin.sh admin@example.com MyPassword123
 #
 # Usage (Docker container):
-#   DB_CONTAINER=docker-compose-db-1 ./scripts/seed_admin.sh admin@example.com MyPassword123
+#   DB_CONTAINER=paywall-db-1 ./scripts/seed_admin.sh admin@example.com MyPassword123
 
 set -euo pipefail
 
 EMAIL="${1:-}"
 PASSWORD="${2:-}"
-DB_CONTAINER="${DB_CONTAINER:-docker-compose-db-1}"
+DB_CONTAINER="${DB_CONTAINER:-paywall-db-1}"
 DATABASE_URL="${DATABASE_URL:-}"
 
 if [[ -z "$EMAIL" || -z "$PASSWORD" ]]; then
