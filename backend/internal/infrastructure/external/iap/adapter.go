@@ -2,6 +2,7 @@ package iap
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/bivex/paywall-iap/internal/application/command"
@@ -31,19 +32,14 @@ type IAPVerificationResult struct {
 	OriginalTxID string
 }
 
-// VerifyReceipt verifies an IAP receipt (platform-agnostic)
-func (a *IAPAdapter) VerifyReceipt(ctx context.Context, receiptData string) (*IAPVerificationResult, error) {
-	// This adapter needs to know which platform to use
-	// For now, we'll return a mock implementation
-	return &IAPVerificationResult{
-		Valid:        true,
-		TransactionID: "adapter-mock-tx",
-		ProductID:    "com.yourapp.premium.monthly",
-		ExpiresAt:    time.Now().Add(30 * 24 * time.Hour),
-		IsRenewable:  true,
-		OriginalTxID: "adapter-mock-original",
-	}, nil
+// VerifyReceipt is not implemented on IAPAdapter directly — use VerifyAppleReceipt
+// or VerifyGoogleReceipt (or the platform-specific adapter wrappers).
+func (a *IAPAdapter) VerifyReceipt(_ context.Context, _ string) (*IAPVerificationResult, error) {
+	return nil, errors.New("IAPAdapter.VerifyReceipt: use platform-specific adapter (AppleVerifierAdapter or AndroidVerifierAdapter)")
 }
+
+// suppress "time imported and not used" — time is still used by Apple/Google helpers below
+var _ = time.Time{}
 
 // VerifyAppleReceipt verifies an Apple receipt
 func (a *IAPAdapter) VerifyAppleReceipt(ctx context.Context, receiptData string) (*command.IAPVerificationResult, error) {

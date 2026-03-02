@@ -114,11 +114,16 @@ func (v *GoogleVerifier) VerifyReceipt(ctx context.Context, receiptData string) 
 
 	// sub.ExpiryTimeMillis is milliseconds since epoch
 	expiresAt := time.Unix(sub.ExpiryTimeMillis/1000, 0)
-	// Valid: payment received AND not expired AND not canceled (auto-renewing or still within paid period)
+	// Valid: payment received AND not yet expired.
+	//
+	// We intentionally do NOT check CancelReason or UserCancellationTimeMillis here:
+	// - CancelReason (int64, omitempty) cannot distinguish "field absent" (0) from
+	//   "user canceled" (also 0) because Go zeroes missing JSON fields.
+	// - A subscription that the user has canceled but whose expiry is still in the
+	//   future is legitimately active — the user paid for that period.
 	paymentReceived := sub.PaymentState != nil && *sub.PaymentState == 1
 	notExpired := expiresAt.After(time.Now())
-	notCanceled := sub.CancelReason == 0 && sub.UserCancellationTimeMillis == 0
-	isValid := paymentReceived && notExpired && notCanceled
+	isValid := paymentReceived && notExpired
 
 	return &VerifyResponse{
 		Valid:         isValid,
