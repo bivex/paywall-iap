@@ -1,82 +1,135 @@
-import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getUsers } from "@/actions/users";
+import { UsersFilters } from "./_components/users-filters";
 
-const users = [
-  { id: "usr_001", email: "alice@example.com", platform: "iOS", ltv: "$184.20", status: "active", role: "user" },
-  { id: "usr_002", email: "bob@example.com", platform: "Android", ltv: "$92.40", status: "grace", role: "user" },
-  { id: "usr_003", email: "carol@example.com", platform: "iOS", ltv: "$312.60", status: "dunning", role: "user" },
-  { id: "usr_004", email: "dave@example.com", platform: "Android", ltv: "$47.00", status: "expired", role: "user" },
-  { id: "usr_005", email: "eve@example.com", platform: "Web", ltv: "$220.00", status: "active", role: "admin" },
-];
-
-const statusClassMap: Record<string, string> = {
-  active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  grace: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  dunning: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-  expired: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+const subStatusMeta: Record<string, { label: string; className: string }> = {
+  active:       { label: "Active",       className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  grace_period: { label: "Grace",        className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  dunning:      { label: "Dunning",      className: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
+  expired:      { label: "Expired",      className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  cancelled:    { label: "Cancelled",    className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" },
+  none:         { label: "No Sub",       className: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" },
 };
 
-export default async function UsersPage() {
-  const t = await getTranslations("users");
+const platformMeta: Record<string, { label: string; className: string }> = {
+  ios:     { label: "iOS",     className: "bg-blue-100 text-blue-700" },
+  android: { label: "Android", className: "bg-green-100 text-green-700" },
+  web:     { label: "Web",     className: "bg-violet-100 text-violet-700" },
+};
+
+interface SearchParams { page?: string; search?: string; platform?: string; role?: string; }
+
+export default async function UsersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const sp = await searchParams;
+  const page = Math.max(1, parseInt(sp.page ?? "1", 10));
+
+  const data = await getUsers({
+    page,
+    limit: 20,
+    search:   sp.search,
+    platform: sp.platform,
+    role:     sp.role,
+  });
+
+  const buildPageUrl = (p: number) => {
+    const params = new URLSearchParams();
+    if (sp.search)   params.set("search",   sp.search);
+    if (sp.platform) params.set("platform", sp.platform);
+    if (sp.role)     params.set("role",     sp.role);
+    params.set("page", String(p));
+    return `/dashboard/users?${params.toString()}`;
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <Button variant="outline" size="sm">{t("exportCsv")}</Button>
+        <h1 className="text-2xl font-semibold">Users</h1>
+        <div className="flex gap-2 text-sm text-muted-foreground items-center">
+          <span>{data.total} total</span>
+        </div>
       </div>
 
       <Card>
         <CardContent className="pt-4 space-y-4">
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            <Input placeholder={t("filter.searchPlaceholder")} className="max-w-sm" />
-            <Select><SelectTrigger className="w-36"><SelectValue placeholder={t("filter.platformPlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.platformAll")}</SelectItem><SelectItem value="ios">{t("filter.platformIos")}</SelectItem><SelectItem value="android">{t("filter.platformAndroid")}</SelectItem><SelectItem value="web">{t("filter.platformWeb")}</SelectItem></SelectContent></Select>
-            <Select><SelectTrigger className="w-32"><SelectValue placeholder={t("filter.rolePlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.roleAll")}</SelectItem><SelectItem value="user">{t("filter.roleUser")}</SelectItem><SelectItem value="admin">{t("filter.roleAdmin")}</SelectItem></SelectContent></Select>
-            <Select><SelectTrigger className="w-40"><SelectValue placeholder={t("filter.subStatusPlaceholder")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.subStatusAll")}</SelectItem><SelectItem value="active">{t("filter.subStatusActive")}</SelectItem><SelectItem value="grace">{t("filter.subStatusGrace")}</SelectItem><SelectItem value="dunning">{t("filter.subStatusDunning")}</SelectItem><SelectItem value="expired">{t("filter.subStatusExpired")}</SelectItem></SelectContent></Select>
-            <Input placeholder={t("filter.ltvMin")} className="w-28" />
-            <Input placeholder={t("filter.ltvMax")} className="w-28" />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="destructive" size="sm">{t("bulkCancel")}</Button>
-            <Button variant="outline" size="sm">{t("bulkGrace")}</Button>
-          </div>
+          <Suspense fallback={null}>
+            <UsersFilters />
+          </Suspense>
 
-          {/* Table */}
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-8"><input type="checkbox" /></TableHead>
-                <TableHead>{t("table.email")}</TableHead>
-                <TableHead>{t("table.platform")}</TableHead>
-                <TableHead>{t("table.ltv")}</TableHead>
-                <TableHead>{t("table.status")}</TableHead>
-                <TableHead>{t("table.role")}</TableHead>
-                <TableHead>{t("table.actions")}</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="w-24">Platform</TableHead>
+                <TableHead className="w-28">Sub Status</TableHead>
+                <TableHead className="w-24 text-right">LTV</TableHead>
+                <TableHead className="w-24">Role</TableHead>
+                <TableHead className="w-36">Joined</TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell><input type="checkbox" /></TableCell>
-                  <TableCell className="font-medium">{u.email}</TableCell>
-                  <TableCell>{u.platform}</TableCell>
-                  <TableCell>{u.ltv}</TableCell>
-                  <TableCell><Badge className={statusClassMap[u.status]}>{t(`status.${u.status}`)}</Badge></TableCell>
-                  <TableCell><Badge variant="outline">{u.role}</Badge></TableCell>
-                  <TableCell><Link href={`/dashboard/users/${u.id}`} className="text-primary text-sm hover:underline">{t("viewProfile")}</Link></TableCell>
+              {data.users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                    No users found.
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                data.users.map((u) => {
+                  const sub = subStatusMeta[u.sub_status] ?? subStatusMeta.none;
+                  const plat = platformMeta[u.platform] ?? { label: u.platform, className: "" };
+                  return (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">{u.email}</TableCell>
+                      <TableCell>
+                        <Badge className={plat.className}>{plat.label}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={sub.className}>{sub.label}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">
+                        ${u.ltv.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">{u.role}</Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/dashboard/users/${u.id}`}>View →</Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
-          <p className="text-xs text-muted-foreground">← 1  2  3 ... 576 →  &nbsp; {t("pagination")}</p>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-xs text-muted-foreground">
+              {data.total} users{data.total_pages > 1 && ` · Page ${data.page} of ${data.total_pages}`}
+            </span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} asChild={page > 1}>
+                {page > 1 ? <Link href={buildPageUrl(page - 1)}>← Prev</Link> : <span>← Prev</span>}
+              </Button>
+              <Button variant="outline" size="sm" disabled={page >= data.total_pages} asChild={page < data.total_pages}>
+                {page < data.total_pages ? <Link href={buildPageUrl(page + 1)}>Next →</Link> : <span>Next →</span>}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+

@@ -268,6 +268,7 @@ func main() {
 			admin.POST("/users/:id/grant", adminHandler.GrantSubscription)
 			admin.POST("/users/:id/revoke", adminHandler.RevokeSubscription)
 			admin.GET("/users", adminHandler.ListUsers)
+			admin.GET("/users/search", adminHandler.SearchUsers)
 			admin.GET("/dashboard/metrics", adminHandler.GetDashboardMetrics)
 			admin.GET("/audit-log", adminHandler.GetAuditLog)
 			admin.GET("/health", adminHandler.GetHealth)

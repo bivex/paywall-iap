@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -358,6 +360,121 @@ totalPages := int((pageResult.TotalCount + int64(limit) - 1) / int64(limit))
 c.JSON(http.StatusOK, gin.H{
 "rows":        pageResult.Rows,
 "total":       pageResult.TotalCount,
+"page":        page,
+"limit":       limit,
+"total_pages": totalPages,
+})
+}
+
+// SearchUsers returns a filtered, paginated list of users.
+// Query: page, limit, search (email/platform_user_id), platform (ios/android/web), role
+func (h *AdminHandler) SearchUsers(c *gin.Context) {
+ctx := c.Request.Context()
+
+page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+if page < 1 {
+page = 1
+}
+limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+if limit < 1 || limit > 200 {
+limit = 20
+}
+offset := (page - 1) * limit
+
+search := c.Query("search")
+platform := c.Query("platform")
+role := c.Query("role")
+
+args := []interface{}{}
+where := []string{}
+idx := 1
+
+if search != "" {
+args = append(args, "%"+search+"%")
+where = append(where, fmt.Sprintf("(u.email ILIKE $%d OR u.platform_user_id ILIKE $%d)", idx, idx))
+idx++
+}
+if platform != "" {
+args = append(args, platform)
+where = append(where, fmt.Sprintf("u.platform = $%d", idx))
+idx++
+}
+if role != "" {
+args = append(args, role)
+where = append(where, fmt.Sprintf("u.role = $%d", idx))
+idx++
+}
+
+whereSQL := ""
+if len(where) > 0 {
+whereSQL = "WHERE " + strings.Join(where, " AND ")
+}
+
+var total int64
+countQ := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s`, whereSQL)
+if err := h.dbPool.QueryRow(ctx, countQ, args...).Scan(&total); err != nil {
+response.InternalError(c, "Failed to count users")
+return
+}
+
+args = append(args, limit, offset)
+dataQ := fmt.Sprintf(`
+SELECT
+u.id, u.platform_user_id, u.platform, u.email, u.role,
+u.ltv, u.app_version, u.created_at,
+COALESCE(s.status, 'none') AS sub_status,
+COALESCE(s.expires_at::text, '') AS sub_expires_at
+FROM users u
+LEFT JOIN LATERAL (
+SELECT status, expires_at FROM subscriptions
+WHERE user_id = u.id
+ORDER BY created_at DESC
+LIMIT 1
+) s ON true
+%s
+ORDER BY u.created_at DESC
+LIMIT $%d OFFSET $%d
+`, whereSQL, idx, idx+1)
+
+rows, err := h.dbPool.Query(ctx, dataQ, args...)
+if err != nil {
+response.InternalError(c, "Failed to list users")
+return
+}
+defer rows.Close()
+
+type UserRow struct {
+ID             string  `json:"id"`
+PlatformUserID string  `json:"platform_user_id"`
+Platform       string  `json:"platform"`
+Email          string  `json:"email"`
+Role           string  `json:"role"`
+LTV            float64 `json:"ltv"`
+AppVersion     string  `json:"app_version"`
+CreatedAt      string  `json:"created_at"`
+SubStatus      string  `json:"sub_status"`
+SubExpiresAt   string  `json:"sub_expires_at"`
+}
+
+var uid uuid.UUID
+result := make([]UserRow, 0, limit)
+for rows.Next() {
+var r UserRow
+var createdAt time.Time
+if err := rows.Scan(&uid, &r.PlatformUserID, &r.Platform, &r.Email, &r.Role,
+&r.LTV, &r.AppVersion, &createdAt, &r.SubStatus, &r.SubExpiresAt); err != nil {
+response.InternalError(c, "Failed to scan user")
+return
+}
+r.ID = uid.String()
+r.CreatedAt = createdAt.Format(time.RFC3339)
+result = append(result, r)
+}
+
+totalPages := int((total + int64(limit) - 1) / int64(limit))
+c.JSON(http.StatusOK, gin.H{
+"users":       result,
+"total":       total,
 "page":        page,
 "limit":       limit,
 "total_pages": totalPages,
