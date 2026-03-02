@@ -15,6 +15,7 @@ import { DashboardBreadcrumb } from "./_components/sidebar/dashboard-breadcrumb"
 import { LayoutControls } from "./_components/sidebar/layout-controls";
 import { SearchDialog } from "./_components/sidebar/search-dialog";
 import { ThemeSwitcher } from "./_components/sidebar/theme-switcher";
+import { NetworkMonitor } from "./_components/network-monitor";
 
 export default async function Layout({ children }: Readonly<{ children: ReactNode }>) {
   const cookieStore = await cookies();
@@ -63,7 +64,10 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             </div>
           </div>
         </header>
-        <div className="h-full p-4 md:p-6">{children}</div>
+        <div className="h-full p-4 md:p-6">
+          <NetworkMonitor />
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

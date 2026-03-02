@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
-import { logError } from "@/lib/debug-error";
+import { useState } from "react";
+import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Wifi } from "lucide-react";
+import { getFailedRequests } from "@/lib/network-monitor.client";
 
 export default function DashboardError({
   error,
@@ -16,10 +16,7 @@ export default function DashboardError({
   const isDev = process.env.NODE_ENV === "development";
   const lines = parseStack(error.stack);
   const appLines = lines.filter((l) => l.isApp);
-
-  useEffect(() => {
-    logError(error, "Dashboard");
-  }, [error]);
+  const failedRequests = isDev ? getFailedRequests() : [];
 
   return (
     <div className="flex flex-col gap-4 py-16 px-4 max-w-2xl mx-auto">
@@ -46,7 +43,33 @@ export default function DashboardError({
 
       {isDev && (
         <>
-          {/* Component Stack — most useful, shown first */}
+          {/* Network — failed fetch requests */}
+          {failedRequests.length > 0 && (
+            <div className="rounded-lg border bg-muted/30 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                <Wifi className="h-3.5 w-3.5" />
+                Network — {failedRequests.length} failed request{failedRequests.length > 1 ? "s" : ""}
+              </div>
+              <div className="bg-slate-950 divide-y divide-slate-800">
+                {failedRequests.map((r, i) => (
+                  <div key={i} className="px-4 py-2.5 font-mono">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className={`font-bold ${r.status >= 500 ? "text-red-400" : r.status >= 400 ? "text-amber-400" : "text-slate-400"}`}>
+                        {r.status || "ERR"}
+                      </span>
+                      <span className="text-slate-300 truncate">{r.method} {r.url}</span>
+                    </div>
+                    {r.body && (
+                      <pre className="mt-1 text-[10px] text-slate-500 truncate">{r.body}</pre>
+                    )}
+                    <div className="text-[10px] text-slate-600 mt-0.5">{r.time}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Component Stack */}
           {error.componentStack && (
             <div className="rounded-lg border bg-muted/30 overflow-hidden">
               <button
@@ -67,7 +90,7 @@ export default function DashboardError({
             </div>
           )}
 
-          {/* JS Stack trace */}
+          {/* JS Stack */}
           {lines.length > 0 && (
             <div className="rounded-lg border bg-muted/30 overflow-hidden">
               <button
@@ -85,7 +108,6 @@ export default function DashboardError({
                 {stackExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
               </button>
 
-              {/* Always show first app frame as quick hint */}
               {!stackExpanded && appLines.length > 0 && (
                 <div className="bg-slate-950 px-4 py-2 text-orange-400 font-semibold text-xs border-t border-slate-800">
                   {appLines[0].raw}
