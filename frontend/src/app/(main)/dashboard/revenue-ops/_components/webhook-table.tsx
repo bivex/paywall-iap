@@ -168,3 +168,44 @@ export function WebhookTable({ rows, initialSort, initialFilterPending }: {
 }
 
 
+
+// Simple pending-only table — no sort, no pagination, server already filtered
+export function PendingWebhookTable({ rows }: { rows: WebhookRow[] }) {
+  if (rows.length === 0) {
+    return (
+      <p className="py-6 text-center text-sm text-muted-foreground">
+        No pending webhooks 🎉
+      </p>
+    );
+  }
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead>Provider</TableHead>
+          <TableHead>Event Type</TableHead>
+          <TableHead>Event ID</TableHead>
+          <TableHead>Received</TableHead>
+          <TableHead className="w-20">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((w) => (
+          <TableRow key={w.id} className="bg-amber-500/[0.03]">
+            <TableCell>
+              <Badge className={`${PROVIDER_COLOR[w.provider.toLowerCase()] ?? "bg-muted text-foreground"} border text-xs capitalize`}>
+                {w.provider}
+              </Badge>
+            </TableCell>
+            <TableCell className="font-mono text-xs">{w.event_type}</TableCell>
+            <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">{w.event_id}</TableCell>
+            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(w.created_at)}</TableCell>
+            <TableCell>
+              <ReplayWebhookButton webhookId={w.id} />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}

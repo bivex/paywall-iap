@@ -68,6 +68,7 @@ export interface RevenueOpsReport {
   };
   webhooks: {
     events: WebhookRow[];
+    pending_events?: WebhookRow[];
     total: number;
     unprocessed: number;
     by_provider: WebhookProviderStat[];

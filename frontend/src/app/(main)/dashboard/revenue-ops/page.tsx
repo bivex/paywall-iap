@@ -12,7 +12,7 @@ import Link from "next/link";
 import { getRevenueOps } from "@/actions/revenue-ops";
 import type { DunningRow, WebhookRow } from "@/actions/revenue-ops";
 import { ReplayWebhookButton } from "./_components/replay-webhook-button";
-import { WebhookTable } from "./_components/webhook-table";
+import { WebhookTable, PendingWebhookTable } from "./_components/webhook-table";
 
 /* ─── helpers ─────────────────────────────────────────── */
 function fmtDate(iso: string | null) {
@@ -228,6 +228,23 @@ export default async function RevenueOpsPage({
               );
             })}
           </div>
+
+          {/* Pending-only table — all unprocessed, no pagination */}
+          {(webhooks.pending_events ?? []).length > 0 && (
+            <Card id="pending-webhooks">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  <CardTitle className="text-sm font-semibold text-amber-600">
+                    Pending Webhooks — {webhooks.pending_events.length} unprocessed
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <PendingWebhookTable rows={webhooks.pending_events ?? []} />
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="pb-3">
