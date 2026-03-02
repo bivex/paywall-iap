@@ -1287,6 +1287,134 @@ mStats.Total = mStats.Pending + mStats.Processing + mStats.Sent + mStats.Failed
 })
 }
 
+// ListWebhooks returns paginated, filterable webhook events.
+// GET /admin/webhooks?page=1&limit=20&provider=stripe&status=pending&search=evt_id
+func (h *AdminHandler) ListWebhooks(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 200 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	provider := c.Query("provider")
+	status := c.Query("status") // "pending" | "processed" | "failed"
+	search := c.Query("search")
+	dateFrom := c.Query("date_from")
+	dateTo := c.Query("date_to")
+
+	args := []interface{}{}
+	where := []string{}
+	idx := 1
+
+	if provider != "" {
+		args = append(args, strings.ToLower(provider))
+		where = append(where, fmt.Sprintf("LOWER(provider) = $%d", idx))
+		idx++
+	}
+	if status == "pending" {
+		where = append(where, "processed_at IS NULL")
+	} else if status == "processed" {
+		where = append(where, "processed_at IS NOT NULL")
+	}
+	if search != "" {
+		args = append(args, "%"+search+"%")
+		where = append(where, fmt.Sprintf("(event_id ILIKE $%d OR event_type ILIKE $%d)", idx, idx))
+		idx++
+	}
+	if dateFrom != "" {
+		args = append(args, dateFrom)
+		where = append(where, fmt.Sprintf("created_at >= $%d::date", idx))
+		idx++
+	}
+	if dateTo != "" {
+		args = append(args, dateTo)
+		where = append(where, fmt.Sprintf("created_at < ($%d::date + INTERVAL '1 day')", idx))
+		idx++
+	}
+
+	whereSQL := ""
+	if len(where) > 0 {
+		whereSQL = "WHERE " + strings.Join(where, " AND ")
+	}
+
+	type Summary struct {
+		Total     int64 `json:"total"`
+		Pending   int64 `json:"pending"`
+		Processed int64 `json:"processed"`
+	}
+	var summary Summary
+	sumQ := fmt.Sprintf(`
+		SELECT
+		  COUNT(*),
+		  COUNT(*) FILTER (WHERE processed_at IS NULL),
+		  COUNT(*) FILTER (WHERE processed_at IS NOT NULL)
+		FROM webhook_events %s`, whereSQL)
+	if err := h.dbPool.QueryRow(ctx, sumQ, args...).Scan(&summary.Total, &summary.Pending, &summary.Processed); err != nil {
+		response.InternalError(c, "Failed to get webhook summary")
+		return
+	}
+
+	dataArgs := append(args, limit, offset)
+	dataQ := fmt.Sprintf(`
+		SELECT id, provider, event_type, COALESCE(event_id,''), processed_at, created_at
+		FROM webhook_events
+		%s
+		ORDER BY created_at DESC
+		LIMIT $%d OFFSET $%d`, whereSQL, idx, idx+1)
+
+	rows, err := h.dbPool.Query(ctx, dataQ, dataArgs...)
+	if err != nil {
+		response.InternalError(c, "Failed to list webhooks")
+		return
+	}
+	defer rows.Close()
+
+	type Row struct {
+		ID          string  `json:"id"`
+		Provider    string  `json:"provider"`
+		EventType   string  `json:"event_type"`
+		EventID     string  `json:"event_id"`
+		Processed   bool    `json:"processed"`
+		ProcessedAt *string `json:"processed_at"`
+		CreatedAt   string  `json:"created_at"`
+	}
+
+	result := make([]Row, 0, limit)
+	for rows.Next() {
+		var r Row
+		var id uuid.UUID
+		var processedAt *time.Time
+		var createdAt time.Time
+		if scanErr := rows.Scan(&id, &r.Provider, &r.EventType, &r.EventID, &processedAt, &createdAt); scanErr != nil {
+			continue
+		}
+		r.ID = id.String()
+		r.CreatedAt = createdAt.Format(time.RFC3339)
+		if processedAt != nil {
+			s := processedAt.Format(time.RFC3339)
+			r.ProcessedAt = &s
+			r.Processed = true
+		}
+		result = append(result, r)
+	}
+
+	totalPages := int((summary.Total + int64(limit) - 1) / int64(limit))
+	c.JSON(200, gin.H{
+		"webhooks":    result,
+		"summary":     summary,
+		"total":       summary.Total,
+		"page":        page,
+		"limit":       limit,
+		"total_pages": totalPages,
+	})
+}
+
 // ReplayWebhook re-enqueues an unprocessed webhook event for processing.
 // POST /v1/admin/webhooks/:id/replay
 func (h *AdminHandler) ReplayWebhook(c *gin.Context) {

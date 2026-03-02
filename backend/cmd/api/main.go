@@ -280,6 +280,7 @@ func main() {
 			admin.GET("/subscriptions/:id", adminHandler.GetSubscriptionDetail)
 			admin.GET("/transactions", adminHandler.ListTransactions)
 			admin.GET("/transactions/:id", adminHandler.GetTransactionDetail)
+			admin.GET("/webhooks", adminHandler.ListWebhooks)
 			admin.GET("/analytics/report", adminHandler.GetAnalyticsReport)
 			admin.GET("/revenue-ops", adminHandler.GetRevenueOps)
 			admin.POST("/webhooks/:id/replay", adminHandler.ReplayWebhook)
