@@ -53,7 +53,7 @@ export function MrrChart() {
             >
               <span className="text-muted-foreground text-xs">{chartConfig[key].label}</span>
               <span className="text-lg font-bold sm:text-3xl">
-                {key === "mrr" ? `$${total.mrr.toLocaleString()}` : total.subs.toLocaleString()}
+                {key === "mrr" ? `$${total.mrr.toLocaleString("en-US")}` : total.subs.toLocaleString("en-US")}
               </span>
             </button>
           ))}
@@ -71,7 +71,7 @@ export function MrrChart() {
                   className="w-[160px]"
                   formatter={(value, name) =>
                     name === "mrr"
-                      ? [`$${Number(value).toLocaleString()}`, "MRR"]
+                      ? [`$${Number(value).toLocaleString("en-US")}`, "MRR"]
                       : [value, "Active Subs"]
                   }
                 />

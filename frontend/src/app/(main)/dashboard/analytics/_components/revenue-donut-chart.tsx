@@ -42,7 +42,7 @@ export function RevenueDonutChart() {
               cursor={false}
               content={
                 <ChartTooltipContent
-                  formatter={(value) => [`$${Number(value).toLocaleString()}`, ""]}
+                  formatter={(value) => [`$${Number(value).toLocaleString("en-US")}`, ""]}
                   hideLabel
                 />
               }
@@ -54,7 +54,7 @@ export function RevenueDonutChart() {
                     return (
                       <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
                         <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-2xl font-bold">
-                          ${total.toLocaleString()}
+                          ${total.toLocaleString("en-US")}
                         </tspan>
                         <tspan x={viewBox.cx} y={(viewBox.cy ?? 0) + 20} className="fill-muted-foreground text-xs">
                           MRR
