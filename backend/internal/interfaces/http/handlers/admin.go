@@ -1046,7 +1046,7 @@ if ps := c.Query("wh_page_size"); ps != "" {
 	}
 }
 whOffset := (whPage - 1) * whPageSize
-
+whPendingOnly := c.Query("wh_pending") == "1"
 // --- Dunning queue (active / in_progress only) ---
 type DunningQueueRow struct {
 ID           string  `json:"id"`
@@ -1144,7 +1144,12 @@ CreatedAt   string  `json:"created_at"`
 whRows, err2 := h.dbPool.Query(ctx, `
 SELECT id, provider, event_type, event_id, processed_at, created_at
 FROM webhook_events
-ORDER BY created_at DESC
+`+func() string {
+	if whPendingOnly {
+		return "WHERE processed_at IS NULL "
+	}
+	return ""
+}()+`ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `, whPageSize, whOffset)
 webhooks := make([]WebhookRow, 0)
@@ -1171,6 +1176,11 @@ webhooks = append(webhooks, row)
 var whTotal, whUnprocessed int
 _ = h.dbPool.QueryRow(ctx, `SELECT COUNT(*) FROM webhook_events`).Scan(&whTotal)
 _ = h.dbPool.QueryRow(ctx, `SELECT COUNT(*) FROM webhook_events WHERE processed_at IS NULL`).Scan(&whUnprocessed)
+// For pagination: use filtered count when pending-only mode is active
+whPaginationTotal := whTotal
+if whPendingOnly {
+	whPaginationTotal = whUnprocessed
+}
 
 type WebhookProviderStat struct {
 Provider  string `json:"provider"`
@@ -1228,7 +1238,7 @@ mStats.Failed = cnt
 }
 mStats.Total = mStats.Pending + mStats.Processing + mStats.Sent + mStats.Failed
 
-	whTotalPages := (whTotal + whPageSize - 1) / whPageSize
+	whTotalPages := (whPaginationTotal + whPageSize - 1) / whPageSize
 	if whTotalPages < 1 {
 		whTotalPages = 1
 	}
@@ -1240,7 +1250,7 @@ mStats.Total = mStats.Pending + mStats.Processing + mStats.Sent + mStats.Failed
 },
 "webhooks": gin.H{
 "events":       webhooks,
-"total":        whTotal,
+"total":        whPaginationTotal,
 "unprocessed":  whUnprocessed,
 "by_provider":  provStats,
 "page":         whPage,
