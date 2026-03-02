@@ -64,10 +64,15 @@ run_sql_quiet() {
 # Upsert user
 echo "👤 Creating user: $EMAIL"
 run_sql "
-INSERT INTO users (platform_user_id, platform, app_version, email, role)
-VALUES ('admin_web_$(echo "$EMAIL" | tr '@' '_')', 'web', '1.0.0', '$EMAIL', 'superadmin')
-ON CONFLICT (email) DO UPDATE SET role = 'superadmin'
-RETURNING id, email, role;
+DO \$\$
+BEGIN
+  IF EXISTS (SELECT 1 FROM users WHERE email = '$EMAIL') THEN
+    UPDATE users SET role = 'superadmin' WHERE email = '$EMAIL';
+  ELSE
+    INSERT INTO users (platform_user_id, platform, app_version, email, role)
+    VALUES ('admin_web_$(echo "$EMAIL" | tr '@.' '__')', 'web', '1.0.0', '$EMAIL', 'superadmin');
+  END IF;
+END \$\$;
 "
 
 USER_ID=$(run_sql_quiet "SELECT id FROM users WHERE email='$EMAIL' LIMIT 1")
