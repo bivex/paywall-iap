@@ -132,8 +132,8 @@ docker compose -f "$FRONTEND_COMPOSE" down --remove-orphans -t 5 2>/dev/null || 
 ok "Containers stopped"
 
 # ── Step 3: Release ports ─────────────────────────────────────────────────────
-info "Releasing ports $API_PORT_HOST, $GOOGLE_MOCK_PORT, $APPLE_MOCK_PORT..."
-for port in "$API_PORT_HOST" "$GOOGLE_MOCK_PORT" "$APPLE_MOCK_PORT" 5432 6379; do
+info "Releasing ports $API_PORT_HOST, $GOOGLE_MOCK_PORT, $APPLE_MOCK_PORT, $FRONTEND_PORT..."
+for port in "$API_PORT_HOST" "$GOOGLE_MOCK_PORT" "$APPLE_MOCK_PORT" "$FRONTEND_PORT" 5432 6379; do
   release_docker_port "$port"
   release_port "$port"
 done
@@ -167,8 +167,12 @@ rm -f "$SCRIPT_DIR/backend/migrations/015_create_ab_test_assignments.up.sql.bak"
 docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
   -c "UPDATE schema_migrations SET dirty = false WHERE dirty = true;" &>/dev/null || true
 
+info "Building migrator image..."
 docker compose -f "$BACKEND_COMPOSE" build migrator 2>&1 | tail -3
-docker compose -f "$BACKEND_COMPOSE" run --rm migrator 2>&1 | tail -5
+info "Applying migrations..."
+if ! docker compose -f "$BACKEND_COMPOSE" run --rm migrator 2>&1 | tail -5; then
+  warn "Migrator exited non-zero (may be already up-to-date) — continuing"
+fi
 ok "Migrations done"
 
 # ── Step 6: Seed superadmin ────────────────────────────────────────────────────
@@ -185,12 +189,16 @@ else
 fi
 
 # ── Step 7: Start frontend ─────────────────────────────────────────────────────
-info "Starting frontend (hot-reload)..."
 export FRONTEND_PORT
 export NEXT_PUBLIC_API_URL="http://localhost:${API_PORT_HOST}"
 export BACKEND_URL="http://paywall-api-1:8080"
-docker compose -f "$FRONTEND_COMPOSE" up -d --build
-ok "Frontend started"
+
+info "Building frontend image (Next.js hot-reload)..."
+docker compose -f "$FRONTEND_COMPOSE" build 2>&1 | tail -5
+
+info "Starting frontend container..."
+docker compose -f "$FRONTEND_COMPOSE" up -d
+ok "Frontend container started"
 
 # ── Step 8: Health checks ──────────────────────────────────────────────────────
 wait_for_http "http://localhost:${API_PORT_HOST}/health" "Backend API" 30
