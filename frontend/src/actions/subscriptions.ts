@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
 export interface SubscriptionRow {
   id: string;
@@ -60,7 +60,7 @@ export async function getSubscriptions(
       `${BACKEND_URL}/v1/admin/subscriptions?${qs.toString()}`,
       {
         headers: { Authorization: `Bearer ${token}` },
-        next: { revalidate: 30 },
+        cache: "no-store",
       },
     );
     if (!res.ok) return null;
