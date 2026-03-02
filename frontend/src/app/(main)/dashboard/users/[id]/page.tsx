@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUserProfile } from "@/actions/user-profile";
+import { UserActionBar } from "./_components/user-action-bar";
 
 const subStatusMeta: Record<string, { label: string; className: string }> = {
   active:    { label: "Active",     className: "bg-emerald-100 text-emerald-800" },
@@ -247,14 +248,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
       </Tabs>
 
       {/* Action bar */}
-      <div className="flex flex-wrap gap-2 border-t pt-4">
-        <Button variant="destructive" size="sm">Force Cancel</Button>
-        <Button variant="outline" size="sm">Force Renew</Button>
-        <Button variant="outline" size="sm">Grant Grace Period</Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/dashboard/audit-log?search=${encodeURIComponent(user.email)}`}>View Audit Log →</Link>
-        </Button>
-      </div>
+      <UserActionBar userId={user.id} hasActiveSub={!!activeSub && activeSub.status === "active"} />
     </div>
   );
 }

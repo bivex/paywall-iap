@@ -651,3 +651,167 @@ c.JSON(http.StatusOK, gin.H{
 "dunning":      dunnings,
 })
 }
+
+// ForceCancel hard-cancels a user's active subscription immediately.
+// Body: {"reason": "..."}
+func (h *AdminHandler) ForceCancel(c *gin.Context) {
+userID, err := uuid.Parse(c.Param("id"))
+if err != nil {
+response.BadRequest(c, "Invalid user ID")
+return
+}
+var req struct {
+Reason string `json:"reason"`
+}
+_ = c.ShouldBindJSON(&req)
+if req.Reason == "" {
+req.Reason = "admin_force_cancel"
+}
+
+sub, err := h.subscriptionRepo.GetActiveByUserID(c.Request.Context(), userID)
+if err != nil {
+response.NotFound(c, "No active subscription found")
+return
+}
+if err := h.subscriptionRepo.Cancel(c.Request.Context(), sub.ID); err != nil {
+response.InternalError(c, "Failed to cancel subscription")
+return
+}
+adminID, _ := c.Get("admin_id")
+if aid, ok := adminID.(uuid.UUID); ok {
+_ = h.auditService.LogAction(c.Request.Context(), aid, "revoke_subscription", "user", &userID, map[string]interface{}{
+"reason": req.Reason, "subscription_id": sub.ID,
+})
+}
+c.JSON(http.StatusOK, gin.H{"ok": true})
+}
+
+// ForceRenew extends the active subscription's expires_at by the given days (default 30).
+// Body: {"days": 30, "reason": "..."}
+func (h *AdminHandler) ForceRenew(c *gin.Context) {
+ctx := c.Request.Context()
+userID, err := uuid.Parse(c.Param("id"))
+if err != nil {
+response.BadRequest(c, "Invalid user ID")
+return
+}
+var req struct {
+Days   int    `json:"days"`
+Reason string `json:"reason"`
+}
+_ = c.ShouldBindJSON(&req)
+if req.Days <= 0 {
+req.Days = 30
+}
+if req.Reason == "" {
+req.Reason = "admin_force_renew"
+}
+
+sub, err := h.subscriptionRepo.GetActiveByUserID(ctx, userID)
+if err != nil {
+// No active sub → try to find latest expired and reactivate
+var subID uuid.UUID
+var expiresAt time.Time
+err2 := h.dbPool.QueryRow(ctx,
+`SELECT id, expires_at FROM subscriptions WHERE user_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, userID,
+).Scan(&subID, &expiresAt)
+if err2 != nil {
+response.NotFound(c, "No subscription found")
+return
+}
+newExpires := time.Now().UTC().AddDate(0, 0, req.Days)
+_, err3 := h.dbPool.Exec(ctx,
+`UPDATE subscriptions SET status='active', expires_at=$1, updated_at=now() WHERE id=$2`,
+newExpires, subID)
+if err3 != nil {
+response.InternalError(c, "Failed to renew subscription")
+return
+}
+adminID, _ := c.Get("admin_id")
+if aid, ok := adminID.(uuid.UUID); ok {
+_ = h.auditService.LogAction(ctx, aid, "manual_renewal", "subscription", &userID, map[string]interface{}{
+"reason": req.Reason, "days": req.Days, "sub_id": subID,
+})
+}
+c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
+return
+}
+
+// Active sub: extend expires_at
+newExpires := sub.ExpiresAt.AddDate(0, 0, req.Days)
+_, err = h.dbPool.Exec(ctx,
+`UPDATE subscriptions SET expires_at=$1, updated_at=now() WHERE id=$2`,
+newExpires, sub.ID)
+if err != nil {
+response.InternalError(c, "Failed to extend subscription")
+return
+}
+adminID, _ := c.Get("admin_id")
+if aid, ok := adminID.(uuid.UUID); ok {
+_ = h.auditService.LogAction(ctx, aid, "manual_renewal", "subscription", &userID, map[string]interface{}{
+"reason": req.Reason, "days": req.Days, "sub_id": sub.ID,
+})
+}
+c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
+}
+
+// GrantGracePeriod grants a grace period of given days to a user's subscription.
+// Body: {"days": 7, "reason": "..."}
+func (h *AdminHandler) GrantGracePeriod(c *gin.Context) {
+ctx := c.Request.Context()
+userID, err := uuid.Parse(c.Param("id"))
+if err != nil {
+response.BadRequest(c, "Invalid user ID")
+return
+}
+var req struct {
+Days   int    `json:"days"`
+Reason string `json:"reason"`
+}
+_ = c.ShouldBindJSON(&req)
+if req.Days <= 0 {
+req.Days = 7
+}
+if req.Reason == "" {
+req.Reason = "admin_grant_grace"
+}
+
+// Get active or most recent subscription
+var subID uuid.UUID
+err = h.dbPool.QueryRow(ctx,
+`SELECT id FROM subscriptions WHERE user_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, userID,
+).Scan(&subID)
+if err != nil {
+response.NotFound(c, "No subscription found")
+return
+}
+
+// Upsert: deactivate any existing active grace period first
+_, _ = h.dbPool.Exec(ctx,
+`UPDATE grace_periods SET status='expired', updated_at=now() WHERE user_id=$1 AND status='active'`, userID)
+
+gracExpires := time.Now().UTC().AddDate(0, 0, req.Days)
+var graceID uuid.UUID
+err = h.dbPool.QueryRow(ctx, `
+INSERT INTO grace_periods (user_id, subscription_id, status, expires_at)
+VALUES ($1, $2, 'active', $3)
+RETURNING id`,
+userID, subID, gracExpires,
+).Scan(&graceID)
+if err != nil {
+response.InternalError(c, "Failed to grant grace period")
+return
+}
+
+// Set subscription to grace status
+_, _ = h.dbPool.Exec(ctx,
+`UPDATE subscriptions SET status='grace', updated_at=now() WHERE id=$1`, subID)
+
+adminID, _ := c.Get("admin_id")
+if aid, ok := adminID.(uuid.UUID); ok {
+_ = h.auditService.LogAction(ctx, aid, "grant_subscription", "user", &userID, map[string]interface{}{
+"reason": req.Reason, "days": req.Days, "grace_id": graceID, "type": "grace_period",
+})
+}
+c.JSON(http.StatusOK, gin.H{"ok": true, "grace_expires_at": gracExpires.Format(time.RFC3339)})
+}
