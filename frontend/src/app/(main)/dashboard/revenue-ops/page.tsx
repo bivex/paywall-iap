@@ -37,19 +37,21 @@ const DUNNING_STATUS_COLOR: Record<string, string> = {
 
 /* ─── pagination bar ─────────────────────────────────── */
 function PaginationBar({
-  page, totalPages, total, pageSize, paramKey,
+  page, totalPages, total, pageSize, paramKey, extraParams = "",
 }: {
   page: number;
   totalPages: number;
   total: number;
   pageSize: number;
   paramKey: string;
+  extraParams?: string;
 }) {
   const from = Math.min((page - 1) * pageSize + 1, total);
   const to   = Math.min(page * pageSize, total);
 
   function href(p: number) {
-    return `?${paramKey}=${p}#webhooks`;
+    const extra = extraParams ? `&${extraParams}` : "";
+    return `?${paramKey}=${p}${extra}#webhooks`;
   }
 
   return (
@@ -244,6 +246,10 @@ export default async function RevenueOpsPage({
                 total={webhooks.total}
                 pageSize={webhooks.page_size}
                 paramKey="wh_page"
+                extraParams={[
+                  whSort    ? `wh_sort=${whSort}`       : "",
+                  whPending ? `wh_pending=1`            : "",
+                ].filter(Boolean).join("&")}
               />
             </CardContent>
           </Card>
