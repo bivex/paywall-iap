@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -808,10 +809,215 @@ _, _ = h.dbPool.Exec(ctx,
 `UPDATE subscriptions SET status='grace', updated_at=now() WHERE id=$1`, subID)
 
 adminID, _ := c.Get("admin_id")
-if aid, ok := adminID.(uuid.UUID); ok {
-_ = h.auditService.LogAction(ctx, aid, "grant_subscription", "user", &userID, map[string]interface{}{
-"reason": req.Reason, "days": req.Days, "grace_id": graceID, "type": "grace_period",
-})
+	if aid, ok := adminID.(uuid.UUID); ok {
+		_ = h.auditService.LogAction(ctx, aid, "grant_subscription", "user", &userID, map[string]interface{}{
+			"reason": req.Reason, "days": req.Days, "grace_id": graceID, "type": "grace_period",
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "grace_expires_at": gracExpires.Format(time.RFC3339)})
 }
-c.JSON(http.StatusOK, gin.H{"ok": true, "grace_expires_at": gracExpires.Format(time.RFC3339)})
+
+// GetAnalyticsReport returns a full analytics report with real formulas:
+// MRR = active subs × price/month (monthly:9.99, annual:99.99/12)
+// Churn rate = churned this month / (active + churned) × 100
+// LTV = total successful revenue / distinct users with transactions
+// New subs = count of subscriptions created this month
+func (h *AdminHandler) GetAnalyticsReport(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// ── Current MRR (active + grace) ─────────────────────────────────
+	var mrr float64
+	err := h.dbPool.QueryRow(ctx, `
+		SELECT COALESCE(ROUND(SUM(
+			CASE WHEN plan_type='monthly' THEN 9.99
+			     WHEN plan_type='annual'  THEN 99.99/12.0
+			     ELSE 0 END
+		)::numeric, 2), 0)
+		FROM subscriptions
+		WHERE status IN ('active','grace') AND deleted_at IS NULL`).Scan(&mrr)
+	if err != nil {
+		response.InternalError(c, "mrr query failed")
+		return
+	}
+
+	// ── LTV: total revenue / distinct users ──────────────────────────
+	var ltv float64
+	var totalRevenue float64
+	err = h.dbPool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount),0),
+		       COALESCE(ROUND(SUM(amount)/NULLIF(COUNT(DISTINCT user_id),0),2),0)
+		FROM transactions WHERE status='success'`).Scan(&totalRevenue, &ltv)
+	if err != nil {
+		response.InternalError(c, "ltv query failed")
+		return
+	}
+
+	// ── New subs this month ──────────────────────────────────────────
+	var newSubsMonth int
+	err = h.dbPool.QueryRow(ctx, `
+		SELECT COUNT(*) FROM subscriptions
+		WHERE deleted_at IS NULL
+		  AND date_trunc('month', created_at) = date_trunc('month', now())`).Scan(&newSubsMonth)
+	if err != nil {
+		response.InternalError(c, "new_subs query failed")
+		return
+	}
+
+	// ── Churn rate this month ────────────────────────────────────────
+	var churned int
+	var activePlusChurned int
+	err = h.dbPool.QueryRow(ctx, `
+		SELECT
+		  COUNT(*) FILTER (WHERE status IN ('cancelled','expired')
+		    AND date_trunc('month', updated_at) = date_trunc('month', now())),
+		  COUNT(*) FILTER (WHERE status IN ('active','grace','cancelled','expired'))
+		FROM subscriptions WHERE deleted_at IS NULL`).Scan(&churned, &activePlusChurned)
+	if err != nil {
+		response.InternalError(c, "churn query failed")
+		return
+	}
+	churnRate := 0.0
+	if activePlusChurned > 0 {
+		churnRate = math.Round(float64(churned)/float64(activePlusChurned)*1000) / 10 // 1 decimal
+	}
+
+	// ── MRR trend: last 6 months ─────────────────────────────────────
+	type TrendPoint struct {
+		Month       string  `json:"month"`
+		MRR         float64 `json:"mrr"`
+		ActiveCount int     `json:"active_count"`
+		NewSubs     int     `json:"new_subs"`
+	}
+	trendRows, err := h.dbPool.Query(ctx, `
+		WITH months AS (
+			SELECT generate_series(
+				date_trunc('month', now()) - 5 * interval '1 month',
+				date_trunc('month', now()),
+				interval '1 month'
+			) AS month_start
+		),
+		monthly_subs AS (
+			SELECT m.month_start,
+				COUNT(s.id) AS active_count,
+				COALESCE(ROUND(SUM(CASE
+					WHEN s.plan_type='monthly' THEN 9.99
+					WHEN s.plan_type='annual'  THEN 99.99/12.0
+					ELSE 0 END)::numeric,2),0) AS mrr
+			FROM months m
+			LEFT JOIN subscriptions s ON s.deleted_at IS NULL
+				AND s.created_at < m.month_start + interval '1 month'
+				AND (s.expires_at >= m.month_start OR s.status IN ('active','grace'))
+			GROUP BY m.month_start
+		),
+		monthly_new AS (
+			SELECT date_trunc('month', created_at) AS ms, COUNT(*) AS new_subs
+			FROM subscriptions WHERE deleted_at IS NULL GROUP BY 1
+		)
+		SELECT to_char(ms.month_start,'YYYY-MM'), ms.mrr, ms.active_count, COALESCE(mn.new_subs,0)
+		FROM monthly_subs ms
+		LEFT JOIN monthly_new mn ON mn.ms = ms.month_start
+		ORDER BY ms.month_start`)
+	if err != nil {
+		response.InternalError(c, "trend query failed")
+		return
+	}
+	defer trendRows.Close()
+	var trend []TrendPoint
+	for trendRows.Next() {
+		var p TrendPoint
+		if err := trendRows.Scan(&p.Month, &p.MRR, &p.ActiveCount, &p.NewSubs); err != nil {
+			response.InternalError(c, "trend scan failed")
+			return
+		}
+		trend = append(trend, p)
+	}
+
+	// ── By platform (active + grace) ─────────────────────────────────
+	type PlatformRow struct {
+		Platform string  `json:"platform"`
+		Count    int     `json:"count"`
+		MRR      float64 `json:"mrr"`
+	}
+	platformRows, err := h.dbPool.Query(ctx, `
+		SELECT platform, COUNT(*),
+			ROUND(SUM(CASE WHEN plan_type='monthly' THEN 9.99
+			               WHEN plan_type='annual'  THEN 99.99/12.0 ELSE 0 END)::numeric,2)
+		FROM subscriptions
+		WHERE status IN ('active','grace') AND deleted_at IS NULL
+		GROUP BY platform ORDER BY platform`)
+	if err != nil {
+		response.InternalError(c, "platform query failed")
+		return
+	}
+	defer platformRows.Close()
+	var byPlatform []PlatformRow
+	for platformRows.Next() {
+		var p PlatformRow
+		if err := platformRows.Scan(&p.Platform, &p.Count, &p.MRR); err != nil {
+			response.InternalError(c, "platform scan failed")
+			return
+		}
+		byPlatform = append(byPlatform, p)
+	}
+
+	// ── By plan type (active + grace) ────────────────────────────────
+	type PlanRow struct {
+		PlanType string  `json:"plan_type"`
+		Count    int     `json:"count"`
+		MRR      float64 `json:"mrr"`
+	}
+	planRows, err := h.dbPool.Query(ctx, `
+		SELECT plan_type, COUNT(*),
+			ROUND(SUM(CASE WHEN plan_type='monthly' THEN 9.99
+			               WHEN plan_type='annual'  THEN 99.99/12.0 ELSE 0 END)::numeric,2)
+		FROM subscriptions
+		WHERE status IN ('active','grace') AND deleted_at IS NULL
+		GROUP BY plan_type ORDER BY plan_type`)
+	if err != nil {
+		response.InternalError(c, "plan query failed")
+		return
+	}
+	defer planRows.Close()
+	var byPlan []PlanRow
+	for planRows.Next() {
+		var p PlanRow
+		if err := planRows.Scan(&p.PlanType, &p.Count, &p.MRR); err != nil {
+			response.InternalError(c, "plan scan failed")
+			return
+		}
+		byPlan = append(byPlan, p)
+	}
+
+	// ── Status counts ─────────────────────────────────────────────────
+	var statusActive, statusGrace, statusCancelled, statusExpired int
+	err = h.dbPool.QueryRow(ctx, `
+		SELECT
+			COUNT(*) FILTER (WHERE status='active'),
+			COUNT(*) FILTER (WHERE status='grace'),
+			COUNT(*) FILTER (WHERE status='cancelled'),
+			COUNT(*) FILTER (WHERE status='expired')
+		FROM subscriptions WHERE deleted_at IS NULL`).Scan(
+		&statusActive, &statusGrace, &statusCancelled, &statusExpired)
+	if err != nil {
+		response.InternalError(c, "status query failed")
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"mrr":             mrr,
+		"arr":             math.Round(mrr*12*100) / 100,
+		"ltv":             ltv,
+		"total_revenue":   totalRevenue,
+		"churn_rate":      churnRate,
+		"new_subs_month":  newSubsMonth,
+		"trend":           trend,
+		"by_platform":     byPlatform,
+		"by_plan":         byPlan,
+		"status_counts": gin.H{
+			"active":    statusActive,
+			"grace":     statusGrace,
+			"cancelled": statusCancelled,
+			"expired":   statusExpired,
+		},
+	})
 }
