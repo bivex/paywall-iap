@@ -182,6 +182,16 @@ func (h *WebhookHandler) AppleWebhook(c *gin.Context) {
 		_ = err // idempotent insert — ignore duplicate errors
 	}
 
+	// Enqueue background processing task
+	taskPayload, _ := json.Marshal(map[string]string{
+		"provider":   "apple",
+		"event_type": notification.NotificationType,
+		"event_id":   notification.NotificationUUID,
+	})
+	if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, taskPayload)); err != nil {
+		logging.Logger.Error("Failed to enqueue Apple webhook task", zap.Error(err))
+	}
+
 	c.JSON(http.StatusOK, gin.H{"status": "received"})
 }
 
