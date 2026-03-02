@@ -13,7 +13,7 @@ const statusClassMap: Record<string, string> = {
   expired:   "bg-red-100 text-red-800",
 };
 
-export function SubscriptionRow({ s }: { s: SubscriptionRow }) {
+export function SubscriptionRow({ s, showCreatedAt }: { s: SubscriptionRow; showCreatedAt?: boolean }) {
   return (
     <SubscriptionDetailSheet
       subscriptionId={s.id}
@@ -33,6 +33,14 @@ export function SubscriptionRow({ s }: { s: SubscriptionRow }) {
             })}
           </TableCell>
           <TableCell>${s.ltv.toFixed(2)}</TableCell>
+          {showCreatedAt && (
+            <TableCell className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
+              {new Date(s.created_at).toLocaleString("en-US", {
+                month: "short", day: "numeric", year: "numeric",
+                hour: "2-digit", minute: "2-digit",
+              })}
+            </TableCell>
+          )}
         </TableRow>
       }
     />

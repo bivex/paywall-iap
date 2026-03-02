@@ -27,6 +27,7 @@ import { formatSource, formatPlanType } from "@/lib/subscriptions/format";
 import { SubscriptionDetailSheet } from "./_components/subscription-detail-sheet";
 import { SubscriptionRow as SubRow } from "./_components/subscription-row";
 import { SubscriptionsFilters } from "./_components/subscriptions-filters";
+import { SortHeader } from "@/components/ui/sort-header";
 
 const statusClassMap: Record<string, string> = {
   active: "bg-green-100 text-green-800",
@@ -48,6 +49,7 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
   ]);
 
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
+  const sort = sp.sort ?? "date_desc"; // default: newest first
 
   const params: SubscriptionsParams = {
     page,
@@ -63,7 +65,13 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
 
   const data = await getSubscriptions(params);
   const notAuthed = data === null;
-  const subs = data?.subscriptions ?? [];
+  let subs = data?.subscriptions ?? [];
+
+  // Client-side sort by created_at (backend doesn't expose sort param yet)
+  subs = [...subs].sort((a, b) => {
+    const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return sort === "date_asc" ? diff : -diff;
+  });
   const total = data?.total ?? 0;
   const totalPages = data?.total_pages ?? 1;
 
@@ -76,7 +84,22 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
     if (sp.search) qs.set("search", sp.search);
     if (sp.date_from) qs.set("date_from", sp.date_from);
     if (sp.date_to) qs.set("date_to", sp.date_to);
+    if (sort !== "date_desc") qs.set("sort", sort);
     qs.set("page", String(p));
+    return `?${qs.toString()}`;
+  };
+
+  const buildSortUrl = (s: string) => {
+    const qs = new URLSearchParams();
+    if (sp.status) qs.set("status", sp.status);
+    if (sp.source) qs.set("source", sp.source);
+    if (sp.platform) qs.set("platform", sp.platform);
+    if (sp.plan_type) qs.set("plan_type", sp.plan_type);
+    if (sp.search) qs.set("search", sp.search);
+    if (sp.date_from) qs.set("date_from", sp.date_from);
+    if (sp.date_to) qs.set("date_to", sp.date_to);
+    if (s !== "date_desc") qs.set("sort", s);
+    qs.set("page", "1");
     return `?${qs.toString()}`;
   };
 
@@ -98,17 +121,26 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
                 <TableHead>{t("table.plan")}</TableHead>
                 <TableHead>{t("table.expires")}</TableHead>
                 <TableHead>{t("table.ltv")}</TableHead>
+                <TableHead>
+                  <SortHeader
+                    label="Created"
+                    sortKey="date"
+                    currentSort={sort}
+                    ascHref={buildSortUrl("date_asc")}
+                    descHref={buildSortUrl("date_desc")}
+                  />
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {subs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     {notAuthed ? "⚠️ Not authenticated — please log in." : "No subscriptions found."}
                   </TableCell>
                 </TableRow>
               ) : (
-                subs.map((s) => <SubRow key={s.id} s={s} />)
+                subs.map((s) => <SubRow key={s.id} s={s} showCreatedAt />)
               )}
             </TableBody>
           </Table>
