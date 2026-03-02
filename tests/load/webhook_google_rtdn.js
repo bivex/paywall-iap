@@ -24,8 +24,8 @@ const PKG     = "com.yourapp";
 const PRODUCT = "com.yourapp.premium_monthly";
 
 // ─── Metrics ─────────────────────────────────────────────────────────────────
-const webhookLatency     = new Trend("webhook_latency_ms");
-const statusMatchCount   = new Counter("status_match_total");
+const webhookLatency      = new Trend("webhook_latency_ms");
+const statusMatchCount    = new Counter("status_match_total");
 const statusMismatchCount = new Counter("status_mismatch_total");
 
 // ─── RTDN notification types with expected resulting subscription status ──────
@@ -68,10 +68,6 @@ export const options = {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function uniqueEmail() {
-  return `rtdn_${__VU}_${Date.now()}@test.invalid`;
-}
-
 function register(platformUID, deviceID) {
   const res = http.post(
     `${BACKEND}/v1/auth/register`,
@@ -146,7 +142,10 @@ export default function () {
   const iapRes = verifyIAP(jwtToken, purchaseToken);
   const iapOK = check(iapRes, {
     "iap verify 200": (r) => r.status === 200,
-    "iap valid=true":  (r) => r.json("valid") === true,
+    "iap has status": (r) => {
+      const b = r.json();
+      return b && b.data && b.data.status !== undefined;
+    },
   });
   if (!iapOK) {
     console.error(`iap verify failed: ${iapRes.status} ${iapRes.body}`);
@@ -174,9 +173,10 @@ export default function () {
     // Give the asynq worker a moment to process.
     sleep(0.3);
 
-    // 4. Fetch current subscription status.
+    // 4. Fetch current subscription status. Response shape: { data: { status: "..." } }
     const subRes = getSubscription(jwtToken);
-    const gotStatus = subRes.json("status") || subRes.json("subscription.status") || "";
+    const body = subRes.json();
+    const gotStatus = (body && body.data && body.data.status) ? body.data.status : "";
     check(subRes, { [`sub status 2xx after ${tc.name}`]: (r) => r.status >= 200 && r.status < 300 });
 
     // 5. Assert.
