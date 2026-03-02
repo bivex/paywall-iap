@@ -23,6 +23,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_COMPOSE="$SCRIPT_DIR/infra/docker-compose/docker-compose.local.yml"
 FRONTEND_COMPOSE="$SCRIPT_DIR/frontend/docker-compose.dev.yml"
+MOCK_COMPOSE="$SCRIPT_DIR/tests/google-billing-mock/deploy/docker-compose.yml"
 DB_CONTAINER="docker-compose-db-1"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@paywall.local}"
 ADMIN_PASS="${ADMIN_PASS:-admin12345}"
@@ -67,6 +68,7 @@ cmd_stop() {
   info "Stopping all containers..."
   docker compose -f "$BACKEND_COMPOSE"  down --remove-orphans 2>/dev/null || true
   docker compose -f "$FRONTEND_COMPOSE" down --remove-orphans 2>/dev/null || true
+  docker compose -f "$MOCK_COMPOSE"     down --remove-orphans 2>/dev/null || true
   ok "All stopped"
 }
 
@@ -183,6 +185,7 @@ echo -e "║  ✅  Dev stack is ready!                             ║"
 echo -e "╠══════════════════════════════════════════════════════╣"
 echo -e "║  Frontend  →  http://localhost:${FRONTEND_PORT}                  ║"
 echo -e "║  Backend   →  http://localhost:${API_PORT_HOST}                 ║"
+echo -e "║  Google Mock→  http://localhost:8090                ║"
 echo -e "║  DB        →  localhost:5432  (postgres/postgres)   ║"
 echo -e "╠══════════════════════════════════════════════════════╣"
 echo -e "║  Admin login:                                        ║"
