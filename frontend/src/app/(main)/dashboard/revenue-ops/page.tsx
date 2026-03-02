@@ -12,6 +12,7 @@ import Link from "next/link";
 import { getRevenueOps } from "@/actions/revenue-ops";
 import type { DunningRow, WebhookRow } from "@/actions/revenue-ops";
 import { ReplayWebhookButton } from "./_components/replay-webhook-button";
+import { WebhookTable } from "./_components/webhook-table";
 
 /* ─── helpers ─────────────────────────────────────────── */
 function fmtDate(iso: string | null) {
@@ -303,53 +304,7 @@ export default async function RevenueOpsPage({
 }
 
 /* ─── sub-components ──────────────────────────────────── */
-function WebhookTable({ rows }: { rows: WebhookRow[] }) {
-  if (rows.length === 0) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">No webhook events found.</p>;
-  }
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <TableHead>Provider</TableHead>
-          <TableHead>Event Type</TableHead>
-          <TableHead>Event ID</TableHead>
-          <TableHead>Received</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="w-20">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((w) => (
-          <TableRow key={w.id}>
-            <TableCell>
-              <Badge className={`${PROVIDER_COLOR[w.provider.toLowerCase()] ?? "bg-muted text-foreground"} border text-xs capitalize`}>
-                {w.provider}
-              </Badge>
-            </TableCell>
-            <TableCell className="font-mono text-xs">{w.event_type}</TableCell>
-            <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">{w.event_id}</TableCell>
-            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(w.created_at)}</TableCell>
-            <TableCell>
-              {w.processed ? (
-                <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-600 bg-emerald-500/5">
-                  <CheckCircle2 className="h-3 w-3 mr-1" /> processed
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-600 bg-amber-500/5 animate-pulse">
-                  <Clock className="h-3 w-3 mr-1" /> pending
-                </Badge>
-              )}
-            </TableCell>
-            <TableCell>
-              {!w.processed && <ReplayWebhookButton webhookId={w.id} />}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
+// WebhookTable is a client component in _components/webhook-table.tsx (sortable)
 
 function DunningTable({ rows }: { rows: DunningRow[] }) {
   if (rows.length === 0) {
