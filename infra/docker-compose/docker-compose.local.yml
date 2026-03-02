@@ -92,6 +92,7 @@ services:
       - PORT=9090
       - GIN_MODE=release
       - CACHE_DIR=/app/tmp
+      - WEBHOOK_URL=http://api:8080/webhook/apple
     volumes:
       - apple-mock-cache:/app/tmp
     healthcheck:
