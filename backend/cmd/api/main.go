@@ -125,7 +125,7 @@ func main() {
 
 	// Initialize IAP verifiers
 	appleVerifier := iapext.NewAppleVerifier(cfg.IAP.AppleSharedSecret, cfg.IAP.IsProduction)
-	googleVerifier := iapext.NewGoogleVerifier(cfg.IAP.GoogleKeyJSON, cfg.IAP.IsProduction)
+	googleVerifier := iapext.NewGoogleVerifier(cfg.IAP.GoogleKeyJSON, cfg.IAP.IsProduction, cfg.IAP.GoogleIAPBaseURL)
 	iapAdapter := iapext.NewIAPAdapter(appleVerifier, googleVerifier)
 	verifyIAPCmd := command.NewVerifyIAPCommand(
 		userRepo,
