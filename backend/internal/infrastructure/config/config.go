@@ -49,6 +49,7 @@ type RedisConfig struct {
 // IAPConfig holds IAP configuration
 type IAPConfig struct {
 	AppleSharedSecret   string `mapstructure:"apple_shared_secret"`
+	AppleMockURL        string `mapstructure:"apple_mock_url"`
 	GoogleKeyJSON       string `mapstructure:"google_key_json"`
 	GoogleIAPBaseURL    string `mapstructure:"google_iap_base_url"`
 	StripeWebhookSecret string `mapstructure:"stripe_webhook_secret"`
@@ -81,6 +82,7 @@ func Load() (*Config, error) {
 	_ = viper.BindEnv("redis.url", "REDIS_URL")
 	_ = viper.BindEnv("jwt.secret", "JWT_SECRET")
 	_ = viper.BindEnv("iap.apple_shared_secret", "APPLE_SHARED_SECRET")
+	_ = viper.BindEnv("iap.apple_mock_url", "APPLE_MOCK_URL")
 	_ = viper.BindEnv("iap.google_key_json", "GOOGLE_SERVICE_ACCOUNT_JSON")
 	_ = viper.BindEnv("iap.google_iap_base_url", "GOOGLE_IAP_BASE_URL")
 	_ = viper.BindEnv("iap.is_production", "IAP_IS_PRODUCTION")

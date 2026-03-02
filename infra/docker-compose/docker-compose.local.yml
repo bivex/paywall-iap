@@ -45,12 +45,16 @@ services:
 
       # Point Google IAP verifier at the local mock (override with real key in prod)
       - GOOGLE_IAP_BASE_URL=http://google-billing-mock:8080
+      # Point Apple IAP verifier at the local mock (unset APPLE_MOCK_URL in prod)
+      - APPLE_MOCK_URL=http://apple-iap-mock:9090
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
       google-billing-mock:
+        condition: service_healthy
+      apple-iap-mock:
         condition: service_healthy
     networks:
       - internal
@@ -71,6 +75,27 @@ services:
       - BACKEND_URL=http://api:8080
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - internal
+
+  apple-iap-mock:
+    build:
+      context: ../../tests/apple-of-my-iap
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    environment:
+      - PORT=9090
+      - GIN_MODE=release
+      - CACHE_DIR=/app/tmp
+    volumes:
+      - apple-mock-cache:/app/tmp
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -112,3 +137,6 @@ services:
 networks:
   internal:
     driver: bridge
+
+volumes:
+  apple-mock-cache:

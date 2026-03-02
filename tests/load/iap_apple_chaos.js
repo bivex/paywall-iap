@@ -24,7 +24,7 @@
  *   3. If scenario requires a real receipt:
  *      a. Creates a subscription on the Apple mock (POST /subs)
  *      b. Optionally mutates state (cancel / expire / refund)
- *      c. Sends the receipt token to the backend (POST /v1/verify/iap platform=apple)
+ *      c. Sends the receipt token to the backend (POST /v1/verify/iap platform=ios)
  *   4. For invalid scenarios: sends garbage receipt-data → backend gets 21002 from mock → 422
  *
  * Scenario weights mirror real-world iOS IAP analytics:
@@ -163,7 +163,7 @@ function mockCreateSub() {
     'mock create sub: has token': r => {
       try {
         const b = JSON.parse(r.body);
-        return !!(b.latestReceiptInfo && b.latestReceiptInfo.length > 0);
+        return !!(b.receiptToken);
       } catch { return false; }
     },
   });
@@ -171,9 +171,9 @@ function mockCreateSub() {
   if (!ok) { mockErrors.add(1); return null; }
 
   try {
-    // latestReceiptInfo[0].transactionId is the receipt token
+    // receiptToken is the receipt identifier returned by the mock
     const b = JSON.parse(res.body);
-    return b.latestReceiptInfo[0].transactionId;
+    return b.receiptToken;
   } catch { mockErrors.add(1); return null; }
 }
 
@@ -241,7 +241,7 @@ function verifyIAP(jwtToken, receiptData, scenario) {
   const res = http.post(
     `${BASE_URL}/v1/verify/iap`,
     JSON.stringify({
-      platform:     'apple',
+      platform:     'ios',
       product_id:   PRODUCT_ID,
       receipt_data: receiptData,
     }),
@@ -315,7 +315,7 @@ export default function () {
     if (!receiptToken) { sleep(0.5); return; }
     receiptData = receiptToken;
   } else {
-    // Garbage receipt — Apple mock returns 21002 → backend returns 422
+    // Garbage receipt — Apple mock returns 21003 (UNAUTH) → backend returns 422
     receiptData = `invalid_receipt_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
   }
 

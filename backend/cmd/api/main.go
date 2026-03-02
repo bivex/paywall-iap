@@ -124,7 +124,7 @@ func main() {
 	cancelSubCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
 
 	// Initialize IAP verifiers
-	appleVerifier := iapext.NewAppleVerifier(cfg.IAP.AppleSharedSecret, cfg.IAP.IsProduction)
+	appleVerifier := iapext.NewAppleVerifier(cfg.IAP.AppleSharedSecret, cfg.IAP.IsProduction, cfg.IAP.AppleMockURL)
 	googleVerifier := iapext.NewGoogleVerifier(cfg.IAP.GoogleKeyJSON, cfg.IAP.IsProduction, cfg.IAP.GoogleIAPBaseURL)
 	iapAdapter := iapext.NewIAPAdapter(appleVerifier, googleVerifier)
 	verifyIAPCmd := command.NewVerifyIAPCommand(
