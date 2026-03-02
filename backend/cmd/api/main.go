@@ -276,6 +276,7 @@ func main() {
 			admin.GET("/dashboard/metrics", adminHandler.GetDashboardMetrics)
 			admin.GET("/audit-log", adminHandler.GetAuditLog)
 			admin.GET("/analytics/report", adminHandler.GetAnalyticsReport)
+			admin.GET("/revenue-ops", adminHandler.GetRevenueOps)
 			admin.GET("/health", adminHandler.GetHealth)
 		}
 	}

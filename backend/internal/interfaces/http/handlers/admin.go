@@ -1021,3 +1021,205 @@ func (h *AdminHandler) GetAnalyticsReport(c *gin.Context) {
 		},
 	})
 }
+
+// GetRevenueOps returns dunning queue, recent webhook events, and matomo staging stats.
+func (h *AdminHandler) GetRevenueOps(c *gin.Context) {
+ctx := c.Request.Context()
+
+// --- Dunning queue (active / in_progress only) ---
+type DunningQueueRow struct {
+ID           string  `json:"id"`
+Email        string  `json:"email"`
+UserID       string  `json:"user_id"`
+PlanType     string  `json:"plan_type"`
+Status       string  `json:"status"`
+AttemptCount int     `json:"attempt_count"`
+MaxAttempts  int     `json:"max_attempts"`
+NextAttempt  *string `json:"next_attempt_at"`
+LastAttempt  *string `json:"last_attempt_at"`
+CreatedAt    string  `json:"created_at"`
+}
+dunningRows, err := h.dbPool.Query(ctx, `
+SELECT d.id, u.email, d.user_id, s.plan_type,
+       d.status, d.attempt_count, d.max_attempts,
+       d.next_attempt_at, d.last_attempt_at, d.created_at
+FROM dunning d
+JOIN users u ON u.id = d.user_id
+JOIN subscriptions s ON s.id = d.subscription_id
+WHERE d.status IN ('pending','in_progress')
+ORDER BY d.next_attempt_at ASC
+LIMIT 50
+`)
+dunning := make([]DunningQueueRow, 0)
+if err == nil {
+defer dunningRows.Close()
+for dunningRows.Next() {
+var row DunningQueueRow
+var nextAt, lastAt *time.Time
+var createdAt time.Time
+var id, uid string
+if scanErr := dunningRows.Scan(&id, &row.Email, &uid, &row.PlanType,
+&row.Status, &row.AttemptCount, &row.MaxAttempts,
+&nextAt, &lastAt, &createdAt); scanErr != nil {
+continue
+}
+row.ID = id
+row.UserID = uid
+row.CreatedAt = createdAt.Format(time.RFC3339)
+if nextAt != nil {
+s := nextAt.Format(time.RFC3339)
+row.NextAttempt = &s
+}
+if lastAt != nil {
+s := lastAt.Format(time.RFC3339)
+row.LastAttempt = &s
+}
+dunning = append(dunning, row)
+}
+}
+
+// --- Dunning counts by status ---
+type DunningStats struct {
+Pending    int `json:"pending"`
+InProgress int `json:"in_progress"`
+Recovered  int `json:"recovered"`
+Failed     int `json:"failed"`
+}
+var dStats DunningStats
+statsRows, _ := h.dbPool.Query(ctx, `
+SELECT status, COUNT(*) FROM dunning GROUP BY status
+`)
+if statsRows != nil {
+defer statsRows.Close()
+for statsRows.Next() {
+var st string
+var cnt int
+if err2 := statsRows.Scan(&st, &cnt); err2 != nil {
+continue
+}
+switch st {
+case "pending":
+dStats.Pending = cnt
+case "in_progress":
+dStats.InProgress = cnt
+case "recovered":
+dStats.Recovered = cnt
+case "failed":
+dStats.Failed = cnt
+}
+}
+}
+
+// --- Recent webhook events ---
+type WebhookRow struct {
+ID          string  `json:"id"`
+Provider    string  `json:"provider"`
+EventType   string  `json:"event_type"`
+EventID     string  `json:"event_id"`
+Processed   bool    `json:"processed"`
+ProcessedAt *string `json:"processed_at"`
+CreatedAt   string  `json:"created_at"`
+}
+whRows, err2 := h.dbPool.Query(ctx, `
+SELECT id, provider, event_type, event_id, processed_at, created_at
+FROM webhook_events
+ORDER BY created_at DESC
+LIMIT 50
+`)
+webhooks := make([]WebhookRow, 0)
+if err2 == nil {
+defer whRows.Close()
+for whRows.Next() {
+var row WebhookRow
+var processedAt *time.Time
+var createdAt time.Time
+if scanErr := whRows.Scan(&row.ID, &row.Provider, &row.EventType, &row.EventID, &processedAt, &createdAt); scanErr != nil {
+continue
+}
+row.CreatedAt = createdAt.Format(time.RFC3339)
+if processedAt != nil {
+s := processedAt.Format(time.RFC3339)
+row.ProcessedAt = &s
+row.Processed = true
+}
+webhooks = append(webhooks, row)
+}
+}
+
+// Webhook summary counts
+var whTotal, whUnprocessed int
+_ = h.dbPool.QueryRow(ctx, `SELECT COUNT(*) FROM webhook_events`).Scan(&whTotal)
+_ = h.dbPool.QueryRow(ctx, `SELECT COUNT(*) FROM webhook_events WHERE processed_at IS NULL`).Scan(&whUnprocessed)
+
+type WebhookProviderStat struct {
+Provider  string `json:"provider"`
+Total     int    `json:"total"`
+Processed int    `json:"processed"`
+}
+provRows, _ := h.dbPool.Query(ctx, `
+SELECT provider,
+       COUNT(*) as total,
+       COUNT(processed_at) as processed
+FROM webhook_events
+GROUP BY provider
+ORDER BY total DESC
+`)
+provStats := make([]WebhookProviderStat, 0)
+if provRows != nil {
+defer provRows.Close()
+for provRows.Next() {
+var p WebhookProviderStat
+if err3 := provRows.Scan(&p.Provider, &p.Total, &p.Processed); err3 == nil {
+provStats = append(provStats, p)
+}
+}
+}
+
+// --- Matomo staging stats ---
+type MatomoStats struct {
+Pending    int `json:"pending"`
+Processing int `json:"processing"`
+Sent       int `json:"sent"`
+Failed     int `json:"failed"`
+Total      int `json:"total"`
+}
+var mStats MatomoStats
+mRows, _ := h.dbPool.Query(ctx, `SELECT status, COUNT(*) FROM matomo_staged_events GROUP BY status`)
+if mRows != nil {
+defer mRows.Close()
+for mRows.Next() {
+var st string
+var cnt int
+if scanErr := mRows.Scan(&st, &cnt); scanErr != nil {
+continue
+}
+switch st {
+case "pending":
+mStats.Pending = cnt
+case "processing":
+mStats.Processing = cnt
+case "sent":
+mStats.Sent = cnt
+case "failed":
+mStats.Failed = cnt
+}
+}
+}
+mStats.Total = mStats.Pending + mStats.Processing + mStats.Sent + mStats.Failed
+
+c.JSON(200, gin.H{
+"dunning": gin.H{
+"queue":  dunning,
+"stats":  dStats,
+},
+"webhooks": gin.H{
+"events":      webhooks,
+"total":       whTotal,
+"unprocessed": whUnprocessed,
+"by_provider": provStats,
+},
+"matomo": gin.H{
+"stats": mStats,
+},
+})
+}
