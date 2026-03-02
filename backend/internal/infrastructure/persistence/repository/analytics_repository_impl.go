@@ -204,3 +204,120 @@ func (r *AnalyticsRepositoryImpl) GetRecentAuditLog(ctx context.Context, limit i
 	return result, rows.Err()
 }
 
+
+// GetAuditLogPaginated returns a paginated, filterable audit log.
+func (r *AnalyticsRepositoryImpl) GetAuditLogPaginated(
+ctx context.Context,
+offset, limit int,
+action, search string,
+from, to time.Time,
+) (*domainRepo.AuditLogPage, error) {
+// Build dynamic WHERE clauses
+args := []interface{}{}
+where := []string{}
+idx := 1
+
+if action != "" {
+args = append(args, action)
+where = append(where, fmt.Sprintf("a.action = $%d", idx))
+idx++
+}
+if search != "" {
+args = append(args, "%"+search+"%")
+where = append(where, fmt.Sprintf("(u.email ILIKE $%d OR a.target_type ILIKE $%d)", idx, idx))
+idx++
+}
+if !from.IsZero() {
+args = append(args, from)
+where = append(where, fmt.Sprintf("a.created_at >= $%d", idx))
+idx++
+}
+if !to.IsZero() {
+args = append(args, to)
+where = append(where, fmt.Sprintf("a.created_at <= $%d", idx))
+idx++
+}
+
+whereSQL := ""
+if len(where) > 0 {
+whereSQL = "WHERE " + joinStrings(where, " AND ")
+}
+
+// Total count
+countQuery := fmt.Sprintf(`
+SELECT COUNT(*)
+FROM admin_audit_log a
+LEFT JOIN users u ON u.id = a.admin_id
+%s
+`, whereSQL)
+
+var total int64
+if err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+return nil, err
+}
+
+// Data rows
+args = append(args, limit, offset)
+dataQuery := fmt.Sprintf(`
+SELECT
+a.id,
+a.created_at,
+COALESCE(u.email, a.admin_id::text) AS admin_email,
+a.action,
+a.target_type,
+COALESCE(a.details::text, '{}'),
+COALESCE(a.ip_address, '')
+FROM admin_audit_log a
+LEFT JOIN users u ON u.id = a.admin_id
+%s
+ORDER BY a.created_at DESC
+LIMIT $%d OFFSET $%d
+`, whereSQL, idx, idx+1)
+
+rows, err := r.pool.Query(ctx, dataQuery, args...)
+if err != nil {
+return nil, err
+}
+defer rows.Close()
+
+result := make([]domainRepo.AuditLogRow, 0, limit)
+for rows.Next() {
+var row domainRepo.AuditLogRow
+var detailsRaw string
+if err := rows.Scan(&row.ID, &row.Time, &row.AdminEmail, &row.Action, &row.TargetType, &detailsRaw, &row.IPAddress); err != nil {
+return nil, err
+}
+// Flatten JSONB → readable string
+var d map[string]interface{}
+if json.Unmarshal([]byte(detailsRaw), &d) == nil {
+parts := ""
+for k, v := range d {
+if parts != "" {
+parts += ", "
+}
+parts += fmt.Sprintf("%s: %v", k, v)
+}
+row.Detail = parts
+} else {
+row.Detail = detailsRaw
+}
+result = append(result, row)
+}
+if err := rows.Err(); err != nil {
+return nil, err
+}
+
+return &domainRepo.AuditLogPage{Rows: result, TotalCount: total}, nil
+}
+
+// joinStrings joins string slice with separator (avoids importing strings package).
+func joinStrings(parts []string, sep string) string {
+out := ""
+for i, p := range parts {
+if i > 0 {
+out += sep
+}
+out += p
+}
+return out
+}

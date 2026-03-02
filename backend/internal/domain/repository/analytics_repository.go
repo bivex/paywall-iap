@@ -33,6 +33,23 @@ type AuditLogEntry struct {
 	Detail string // JSON details marshalled to string
 }
 
+// AuditLogRow is a full row for the paginated audit log page.
+type AuditLogRow struct {
+	ID         string
+	Time       time.Time
+	AdminEmail string
+	Action     string
+	TargetType string
+	Detail     string
+	IPAddress  string
+}
+
+// AuditLogPage is the result of a paginated audit log query.
+type AuditLogPage struct {
+	Rows       []AuditLogRow
+	TotalCount int64
+}
+
 // AnalyticsRepository defines methods for retrieving analytics data
 type AnalyticsRepository interface {
 	GetRevenueBetween(ctx context.Context, start, end time.Time) (float64, error)
@@ -46,4 +63,10 @@ type AnalyticsRepository interface {
 	GetChurnRiskCount(ctx context.Context) (int, error)
 	GetWebhookHealthByProvider(ctx context.Context) ([]WebhookProviderHealth, error)
 	GetRecentAuditLog(ctx context.Context, limit int) ([]AuditLogEntry, error)
+
+	// GetAuditLogPaginated returns a page of audit log rows with optional filters.
+	// action: filter by action string (empty = all)
+	// search: filter admin email or target_type (empty = all)
+	// from/to: time range (zero = no bound)
+	GetAuditLogPaginated(ctx context.Context, offset, limit int, action, search string, from, to time.Time) (*AuditLogPage, error)
 }

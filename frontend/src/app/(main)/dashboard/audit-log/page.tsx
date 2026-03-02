@@ -1,72 +1,176 @@
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getAuditLog } from "@/actions/audit-log";
+import { AuditLogFilters } from "./_components/audit-log-filters";
 
-const logs = [
-  { id: "al_001", admin: "admin@paywall.local", action: "grant_refund", target: "user:usr_001", ip: "192.168.1.5", ts: "2026-03-01 14:02" },
-  { id: "al_002", admin: "admin@paywall.local", action: "cancel_subscription", target: "sub:sub_019", ip: "192.168.1.5", ts: "2026-03-01 13:55" },
-  { id: "al_003", admin: "admin@paywall.local", action: "update_plan_price", target: "plan:pro_monthly", ip: "192.168.1.5", ts: "2026-03-01 13:40" },
-  { id: "al_004", admin: "ops@paywall.local", action: "trigger_winback", target: "campaign:wc_001", ip: "10.0.0.12", ts: "2026-03-01 13:12" },
-  { id: "al_005", admin: "ops@paywall.local", action: "replay_webhook", target: "webhook:wh_003", ip: "10.0.0.12", ts: "2026-03-01 12:58" },
-  { id: "al_006", admin: "admin@paywall.local", action: "manual_renewal", target: "sub:sub_022", ip: "192.168.1.5", ts: "2026-03-01 12:30" },
-];
-
-const actionColors: Record<string, string> = {
-  grant_refund: "bg-blue-100 text-blue-800",
-  cancel_subscription: "bg-red-100 text-red-800",
-  update_plan_price: "bg-orange-100 text-orange-800",
-  trigger_winback: "bg-purple-100 text-purple-800",
-  replay_webhook: "bg-yellow-100 text-yellow-800",
-  manual_renewal: "bg-green-100 text-green-800",
+// Badge style per action type
+const actionMeta: Record<string, { label: string; className: string }> = {
+  grant_subscription:   { label: "Grant",      className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  revoke_subscription:  { label: "Revoke",     className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  grant_refund:         { label: "Refund",     className: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  cancel_subscription:  { label: "Cancel",     className: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400" },
+  update_plan_price:    { label: "Pricing",    className: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400" },
+  trigger_dunning:      { label: "Dunning",    className: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
+  replay_webhook:       { label: "Webhook",    className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  manual_renewal:       { label: "Renewal",    className: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400" },
 };
 
-export default async function AuditLogPage() {
+function ActionBadge({ action }: { action: string }) {
+  const meta = actionMeta[action];
+  return (
+    <Badge className={meta?.className ?? "bg-gray-100 text-gray-700"}>
+      {meta?.label ?? action}
+    </Badge>
+  );
+}
+
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+  } catch {
+    return iso;
+  }
+}
+
+interface SearchParams {
+  page?: string;
+  action?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+}
+
+export default async function AuditLogPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const t = await getTranslations("auditLog");
+  const sp = await searchParams;
+
+  const page = Math.max(1, parseInt(sp.page ?? "1", 10));
+  const data = await getAuditLog({
+    page,
+    limit: 20,
+    action: sp.action,
+    search: sp.search,
+    from: sp.from,
+    to: sp.to,
+  });
+
+  const buildPageUrl = (p: number) => {
+    const params = new URLSearchParams();
+    if (sp.action) params.set("action", sp.action);
+    if (sp.search) params.set("search", sp.search);
+    if (sp.from) params.set("from", sp.from);
+    if (sp.to) params.set("to", sp.to);
+    params.set("page", String(p));
+    return `/dashboard/audit-log?${params.toString()}`;
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <Button variant="outline" size="sm">{t("exportCsv")}</Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/api/proxy/audit-log/export?action=${sp.action ?? ""}&search=${sp.search ?? ""}&from=${sp.from ?? ""}&to=${sp.to ?? ""}`}>
+            {t("exportCsv")}
+          </Link>
+        </Button>
       </div>
+
       <Card>
         <CardContent className="pt-4 space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <Input placeholder={t("filter.searchPlaceholder")} className="w-52" />
-            <Select><SelectTrigger className="w-48"><SelectValue placeholder={t("filter.actionAll")} /></SelectTrigger><SelectContent><SelectItem value="all">{t("filter.allActions")}</SelectItem><SelectItem value="grant_refund">grant_refund</SelectItem><SelectItem value="cancel_subscription">cancel_subscription</SelectItem><SelectItem value="update_plan_price">update_plan_price</SelectItem><SelectItem value="trigger_winback">trigger_winback</SelectItem></SelectContent></Select>
-            <Input type="date" className="w-40" />
-            <Input type="date" className="w-40" />
-          </div>
+          {/* Client-side filter controls (updates URL) */}
+          <Suspense fallback={null}>
+            <AuditLogFilters />
+          </Suspense>
+
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("table.timestamp")}</TableHead>
+                <TableHead className="w-40">{t("table.timestamp")}</TableHead>
                 <TableHead>{t("table.admin")}</TableHead>
-                <TableHead>{t("table.action")}</TableHead>
+                <TableHead className="w-36">{t("table.action")}</TableHead>
                 <TableHead>{t("table.target")}</TableHead>
-                <TableHead>{t("table.ipAddress")}</TableHead>
+                <TableHead className="w-36">{t("table.ipAddress")}</TableHead>
                 <TableHead>{t("table.detail")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs.map((l) => (
-                <TableRow key={l.id}>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{l.ts}</TableCell>
-                  <TableCell className="text-sm">{l.admin}</TableCell>
-                  <TableCell><Badge className={actionColors[l.action] ?? ""}>{l.action}</Badge></TableCell>
-                  <TableCell className="font-mono text-xs">{l.target}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{l.ip}</TableCell>
-                  <TableCell><Button variant="ghost" size="sm">→</Button></TableCell>
+              {data.rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
+                    No audit log entries found.
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                data.rows.map((row) => (
+                  <TableRow key={row.ID}>
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDate(row.Time)}
+                    </TableCell>
+                    <TableCell className="text-sm font-medium">{row.AdminEmail}</TableCell>
+                    <TableCell><ActionBadge action={row.Action} /></TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {row.TargetType}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {row.IPAddress || "—"}
+                    </TableCell>
+                    <TableCell className="text-xs max-w-xs truncate" title={row.Detail}>
+                      {row.Detail || "—"}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
-          <p className="text-xs text-muted-foreground">← 1  2  3 ... →  {t("pagination")}</p>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-muted-foreground">
+              {data.total} {data.total === 1 ? "entry" : "entries"}
+              {data.total_pages > 1 && ` · Page ${data.page} of ${data.total_pages}`}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                asChild={page > 1}
+              >
+                {page > 1 ? (
+                  <Link href={buildPageUrl(page - 1)}>← Previous</Link>
+                ) : (
+                  <span>← Previous</span>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= data.total_pages}
+                asChild={page < data.total_pages}
+              >
+                {page < data.total_pages ? (
+                  <Link href={buildPageUrl(page + 1)}>Next →</Link>
+                ) : (
+                  <span>Next →</span>
+                )}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+

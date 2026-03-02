@@ -111,3 +111,8 @@ func (s *AnalyticsService) GetRecentAuditLog(ctx context.Context, limit int) ([]
 	return s.repo.GetRecentAuditLog(ctx, limit)
 }
 
+
+// GetAuditLogPaginated delegates to the repository.
+func (s *AnalyticsService) GetAuditLogPaginated(ctx context.Context, offset, limit int, action, search string, from, to time.Time) (*repository.AuditLogPage, error) {
+return s.repo.GetAuditLogPaginated(ctx, offset, limit, action, search, from, to)
+}

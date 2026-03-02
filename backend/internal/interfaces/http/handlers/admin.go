@@ -320,3 +320,46 @@ func (h *AdminHandler) GetDashboardMetrics(c *gin.Context) {
 		"last_updated":  now,
 	})
 }
+
+// GetAuditLog returns a paginated list of admin audit log entries with optional filters.
+// Query params: page (1-based), limit (default 20), action, search, from, to (RFC3339)
+func (h *AdminHandler) GetAuditLog(c *gin.Context) {
+ctx := c.Request.Context()
+
+page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+if page < 1 {
+page = 1
+}
+limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+if limit < 1 || limit > 100 {
+limit = 20
+}
+offset := (page - 1) * limit
+
+action := c.Query("action")
+search := c.Query("search")
+
+var from, to time.Time
+if v := c.Query("from"); v != "" {
+from, _ = time.Parse(time.RFC3339, v)
+}
+if v := c.Query("to"); v != "" {
+to, _ = time.Parse(time.RFC3339, v)
+}
+
+pageResult, err := h.analyticsService.GetAuditLogPaginated(ctx, offset, limit, action, search, from, to)
+if err != nil {
+response.InternalError(c, "Failed to get audit log")
+return
+}
+
+totalPages := int((pageResult.TotalCount + int64(limit) - 1) / int64(limit))
+
+c.JSON(http.StatusOK, gin.H{
+"rows":        pageResult.Rows,
+"total":       pageResult.TotalCount,
+"page":        page,
+"limit":       limit,
+"total_pages": totalPages,
+})
+}
