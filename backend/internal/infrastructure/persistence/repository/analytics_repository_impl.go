@@ -102,7 +102,7 @@ func (r *AnalyticsRepositoryImpl) GetMRRTrend(ctx context.Context, months int) (
 	}
 	defer rows.Close()
 
-	var result []domainRepo.MonthlyMRR
+	result := make([]domainRepo.MonthlyMRR, 0)
 	for rows.Next() {
 		var m domainRepo.MonthlyMRR
 		if err := rows.Scan(&m.Month, &m.MRR); err != nil {
@@ -153,7 +153,7 @@ func (r *AnalyticsRepositoryImpl) GetWebhookHealthByProvider(ctx context.Context
 	}
 	defer rows.Close()
 
-	var result []domainRepo.WebhookProviderHealth
+	result := make([]domainRepo.WebhookProviderHealth, 0)
 	for rows.Next() {
 		var h domainRepo.WebhookProviderHealth
 		if err := rows.Scan(&h.Provider, &h.Unprocessed, &h.Total); err != nil {
@@ -178,7 +178,7 @@ func (r *AnalyticsRepositoryImpl) GetRecentAuditLog(ctx context.Context, limit i
 	}
 	defer rows.Close()
 
-	var result []domainRepo.AuditLogEntry
+	result := make([]domainRepo.AuditLogEntry, 0)
 	for rows.Next() {
 		var e domainRepo.AuditLogEntry
 		var detailsRaw string
