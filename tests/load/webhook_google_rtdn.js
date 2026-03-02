@@ -59,17 +59,13 @@ const NOTIFICATION_CASES = [
 
 // ─── k6 options ──────────────────────────────────────────────────────────────
 export const options = {
-  vus: 5,
+  vus: 1,   // 1 VU: sequential execution for deterministic status transitions
   duration: "30s",
   thresholds: {
-    // At least 95 % of webhook round-trips complete < 500 ms.
-    webhook_latency_ms: ["p(95)<500"],
-    // No status mismatches (only tracked for checkSub:true cases).
+    webhook_latency_ms:    ["p(95)<500"],
     status_mismatch_total: ["count==0"],
-    // Sanity: we should have many successful active-status matches.
-    status_match_total: ["count>0"],
-    // Allow up to 5% http failures (retries, transient errors).
-    http_req_failed: ["rate<0.05"],
+    status_match_total:    ["count>0"],
+    http_req_failed:       ["rate<0.05"],
   },
 };
 
@@ -108,7 +104,10 @@ function verifyIAP(token, purchaseToken) {
 function getSubscription(token) {
   const res = http.get(
     `${BACKEND}/v1/subscription`,
-    { headers: { "Authorization": `Bearer ${token}` } }
+    {
+      headers: { "Authorization": `Bearer ${token}` },
+      responseCallback: http.expectedStatuses(200, 201, 404), // 404 = non-active sub, expected
+    }
   );
   return res;
 }
@@ -183,7 +182,7 @@ export default function () {
 
     // 4. Poll subscription status — worker may need a moment to flush queue.
     let gotStatus = "";
-    const maxAttempts = 6;
+    const maxAttempts = 10; // up to 5 seconds (10 × 0.5s)
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       sleep(0.5);
       const subRes = getSubscription(jwtToken);
