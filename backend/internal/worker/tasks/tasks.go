@@ -216,8 +216,27 @@ func (h *TaskHandlers) HandleProcessWebhook(ctx context.Context, t *asynq.Task) 
 			return err
 		}
 	case "apple":
+		// TODO: implement Apple App Store Server Notifications v2 handler.
+		// Payload is a signed JWS (JWT). Steps:
+		//   1. Decode + verify signedPayload using Apple root CA
+		//   2. Extract notificationType / subtype and originalTransactionId
+		//   3. Map to subscription state changes (SUBSCRIBED, DID_RENEW, EXPIRED, REFUND, etc.)
+		//   4. Update subscriptions table accordingly (status, expires_at, cancel_at)
+		//   5. Trigger SendNotification task for relevant events
 		h.logger.Info("Apple event ignored (stub)", zap.String("type", payload.EventType))
 	case "google":
+		// TODO: implement Google Play Real-Time Developer Notifications (RTDN) handler.
+		// Payload arrives via Cloud Pub/Sub → POST /webhook/google as base64-encoded JSON.
+		// Steps:
+		//   1. Decode data.message.data (base64 → DeveloperNotification proto/JSON)
+		//   2. Switch on notificationType inside SubscriptionNotification
+		//      - SUBSCRIPTION_PURCHASED, SUBSCRIPTION_RENEWED → activate/extend subscription
+		//      - SUBSCRIPTION_EXPIRED, SUBSCRIPTION_REVOKED  → mark expired/cancelled
+		//      - SUBSCRIPTION_IN_GRACE_PERIOD                → set grace_period_ends_at
+		//      - SUBSCRIPTION_ON_HOLD                        → pause subscription
+		//   3. Call Google Play Developer API (purchases.subscriptionsv2.get) to verify latest state
+		//   4. Update subscriptions table
+		//   5. Trigger SendNotification task for relevant events
 		h.logger.Info("Google event ignored (stub)", zap.String("type", payload.EventType))
 	}
 
