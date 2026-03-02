@@ -45,7 +45,7 @@ func NewTestServer(
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(registerCmd, jwtMiddleware)
+	authHandler := handlers.NewAuthHandler(registerCmd, nil, jwtMiddleware)
 	subscriptionHandler := handlers.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelCmd, jwtMiddleware)
 
 	// Setup routes
