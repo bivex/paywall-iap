@@ -1293,3 +1293,142 @@ _ = h.auditService.LogAction(ctx, aid, "replay_webhook", "webhook_event", &id, m
 
 c.JSON(200, gin.H{"ok": true, "queued": eventID})
 }
+
+// ListSubscriptions returns a paginated, filterable list of all subscriptions.
+// GET /admin/subscriptions?page=1&limit=20&status=active&source=iap&platform=ios&plan_type=monthly&search=email&date_from=2024-01-01&date_to=2024-12-31
+func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
+ctx := c.Request.Context()
+
+page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+if page < 1 {
+page = 1
+}
+limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+if limit < 1 || limit > 200 {
+limit = 20
+}
+offset := (page - 1) * limit
+
+status := c.Query("status")
+source := c.Query("source")
+platform := c.Query("platform")
+planType := c.Query("plan_type")
+search := c.Query("search")
+dateFrom := c.Query("date_from")
+dateTo := c.Query("date_to")
+
+args := []interface{}{}
+where := []string{"s.deleted_at IS NULL"}
+idx := 1
+
+if status != "" {
+args = append(args, status)
+where = append(where, fmt.Sprintf("s.status = $%d", idx))
+idx++
+}
+if source != "" {
+args = append(args, source)
+where = append(where, fmt.Sprintf("s.source = $%d", idx))
+idx++
+}
+if platform != "" {
+args = append(args, platform)
+where = append(where, fmt.Sprintf("s.platform = $%d", idx))
+idx++
+}
+if planType != "" {
+args = append(args, planType)
+where = append(where, fmt.Sprintf("s.plan_type = $%d", idx))
+idx++
+}
+if search != "" {
+args = append(args, "%"+search+"%")
+where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
+idx++
+}
+if dateFrom != "" {
+args = append(args, dateFrom)
+where = append(where, fmt.Sprintf("s.expires_at >= $%d::date", idx))
+idx++
+}
+if dateTo != "" {
+args = append(args, dateTo)
+where = append(where, fmt.Sprintf("s.expires_at < ($%d::date + INTERVAL '1 day')", idx))
+idx++
+}
+
+whereSQL := "WHERE " + strings.Join(where, " AND ")
+
+var total int64
+countQ := fmt.Sprintf(
+`SELECT COUNT(*) FROM subscriptions s JOIN users u ON u.id = s.user_id %s`,
+whereSQL,
+)
+if err := h.dbPool.QueryRow(ctx, countQ, args...).Scan(&total); err != nil {
+response.InternalError(c, "Failed to count subscriptions")
+return
+}
+
+args = append(args, limit, offset)
+dataQ := fmt.Sprintf(`
+SELECT
+s.id, s.status, s.source, s.platform, s.plan_type,
+s.expires_at, s.created_at,
+u.id AS user_id, COALESCE(u.email, '') AS email,
+COALESCE(u.ltv, 0) AS ltv
+FROM subscriptions s
+JOIN users u ON u.id = s.user_id
+%s
+ORDER BY s.created_at DESC
+LIMIT $%d OFFSET $%d
+`, whereSQL, idx, idx+1)
+
+rows, err := h.dbPool.Query(ctx, dataQ, args...)
+if err != nil {
+response.InternalError(c, "Failed to list subscriptions")
+return
+}
+defer rows.Close()
+
+type SubRow struct {
+ID        string  `json:"id"`
+Status    string  `json:"status"`
+Source    string  `json:"source"`
+Platform  string  `json:"platform"`
+PlanType  string  `json:"plan_type"`
+ExpiresAt string  `json:"expires_at"`
+CreatedAt string  `json:"created_at"`
+UserID    string  `json:"user_id"`
+Email     string  `json:"email"`
+LTV       float64 `json:"ltv"`
+}
+
+var subID, userID uuid.UUID
+result := make([]SubRow, 0, limit)
+for rows.Next() {
+var r SubRow
+var expiresAt, createdAt time.Time
+if err := rows.Scan(
+&subID, &r.Status, &r.Source, &r.Platform, &r.PlanType,
+&expiresAt, &createdAt,
+&userID, &r.Email, &r.LTV,
+); err != nil {
+response.InternalError(c, "Failed to scan subscription row")
+return
+}
+r.ID = subID.String()
+r.UserID = userID.String()
+r.ExpiresAt = expiresAt.Format(time.RFC3339)
+r.CreatedAt = createdAt.Format(time.RFC3339)
+result = append(result, r)
+}
+
+totalPages := int((total + int64(limit) - 1) / int64(limit))
+c.JSON(http.StatusOK, gin.H{
+"subscriptions": result,
+"total":         total,
+"page":          page,
+"limit":         limit,
+"total_pages":   totalPages,
+})
+}

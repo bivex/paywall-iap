@@ -276,6 +276,7 @@ func main() {
 			admin.GET("/users/:id/profile", adminHandler.GetUserProfile)
 			admin.GET("/dashboard/metrics", adminHandler.GetDashboardMetrics)
 			admin.GET("/audit-log", adminHandler.GetAuditLog)
+			admin.GET("/subscriptions", adminHandler.ListSubscriptions)
 			admin.GET("/analytics/report", adminHandler.GetAnalyticsReport)
 			admin.GET("/revenue-ops", adminHandler.GetRevenueOps)
 			admin.POST("/webhooks/:id/replay", adminHandler.ReplayWebhook)
