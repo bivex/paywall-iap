@@ -14,11 +14,13 @@
  */
 
 import { Suspense } from "react";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { getSubscriptions } from "@/actions/subscriptions";
 import type { SubscriptionsParams } from "@/actions/subscriptions";
 import { formatSource, formatPlanType } from "@/lib/subscriptions/format";
@@ -123,25 +125,43 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
           </Table>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              {total > 0
-                ? `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total}`
-                : "No results"}
-            </span>
-            <div className="flex gap-1">
-              {page > 1 && (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={buildPageUrl(page - 1)}>← Prev</a>
+          {total > 0 && (
+            <div className="flex items-center justify-between px-1 pt-3 border-t">
+              <p className="text-xs text-muted-foreground">
+                Showing{" "}
+                <span className="font-medium text-foreground">
+                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)}
+                </span>{" "}
+                of <span className="font-medium text-foreground">{total}</span>
+              </p>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
+                  {page > 1 ? <Link href={buildPageUrl(1)}><ChevronsLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronsLeft className="h-3.5 w-3.5" /></span>}
                 </Button>
-              )}
-              {page < totalPages && (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={buildPageUrl(page + 1)}>Next →</a>
+                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
+                  {page > 1 ? <Link href={buildPageUrl(page - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronLeft className="h-3.5 w-3.5" /></span>}
                 </Button>
-              )}
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let p: number;
+                  if (totalPages <= 5) p = i + 1;
+                  else if (page <= 3) p = i + 1;
+                  else if (page >= totalPages - 2) p = totalPages - 4 + i;
+                  else p = page - 2 + i;
+                  return (
+                    <Button key={p} variant={p === page ? "default" : "outline"} size="icon" className="h-7 w-7 text-xs" asChild={p !== page}>
+                      {p !== page ? <Link href={buildPageUrl(p)}>{p}</Link> : <span>{p}</span>}
+                    </Button>
+                  );
+                })}
+                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
+                  {page < totalPages ? <Link href={buildPageUrl(page + 1)}><ChevronRight className="h-3.5 w-3.5" /></Link> : <span><ChevronRight className="h-3.5 w-3.5" /></span>}
+                </Button>
+                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
+                  {page < totalPages ? <Link href={buildPageUrl(totalPages)}><ChevronsRight className="h-3.5 w-3.5" /></Link> : <span><ChevronsRight className="h-3.5 w-3.5" /></span>}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
