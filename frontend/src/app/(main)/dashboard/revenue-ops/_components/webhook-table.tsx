@@ -20,7 +20,7 @@ function fmtDate(iso: string | null) {
   });
 }
 
-type SortKey = "status" | "provider" | "event_type" | "created_at";
+type SortKey = "status" | "provider" | "event_type" | "created_at" | "actions";
 type SortDir = "asc" | "desc";
 
 // Defined at module level — stable reference, no remounting issues
@@ -62,6 +62,10 @@ export function WebhookTable({ rows, initialSort }: { rows: WebhookRow[]; initia
         case "created_at":
           cmp = new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime();
           break;
+        case "actions":
+          // has-action (pending) first when asc
+          cmp = Number(a.processed) - Number(b.processed);
+          break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -91,7 +95,9 @@ export function WebhookTable({ rows, initialSort }: { rows: WebhookRow[]; initia
           <TableHead className={thClass} onClick={() => handleSort("status")}>
             Status <SortIndicator active={sortKey === "status"} dir={sortDir} />
           </TableHead>
-          <TableHead className="w-20">Actions</TableHead>
+          <TableHead className={`${thClass} w-20`} onClick={() => handleSort("actions")}>
+            Actions <SortIndicator active={sortKey === "actions"} dir={sortDir} />
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
