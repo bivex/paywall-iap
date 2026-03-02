@@ -4,7 +4,7 @@ export default function GlobalError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
+  error: Error & { digest?: string; componentStack?: string };
   reset: () => void;
 }) {
   return (
@@ -20,7 +20,7 @@ function ErrorDisplay({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
+  error: Error & { digest?: string; componentStack?: string };
   reset: () => void;
 }) {
   const isDev = process.env.NODE_ENV === "development";
@@ -43,21 +43,34 @@ function ErrorDisplay({
         <div style={{ color: "#dc2626", fontSize: 14 }}>{error.message}</div>
       </div>
 
+      {isDev && error.componentStack && (
+        <details open style={{ marginBottom: 16 }}>
+          <summary style={{ cursor: "pointer", color: "#059669", fontWeight: 600, fontSize: 12, marginBottom: 8 }}>
+            📍 Component stack (most precise)
+          </summary>
+          <pre style={{ background: "#0f172a", color: "#34d399", borderRadius: 8, padding: 16, fontSize: 11, overflow: "auto", maxHeight: 240, whiteSpace: "pre-wrap" }}>
+            {error.componentStack.trim()}
+          </pre>
+        </details>
+      )}
+
       {isDev && lines.length > 0 && (
-        <div style={{ background: "#0f172a", borderRadius: 8, padding: 16, marginBottom: 16, overflowX: "auto" }}>
-          <div style={{ color: "#94a3b8", fontSize: 11, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            Stack trace
+        <details style={{ marginBottom: 16 }}>
+          <summary style={{ cursor: "pointer", color: "#94a3b8", fontSize: 12, marginBottom: 8 }}>
+            JS stack trace
+          </summary>
+          <div style={{ background: "#0f172a", borderRadius: 8, padding: 16, overflowX: "auto" }}>
+            {lines.map((line, i) => (
+              <div key={i} style={{ marginBottom: 2 }}>
+                {line.isApp ? (
+                  <span style={{ color: "#f97316", fontWeight: 600, fontSize: 12 }}>{line.raw}</span>
+                ) : (
+                  <span style={{ color: "#64748b", fontSize: 11 }}>{line.raw}</span>
+                )}
+              </div>
+            ))}
           </div>
-          {lines.map((line, i) => (
-            <div key={i} style={{ marginBottom: 2 }}>
-              {line.isApp ? (
-                <span style={{ color: "#f97316", fontWeight: 600, fontSize: 12 }}>{line.raw}</span>
-              ) : (
-                <span style={{ color: "#64748b", fontSize: 11 }}>{line.raw}</span>
-              )}
-            </div>
-          ))}
-        </div>
+        </details>
       )}
 
       <button
