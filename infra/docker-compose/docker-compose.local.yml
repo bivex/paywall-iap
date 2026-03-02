@@ -68,6 +68,7 @@ services:
       - MOCK_LOG_LEVEL=info
       - MOCK_METRICS_ENABLED=true
       - MOCK_MOCK_SCENARIOS_PATH=config/scenarios/default.json
+      - BACKEND_URL=http://api:8081
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
       interval: 5s
