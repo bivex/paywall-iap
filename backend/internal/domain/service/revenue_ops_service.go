@@ -153,7 +153,9 @@ func (s *RevenueOpsService) fetchDunningQueue(ctx context.Context) ([]DunningQue
 	}
 	defer rows.Close()
 
-	var queue []DunningQueueRow
+	// Initialize as empty slice to avoid null in JSON
+	queue := make([]DunningQueueRow, 0)
+
 	for rows.Next() {
 		var row DunningQueueRow
 		var nextAt, lastAt *time.Time
@@ -275,7 +277,7 @@ func (s *RevenueOpsService) fetchWebhookEvents(ctx context.Context, limit, offse
 	}
 	defer rows.Close()
 
-	var events []WebhookRow
+	events := make([]WebhookRow, 0)
 	for rows.Next() {
 		var row WebhookRow
 		var processedAt *time.Time
@@ -312,7 +314,7 @@ func (s *RevenueOpsService) fetchPendingWebhooks(ctx context.Context) []WebhookR
 	}
 	defer rows.Close()
 
-	var events []WebhookRow
+	events := make([]WebhookRow, 0)
 	for rows.Next() {
 		var row WebhookRow
 		var createdAt time.Time
@@ -352,15 +354,15 @@ func (s *RevenueOpsService) fetchWebhookProviderStats(ctx context.Context) []Web
 	}
 	defer rows.Close()
 
-	var stats []WebhookProviderStat
+	providerStats := make([]WebhookProviderStat, 0)
 	for rows.Next() {
 		var p WebhookProviderStat
 		if err := rows.Scan(&p.Provider, &p.Total, &p.Processed); err == nil {
-			stats = append(stats, p)
+			providerStats = append(providerStats, p)
 		}
 	}
 
-	return stats
+	return providerStats
 }
 
 // fetchMatomoStats retrieves Matomo staging statistics
