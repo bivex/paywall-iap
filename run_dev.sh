@@ -104,7 +104,6 @@ cmd_logs() {
   docker compose -f "$BACKEND_COMPOSE"  logs -f --tail=50 &
   docker compose -f "$FRONTEND_COMPOSE" logs -f --tail=50
 }
-
 # ─── Main ─────────────────────────────────────────────────────────────────────
 [[ "${1:-}" == "stop" ]] && { cmd_stop; exit 0; }
 [[ "${1:-}" == "logs" ]] && { cmd_logs; exit 0; }
@@ -187,6 +186,9 @@ fi
 
 # ── Step 7: Start frontend ─────────────────────────────────────────────────────
 info "Starting frontend (hot-reload)..."
+export FRONTEND_PORT
+export NEXT_PUBLIC_API_URL="http://localhost:${API_PORT_HOST}"
+export BACKEND_URL="http://paywall-api-1:8080"
 docker compose -f "$FRONTEND_COMPOSE" up -d --build
 ok "Frontend started"
 

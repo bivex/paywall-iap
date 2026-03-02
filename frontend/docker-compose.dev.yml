@@ -6,12 +6,12 @@ services:
     image: paywall-frontend-dev:latest
     container_name: paywall-frontend
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-      - BACKEND_URL=${BACKEND_URL:-http://api:8080}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8081}
+      - BACKEND_URL=${BACKEND_URL:-http://paywall-api-1:8080}
       - WATCHPACK_POLLING=true   # needed for file-watch inside Docker on macOS
     volumes:
       - .:/app                   # mount source → hot reload picks up changes
@@ -19,7 +19,7 @@ services:
       - /app/.next               # keep .next build cache inside container
     networks:
       - default
-      - docker-compose_internal
+      - paywall_internal
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
@@ -30,5 +30,5 @@ services:
 
 networks:
   default: {}
-  docker-compose_internal:
+  paywall_internal:
     external: true
