@@ -80,7 +80,7 @@
     "webhookHealth": {
       "title": "Webhook Health",
       "googleFailed": "Google (2 failed, retrying)",
-      "unprocessed": "0 Unprocessed Events"
+      "unprocessed": "Unprocessed Events"
     }
   },
   "analytics": {

@@ -80,7 +80,7 @@
     "webhookHealth": {
       "title": "Состояние вебхуков",
       "googleFailed": "Google (2 ошибки, повтор)",
-      "unprocessed": "0 необработанных событий"
+      "unprocessed": "необработанных событий"
     }
   },
   "analytics": {
