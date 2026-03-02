@@ -16,7 +16,7 @@ import {
   applySidebarCollapsible,
   applySidebarVariant,
 } from "@/lib/preferences/layout-utils";
-import { PREFERENCE_DEFAULTS } from "@/lib/preferences/preferences-config";
+import { PREFERENCE_DEFAULTS, PRESET_CONFIGS } from "@/lib/preferences/preferences-config";
 import { persistPreference } from "@/lib/preferences/preferences-storage";
 import { THEME_PRESET_OPTIONS, type ThemeMode, type ThemePreset } from "@/lib/preferences/theme";
 import { applyThemePreset } from "@/lib/preferences/theme-utils";
@@ -40,9 +40,18 @@ export function LayoutControls() {
   const setFont = usePreferencesStore((s) => s.setFont);
 
   const onThemePresetChange = async (preset: ThemePreset) => {
+    const config = PRESET_CONFIGS[preset];
+
     applyThemePreset(preset);
     setThemePreset(preset);
     persistPreference("theme_preset", preset);
+
+    onThemeModeChange(config.theme_mode);
+    onFontChange(config.font);
+    onContentLayoutChange(config.content_layout);
+    onNavbarStyleChange(config.navbar_style);
+    onSidebarStyleChange(config.sidebar_variant);
+    onSidebarCollapseModeChange(config.sidebar_collapsible);
   };
 
   const onThemeModeChange = async (mode: ThemeMode | "") => {

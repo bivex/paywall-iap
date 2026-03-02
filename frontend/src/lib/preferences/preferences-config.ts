@@ -76,6 +76,49 @@ export const PREFERENCE_DEFAULTS: PreferenceValueMap = {
 };
 
 /**
+ * Full preference config applied when a preset is selected.
+ * Each preset defines ALL settings so the UI is always fully configured.
+ */
+export const PRESET_CONFIGS: Record<ThemePreset, PreferenceValueMap> = {
+  default: {
+    theme_preset: "default",
+    theme_mode: "light",
+    font: "inter",
+    content_layout: "centered",
+    navbar_style: "sticky",
+    sidebar_variant: "inset",
+    sidebar_collapsible: "icon",
+  },
+  brutalist: {
+    theme_preset: "brutalist",
+    theme_mode: "light",
+    font: "geist",
+    content_layout: "full-width",
+    navbar_style: "scroll",
+    sidebar_variant: "sidebar",
+    sidebar_collapsible: "offcanvas",
+  },
+  "soft-pop": {
+    theme_preset: "soft-pop",
+    theme_mode: "light",
+    font: "nunito",
+    content_layout: "centered",
+    navbar_style: "sticky",
+    sidebar_variant: "floating",
+    sidebar_collapsible: "icon",
+  },
+  tangerine: {
+    theme_preset: "tangerine",
+    theme_mode: "light",
+    font: "outfit",
+    content_layout: "centered",
+    navbar_style: "sticky",
+    sidebar_variant: "sidebar",
+    sidebar_collapsible: "icon",
+  },
+};
+
+/**
  * How each preference is persisted.
  * You can change these per-key.
  */
