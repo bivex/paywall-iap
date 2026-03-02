@@ -55,3 +55,10 @@ SELECT DISTINCT user_id FROM subscriptions
 WHERE status = 'cancelled'
   AND updated_at > now() - ($1 * INTERVAL '1 day')
   AND deleted_at IS NULL;
+
+-- name: GetSubscriptionByProviderTxID :one
+SELECT s.* FROM subscriptions s
+JOIN transactions t ON t.subscription_id = s.id
+WHERE t.provider_tx_id = $1 AND s.deleted_at IS NULL
+ORDER BY s.created_at DESC
+LIMIT 1;
