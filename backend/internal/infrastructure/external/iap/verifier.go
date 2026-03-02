@@ -146,6 +146,11 @@ func (v *AppleVerifier) VerifyReceipt(ctx context.Context, receiptData string) (
 	}
 	first := latestReceipts[0]
 
+	// Refunded/cancelled transactions have cancellation_date set → reject.
+	if first.CancellationDate.CancellationDate != "" || first.CancellationDate.CancellationDateMS != "" {
+		return &VerifyResponse{Valid: false}, nil
+	}
+
 	expiresAt := time.Now()
 	if first.ExpiresDateMS != "" {
 		if ms, err := strconv.ParseInt(first.ExpiresDateMS, 10, 64); err == nil {
