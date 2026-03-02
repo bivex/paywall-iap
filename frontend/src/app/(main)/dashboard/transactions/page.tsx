@@ -1,21 +1,26 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertCircle, CheckCircle2, XCircle, RefreshCw, DollarSign, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import {
+  AlertCircle, CheckCircle, XCircle, RefreshCw,
+  DollarSign, TrendingUp, TrendingDown,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+} from "lucide-react";
 import { getTransactions } from "@/actions/transactions";
-import type { TransactionsParams } from "@/actions/transactions";
+import type { TransactionsParams, TransactionSummary } from "@/actions/transactions";
 import { formatSource } from "@/lib/subscriptions/format";
 import { TransactionsFilters } from "./_components/transactions-filters";
-import { Suspense } from "react";
+import { CopyTxId } from "./_components/copy-tx-id";
 
 const PAGE_SIZE = 20;
 
 const STATUS_STYLE: Record<string, string> = {
-  success:  "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-  failed:   "bg-red-500/10 text-red-600 border-red-500/20",
-  refunded: "bg-slate-500/10 text-slate-600 border-slate-500/20",
+  success:  "bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20",
+  failed:   "bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20",
+  refunded: "bg-slate-500/10 text-slate-500 hover:bg-slate-500/20 border-slate-500/20",
 };
 
 function fmt(iso: string) {
@@ -23,6 +28,79 @@ function fmt(iso: string) {
     month: "short", day: "numeric", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
+}
+
+function KPICard({
+  title, value, icon: Icon, iconColor, bgColor, sub,
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  iconColor: string;
+  bgColor: string;
+  sub?: React.ReactNode;
+}) {
+  return (
+    <Card className="p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+          <p className="text-3xl font-bold tracking-tight">{value}</p>
+          {sub && <div className="mt-2">{sub}</div>}
+        </div>
+        <div className={`rounded-lg p-3 ${bgColor}`}>
+          <Icon className={`h-6 w-6 ${iconColor}`} />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function buildKPIs(s: TransactionSummary) {
+  return [
+    {
+      title: "Total Transactions",
+      value: s.total_count.toLocaleString(),
+      icon: DollarSign,
+      iconColor: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Successful",
+      value: s.success_count.toLocaleString(),
+      icon: CheckCircle,
+      iconColor: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+    },
+    {
+      title: "Failed",
+      value: s.failed_count.toLocaleString(),
+      icon: XCircle,
+      iconColor: "text-red-500",
+      bgColor: "bg-red-500/10",
+    },
+    {
+      title: "Refunded",
+      value: s.refunded_count.toLocaleString(),
+      icon: RefreshCw,
+      iconColor: "text-slate-500",
+      bgColor: "bg-slate-500/10",
+    },
+    {
+      title: "Total Revenue",
+      value: `$${s.total_revenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: TrendingUp,
+      iconColor: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+    },
+    {
+      title: "Total Refunds",
+      value: `$${s.total_refunded.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: TrendingDown,
+      iconColor: "text-slate-500",
+      bgColor: "bg-slate-500/10",
+    },
+  ];
 }
 
 interface Props {
@@ -34,14 +112,9 @@ export default async function TransactionsPage({ searchParams }: Props) {
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
 
   const params: TransactionsParams = {
-    page,
-    limit: PAGE_SIZE,
-    status: sp.status,
-    source: sp.source,
-    platform: sp.platform,
-    search: sp.search,
-    date_from: sp.date_from,
-    date_to: sp.date_to,
+    page, limit: PAGE_SIZE,
+    status: sp.status, source: sp.source, platform: sp.platform,
+    search: sp.search, date_from: sp.date_from, date_to: sp.date_to,
   };
 
   const data = await getTransactions(params);
@@ -70,69 +143,37 @@ export default async function TransactionsPage({ searchParams }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Transaction Reconciliation</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Full transaction ledger · reconcile payments across IAP, Stripe & Google Play
-        </p>
+        <h1 className="text-3xl font-bold mb-1">Transaction Reconciliation</h1>
+        <p className="text-muted-foreground">Monitor and manage all payment transactions</p>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {[
-          { label: "Total",      value: summary.total_count,    icon: DollarSign,   color: "text-foreground",      bg: "bg-muted"              },
-          { label: "Success",    value: summary.success_count,  icon: CheckCircle2, color: "text-emerald-500",     bg: "bg-emerald-500/10"     },
-          { label: "Failed",     value: summary.failed_count,   icon: XCircle,      color: "text-red-500",         bg: "bg-red-500/10"         },
-          { label: "Refunded",   value: summary.refunded_count, icon: RefreshCw,    color: "text-slate-500",       bg: "bg-slate-500/10"       },
-          { label: "Revenue",    value: `$${summary.total_revenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-          { label: "Refunds",    value: `$${summary.total_refunded.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: RefreshCw,  color: "text-slate-500",  bg: "bg-slate-500/10"  },
-        ].map((s) => {
-          const Icon = s.icon;
-          return (
-            <Card key={s.label} className="py-4">
-              <CardContent className="px-4 py-0 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{s.label}</p>
-                  <p className={`text-xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
-                </div>
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full ${s.bg}`}>
-                  <Icon className={`h-4 w-4 ${s.color}`} />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      {/* KPI cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {buildKPIs(summary).map((kpi) => (
+          <KPICard key={kpi.title} {...kpi} />
+        ))}
       </div>
 
-      {/* Table */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold">Transactions</CardTitle>
-            <span className="text-xs text-muted-foreground">
-              {total > 0
-                ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, total)} of ${total}`
-                : "No results"}
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-4">
-          <Suspense>
-            <TransactionsFilters />
-          </Suspense>
+      {/* Table card */}
+      <Card className="p-6">
+        <Suspense>
+          <TransactionsFilters />
+        </Suspense>
 
+        <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Date</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Provider TX ID</TableHead>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="font-semibold">Date</TableHead>
+                <TableHead className="font-semibold">User Email</TableHead>
+                <TableHead className="font-semibold">Source</TableHead>
+                <TableHead className="font-semibold">Plan Type</TableHead>
+                <TableHead className="font-semibold text-right">Amount</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+                <TableHead className="font-semibold">Provider TX ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -144,16 +185,14 @@ export default async function TransactionsPage({ searchParams }: Props) {
                 </TableRow>
               ) : (
                 transactions.map((tx) => (
-                  <TableRow key={tx.id}>
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(tx.created_at)}</TableCell>
-                    <TableCell className="font-medium text-sm">{tx.email || tx.user_id.slice(0, 8) + "…"}</TableCell>
+                  <TableRow key={tx.id} className="hover:bg-muted/30">
+                    <TableCell className="text-muted-foreground whitespace-nowrap">{fmt(tx.created_at)}</TableCell>
+                    <TableCell className="font-medium">{tx.email || tx.user_id.slice(0, 8) + "…"}</TableCell>
                     <TableCell>
-                      <span className="text-xs text-muted-foreground">{formatSource(tx.source, tx.platform)}</span>
+                      <Badge variant="outline" className="font-medium">{formatSource(tx.source, tx.platform)}</Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-xs capitalize">{tx.plan_type}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-mono font-medium">
+                    <TableCell className="text-muted-foreground capitalize">{tx.plan_type}</TableCell>
+                    <TableCell className="text-right font-semibold">
                       {tx.status === "refunded" ? (
                         <span className="text-slate-500">−${tx.amount.toFixed(2)}</span>
                       ) : (
@@ -162,55 +201,58 @@ export default async function TransactionsPage({ searchParams }: Props) {
                       <span className="ml-1 text-xs text-muted-foreground">{tx.currency}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`${STATUS_STYLE[tx.status] ?? "bg-muted"} border text-xs`}>
-                        {tx.status}
+                      <Badge className={`${STATUS_STYLE[tx.status] ?? "bg-muted"} border`}>
+                        {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground max-w-[160px] truncate" title={tx.provider_tx_id}>
-                      {tx.provider_tx_id || "—"}
+                    <TableCell>
+                      {tx.provider_tx_id ? <CopyTxId txId={tx.provider_tx_id} /> : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+        </div>
 
-          {/* Pagination */}
-          {total > 0 && (
-            <div className="flex items-center justify-between px-1 pt-3 border-t">
-              <p className="text-xs text-muted-foreground">
-                Page <span className="font-medium text-foreground">{page}</span> of{" "}
-                <span className="font-medium text-foreground">{totalPages}</span>
-              </p>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
-                  {page > 1 ? <Link href={buildPageUrl(1)}><ChevronsLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronsLeft className="h-3.5 w-3.5" /></span>}
-                </Button>
-                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
-                  {page > 1 ? <Link href={buildPageUrl(page - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronLeft className="h-3.5 w-3.5" /></span>}
-                </Button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  let p: number;
-                  if (totalPages <= 5) p = i + 1;
-                  else if (page <= 3) p = i + 1;
-                  else if (page >= totalPages - 2) p = totalPages - 4 + i;
-                  else p = page - 2 + i;
-                  return (
-                    <Button key={p} variant={p === page ? "default" : "outline"} size="icon" className="h-7 w-7 text-xs" asChild={p !== page}>
-                      {p !== page ? <Link href={buildPageUrl(p)}>{p}</Link> : <span>{p}</span>}
-                    </Button>
-                  );
-                })}
-                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
-                  {page < totalPages ? <Link href={buildPageUrl(page + 1)}><ChevronRight className="h-3.5 w-3.5" /></Link> : <span><ChevronRight className="h-3.5 w-3.5" /></span>}
-                </Button>
-                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
-                  {page < totalPages ? <Link href={buildPageUrl(totalPages)}><ChevronsRight className="h-3.5 w-3.5" /></Link> : <span><ChevronsRight className="h-3.5 w-3.5" /></span>}
-                </Button>
-              </div>
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-6">
+          <p className="text-sm text-muted-foreground">
+            {total > 0
+              ? <>Showing <span className="font-medium text-foreground">{(page - 1) * PAGE_SIZE + 1}</span> to{" "}
+                  <span className="font-medium text-foreground">{Math.min(page * PAGE_SIZE, total)}</span> of{" "}
+                  <span className="font-medium text-foreground">{total}</span> transactions</>
+              : "No transactions found"}
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" disabled={page <= 1} asChild={page > 1}>
+                {page > 1 ? <Link href={buildPageUrl(1)}><ChevronsLeft className="h-4 w-4" /></Link> : <span><ChevronsLeft className="h-4 w-4" /></span>}
+              </Button>
+              <Button variant="outline" size="icon" disabled={page <= 1} asChild={page > 1}>
+                {page > 1 ? <Link href={buildPageUrl(page - 1)}><ChevronLeft className="h-4 w-4" /></Link> : <span><ChevronLeft className="h-4 w-4" /></span>}
+              </Button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let p: number;
+                if (totalPages <= 5) p = i + 1;
+                else if (page <= 3) p = i + 1;
+                else if (page >= totalPages - 2) p = totalPages - 4 + i;
+                else p = page - 2 + i;
+                return (
+                  <Button key={p} variant={p === page ? "default" : "outline"} size="icon" asChild={p !== page}>
+                    {p !== page ? <Link href={buildPageUrl(p)}>{p}</Link> : <span>{p}</span>}
+                  </Button>
+                );
+              })}
+              <Button variant="outline" size="icon" disabled={page >= totalPages} asChild={page < totalPages}>
+                {page < totalPages ? <Link href={buildPageUrl(page + 1)}><ChevronRight className="h-4 w-4" /></Link> : <span><ChevronRight className="h-4 w-4" /></span>}
+              </Button>
+              <Button variant="outline" size="icon" disabled={page >= totalPages} asChild={page < totalPages}>
+                {page < totalPages ? <Link href={buildPageUrl(totalPages)}><ChevronsRight className="h-4 w-4" /></Link> : <span><ChevronsRight className="h-4 w-4" /></span>}
+              </Button>
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
