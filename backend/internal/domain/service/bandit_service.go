@@ -316,19 +316,7 @@ func (b *ThompsonSamplingBandit) SampleBeta(alpha, beta float64) float64 {
 
 	// For small parameters, use simple approximation
 	if alpha < 1 && beta < 1 {
-		// Johnk's method for alpha,beta < 1
-		for {
-			u1 := b.rng.Float64()
-			u2 := b.rng.Float64()
-			if u1 == 0 || u2 == 0 {
-				continue
-			}
-			x := math.Pow(u1, 1/alpha)
-			y := math.Pow(u2, 1/beta)
-			if x+y <= 1 {
-				return x / (x + y)
-			}
-		}
+		return b.sampleBetaJohnk(alpha, beta)
 	}
 
 	if alpha < 1 {
@@ -341,45 +329,71 @@ func (b *ThompsonSamplingBandit) SampleBeta(alpha, beta float64) float64 {
 		return b.SampleBeta(alpha, beta+1) * math.Pow(b.rng.Float64(), 1/beta)
 	}
 
-	// Marsaglia-Tsang method for alpha,beta >= 1
-	const (
-		// Number of iterations for refinement
-		iterations = 3
-	)
-
-	a := alpha - 1
-	b_param := beta - 1
-
-	// Gamma distribution parameters using Marsaglia-Tsang
- theta := 1.0
-	if a <= b_param {
-		theta = a / (a + b_param)
+	// Try Marsaglia-Tsang method for alpha,beta >= 1
+	if sample := b.sampleBetaMarsagliaTsang(alpha, beta); sample >= 0 {
+		return sample
 	}
+
+	// Fallback: Cheng's method
+	return b.sampleBetaCheng(alpha, beta)
+}
+
+// sampleBetaJohnk implements Johnk's method for alpha,beta < 1
+func (b *ThompsonSamplingBandit) sampleBetaJohnk(alpha, beta float64) float64 {
+	for {
+		u1 := b.rng.Float64()
+		u2 := b.rng.Float64()
+		if u1 == 0 || u2 == 0 {
+			continue
+		}
+		x := math.Pow(u1, 1/alpha)
+		y := math.Pow(u2, 1/beta)
+		if x+y <= 1 {
+			return x / (x + y)
+		}
+	}
+}
+
+// sampleBetaMarsagliaTsang implements Marsaglia-Tsang method for alpha,beta >= 1
+// Returns -1 if sampling fails
+func (b *ThompsonSamplingBandit) sampleBetaMarsagliaTsang(alpha, beta float64) float64 {
+	const iterations = 3
 
 	for i := 0; i < iterations; i++ {
 		u := b.rng.Float64()
 		v := b.rng.Float64()
 
-		// Generate from Gamma(alpha,1)
-		gamma := -math.Log(u)
-		if gamma > 0 {
-			gamma = math.Pow(gamma, 1/alpha)
-		}
-
-		// Generate from Gamma(beta,1)
-		gamma2 := -math.Log(v)
-		if gamma2 > 0 {
-			gamma2 = math.Pow(gamma2, 1/beta)
-		}
+		gamma := b.sampleGamma(alpha, u)
+		gamma2 := b.sampleGamma(beta, v)
 
 		if gamma+gamma2 > 0 {
 			return gamma / (gamma + gamma2)
 		}
-
-		// Retry if failed
 	}
 
-	// Fallback: Cheng's method
+	return -1 // Indicate failure
+}
+
+// sampleGamma generates a sample from Gamma(shape, 1) using logarithm
+func (b *ThompsonSamplingBandit) sampleGamma(shape, u float64) float64 {
+	gamma := -math.Log(u)
+	if gamma > 0 {
+		gamma = math.Pow(gamma, 1/shape)
+	}
+	return gamma
+}
+
+// sampleBetaCheng implements Cheng's method as a fallback
+func (b *ThompsonSamplingBandit) sampleBetaCheng(alpha, beta float64) float64 {
+	a := alpha - 1
+	bParam := beta - 1
+
+	// Initial theta value
+	theta := 1.0
+	if a <= bParam {
+		theta = a / (a + bParam)
+	}
+
 	x := theta
 	for {
 		u := b.rng.Float64()
@@ -397,7 +411,7 @@ func (b *ThompsonSamplingBandit) SampleBeta(alpha, beta float64) float64 {
 		}
 
 		// Acceptance-rejection
-		lhs := math.Pow(1-x, b_param)
+		lhs := math.Pow(1-x, bParam)
 		rhs := math.Pow(x, a-1)
 
 		if u <= lhs*rhs {

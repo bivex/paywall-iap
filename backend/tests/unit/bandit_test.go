@@ -54,6 +54,27 @@ func (m *MockBanditRepository) GetActiveAssignment(ctx context.Context, experime
 	return args.Get(0).(*service.Assignment), args.Error(1)
 }
 
+func (m *MockBanditRepository) GetExperimentConfig(ctx context.Context, experimentID uuid.UUID) (*service.ExperimentConfig, error) {
+	args := m.Called(ctx, experimentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*service.ExperimentConfig), args.Error(1)
+}
+
+func (m *MockBanditRepository) GetUserContext(ctx context.Context, userID uuid.UUID) (*service.UserContext, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*service.UserContext), args.Error(1)
+}
+
+func (m *MockBanditRepository) SetUserContext(ctx context.Context, uctx *service.UserContext) error {
+	args := m.Called(ctx, uctx)
+	return args.Error(0)
+}
+
 // MockBanditCache is a mock for BanditCache
 type MockBanditCache struct {
 	mock.Mock

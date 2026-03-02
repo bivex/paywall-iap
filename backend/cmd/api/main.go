@@ -11,12 +11,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/application/query"
+	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/cache"
 	"github.com/bivex/paywall-iap/internal/infrastructure/config"
@@ -29,16 +31,8 @@ import (
 )
 
 func main() {
-	// Load configuration
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
-	// Initialize logger
-	if err := logging.Init(&cfg.Sentry); err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
-	}
+	cfg := mustLoadConfig()
+	mustInitLogger(&cfg.Sentry)
 	defer logging.Sync()
 
 	logging.Logger.Info("Starting IAP API server",
@@ -46,55 +40,129 @@ func main() {
 		zap.String("environment", cfg.Sentry.Environment),
 	)
 
-	// Initialize database connection
 	ctx := context.Background()
-	dbPool, err := pool.NewPool(ctx, cfg.Database)
-	if err != nil {
-		logging.Logger.Fatal("Failed to create database pool", zap.Error(err))
-	}
+	dbPool := mustInitDB(ctx, cfg.Database)
 	defer pool.Close(dbPool)
 
-	// Test database connection
-	if err := pool.Ping(ctx, dbPool); err != nil {
-		logging.Logger.Fatal("Failed to ping database", zap.Error(err))
-	}
-
-	// Initialize Redis
-	opts, err := redis.ParseURL(cfg.Redis.URL)
-	if err != nil {
-		logging.Logger.Fatal("Failed to parse Redis URL", zap.Error(err))
-	}
-	opts.PoolSize = cfg.Redis.PoolSize
+	opts := mustInitRedis(ctx, cfg.Redis)
 	redisClient := redis.NewClient(opts)
 	defer redisClient.Close()
 
-	// Test Redis connection
-	if err := redisClient.Ping(ctx).Err(); err != nil {
-		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
-	}
-
-	// Initialize Asynq client
 	asynqClient := asynq.NewClient(asynq.RedisClientOpt{Addr: opts.Addr, Password: opts.Password})
 	defer asynqClient.Close()
 
+	deps := initDependencies(cfg, dbPool, redisClient, asynqClient)
+	router := setupRouter(cfg, deps, redisClient)
+
+	startServer(cfg, router)
+}
+
+// mustLoadConfig loads and returns configuration, exiting on failure
+func mustLoadConfig() *config.Config {
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+	return cfg
+}
+
+// mustInitLogger initializes the logger, exiting on failure
+func mustInitLogger(sentryCfg *config.SentryConfig) {
+	if err := logging.Init(sentryCfg); err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
+}
+
+// mustInitDB creates and tests database connection
+func mustInitDB(ctx context.Context, dbCfg config.DatabaseConfig) *pgxpool.Pool {
+	dbPool, err := pool.NewPool(ctx, dbCfg)
+	if err != nil {
+		logging.Logger.Fatal("Failed to create database pool", zap.Error(err))
+	}
+
+	if err := pool.Ping(ctx, dbPool); err != nil {
+		pool.Close(dbPool)
+		logging.Logger.Fatal("Failed to ping database", zap.Error(err))
+	}
+
+	return dbPool
+}
+
+// mustInitRedis parses Redis URL and tests connection
+func mustInitRedis(ctx context.Context, redisCfg config.RedisConfig) *redis.Options {
+	opts, err := redis.ParseURL(redisCfg.URL)
+	if err != nil {
+		logging.Logger.Fatal("Failed to parse Redis URL", zap.Error(err))
+	}
+	opts.PoolSize = redisCfg.PoolSize
+
+	// Test connection
+	redisClient := redis.NewClient(opts)
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		redisClient.Close()
+		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
+	}
+	redisClient.Close()
+
+	return opts
+}
+
+// dependencies holds all initialized dependencies
+type dependencies struct {
+	queries              *generated.Queries
+	userRepo             domainRepo.UserRepository
+	subscriptionRepo     domainRepo.SubscriptionRepository
+	transactionRepo      domainRepo.TransactionRepository
+	analyticsRepo        domainRepo.AnalyticsRepository
+	banditRepo           service.BanditRepository
+	adminCredRepo        domainRepo.AdminCredentialRepository
+
+	analyticsService     *service.AnalyticsService
+	auditService         *service.AuditService
+	banditService        *service.ThompsonSamplingBandit
+	advancedBandit       *service.AdvancedBanditEngine
+	currencyService      *service.CurrencyRateService
+
+	jwtMiddleware        *middleware.JWTMiddleware
+	rateLimiter          *middleware.RateLimiter
+
+	registerCmd          *command.RegisterCommand
+	cancelSubCmd          *command.CancelSubscriptionCommand
+	verifyIAPCmd          *command.VerifyIAPCommand
+	adminLoginCmd         *command.AdminLoginCommand
+
+	getSubQuery           *query.GetSubscriptionQuery
+	checkAccessQuery      *query.CheckAccessQuery
+
+	authHandler           *app_handler.AuthHandler
+	iapHandler            *app_handler.IAPHandler
+	subscriptionHandler  *app_handler.SubscriptionHandler
+	adminHandler          *app_handler.AdminHandler
+	webhookHandler        *app_handler.WebhookHandler
+	banditHandler         *app_handler.BanditHandler
+	banditAdvancedHandler *app_handler.BanditAdvancedHandler
+}
+
+// initDependencies initializes all repositories, services, middleware, and handlers
+func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *redis.Client, asynqClient *asynq.Client) *dependencies {
 	// Initialize repositories
 	queries := generated.New(dbPool)
 	userRepo := repository.NewUserRepository(queries)
 	subscriptionRepo := repository.NewSubscriptionRepository(queries)
 	transactionRepo := repository.NewTransactionRepository(queries)
 	analyticsRepo := repository.NewAnalyticsRepository(dbPool)
+	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
+	adminCredRepo := repository.NewAdminCredentialRepository(queries)
 
 	// Initialize services
 	analyticsService := service.NewAnalyticsService(analyticsRepo, subscriptionRepo)
 	auditService := service.NewAuditService(dbPool)
 
-	// Initialize bandit components
-	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
+	// Bandit components
 	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
 	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
-
-	// Initialize advanced bandit services
 	currencyService := service.NewCurrencyRateService(redisClient, logging.Logger)
+
 	advancedBanditEngine := service.NewAdvancedBanditEngine(
 		banditService,
 		banditRepo,
@@ -102,7 +170,7 @@ func main() {
 		currencyService,
 		logging.Logger,
 		&service.EngineConfig{
-			ExperimentConfig: nil, // Will be configured per experiment
+			ExperimentConfig: nil,
 			EnableCurrency:   true,
 			EnableContextual: true,
 			EnableDelayed:    true,
@@ -112,21 +180,17 @@ func main() {
 	)
 
 	// Initialize middleware
-	jwtMiddleware := middleware.NewJWTMiddleware(
-		cfg.JWT.Secret,
-		redisClient,
-		cfg.JWT.AccessTTL,
-	)
-	rateLimiter := middleware.NewRateLimiter(redisClient, true) // fail open
-
-	// Initialize commands
-	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
-	cancelSubCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
+	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWT.Secret, redisClient, cfg.JWT.AccessTTL)
+	rateLimiter := middleware.NewRateLimiter(redisClient, true)
 
 	// Initialize IAP verifiers
 	appleVerifier := iapext.NewAppleVerifier(cfg.IAP.AppleSharedSecret, cfg.IAP.IsProduction, cfg.IAP.AppleMockURL)
 	googleVerifier := iapext.NewGoogleVerifier(cfg.IAP.GoogleKeyJSON, cfg.IAP.IsProduction, cfg.IAP.GoogleIAPBaseURL)
 	iapAdapter := iapext.NewIAPAdapter(appleVerifier, googleVerifier)
+
+	// Initialize commands
+	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
+	cancelSubCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
 	verifyIAPCmd := command.NewVerifyIAPCommand(
 		userRepo,
 		subscriptionRepo,
@@ -134,8 +198,6 @@ func main() {
 		iapext.NewAppleVerifierAdapter(iapAdapter),
 		iapext.NewAndroidVerifierAdapter(iapAdapter),
 	)
-
-	adminCredRepo := repository.NewAdminCredentialRepository(queries)
 	adminLoginCmd := command.NewAdminLoginCommand(userRepo, adminCredRepo, jwtMiddleware)
 
 	// Initialize queries
@@ -145,12 +207,7 @@ func main() {
 	// Initialize handlers
 	authHandler := app_handler.NewAuthHandler(registerCmd, adminLoginCmd, jwtMiddleware)
 	iapHandler := app_handler.NewIAPHandler(verifyIAPCmd, jwtMiddleware, rateLimiter)
-	subscriptionHandler := app_handler.NewSubscriptionHandler(
-		getSubQuery,
-		checkAccessQuery,
-		cancelSubCmd,
-		jwtMiddleware,
-	)
+	subscriptionHandler := app_handler.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelSubCmd, jwtMiddleware)
 	adminHandler := app_handler.NewAdminHandler(
 		subscriptionRepo,
 		userRepo,
@@ -159,6 +216,9 @@ func main() {
 		redisClient,
 		analyticsService,
 		auditService,
+		service.NewRevenueOpsService(dbPool),
+		service.NewAnalyticsReportService(dbPool),
+		service.NewUserProfileService(dbPool),
 		asynqClient,
 	)
 	webhookHandler := app_handler.NewWebhookHandler(
@@ -168,127 +228,174 @@ func main() {
 		queries,
 		asynqClient,
 	)
-
-	// Initialize bandit handler
 	banditHandler := app_handler.NewBanditHandler(banditService)
 	banditAdvancedHandler := app_handler.NewBanditAdvancedHandler(advancedBanditEngine, currencyService, logging.Logger)
 
-	// Setup Gin router
+	return &dependencies{
+		queries:              queries,
+		userRepo:             userRepo,
+		subscriptionRepo:     subscriptionRepo,
+		transactionRepo:      transactionRepo,
+		analyticsRepo:        analyticsRepo,
+		banditRepo:           banditRepo,
+		adminCredRepo:        adminCredRepo,
+		analyticsService:     analyticsService,
+		auditService:         auditService,
+		banditService:        banditService,
+		advancedBandit:       advancedBanditEngine,
+		currencyService:      currencyService,
+		jwtMiddleware:        jwtMiddleware,
+		rateLimiter:          rateLimiter,
+		registerCmd:          registerCmd,
+		cancelSubCmd:          cancelSubCmd,
+		verifyIAPCmd:          verifyIAPCmd,
+		adminLoginCmd:         adminLoginCmd,
+		getSubQuery:           getSubQuery,
+		checkAccessQuery:      checkAccessQuery,
+		authHandler:           authHandler,
+		iapHandler:            iapHandler,
+		subscriptionHandler:  subscriptionHandler,
+		adminHandler:          adminHandler,
+		webhookHandler:        webhookHandler,
+		banditHandler:         banditHandler,
+		banditAdvancedHandler: banditAdvancedHandler,
+	}
+}
+
+// setupRouter configures and returns the Gin router with all routes
+func setupRouter(cfg *config.Config, d *dependencies, redisClient *redis.Client) *gin.Engine {
 	if cfg.Sentry.Environment != "development" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	router := gin.New()
-	router.Use(
-		gin.Recovery(),
-		logging.RequestMiddleware(logging.Logger),
-	)
+	router.Use(gin.Recovery(), logging.RequestMiddleware(logging.Logger))
 
-	// Health check endpoint (no auth required)
+	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// Webhook routes (no auth — verified by signature)
+	// Webhooks (no auth)
 	webhooks := router.Group("/webhook")
 	{
-		webhooks.POST("/stripe", webhookHandler.StripeWebhook)
-		webhooks.POST("/apple", webhookHandler.AppleWebhook)
-		webhooks.POST("/google", webhookHandler.GoogleWebhook)
+		webhooks.POST("/stripe", d.webhookHandler.StripeWebhook)
+		webhooks.POST("/apple", d.webhookHandler.AppleWebhook)
+		webhooks.POST("/google", d.webhookHandler.GoogleWebhook)
 	}
 
 	// API v1 routes
 	v1 := router.Group("/v1")
 	{
-		// Auth routes (mobile)
-		auth := v1.Group("/auth")
-		{
-			auth.POST("/register", authHandler.Register)
-			auth.POST("/refresh",
-				rateLimiter.Middleware(middleware.ByIP, middleware.DefaultConfig),
-				authHandler.RefreshToken,
-			)
-		}
-
-		// Admin auth routes (web dashboard)
-		adminAuth := v1.Group("/admin/auth")
-		{
-			adminAuth.POST("/login", authHandler.AdminLogin)
-			adminAuth.POST("/logout",
-				jwtMiddleware.Authenticate(),
-				authHandler.AdminLogout,
-			)
-		}
-
-		// Bandit routes (multi-armed bandit)
-		bandit := v1.Group("/bandit")
-		{
-			bandit.POST("/assign", banditHandler.Assign)
-			bandit.POST("/reward", banditHandler.Reward)
-			bandit.GET("/statistics", banditHandler.Statistics)
-			bandit.GET("/health", banditHandler.Health)
-
-			// Advanced bandit routes (net/http handlers wrapped for gin)
-			bandit.GET("/currency/rates", gin.WrapF(banditAdvancedHandler.GetCurrencyRates))
-			bandit.POST("/currency/update", gin.WrapF(banditAdvancedHandler.UpdateCurrencyRates))
-			bandit.POST("/currency/convert", gin.WrapF(banditAdvancedHandler.ConvertCurrency))
-			bandit.GET("/experiments/:id/objectives", gin.WrapF(banditAdvancedHandler.GetObjectiveScores))
-			bandit.PUT("/experiments/:id/objectives/config", gin.WrapF(banditAdvancedHandler.SetObjectiveConfig))
-			bandit.GET("/experiments/:id/window/info", gin.WrapF(banditAdvancedHandler.GetWindowInfo))
-			bandit.POST("/experiments/:id/window/trim", gin.WrapF(banditAdvancedHandler.TrimWindow))
-			bandit.GET("/experiments/:id/window/events", gin.WrapF(banditAdvancedHandler.ExportWindowEvents))
-			bandit.POST("/conversions", gin.WrapF(banditAdvancedHandler.ProcessConversion))
-			bandit.GET("/pending/:id", gin.WrapF(banditAdvancedHandler.GetPendingReward))
-			bandit.GET("/users/:id/pending", gin.WrapF(banditAdvancedHandler.GetUserPendingRewards))
-			bandit.GET("/experiments/:id/metrics", gin.WrapF(banditAdvancedHandler.GetMetrics))
-			bandit.POST("/maintenance", gin.WrapF(banditAdvancedHandler.RunMaintenance))
-		}
-
-		// Protected routes (require JWT)
-		protected := v1.Group("")
-		protected.Use(jwtMiddleware.Authenticate())
-		{
-			// IAP verification
-			protected.POST("/verify/iap", iapHandler.VerifyReceipt)
-
-			// Subscription routes
-			subs := protected.Group("/subscription")
-			subs.GET("", subscriptionHandler.GetSubscription)
-			subs.GET("/access",
-				rateLimiter.Middleware(middleware.ByUserID, middleware.PollingConfig),
-				subscriptionHandler.CheckAccess,
-			)
-			subs.DELETE("", subscriptionHandler.CancelSubscription)
-		}
-
-		// Admin routes
-		admin := v1.Group("/admin")
-		admin.Use(jwtMiddleware.Authenticate())
-		admin.Use(middleware.AdminMiddleware(userRepo, cfg.JWT.Secret))
-		{
-			admin.POST("/users/:id/grant", adminHandler.GrantSubscription)
-			admin.POST("/users/:id/revoke", adminHandler.RevokeSubscription)
-			admin.POST("/users/:id/force-cancel", adminHandler.ForceCancel)
-			admin.POST("/users/:id/force-renew", adminHandler.ForceRenew)
-			admin.POST("/users/:id/grant-grace", adminHandler.GrantGracePeriod)
-			admin.GET("/users", adminHandler.ListUsers)
-			admin.GET("/users/search", adminHandler.SearchUsers)
-			admin.GET("/users/:id/profile", adminHandler.GetUserProfile)
-			admin.GET("/dashboard/metrics", adminHandler.GetDashboardMetrics)
-			admin.GET("/audit-log", adminHandler.GetAuditLog)
-			admin.GET("/subscriptions", adminHandler.ListSubscriptions)
-			admin.GET("/subscriptions/:id", adminHandler.GetSubscriptionDetail)
-			admin.GET("/transactions", adminHandler.ListTransactions)
-			admin.GET("/transactions/:id", adminHandler.GetTransactionDetail)
-			admin.GET("/webhooks", adminHandler.ListWebhooks)
-			admin.GET("/analytics/report", adminHandler.GetAnalyticsReport)
-			admin.GET("/revenue-ops", adminHandler.GetRevenueOps)
-			admin.POST("/webhooks/:id/replay", adminHandler.ReplayWebhook)
-			admin.GET("/health", adminHandler.GetHealth)
-		}
+		setupAuthRoutes(v1, d)
+		setupAdminAuthRoutes(v1, d)
+		setupBanditRoutes(v1, d)
+		setupProtectedRoutes(v1, d)
+		setupAdminRoutes(v1, d, cfg)
 	}
 
-	// Start server
+	return router
+}
+
+// setupAuthRoutes configures authentication routes
+func setupAuthRoutes(v1 *gin.RouterGroup, d *dependencies) {
+	auth := v1.Group("/auth")
+	{
+		auth.POST("/register", d.authHandler.Register)
+		auth.POST("/refresh",
+			d.rateLimiter.Middleware(middleware.ByIP, middleware.DefaultConfig),
+			d.authHandler.RefreshToken,
+		)
+	}
+}
+
+// setupAdminAuthRoutes configures admin authentication routes
+func setupAdminAuthRoutes(v1 *gin.RouterGroup, d *dependencies) {
+	adminAuth := v1.Group("/admin/auth")
+	{
+		adminAuth.POST("/login", d.authHandler.AdminLogin)
+		adminAuth.POST("/logout",
+			d.jwtMiddleware.Authenticate(),
+			d.authHandler.AdminLogout,
+		)
+	}
+}
+
+// setupBanditRoutes configures multi-armed bandit routes
+func setupBanditRoutes(v1 *gin.RouterGroup, d *dependencies) {
+	bandit := v1.Group("/bandit")
+	{
+		bandit.POST("/assign", d.banditHandler.Assign)
+		bandit.POST("/reward", d.banditHandler.Reward)
+		bandit.GET("/statistics", d.banditHandler.Statistics)
+		bandit.GET("/health", d.banditHandler.Health)
+
+		// Advanced bandit routes
+		bandit.GET("/currency/rates", gin.WrapF(d.banditAdvancedHandler.GetCurrencyRates))
+		bandit.POST("/currency/update", gin.WrapF(d.banditAdvancedHandler.UpdateCurrencyRates))
+		bandit.POST("/currency/convert", gin.WrapF(d.banditAdvancedHandler.ConvertCurrency))
+		bandit.GET("/experiments/:id/objectives", gin.WrapF(d.banditAdvancedHandler.GetObjectiveScores))
+		bandit.PUT("/experiments/:id/objectives/config", gin.WrapF(d.banditAdvancedHandler.SetObjectiveConfig))
+		bandit.GET("/experiments/:id/window/info", gin.WrapF(d.banditAdvancedHandler.GetWindowInfo))
+		bandit.POST("/experiments/:id/window/trim", gin.WrapF(d.banditAdvancedHandler.TrimWindow))
+		bandit.GET("/experiments/:id/window/events", gin.WrapF(d.banditAdvancedHandler.ExportWindowEvents))
+		bandit.POST("/conversions", gin.WrapF(d.banditAdvancedHandler.ProcessConversion))
+		bandit.GET("/pending/:id", gin.WrapF(d.banditAdvancedHandler.GetPendingReward))
+		bandit.GET("/users/:id/pending", gin.WrapF(d.banditAdvancedHandler.GetUserPendingRewards))
+		bandit.GET("/experiments/:id/metrics", gin.WrapF(d.banditAdvancedHandler.GetMetrics))
+		bandit.POST("/maintenance", gin.WrapF(d.banditAdvancedHandler.RunMaintenance))
+	}
+}
+
+// setupProtectedRoutes configures JWT-protected routes
+func setupProtectedRoutes(v1 *gin.RouterGroup, d *dependencies) {
+	protected := v1.Group("")
+	protected.Use(d.jwtMiddleware.Authenticate())
+	{
+		protected.POST("/verify/iap", d.iapHandler.VerifyReceipt)
+
+		subs := protected.Group("/subscription")
+		{
+			subs.GET("", d.subscriptionHandler.GetSubscription)
+			subs.GET("/access",
+				d.rateLimiter.Middleware(middleware.ByUserID, middleware.PollingConfig),
+				d.subscriptionHandler.CheckAccess,
+			)
+			subs.DELETE("", d.subscriptionHandler.CancelSubscription)
+		}
+	}
+}
+
+// setupAdminRoutes configures admin routes
+func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) {
+	admin := v1.Group("/admin")
+	admin.Use(d.jwtMiddleware.Authenticate())
+	admin.Use(middleware.AdminMiddleware(d.userRepo, cfg.JWT.Secret))
+	{
+		admin.POST("/users/:id/grant", d.adminHandler.GrantSubscription)
+		admin.POST("/users/:id/revoke", d.adminHandler.RevokeSubscription)
+		admin.POST("/users/:id/force-cancel", d.adminHandler.ForceCancel)
+		admin.POST("/users/:id/force-renew", d.adminHandler.ForceRenew)
+		admin.POST("/users/:id/grant-grace", d.adminHandler.GrantGracePeriod)
+		admin.GET("/users", d.adminHandler.ListUsers)
+		admin.GET("/users/search", d.adminHandler.SearchUsers)
+		admin.GET("/users/:id/profile", d.adminHandler.GetUserProfile)
+		admin.GET("/dashboard/metrics", d.adminHandler.GetDashboardMetrics)
+		admin.GET("/audit-log", d.adminHandler.GetAuditLog)
+		admin.GET("/subscriptions", d.adminHandler.ListSubscriptions)
+		admin.GET("/subscriptions/:id", d.adminHandler.GetSubscriptionDetail)
+		admin.GET("/transactions", d.adminHandler.ListTransactions)
+		admin.GET("/transactions/:id", d.adminHandler.GetTransactionDetail)
+		admin.GET("/webhooks", d.adminHandler.ListWebhooks)
+		admin.GET("/analytics/report", d.adminHandler.GetAnalyticsReport)
+		admin.GET("/revenue-ops", d.adminHandler.GetRevenueOps)
+		admin.POST("/webhooks/:id/replay", d.adminHandler.ReplayWebhook)
+		admin.GET("/health", d.adminHandler.GetHealth)
+	}
+}
+
+// startServer starts the HTTP server with graceful shutdown
+func startServer(cfg *config.Config, router *gin.Engine) {
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler:      router,
@@ -296,7 +403,7 @@ func main() {
 		WriteTimeout: cfg.Server.WriteTimeout,
 	}
 
-	// Graceful shutdown
+	// Start server in background
 	go func() {
 		logging.Logger.Info("Server listening", zap.String("addr", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
