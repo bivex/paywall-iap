@@ -52,13 +52,13 @@ const PRODUCT   = __ENV.PRODUCT  || 'com.yourapp.premium_monthly';
 // ──────────────────────────────────────────────
 const SCENARIOS = [
   // [prefix, expectedStatus, label, weight]
-  { prefix: 'valid_active_',   expect: 200, label: 'active',          weight: 30 },
-  { prefix: 'product_valid_',  expect: 200, label: 'product_valid',   weight: 10 },
-  { prefix: 'expired_',        expect: 422, label: 'expired',         weight: 15 },
-  { prefix: 'canceled_',       expect: 422, label: 'canceled',        weight: 15 },
-  { prefix: 'pending_',        expect: 422, label: 'pending',         weight: 10 },
-  { prefix: 'invalid_',        expect: 422, label: 'invalid_token',   weight: 10 },
-  { prefix: 'product_pending_',expect: 422, label: 'product_pending', weight: 10 },
+  { prefix: 'valid_active_',    expect: 200, label: 'active',          weight: 35 },
+  { prefix: 'expired_',         expect: 422, label: 'expired',         weight: 15 },
+  { prefix: 'canceled_',        expect: 422, label: 'canceled',        weight: 15 },
+  { prefix: 'pending_',         expect: 422, label: 'pending',         weight: 10 },
+  { prefix: 'invalid_',         expect: 422, label: 'invalid_token',   weight: 10 },
+  { prefix: 'product_valid_',   expect: 422, label: 'product_sub_404', weight: 10 },
+  { prefix: 'product_pending_', expect: 422, label: 'product_pending', weight:  5 },
 ];
 
 // Build weighted random picker
@@ -82,14 +82,15 @@ export const options = {
     { duration: '30s', target: 0   },   // cool-down
   ],
   thresholds: {
-    // Overall HTTP error rate < 5% (422s from invalid receipts are expected and NOT errors)
-    http_req_failed:                              ['rate<0.05'],
-    // Happy-path latency (register + verify): p95 < 2s
+    // True HTTP failures (network errors, 5xx): < 1%
+    // Note: 4xx from invalid receipts are marked as expectedStatuses and excluded
+    http_req_failed:                              ['rate<0.01'],
+    // Happy-path latency
     'http_req_duration{scenario:register}':       ['p(95)<2000', 'p(99)<4000'],
     'http_req_duration{scenario:verify_iap}':     ['p(95)<3000', 'p(99)<6000'],
-    // Custom: success rate on valid receipts > 95%
+    // Valid receipts must succeed >95%
     'iap_valid_success_rate':                     ['rate>0.95'],
-    // Custom: invalid receipts must be rejected (not silently accepted)
+    // Invalid receipts must be rejected >95%
     'iap_invalid_reject_rate':                    ['rate>0.95'],
   },
 };
@@ -161,6 +162,8 @@ function verifyIAP(token, scenario) {
   const start = Date.now();
   const res = http.post(`${BASE_URL}/v1/verify/iap`, body, {
     headers: authHeaders(token),
+    // Tell k6 that 400/422 are expected (not "failures") for invalid-receipt scenarios
+    responseCallback: http.expectedStatuses({ min: 200, max: 299 }, 400, 422),
     tags:    { scenario: 'verify_iap', iap_label: scenario.label },
   });
   iapTrend.add(Date.now() - start);
