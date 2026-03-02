@@ -1026,6 +1026,21 @@ func (h *AdminHandler) GetAnalyticsReport(c *gin.Context) {
 func (h *AdminHandler) GetRevenueOps(c *gin.Context) {
 ctx := c.Request.Context()
 
+// Pagination params for webhook events
+whPage := 1
+whPageSize := 20
+if p := c.Query("wh_page"); p != "" {
+	if v, err := strconv.Atoi(p); err == nil && v > 0 {
+		whPage = v
+	}
+}
+if ps := c.Query("wh_page_size"); ps != "" {
+	if v, err := strconv.Atoi(ps); err == nil && v > 0 && v <= 100 {
+		whPageSize = v
+	}
+}
+whOffset := (whPage - 1) * whPageSize
+
 // --- Dunning queue (active / in_progress only) ---
 type DunningQueueRow struct {
 ID           string  `json:"id"`
@@ -1124,8 +1139,8 @@ whRows, err2 := h.dbPool.Query(ctx, `
 SELECT id, provider, event_type, event_id, processed_at, created_at
 FROM webhook_events
 ORDER BY created_at DESC
-LIMIT 50
-`)
+LIMIT $1 OFFSET $2
+`, whPageSize, whOffset)
 webhooks := make([]WebhookRow, 0)
 if err2 == nil {
 defer whRows.Close()
@@ -1207,16 +1222,24 @@ mStats.Failed = cnt
 }
 mStats.Total = mStats.Pending + mStats.Processing + mStats.Sent + mStats.Failed
 
-c.JSON(200, gin.H{
+	whTotalPages := (whTotal + whPageSize - 1) / whPageSize
+	if whTotalPages < 1 {
+		whTotalPages = 1
+	}
+
+	c.JSON(200, gin.H{
 "dunning": gin.H{
 "queue":  dunning,
 "stats":  dStats,
 },
 "webhooks": gin.H{
-"events":      webhooks,
-"total":       whTotal,
-"unprocessed": whUnprocessed,
-"by_provider": provStats,
+"events":       webhooks,
+"total":        whTotal,
+"unprocessed":  whUnprocessed,
+"by_provider":  provStats,
+"page":         whPage,
+"page_size":    whPageSize,
+"total_pages":  whTotalPages,
 },
 "matomo": gin.H{
 "stats": mStats,

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertCircle, CheckCircle2, Clock, RefreshCw,
   Webhook, Activity, AlertTriangle, XCircle, Loader2,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import Link from "next/link";
 import { getRevenueOps } from "@/actions/revenue-ops";
@@ -32,9 +33,83 @@ const DUNNING_STATUS_COLOR: Record<string, string> = {
   failed:      "bg-red-500/10 text-red-600 border-red-500/20",
 };
 
+/* ─── pagination bar ─────────────────────────────────── */
+function PaginationBar({
+  page, totalPages, total, pageSize, paramKey,
+}: {
+  page: number;
+  totalPages: number;
+  total: number;
+  pageSize: number;
+  paramKey: string;
+}) {
+  const from = Math.min((page - 1) * pageSize + 1, total);
+  const to   = Math.min(page * pageSize, total);
+
+  function href(p: number) {
+    return `?${paramKey}=${p}#webhooks`;
+  }
+
+  return (
+    <div className="flex items-center justify-between px-1 pt-3 border-t">
+      <p className="text-xs text-muted-foreground">
+        Showing <span className="font-medium text-foreground">{from}–{to}</span> of{" "}
+        <span className="font-medium text-foreground">{total}</span>
+      </p>
+      <div className="flex items-center gap-1">
+        <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
+          {page > 1 ? <Link href={href(1)}><ChevronsLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronsLeft className="h-3.5 w-3.5" /></span>}
+        </Button>
+        <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
+          {page > 1 ? <Link href={href(page - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronLeft className="h-3.5 w-3.5" /></span>}
+        </Button>
+
+        {/* page numbers */}
+        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+          let p: number;
+          if (totalPages <= 5) {
+            p = i + 1;
+          } else if (page <= 3) {
+            p = i + 1;
+          } else if (page >= totalPages - 2) {
+            p = totalPages - 4 + i;
+          } else {
+            p = page - 2 + i;
+          }
+          return (
+            <Button
+              key={p}
+              variant={p === page ? "default" : "outline"}
+              size="icon"
+              className="h-7 w-7 text-xs"
+              asChild={p !== page}
+            >
+              {p !== page ? <Link href={href(p)}>{p}</Link> : <span>{p}</span>}
+            </Button>
+          );
+        })}
+
+        <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
+          {page < totalPages ? <Link href={href(page + 1)}><ChevronRight className="h-3.5 w-3.5" /></Link> : <span><ChevronRight className="h-3.5 w-3.5" /></span>}
+        </Button>
+        <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
+          {page < totalPages ? <Link href={href(totalPages)}><ChevronsRight className="h-3.5 w-3.5" /></Link> : <span><ChevronsRight className="h-3.5 w-3.5" /></span>}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── page ────────────────────────────────────────────── */
-export default async function RevenueOpsPage() {
-  const report = await getRevenueOps();
+export default async function RevenueOpsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ wh_page?: string }>;
+}) {
+  const sp = await searchParams;
+  const whPage = Math.max(1, parseInt(sp.wh_page ?? "1", 10) || 1);
+
+  const report = await getRevenueOps(whPage);
 
   if (!report) {
     return (
@@ -77,10 +152,10 @@ export default async function RevenueOpsPage() {
       {/* Summary stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Active Dunning",     value: activeDunning,              icon: RefreshCw,    color: activeDunning > 0 ? "text-amber-500" : "text-muted-foreground",    bg: "bg-amber-500/10"  },
-          { label: "Recovered",          value: dunning.stats.recovered,    icon: CheckCircle2, color: "text-emerald-500",                                                 bg: "bg-emerald-500/10" },
-          { label: "Webhooks Unprocessed",value: webhooks.unprocessed,      icon: Webhook,      color: webhooks.unprocessed > 0 ? "text-red-500" : "text-muted-foreground",bg: "bg-red-500/10"     },
-          { label: "Total Webhooks",     value: webhooks.total,             icon: Activity,     color: "text-blue-500",                                                    bg: "bg-blue-500/10"    },
+          { label: "Active Dunning",      value: activeDunning,           icon: RefreshCw,    color: activeDunning > 0 ? "text-amber-500" : "text-muted-foreground", bg: "bg-amber-500/10"   },
+          { label: "Recovered",           value: dunning.stats.recovered, icon: CheckCircle2, color: "text-emerald-500",                                              bg: "bg-emerald-500/10" },
+          { label: "Webhooks Unprocessed",value: webhooks.unprocessed,    icon: Webhook,      color: webhooks.unprocessed > 0 ? "text-red-500" : "text-muted-foreground", bg: "bg-red-500/10" },
+          { label: "Total Webhooks",      value: webhooks.total,          icon: Activity,     color: "text-blue-500",                                                bg: "bg-blue-500/10"    },
         ].map((s) => {
           const Icon = s.icon;
           return (
@@ -121,7 +196,7 @@ export default async function RevenueOpsPage() {
         </TabsList>
 
         {/* ── WEBHOOK INBOX ── */}
-        <TabsContent value="webhooks" className="mt-4 space-y-4">
+        <TabsContent value="webhooks" id="webhooks" className="mt-4 space-y-4">
           {/* By-provider breakdown */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {webhooks.by_provider.map((p) => {
@@ -150,11 +225,20 @@ export default async function RevenueOpsPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold">Recent Webhook Events</CardTitle>
-                <span className="text-xs text-muted-foreground">Showing last 50 · {webhooks.total} total</span>
+                <span className="text-xs text-muted-foreground">
+                  Page {webhooks.page} of {webhooks.total_pages} · {webhooks.total} total
+                </span>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 space-y-0">
               <WebhookTable rows={webhooks.events} />
+              <PaginationBar
+                page={webhooks.page}
+                totalPages={webhooks.total_pages}
+                total={webhooks.total}
+                pageSize={webhooks.page_size}
+                paramKey="wh_page"
+              />
             </CardContent>
           </Card>
         </TabsContent>
