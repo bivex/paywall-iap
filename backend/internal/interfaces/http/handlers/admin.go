@@ -1182,6 +1182,29 @@ if whPendingOnly {
 	whPaginationTotal = whUnprocessed
 }
 
+// Pending webhooks (all unprocessed, no pagination)
+pendingRows, _ := h.dbPool.Query(ctx, `
+SELECT id, provider, event_type, event_id, created_at
+FROM webhook_events
+WHERE processed_at IS NULL
+ORDER BY created_at ASC
+LIMIT 200
+`)
+pendingWebhooks := make([]WebhookRow, 0)
+if pendingRows != nil {
+	defer pendingRows.Close()
+	for pendingRows.Next() {
+		var row WebhookRow
+		var createdAt time.Time
+		if scanErr := pendingRows.Scan(&row.ID, &row.Provider, &row.EventType, &row.EventID, &createdAt); scanErr != nil {
+			continue
+		}
+		row.CreatedAt = createdAt.Format(time.RFC3339)
+		row.Processed = false
+		pendingWebhooks = append(pendingWebhooks, row)
+	}
+}
+
 type WebhookProviderStat struct {
 Provider  string `json:"provider"`
 Total     int    `json:"total"`
@@ -1250,6 +1273,7 @@ mStats.Total = mStats.Pending + mStats.Processing + mStats.Sent + mStats.Failed
 },
 "webhooks": gin.H{
 "events":       webhooks,
+"pending_events": pendingWebhooks,
 "total":        whPaginationTotal,
 "unprocessed":  whUnprocessed,
 "by_provider":  provStats,
