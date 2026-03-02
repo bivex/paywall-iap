@@ -100,3 +100,21 @@ export async function getRevenueOps(whPage = 1): Promise<RevenueOpsReport | null
     return null;
   }
 }
+
+export async function replayWebhook(webhookId: string): Promise<boolean> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("admin_access_token")?.value;
+  if (!token) return false;
+
+  const base = process.env.BACKEND_URL ?? "http://api:8080";
+  try {
+    const res = await fetch(`${base}/v1/admin/webhooks/${webhookId}/replay`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

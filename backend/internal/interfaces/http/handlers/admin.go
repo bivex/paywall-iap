@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
+	"github.com/bivex/paywall-iap/internal/worker/tasks"
 )
 
 // AdminHandler handles admin endpoints
@@ -29,6 +32,7 @@ type AdminHandler struct {
 	redisClient      *redis.Client
 	analyticsService *service.AnalyticsService
 	auditService     *service.AuditService
+	asynqClient      *asynq.Client
 }
 
 // NewAdminHandler creates a new admin handler
@@ -40,6 +44,7 @@ func NewAdminHandler(
 	redisClient *redis.Client,
 	analyticsService *service.AnalyticsService,
 	auditService *service.AuditService,
+	asynqClient *asynq.Client,
 ) *AdminHandler {
 	return &AdminHandler{
 		subscriptionRepo: subscriptionRepo,
@@ -49,6 +54,7 @@ func NewAdminHandler(
 		redisClient:      redisClient,
 		analyticsService: analyticsService,
 		auditService:     auditService,
+		asynqClient:      asynqClient,
 	}
 }
 
@@ -1245,4 +1251,45 @@ mStats.Total = mStats.Pending + mStats.Processing + mStats.Sent + mStats.Failed
 "stats": mStats,
 },
 })
+}
+
+// ReplayWebhook re-enqueues an unprocessed webhook event for processing.
+// POST /v1/admin/webhooks/:id/replay
+func (h *AdminHandler) ReplayWebhook(c *gin.Context) {
+ctx := c.Request.Context()
+id, err := uuid.Parse(c.Param("id"))
+if err != nil {
+response.BadRequest(c, "Invalid webhook ID")
+return
+}
+
+var provider, eventType, eventID string
+var processedAt *time.Time
+err = h.dbPool.QueryRow(ctx,
+`SELECT provider, event_type, event_id, processed_at FROM webhook_events WHERE id = $1`, id,
+).Scan(&provider, &eventType, &eventID, &processedAt)
+if err != nil {
+response.NotFound(c, "Webhook event not found")
+return
+}
+
+payload, _ := json.Marshal(map[string]string{
+"provider":   provider,
+"event_type": eventType,
+"event_id":   eventID,
+})
+if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, payload)); err != nil {
+response.InternalError(c, "Failed to enqueue replay task")
+return
+}
+
+// Log admin action
+adminID, _ := c.Get("admin_id")
+if aid, ok := adminID.(uuid.UUID); ok {
+_ = h.auditService.LogAction(ctx, aid, "replay_webhook", "webhook_event", &id, map[string]interface{}{
+"provider": provider, "event_type": eventType, "event_id": eventID,
+})
+}
+
+c.JSON(200, gin.H{"ok": true, "queued": eventID})
 }

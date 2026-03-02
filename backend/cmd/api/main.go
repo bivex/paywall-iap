@@ -159,6 +159,7 @@ func main() {
 		redisClient,
 		analyticsService,
 		auditService,
+		asynqClient,
 	)
 	webhookHandler := app_handler.NewWebhookHandler(
 		cfg.IAP.StripeWebhookSecret,
@@ -277,6 +278,7 @@ func main() {
 			admin.GET("/audit-log", adminHandler.GetAuditLog)
 			admin.GET("/analytics/report", adminHandler.GetAnalyticsReport)
 			admin.GET("/revenue-ops", adminHandler.GetRevenueOps)
+			admin.POST("/webhooks/:id/replay", adminHandler.ReplayWebhook)
 			admin.GET("/health", adminHandler.GetHealth)
 		}
 	}

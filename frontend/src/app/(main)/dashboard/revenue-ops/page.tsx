@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { getRevenueOps } from "@/actions/revenue-ops";
 import type { DunningRow, WebhookRow } from "@/actions/revenue-ops";
+import { ReplayWebhookButton } from "./_components/replay-webhook-button";
 
 /* ─── helpers ─────────────────────────────────────────── */
 function fmtDate(iso: string | null) {
@@ -315,6 +316,7 @@ function WebhookTable({ rows }: { rows: WebhookRow[] }) {
           <TableHead>Event ID</TableHead>
           <TableHead>Received</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead className="w-20">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -338,6 +340,9 @@ function WebhookTable({ rows }: { rows: WebhookRow[] }) {
                   <Clock className="h-3 w-3 mr-1" /> pending
                 </Badge>
               )}
+            </TableCell>
+            <TableCell>
+              {!w.processed && <ReplayWebhookButton webhookId={w.id} />}
             </TableCell>
           </TableRow>
         ))}
