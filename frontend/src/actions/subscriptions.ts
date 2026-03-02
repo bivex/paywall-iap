@@ -71,3 +71,34 @@ export async function getSubscriptions(
 }
 
 
+
+export interface TransactionRow {
+  id: string;
+  provider: string;
+  provider_tx_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  created_at: string;
+}
+
+export interface SubscriptionDetail extends SubscriptionRow {
+  updated_at: string;
+  transactions: TransactionRow[];
+}
+
+export async function getSubscriptionDetail(id: string): Promise<SubscriptionDetail | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("admin_access_token")?.value;
+  if (!token) return null;
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/subscriptions/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as SubscriptionDetail;
+  } catch {
+    return null;
+  }
+}

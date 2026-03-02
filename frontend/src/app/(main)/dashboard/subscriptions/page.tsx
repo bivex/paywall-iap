@@ -24,6 +24,8 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-r
 import { getSubscriptions } from "@/actions/subscriptions";
 import type { SubscriptionsParams } from "@/actions/subscriptions";
 import { formatSource, formatPlanType } from "@/lib/subscriptions/format";
+import { SubscriptionDetailSheet } from "./_components/subscription-detail-sheet";
+import { SubscriptionRow as SubRow } from "./_components/subscription-row";
 import { SubscriptionsFilters } from "./_components/subscriptions-filters";
 
 const statusClassMap: Record<string, string> = {
@@ -106,20 +108,7 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
                   </TableCell>
                 </TableRow>
               ) : (
-                subs.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.email || s.user_id}</TableCell>
-                    <TableCell>
-                      <Badge className={statusClassMap[s.status] ?? "bg-muted text-muted-foreground"}>
-                        {s.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatSource(s.source, s.platform)}</TableCell>
-                    <TableCell>{formatPlanType(s.plan_type)}</TableCell>
-                    <TableCell>{new Date(s.expires_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</TableCell>
-                    <TableCell>${s.ltv.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))
+                subs.map((s) => <SubRow key={s.id} s={s} />)
               )}
             </TableBody>
           </Table>

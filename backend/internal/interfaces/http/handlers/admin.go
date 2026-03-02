@@ -1328,6 +1328,92 @@ _ = h.auditService.LogAction(ctx, aid, "replay_webhook", "webhook_event", &id, m
 c.JSON(200, gin.H{"ok": true, "queued": eventID})
 }
 
+// GetSubscriptionDetail returns full detail for a single subscription by ID.
+// GET /admin/subscriptions/:id
+func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
+	ctx := c.Request.Context()
+	subID := c.Param("id")
+	if subID == "" {
+		c.JSON(400, gin.H{"error": "missing id"})
+		return
+	}
+
+	type TxRow struct {
+		ID          string  `json:"id"`
+		Provider    string  `json:"provider"`
+		ProviderTxID string `json:"provider_tx_id"`
+		Amount      float64 `json:"amount"`
+		Currency    string  `json:"currency"`
+		Status      string  `json:"status"`
+		CreatedAt   string  `json:"created_at"`
+	}
+
+	type Detail struct {
+		ID          string  `json:"id"`
+		Status      string  `json:"status"`
+		Source      string  `json:"source"`
+		Platform    string  `json:"platform"`
+		PlanType    string  `json:"plan_type"`
+		ExpiresAt   string  `json:"expires_at"`
+		CreatedAt   string  `json:"created_at"`
+		UpdatedAt   string  `json:"updated_at"`
+		UserID      string  `json:"user_id"`
+		Email       string  `json:"email"`
+		LTV         float64 `json:"ltv"`
+		Transactions []TxRow `json:"transactions"`
+	}
+
+	var d Detail
+	var sID, uID uuid.UUID
+	var expiresAt, createdAt, updatedAt time.Time
+	err := h.dbPool.QueryRow(ctx, `
+		SELECT s.id, s.status, s.source, s.platform, s.plan_type,
+		       s.expires_at, s.created_at, s.updated_at,
+		       u.id, COALESCE(u.email,''), COALESCE(u.ltv,0)
+		FROM subscriptions s
+		JOIN users u ON u.id = s.user_id
+		WHERE s.id = $1 AND s.deleted_at IS NULL
+	`, subID).Scan(
+		&sID, &d.Status, &d.Source, &d.Platform, &d.PlanType,
+		&expiresAt, &createdAt, &updatedAt,
+		&uID, &d.Email, &d.LTV,
+	)
+	if err != nil {
+		c.JSON(404, gin.H{"error": "subscription not found"})
+		return
+	}
+	d.ID = sID.String()
+	d.UserID = uID.String()
+	d.ExpiresAt = expiresAt.Format(time.RFC3339)
+	d.CreatedAt = createdAt.Format(time.RFC3339)
+	d.UpdatedAt = updatedAt.Format(time.RFC3339)
+
+	// Load transactions
+	txRows, _ := h.dbPool.Query(ctx, `
+		SELECT id, provider, provider_tx_id, amount, currency, status, created_at
+		FROM transactions
+		WHERE subscription_id = $1
+		ORDER BY created_at DESC
+	`, subID)
+	d.Transactions = make([]TxRow, 0)
+	if txRows != nil {
+		defer txRows.Close()
+		for txRows.Next() {
+			var tx TxRow
+			var txID uuid.UUID
+			var txCreatedAt time.Time
+			if scanErr := txRows.Scan(&txID, &tx.Provider, &tx.ProviderTxID, &tx.Amount, &tx.Currency, &tx.Status, &txCreatedAt); scanErr != nil {
+				continue
+			}
+			tx.ID = txID.String()
+			tx.CreatedAt = txCreatedAt.Format(time.RFC3339)
+			d.Transactions = append(d.Transactions, tx)
+		}
+	}
+
+	c.JSON(200, d)
+}
+
 // ListSubscriptions returns a paginated, filterable list of all subscriptions.
 // GET /admin/subscriptions?page=1&limit=20&status=active&source=iap&platform=ios&plan_type=monthly&search=email&date_from=2024-01-01&date_to=2024-12-31
 func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
