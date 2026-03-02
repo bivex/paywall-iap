@@ -61,3 +61,4 @@ backend/seed
 backend/worker
 
 backend/api
+tests/load/results/
