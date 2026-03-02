@@ -480,3 +480,174 @@ c.JSON(http.StatusOK, gin.H{
 "total_pages": totalPages,
 })
 }
+
+// GetUserProfile returns a full 360° user profile: identity, subscriptions, transactions, audit log, dunning.
+func (h *AdminHandler) GetUserProfile(c *gin.Context) {
+ctx := c.Request.Context()
+userID := c.Param("id")
+
+uid, err := uuid.Parse(userID)
+if err != nil {
+c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+return
+}
+
+// --- Identity ---
+type UserInfo struct {
+ID             string  `json:"id"`
+PlatformUserID string  `json:"platform_user_id"`
+DeviceID       *string `json:"device_id"`
+Platform       string  `json:"platform"`
+AppVersion     string  `json:"app_version"`
+Email          string  `json:"email"`
+Role           string  `json:"role"`
+LTV            float64 `json:"ltv"`
+CreatedAt      string  `json:"created_at"`
+}
+var user UserInfo
+var createdAt time.Time
+err = h.dbPool.QueryRow(ctx,
+`SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, created_at
+ FROM users WHERE id = $1`, uid,
+).Scan(&uid, &user.PlatformUserID, &user.DeviceID, &user.Platform, &user.AppVersion,
+&user.Email, &user.Role, &user.LTV, &createdAt)
+if err != nil {
+c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+return
+}
+user.ID = uid.String()
+user.CreatedAt = createdAt.Format(time.RFC3339)
+
+// --- Subscriptions ---
+type SubRow struct {
+ID        string `json:"id"`
+Status    string `json:"status"`
+Source    string `json:"source"`
+Platform  string `json:"platform"`
+ProductID string `json:"product_id"`
+PlanType  string `json:"plan_type"`
+ExpiresAt string `json:"expires_at"`
+AutoRenew bool   `json:"auto_renew"`
+CreatedAt string `json:"created_at"`
+}
+subRows, err := h.dbPool.Query(ctx,
+`SELECT id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at
+ FROM subscriptions WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 10`, uid)
+if err != nil {
+response.InternalError(c, "Failed to get subscriptions")
+return
+}
+defer subRows.Close()
+subs := make([]SubRow, 0)
+for subRows.Next() {
+var s SubRow
+var sid uuid.UUID
+var exp, cat time.Time
+if err := subRows.Scan(&sid, &s.Status, &s.Source, &s.Platform, &s.ProductID, &s.PlanType, &exp, &s.AutoRenew, &cat); err != nil {
+continue
+}
+s.ID = sid.String()
+s.ExpiresAt = exp.Format(time.RFC3339)
+s.CreatedAt = cat.Format(time.RFC3339)
+subs = append(subs, s)
+}
+
+// --- Transactions ---
+type TxRow struct {
+ID       string  `json:"id"`
+Amount   float64 `json:"amount"`
+Currency string  `json:"currency"`
+Status   string  `json:"status"`
+TxID     *string `json:"provider_tx_id"`
+Date     string  `json:"date"`
+}
+txRows, err := h.dbPool.Query(ctx,
+`SELECT id, amount, currency, status, provider_tx_id, created_at
+ FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`, uid)
+if err != nil {
+response.InternalError(c, "Failed to get transactions")
+return
+}
+defer txRows.Close()
+txs := make([]TxRow, 0)
+for txRows.Next() {
+var t TxRow
+var tid uuid.UUID
+var tdate time.Time
+var amountStr string
+if err := txRows.Scan(&tid, &amountStr, &t.Currency, &t.Status, &t.TxID, &tdate); err != nil {
+continue
+}
+t.ID = tid.String()
+fmt.Sscan(amountStr, &t.Amount)
+t.Date = tdate.Format(time.RFC3339)
+txs = append(txs, t)
+}
+
+// --- Audit log for this user ---
+type AuditRow struct {
+Action     string `json:"action"`
+AdminEmail string `json:"admin_email"`
+Detail     string `json:"detail"`
+Date       string `json:"date"`
+}
+auditRows, err := h.dbPool.Query(ctx,
+`SELECT a.action, COALESCE(u2.email, a.admin_id::text), COALESCE(a.details::text,'{}'), a.created_at
+ FROM admin_audit_log a LEFT JOIN users u2 ON u2.id = a.admin_id
+ WHERE a.target_user_id = $1 ORDER BY a.created_at DESC LIMIT 10`, uid)
+if err != nil {
+response.InternalError(c, "Failed to get audit log")
+return
+}
+defer auditRows.Close()
+audits := make([]AuditRow, 0)
+for auditRows.Next() {
+var a AuditRow
+var adate time.Time
+if err := auditRows.Scan(&a.Action, &a.AdminEmail, &a.Detail, &adate); err != nil {
+continue
+}
+a.Date = adate.Format(time.RFC3339)
+audits = append(audits, a)
+}
+
+// --- Dunning ---
+type DunningRow struct {
+Status      string  `json:"status"`
+AttemptCount int    `json:"attempt_count"`
+MaxAttempts  int    `json:"max_attempts"`
+NextAttempt  *string `json:"next_attempt_at"`
+CreatedAt    string  `json:"created_at"`
+}
+dunRows, err := h.dbPool.Query(ctx,
+`SELECT status, attempt_count, max_attempts, next_attempt_at, created_at
+ FROM dunning WHERE user_id = $1 ORDER BY created_at DESC LIMIT 5`, uid)
+if err != nil {
+response.InternalError(c, "Failed to get dunning")
+return
+}
+defer dunRows.Close()
+dunnings := make([]DunningRow, 0)
+for dunRows.Next() {
+var d DunningRow
+var ddate time.Time
+var nextAt *time.Time
+if err := dunRows.Scan(&d.Status, &d.AttemptCount, &d.MaxAttempts, &nextAt, &ddate); err != nil {
+continue
+}
+if nextAt != nil {
+s := nextAt.Format(time.RFC3339)
+d.NextAttempt = &s
+}
+d.CreatedAt = ddate.Format(time.RFC3339)
+dunnings = append(dunnings, d)
+}
+
+c.JSON(http.StatusOK, gin.H{
+"user":         user,
+"subscriptions": subs,
+"transactions": txs,
+"audit_log":    audits,
+"dunning":      dunnings,
+})
+}
