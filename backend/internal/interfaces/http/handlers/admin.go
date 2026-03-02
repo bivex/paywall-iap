@@ -1388,13 +1388,13 @@ func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
 	d.CreatedAt = createdAt.Format(time.RFC3339)
 	d.UpdatedAt = updatedAt.Format(time.RFC3339)
 
-	// Load transactions
+	// Load transactions (no provider column in transactions table; derive from sub source)
 	txRows, _ := h.dbPool.Query(ctx, `
-		SELECT id, provider, provider_tx_id, amount, currency, status, created_at
+		SELECT id, COALESCE(provider_tx_id,''), amount, currency, status, created_at
 		FROM transactions
 		WHERE subscription_id = $1
 		ORDER BY created_at DESC
-	`, subID)
+	`, sID)
 	d.Transactions = make([]TxRow, 0)
 	if txRows != nil {
 		defer txRows.Close()
@@ -1402,10 +1402,11 @@ func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
 			var tx TxRow
 			var txID uuid.UUID
 			var txCreatedAt time.Time
-			if scanErr := txRows.Scan(&txID, &tx.Provider, &tx.ProviderTxID, &tx.Amount, &tx.Currency, &tx.Status, &txCreatedAt); scanErr != nil {
+			if scanErr := txRows.Scan(&txID, &tx.ProviderTxID, &tx.Amount, &tx.Currency, &tx.Status, &txCreatedAt); scanErr != nil {
 				continue
 			}
 			tx.ID = txID.String()
+			tx.Provider = d.Source // derive from subscription source
 			tx.CreatedAt = txCreatedAt.Format(time.RFC3339)
 			d.Transactions = append(d.Transactions, tx)
 		}
