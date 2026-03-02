@@ -1432,3 +1432,164 @@ c.JSON(http.StatusOK, gin.H{
 "total_pages":   totalPages,
 })
 }
+
+// ListTransactions returns a paginated, filterable list of all transactions for reconciliation.
+// GET /admin/transactions?page=1&limit=20&status=success&source=iap&platform=ios&search=email&date_from=2024-01-01&date_to=2024-12-31
+func (h *AdminHandler) ListTransactions(c *gin.Context) {
+ctx := c.Request.Context()
+
+page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+if page < 1 {
+page = 1
+}
+limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+if limit < 1 || limit > 200 {
+limit = 20
+}
+offset := (page - 1) * limit
+
+status := c.Query("status")
+source := c.Query("source")
+platform := c.Query("platform")
+search := c.Query("search")
+dateFrom := c.Query("date_from")
+dateTo := c.Query("date_to")
+
+args := []interface{}{}
+where := []string{}
+idx := 1
+
+if status != "" {
+args = append(args, status)
+where = append(where, fmt.Sprintf("t.status = $%d", idx))
+idx++
+}
+if source != "" {
+args = append(args, source)
+where = append(where, fmt.Sprintf("s.source = $%d", idx))
+idx++
+}
+if platform != "" {
+args = append(args, platform)
+where = append(where, fmt.Sprintf("s.platform = $%d", idx))
+idx++
+}
+if search != "" {
+args = append(args, "%"+search+"%")
+where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
+idx++
+}
+if dateFrom != "" {
+args = append(args, dateFrom)
+where = append(where, fmt.Sprintf("t.created_at >= $%d::date", idx))
+idx++
+}
+if dateTo != "" {
+args = append(args, dateTo)
+where = append(where, fmt.Sprintf("t.created_at < ($%d::date + INTERVAL '1 day')", idx))
+idx++
+}
+
+whereSQL := ""
+if len(where) > 0 {
+whereSQL = "WHERE " + strings.Join(where, " AND ")
+}
+
+baseQ := fmt.Sprintf(`
+FROM transactions t
+JOIN users u ON u.id = t.user_id
+JOIN subscriptions s ON s.id = t.subscription_id
+%s`, whereSQL)
+
+// totals for reconciliation summary
+type Summary struct {
+TotalCount     int64   `json:"total_count"`
+SuccessCount   int64   `json:"success_count"`
+FailedCount    int64   `json:"failed_count"`
+RefundedCount  int64   `json:"refunded_count"`
+TotalRevenue   float64 `json:"total_revenue"`
+TotalRefunded  float64 `json:"total_refunded"`
+}
+var summary Summary
+sumQ := fmt.Sprintf(`
+SELECT
+COUNT(*),
+COUNT(*) FILTER (WHERE t.status = 'success'),
+COUNT(*) FILTER (WHERE t.status = 'failed'),
+COUNT(*) FILTER (WHERE t.status = 'refunded'),
+COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'success'), 0),
+COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'refunded'), 0)
+%s`, baseQ)
+if err := h.dbPool.QueryRow(ctx, sumQ, args...).Scan(
+&summary.TotalCount, &summary.SuccessCount, &summary.FailedCount,
+&summary.RefundedCount, &summary.TotalRevenue, &summary.TotalRefunded,
+); err != nil {
+response.InternalError(c, "Failed to get transaction summary")
+return
+}
+
+args = append(args, limit, offset)
+dataQ := fmt.Sprintf(`
+SELECT
+t.id, t.amount, t.currency, t.status,
+COALESCE(t.provider_tx_id, '') AS provider_tx_id,
+COALESCE(t.receipt_hash, '') AS receipt_hash,
+t.created_at,
+u.id AS user_id, COALESCE(u.email, '') AS email,
+s.source, s.platform, s.plan_type
+%s
+ORDER BY t.created_at DESC
+LIMIT $%d OFFSET $%d`, baseQ, idx, idx+1)
+
+rows, err := h.dbPool.Query(ctx, dataQ, args...)
+if err != nil {
+response.InternalError(c, "Failed to list transactions")
+return
+}
+defer rows.Close()
+
+type TxRow struct {
+ID          string  `json:"id"`
+Amount      float64 `json:"amount"`
+Currency    string  `json:"currency"`
+Status      string  `json:"status"`
+ProviderTxID string `json:"provider_tx_id"`
+ReceiptHash string  `json:"receipt_hash"`
+CreatedAt   string  `json:"created_at"`
+UserID      string  `json:"user_id"`
+Email       string  `json:"email"`
+Source      string  `json:"source"`
+Platform    string  `json:"platform"`
+PlanType    string  `json:"plan_type"`
+}
+
+result := make([]TxRow, 0, limit)
+for rows.Next() {
+var r TxRow
+var txID, userID uuid.UUID
+var createdAt time.Time
+if err := rows.Scan(
+&txID, &r.Amount, &r.Currency, &r.Status,
+&r.ProviderTxID, &r.ReceiptHash, &createdAt,
+&userID, &r.Email,
+&r.Source, &r.Platform, &r.PlanType,
+); err != nil {
+response.InternalError(c, "Failed to scan transaction row")
+return
+}
+r.ID = txID.String()
+r.UserID = userID.String()
+r.CreatedAt = createdAt.Format(time.RFC3339)
+result = append(result, r)
+}
+
+totalPages := int((summary.TotalCount + int64(limit) - 1) / int64(limit))
+c.JSON(http.StatusOK, gin.H{
+"transactions": result,
+"summary":      summary,
+"total":        summary.TotalCount,
+"page":         page,
+"limit":        limit,
+"total_pages":  totalPages,
+})
+}
