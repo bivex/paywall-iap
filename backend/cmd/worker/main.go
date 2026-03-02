@@ -45,9 +45,6 @@ func main() {
 	}
 	defer pool.Close(dbPool)
 
-	queries := generated.New(dbPool)
-	taskHandlers := worker_tasks.NewTaskHandlers(queries)
-
 	// Initialize Redis
 	opts, err := redis.ParseURL(cfg.Redis.URL)
 	if err != nil {
@@ -61,6 +58,9 @@ func main() {
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		logging.Logger.Fatal("Failed to ping Redis", zap.Error(err))
 	}
+
+	queries := generated.New(dbPool)
+	taskHandlers := worker_tasks.NewTaskHandlers(queries, redisClient)
 
 	// Initialize advanced bandit services for worker
 	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
