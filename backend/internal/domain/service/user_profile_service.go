@@ -146,7 +146,7 @@ func (s *UserProfileService) fetchSubscriptions(ctx context.Context, userID uuid
 	}
 	defer rows.Close()
 
-	var subs []SubscriptionRow
+	subs := make([]SubscriptionRow, 0)
 	for rows.Next() {
 		var s SubscriptionRow
 		var sid uuid.UUID
@@ -173,7 +173,7 @@ func (s *UserProfileService) fetchTransactions(ctx context.Context, userID uuid.
 	}
 	defer rows.Close()
 
-	var txs []TransactionRow
+	txs := make([]TransactionRow, 0)
 	for rows.Next() {
 		var t TransactionRow
 		var tid uuid.UUID
@@ -202,7 +202,7 @@ func (s *UserProfileService) fetchAuditLog(ctx context.Context, userID uuid.UUID
 	}
 	defer rows.Close()
 
-	var audits []AuditRow
+	audits := make([]AuditRow, 0)
 	for rows.Next() {
 		var a AuditRow
 		var adate time.Time
@@ -226,7 +226,7 @@ func (s *UserProfileService) fetchDunning(ctx context.Context, userID uuid.UUID)
 	}
 	defer rows.Close()
 
-	var dunnings []DunningRow
+	dunnings := make([]DunningRow, 0)
 	for rows.Next() {
 		var d DunningRow
 		var ddate time.Time

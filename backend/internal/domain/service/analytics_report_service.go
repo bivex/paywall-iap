@@ -207,7 +207,7 @@ func (s *AnalyticsReportService) fetchTrend(ctx context.Context) ([]TrendPoint, 
 	}
 	defer rows.Close()
 
-	var trend []TrendPoint
+	trend := make([]TrendPoint, 0)
 	for rows.Next() {
 		var p TrendPoint
 		if err := rows.Scan(&p.Month, &p.MRR, &p.ActiveCount, &p.NewSubs); err != nil {
@@ -233,7 +233,7 @@ func (s *AnalyticsReportService) fetchByPlatform(ctx context.Context) ([]Platfor
 	}
 	defer rows.Close()
 
-	var stats []PlatformRow
+	stats := make([]PlatformRow, 0)
 	for rows.Next() {
 		var p PlatformRow
 		if err := rows.Scan(&p.Platform, &p.Count, &p.MRR); err != nil {
@@ -259,7 +259,7 @@ func (s *AnalyticsReportService) fetchByPlan(ctx context.Context) ([]PlanRow, er
 	}
 	defer rows.Close()
 
-	var stats []PlanRow
+	stats := make([]PlanRow, 0)
 	for rows.Next() {
 		var p PlanRow
 		if err := rows.Scan(&p.PlanType, &p.Count, &p.MRR); err != nil {
