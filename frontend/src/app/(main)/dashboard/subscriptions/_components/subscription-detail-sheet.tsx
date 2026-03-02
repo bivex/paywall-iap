@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink, ChevronDown, ChevronRight, Copy, Check } from "lucide-react";
 import { getSubscriptionDetail } from "@/actions/subscriptions";
 import type { SubscriptionDetail } from "@/actions/subscriptions";
 import { formatSource, formatPlanType } from "@/lib/subscriptions/format";
@@ -38,6 +38,88 @@ function Field({ label, value, mono }: { label: string; value: React.ReactNode; 
       <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">{label}</span>
       <span className={`text-sm ${mono ? "font-mono text-xs break-all text-foreground/80" : "font-medium"}`}>{value}</span>
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      className="ml-1 inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
+      onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+    >
+      {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+    </button>
+  );
+}
+
+function TxDetailRow({ tx }: { tx: import("@/actions/subscriptions").TransactionRow }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <>
+      <TableRow
+        className="text-xs cursor-pointer hover:bg-muted/60 transition-colors"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <TableCell className="py-2.5 w-6">
+          {expanded
+            ? <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+        </TableCell>
+        <TableCell className="capitalize py-2.5 font-medium">{tx.provider}</TableCell>
+        <TableCell className="font-mono max-w-[80px] truncate py-2.5 text-muted-foreground">{tx.provider_tx_id || "—"}</TableCell>
+        <TableCell className="py-2.5 text-right font-semibold tabular-nums">
+          {tx.amount.toFixed(2)} <span className="text-muted-foreground text-[10px]">{tx.currency.toUpperCase()}</span>
+        </TableCell>
+        <TableCell className="py-2.5">
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${txStatusClass[tx.status] ?? "bg-muted text-muted-foreground"}`}>
+            {tx.status}
+          </span>
+        </TableCell>
+        <TableCell className="py-2.5 whitespace-nowrap text-muted-foreground">{fmt(tx.created_at)}</TableCell>
+      </TableRow>
+      {expanded && (
+        <TableRow className="bg-muted/20 hover:bg-muted/20">
+          <TableCell />
+          <TableCell colSpan={5} className="py-3 pb-4">
+            <div className="space-y-2.5">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Transaction ID</span>
+                <span className="font-mono text-xs break-all text-foreground/80 flex items-center gap-1">
+                  {tx.id}
+                  <CopyButton text={tx.id} />
+                </span>
+              </div>
+              {tx.provider_tx_id && (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Provider Tx ID</span>
+                  <span className="font-mono text-xs break-all text-foreground/80 flex items-center gap-1">
+                    {tx.provider_tx_id}
+                    <CopyButton text={tx.provider_tx_id} />
+                  </span>
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-3 pt-1">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Provider</span>
+                  <span className="text-xs capitalize font-medium">{tx.provider}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Amount</span>
+                  <span className="text-xs font-semibold tabular-nums">{tx.amount.toFixed(2)} {tx.currency.toUpperCase()}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Status</span>
+                  <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${txStatusClass[tx.status] ?? "bg-muted text-muted-foreground"}`}>
+                    {tx.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
 
@@ -160,6 +242,7 @@ export function SubscriptionDetailSheet({ subscriptionId, trigger }: Props) {
                     <Table>
                       <TableHeader>
                         <TableRow className="hover:bg-transparent bg-muted/40">
+                          <TableHead className="w-6 h-8 py-2" />
                           <TableHead className="text-xs h-8 py-2">Provider</TableHead>
                           <TableHead className="text-xs h-8 py-2">Tx ID</TableHead>
                           <TableHead className="text-xs h-8 py-2 text-right">Amount</TableHead>
@@ -169,19 +252,7 @@ export function SubscriptionDetailSheet({ subscriptionId, trigger }: Props) {
                       </TableHeader>
                       <TableBody>
                         {detail.transactions.map((tx) => (
-                          <TableRow key={tx.id} className="text-xs">
-                            <TableCell className="capitalize py-2.5 font-medium">{tx.provider}</TableCell>
-                            <TableCell className="font-mono max-w-[90px] truncate py-2.5 text-muted-foreground">{tx.provider_tx_id}</TableCell>
-                            <TableCell className="py-2.5 text-right font-semibold tabular-nums">
-                              {tx.amount.toFixed(2)} <span className="text-muted-foreground text-[10px]">{tx.currency.toUpperCase()}</span>
-                            </TableCell>
-                            <TableCell className="py-2.5">
-                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${txStatusClass[tx.status] ?? "bg-muted text-muted-foreground"}`}>
-                                {tx.status}
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-2.5 whitespace-nowrap text-muted-foreground">{fmt(tx.created_at)}</TableCell>
-                          </TableRow>
+                          <TxDetailRow key={tx.id} tx={tx} />
                         ))}
                       </TableBody>
                     </Table>
