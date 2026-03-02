@@ -23,19 +23,20 @@ function fmtDate(iso: string | null) {
 type SortKey = "status" | "provider" | "event_type" | "created_at";
 type SortDir = "asc" | "desc";
 
-function SortIcon({ col, sortKey, dir }: { col: SortKey; sortKey: SortKey; dir: SortDir }) {
-  if (col !== sortKey) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/40 inline" />;
+// Defined at module level — stable reference, no remounting issues
+function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30 inline-block" />;
   return dir === "asc"
-    ? <ArrowUp   className="ml-1 h-3 w-3 text-foreground inline" />
-    : <ArrowDown className="ml-1 h-3 w-3 text-foreground inline" />;
+    ? <ArrowUp   className="ml-1 h-3 w-3 inline-block" />
+    : <ArrowDown className="ml-1 h-3 w-3 inline-block" />;
 }
 
 export function WebhookTable({ rows }: { rows: WebhookRow[] }) {
-  // default: pending first (processed=false → 0, true → 1 ascending = pending first)
+  // default: pending first
   const [sortKey, setSortKey] = useState<SortKey>("status");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  function toggleSort(key: SortKey) {
+  function handleSort(key: SortKey) {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
@@ -50,7 +51,6 @@ export function WebhookTable({ rows }: { rows: WebhookRow[] }) {
       let cmp = 0;
       switch (sortKey) {
         case "status":
-          // pending (false) before processed (true)
           cmp = Number(a.processed) - Number(b.processed);
           break;
         case "provider":
@@ -72,27 +72,25 @@ export function WebhookTable({ rows }: { rows: WebhookRow[] }) {
     return <p className="py-8 text-center text-sm text-muted-foreground">No webhook events found.</p>;
   }
 
-  function Th({ col, children }: { col: SortKey; children: React.ReactNode }) {
-    return (
-      <TableHead
-        className="cursor-pointer select-none hover:text-foreground transition-colors"
-        onClick={() => toggleSort(col)}
-      >
-        {children}
-        <SortIcon col={col} sortKey={sortKey} dir={sortDir} />
-      </TableHead>
-    );
-  }
+  const thClass = "cursor-pointer select-none hover:text-foreground transition-colors";
 
   return (
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <Th col="provider">Provider</Th>
-          <Th col="event_type">Event Type</Th>
+          <TableHead className={thClass} onClick={() => handleSort("provider")}>
+            Provider <SortIndicator active={sortKey === "provider"} dir={sortDir} />
+          </TableHead>
+          <TableHead className={thClass} onClick={() => handleSort("event_type")}>
+            Event Type <SortIndicator active={sortKey === "event_type"} dir={sortDir} />
+          </TableHead>
           <TableHead>Event ID</TableHead>
-          <Th col="created_at">Received</Th>
-          <Th col="status">Status</Th>
+          <TableHead className={thClass} onClick={() => handleSort("created_at")}>
+            Received <SortIndicator active={sortKey === "created_at"} dir={sortDir} />
+          </TableHead>
+          <TableHead className={thClass} onClick={() => handleSort("status")}>
+            Status <SortIndicator active={sortKey === "status"} dir={sortDir} />
+          </TableHead>
           <TableHead className="w-20">Actions</TableHead>
         </TableRow>
       </TableHeader>
