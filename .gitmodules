@@ -1,6 +1,6 @@
 [submodule "tests/google-billing-mock"]
 	path = tests/google-billing-mock
 	url = https://github.com/bivex/google-billing-mock
-[submodule "tools/apple-of-my-iap"]
-	path = tools/apple-of-my-iap
+[submodule "tests/apple-of-my-iap"]
+	path = tests/apple-of-my-iap
 	url = https://github.com/bivex/apple-of-my-iap
