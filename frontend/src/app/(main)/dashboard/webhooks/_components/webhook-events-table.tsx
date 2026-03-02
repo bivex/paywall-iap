@@ -130,18 +130,16 @@ export function WebhookEventsTable({
       {/* Table card */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Event Log</CardTitle>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="relative flex-1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-base shrink-0">Event Log</CardTitle>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="relative flex-1 min-w-0 max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Search event ID or type…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 pr-8 w-full"
+                  className="pl-9 pr-8"
                 />
                 {search && (
                   <button
@@ -153,8 +151,8 @@ export function WebhookEventsTable({
                 )}
               </div>
               <Select value={provider} onValueChange={setProvider}>
-                <SelectTrigger className="w-full sm:w-[150px] shrink-0">
-                  <SelectValue placeholder="Provider" />
+                <SelectTrigger className="w-[140px] shrink-0">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Providers</SelectItem>
@@ -164,8 +162,8 @@ export function WebhookEventsTable({
                 </SelectContent>
               </Select>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-full sm:w-[140px] shrink-0">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="w-[130px] shrink-0">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
