@@ -72,14 +72,20 @@ function uniqueEmail() {
   return `rtdn_${__VU}_${Date.now()}@test.invalid`;
 }
 
-function register(email, password) {
+function register(platformUID, deviceID) {
   const res = http.post(
     `${BACKEND}/v1/auth/register`,
-    JSON.stringify({ email, password }),
+    JSON.stringify({
+      platform_user_id: platformUID,
+      device_id:        deviceID,
+      platform:         "android",
+      app_version:      "1.0",
+    }),
     { headers: { "Content-Type": "application/json" } }
   );
   check(res, { "register 2xx": (r) => r.status >= 200 && r.status < 300 });
-  return res.json("token") || "";
+  const body = res.json();
+  return (body && body.data && body.data.access_token) ? body.data.access_token : "";
 }
 
 function verifyIAP(token, purchaseToken) {
@@ -91,7 +97,7 @@ function verifyIAP(token, purchaseToken) {
   });
   const res = http.post(
     `${BACKEND}/v1/verify/iap`,
-    JSON.stringify({ platform: "android", receiptData }),
+    JSON.stringify({ platform: "android", product_id: PRODUCT, receipt_data: receiptData }),
     { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` } }
   );
   return res;
@@ -124,11 +130,11 @@ function sendWebhook(purchaseToken, notificationType) {
 
 // ─── Main test ───────────────────────────────────────────────────────────────
 export default function () {
-  const email    = uniqueEmail();
-  const password = "TestPass1!";
+  const uid      = `rtdn_${__VU}_${Date.now()}`;
+  const deviceID = `dev_${__VU}_${Date.now()}`;
 
   // 1. Register + get JWT.
-  const jwtToken = register(email, password);
+  const jwtToken = register(uid, deviceID);
   if (!jwtToken) {
     console.error("registration failed, skipping VU iteration");
     return;
