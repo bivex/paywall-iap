@@ -1,0 +1,3 @@
+[submodule "tests/google-billing-mock"]
+	path = tests/google-billing-mock
+	url = https://github.com/bivex/google-billing-mock
