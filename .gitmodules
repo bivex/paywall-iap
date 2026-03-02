@@ -4,3 +4,6 @@
 [submodule "tests/apple-of-my-iap"]
 	path = tests/apple-of-my-iap
 	url = https://github.com/bivex/apple-of-my-iap
+[submodule "tools/expert-octo-sniffle"]
+	path = tools/expert-octo-sniffle
+	url = https://github.com/bivex/expert-octo-sniffle
