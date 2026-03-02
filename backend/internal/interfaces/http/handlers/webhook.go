@@ -473,6 +473,16 @@ func (h *WebhookHandler) GoogleWebhook(c *gin.Context) {
 		_ = err
 	}
 
+	// Enqueue background processing task (same pattern as Stripe).
+	taskPayload, _ := json.Marshal(map[string]string{
+		"provider":   "google",
+		"event_type": eventType,
+		"event_id":   eventID,
+	})
+	if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, taskPayload)); err != nil {
+		logging.Logger.Error("Failed to enqueue Google webhook task", zap.Error(err))
+	}
+
 	c.JSON(http.StatusOK, gin.H{"status": "received"})
 }
 
