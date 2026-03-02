@@ -15,6 +15,7 @@ import { formatSource } from "@/lib/subscriptions/format";
 import { TransactionsFilters } from "./_components/transactions-filters";
 import { CopyTxId } from "./_components/copy-tx-id";
 import { TxRow } from "./_components/tx-row";
+import { SortHeader } from "@/components/ui/sort-header";
 
 const PAGE_SIZE = 20;
 
@@ -111,6 +112,7 @@ interface Props {
 export default async function TransactionsPage({ searchParams }: Props) {
   const sp = await searchParams;
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
+  const sort = sp.sort ?? "date_desc"; // default: newest first
 
   const params: TransactionsParams = {
     page, limit: PAGE_SIZE,
@@ -129,7 +131,13 @@ export default async function TransactionsPage({ searchParams }: Props) {
     );
   }
 
-  const { transactions, summary, total, total_pages: totalPages } = data;
+  const { transactions: rawTxs, summary, total, total_pages: totalPages } = data;
+
+  // Sort by created_at (backend doesn't expose sort param yet)
+  const transactions = [...rawTxs].sort((a, b) => {
+    const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return sort === "date_asc" ? diff : -diff;
+  });
 
   const buildPageUrl = (p: number) => {
     const qs = new URLSearchParams();
@@ -139,7 +147,21 @@ export default async function TransactionsPage({ searchParams }: Props) {
     if (sp.search) qs.set("search", sp.search);
     if (sp.date_from) qs.set("date_from", sp.date_from);
     if (sp.date_to) qs.set("date_to", sp.date_to);
+    if (sort !== "date_desc") qs.set("sort", sort);
     qs.set("page", String(p));
+    return `?${qs.toString()}`;
+  };
+
+  const buildSortUrl = (s: string) => {
+    const qs = new URLSearchParams();
+    if (sp.status) qs.set("status", sp.status);
+    if (sp.source) qs.set("source", sp.source);
+    if (sp.platform) qs.set("platform", sp.platform);
+    if (sp.search) qs.set("search", sp.search);
+    if (sp.date_from) qs.set("date_from", sp.date_from);
+    if (sp.date_to) qs.set("date_to", sp.date_to);
+    if (s !== "date_desc") qs.set("sort", s);
+    qs.set("page", "1");
     return `?${qs.toString()}`;
   };
 
@@ -168,7 +190,15 @@ export default async function TransactionsPage({ searchParams }: Props) {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="font-semibold">Date</TableHead>
+                <TableHead className="font-semibold">
+                  <SortHeader
+                    label="Date"
+                    sortKey="date"
+                    currentSort={sort}
+                    ascHref={buildSortUrl("date_asc")}
+                    descHref={buildSortUrl("date_desc")}
+                  />
+                </TableHead>
                 <TableHead className="font-semibold">User Email</TableHead>
                 <TableHead className="font-semibold">Source</TableHead>
                 <TableHead className="font-semibold">Plan Type</TableHead>
