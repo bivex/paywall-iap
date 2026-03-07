@@ -62,6 +62,11 @@ func (m *MockBanditRepository) GetExperimentConfig(ctx context.Context, experime
 	return args.Get(0).(*service.ExperimentConfig), args.Error(1)
 }
 
+func (m *MockBanditRepository) UpdateObjectiveConfig(ctx context.Context, experimentID uuid.UUID, objectiveType service.ObjectiveType, objectiveWeights map[string]float64) error {
+	args := m.Called(ctx, experimentID, objectiveType, objectiveWeights)
+	return args.Error(0)
+}
+
 func (m *MockBanditRepository) GetUserContext(ctx context.Context, userID uuid.UUID) (*service.UserContext, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
@@ -78,7 +83,7 @@ func (m *MockBanditRepository) SetUserContext(ctx context.Context, uctx *service
 // MockBanditCache is a mock for BanditCache
 type MockBanditCache struct {
 	mock.Mock
-	data map[string]*service.ArmStats
+	data        map[string]*service.ArmStats
 	assignments map[string]uuid.UUID
 }
 
@@ -300,9 +305,9 @@ func TestSampleBeta(t *testing.T) {
 			alpha float64
 			beta  float64
 		}{
-			{1.0, 1.0}, // Uniform
-			{10.0, 5.0}, // Skewed toward success
-			{5.0, 10.0}, // Skewed toward failure
+			{1.0, 1.0},     // Uniform
+			{10.0, 5.0},    // Skewed toward success
+			{5.0, 10.0},    // Skewed toward failure
 			{100.0, 100.0}, // Peaked around 0.5
 		}
 

@@ -89,14 +89,14 @@ func (r *PostgresBanditRepository) GetArmStats(ctx context.Context, armID uuid.U
 	if err == pgx.ErrNoRows {
 		// Return default stats if not found
 		return &service.ArmStats{
-			ArmID:     armID,
-			Alpha:     1.0, // Uniform prior
-			Beta:      1.0,
-			Samples:   0,
+			ArmID:       armID,
+			Alpha:       1.0, // Uniform prior
+			Beta:        1.0,
+			Samples:     0,
 			Conversions: 0,
-			Revenue:   0,
-			AvgReward: 0,
-			UpdatedAt: time.Now(),
+			Revenue:     0,
+			AvgReward:   0,
+			UpdatedAt:   time.Now(),
 		}, nil
 	}
 
@@ -407,29 +407,29 @@ func (r *PostgresBanditRepository) CreateArm(ctx context.Context, arm *service.A
 
 // Experiment represents an A/B test experiment
 type Experiment struct {
-	ID                    uuid.UUID
-	Name                  string
-	Description           string
-	Status                string
-	StartAt               *time.Time
-	EndAt                 *time.Time
-	AlgorithmType         *string
-	IsBandit              bool
-	MinSampleSize         int
-	ConfidenceThreshold   float64
-	WinnerConfidence      *float64
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
+	ID                  uuid.UUID
+	Name                string
+	Description         string
+	Status              string
+	StartAt             *time.Time
+	EndAt               *time.Time
+	AlgorithmType       *string
+	IsBandit            bool
+	MinSampleSize       int
+	ConfidenceThreshold float64
+	WinnerConfidence    *float64
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 	// Advanced bandit fields
-	WindowType           *string
-	WindowSize           *int
-	WindowMinSamples     *int
-	ObjectiveType        *string
-	ObjectiveWeights     *map[string]float64
-	EnableContextual     *bool
-	EnableDelayed        *bool
-	EnableCurrency       *bool
-	ExplorationAlpha     *float64
+	WindowType       *string
+	WindowSize       *int
+	WindowMinSamples *int
+	ObjectiveType    *string
+	ObjectiveWeights *map[string]float64
+	EnableContextual *bool
+	EnableDelayed    *bool
+	EnableCurrency   *bool
+	ExplorationAlpha *float64
 }
 
 // =====================================================
@@ -493,6 +493,41 @@ func (r *PostgresBanditRepository) GetExperimentConfig(ctx context.Context, expe
 	}
 
 	return &config, nil
+}
+
+// UpdateObjectiveConfig persists objective configuration fields for an experiment.
+func (r *PostgresBanditRepository) UpdateObjectiveConfig(
+	ctx context.Context,
+	experimentID uuid.UUID,
+	objectiveType service.ObjectiveType,
+	objectiveWeights map[string]float64,
+) error {
+	var objectiveWeightsJSON []byte
+	var err error
+	if objectiveWeights != nil {
+		objectiveWeightsJSON, err = json.Marshal(objectiveWeights)
+		if err != nil {
+			return fmt.Errorf("failed to marshal objective weights: %w", err)
+		}
+	}
+
+	query := `
+		UPDATE ab_tests
+		SET objective_type = $2,
+		    objective_weights = $3,
+		    updated_at = NOW()
+		WHERE id = $1
+	`
+
+	result, err := r.pool.Exec(ctx, query, experimentID, objectiveType, objectiveWeightsJSON)
+	if err != nil {
+		return fmt.Errorf("failed to update objective config: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("experiment not found")
+	}
+
+	return nil
 }
 
 // GetUserContext retrieves user context for contextual bandits
@@ -588,14 +623,14 @@ func (r *PostgresBanditRepository) GetObjectiveStats(ctx context.Context, armID 
 	if err == pgx.ErrNoRows {
 		// Return default stats if not found
 		return &service.ArmObjectiveStats{
-			ArmID:        armID,
+			ArmID:         armID,
 			ObjectiveType: objectiveType,
-			Alpha:        1.0,
-			Beta:         1.0,
-			Samples:      0,
-			Conversions:  0,
-			TotalRevenue: 0,
-			AvgLTV:       0,
+			Alpha:         1.0,
+			Beta:          1.0,
+			Samples:       0,
+			Conversions:   0,
+			TotalRevenue:  0,
+			AvgLTV:        0,
 		}, nil
 	}
 

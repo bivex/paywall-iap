@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +22,13 @@ type AdvancedBanditEngine struct {
 	currencyService   *CurrencyRateService
 	repo              BanditRepository
 	cache             BanditCache
+	redisClient       *redis.Client
 	logger            *zap.Logger
+	enableCurrency    bool
+	enableContextual  bool
+	enableDelayed     bool
+	enableWindow      bool
+	enableHybrid      bool
 }
 
 // EngineConfig configures the advanced bandit engine
@@ -39,6 +46,7 @@ func NewAdvancedBanditEngine(
 	base *ThompsonSamplingBandit,
 	repo BanditRepository,
 	cache BanditCache,
+	redisClient *redis.Client,
 	currencyService *CurrencyRateService,
 	logger *zap.Logger,
 	config *EngineConfig,
@@ -47,8 +55,17 @@ func NewAdvancedBanditEngine(
 		base:            base,
 		repo:            repo,
 		cache:           cache,
+		redisClient:     redisClient,
 		currencyService: currencyService,
 		logger:          logger,
+	}
+
+	if config != nil {
+		engine.enableCurrency = config.EnableCurrency
+		engine.enableContextual = config.EnableContextual
+		engine.enableDelayed = config.EnableDelayed
+		engine.enableWindow = config.EnableWindow
+		engine.enableHybrid = config.EnableHybrid
 	}
 
 	// Configure strategies based on config
@@ -93,6 +110,72 @@ func NewAdvancedBanditEngine(
 	}
 
 	return engine
+}
+
+func (e *AdvancedBanditEngine) getExperimentConfig(
+	ctx context.Context,
+	experimentID uuid.UUID,
+) (*ExperimentConfig, error) {
+	config, err := e.repo.GetExperimentConfig(ctx, experimentID)
+	if err != nil || config == nil {
+		return &ExperimentConfig{ID: experimentID, ObjectiveType: ObjectiveConversion}, nil
+	}
+
+	if config.ID == uuid.Nil {
+		config.ID = experimentID
+	}
+	if config.ObjectiveType == "" {
+		config.ObjectiveType = ObjectiveConversion
+	}
+
+	return config, nil
+}
+
+func (e *AdvancedBanditEngine) getDelayedStrategy() (*DelayedRewardStrategy, error) {
+	if !e.enableDelayed {
+		return nil, fmt.Errorf("delayed feedback not enabled")
+	}
+	if e.delayedStrategy != nil {
+		return e.delayedStrategy, nil
+	}
+
+	e.delayedStrategy = NewDelayedRewardStrategy(e.repo, e.cache, e.logger)
+	return e.delayedStrategy, nil
+}
+
+func (e *AdvancedBanditEngine) getHybridStrategy(
+	ctx context.Context,
+	experimentID uuid.UUID,
+) (*HybridObjectiveStrategy, error) {
+	if !e.enableHybrid {
+		return nil, fmt.Errorf("hybrid objective not enabled")
+	}
+
+	config, err := e.getExperimentConfig(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewHybridObjectiveStrategy(e.repo, e.cache, e.logger, config, e.base), nil
+}
+
+func (e *AdvancedBanditEngine) getWindowStrategy(
+	ctx context.Context,
+	experimentID uuid.UUID,
+) (*SlidingWindowStrategy, error) {
+	if !e.enableWindow {
+		return nil, fmt.Errorf("sliding window not enabled")
+	}
+	if e.redisClient == nil {
+		return nil, fmt.Errorf("sliding window requires redis")
+	}
+
+	config, err := e.getExperimentConfig(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewSlidingWindowStrategy(e.repo, e.redisClient, e.logger, experimentID, config.WindowConfig), nil
 }
 
 // SelectArm selects an arm using the configured strategies
@@ -141,8 +224,8 @@ func (e *AdvancedBanditEngine) SelectArm(
 	}
 
 	// Record pending reward if delayed feedback is enabled
-	if e.delayedStrategy != nil {
-		_, err := e.delayedStrategy.RecordPendingReward(ctx, experimentID, selectedArm.ID, userID)
+	if delayedStrategy, err := e.getDelayedStrategy(); err == nil {
+		_, err := delayedStrategy.RecordPendingReward(ctx, experimentID, selectedArm.ID, userID)
 		if err != nil {
 			e.logger.Warn("Failed to record pending reward", zap.Error(err))
 		}
@@ -169,13 +252,16 @@ func (e *AdvancedBanditEngine) RecordReward(
 	finalReward := reward
 	finalCurrency := currency
 
-	if e.rewardStrategy != nil && currency != "" && currency != "USD" {
-		converted, err := e.currencyService.ConvertToUSD(ctx, reward, currency)
-		if err != nil {
-			e.logger.Warn("Currency conversion failed", zap.Error(err))
-		} else {
-			finalReward = converted
-			finalCurrency = "USD"
+	if currency != "" && currency != "USD" && e.currencyService != nil && e.enableCurrency {
+		config, err := e.getExperimentConfig(ctx, experimentID)
+		if err == nil && (config == nil || config.EnableCurrency) {
+			converted, err := e.currencyService.ConvertToUSD(ctx, reward, currency)
+			if err != nil {
+				e.logger.Warn("Currency conversion failed", zap.Error(err))
+			} else {
+				finalReward = converted
+				finalCurrency = "USD"
+			}
 		}
 	}
 
@@ -192,7 +278,7 @@ func (e *AdvancedBanditEngine) RecordReward(
 	}
 
 	// Update window strategy if enabled
-	if e.windowStrategy != nil {
+	if windowStrategy, err := e.getWindowStrategy(ctx, experimentID); err == nil {
 		event := RewardEvent{
 			UserID:      userID,
 			ArmID:       armID,
@@ -200,20 +286,20 @@ func (e *AdvancedBanditEngine) RecordReward(
 			Currency:    finalCurrency,
 			Timestamp:   time.Now(),
 		}
-		if err := e.windowStrategy.RecordEvent(ctx, armID, event); err != nil {
+		if err := windowStrategy.RecordEvent(ctx, armID, event); err != nil {
 			e.logger.Warn("Failed to record window event", zap.Error(err))
 		}
 	}
 
 	// Update hybrid objective stats if enabled
-	if e.hybridStrategy != nil {
+	if hybridStrategy, err := e.getHybridStrategy(ctx, experimentID); err == nil {
 		// Determine which objectives to update
-		objectiveType := e.hybridStrategy.GetConfig().ObjectiveType
+		objectiveType := hybridStrategy.GetConfig().ObjectiveType
 
 		if objectiveType == ObjectiveHybrid {
 			// Update all objectives
-			for objType := range e.hybridStrategy.GetConfig().ObjectiveWeights {
-				if err := e.hybridStrategy.RecordObjectiveReward(
+			for objType := range hybridStrategy.GetConfig().ObjectiveWeights {
+				if err := hybridStrategy.RecordObjectiveReward(
 					ctx, armID, ObjectiveType(objType), finalReward, 0,
 				); err != nil {
 					e.logger.Warn("Failed to record objective reward",
@@ -223,7 +309,7 @@ func (e *AdvancedBanditEngine) RecordReward(
 				}
 			}
 		} else {
-			if err := e.hybridStrategy.RecordObjectiveReward(
+			if err := hybridStrategy.RecordObjectiveReward(
 				ctx, armID, objectiveType, finalReward, 0,
 			); err != nil {
 				e.logger.Warn("Failed to record objective reward", zap.Error(err))
@@ -242,12 +328,13 @@ func (e *AdvancedBanditEngine) ProcessConversion(
 	conversionValue float64,
 	currency string,
 ) error {
-	if e.delayedStrategy == nil {
-		return fmt.Errorf("delayed feedback not enabled")
+	delayedStrategy, err := e.getDelayedStrategy()
+	if err != nil {
+		return err
 	}
 
 	// Process through delayed strategy
-	if err := e.delayedStrategy.ProcessConversion(
+	if err := delayedStrategy.ProcessConversion(
 		ctx, transactionID, userID, conversionValue, currency,
 	); err != nil {
 		return err
@@ -269,8 +356,9 @@ func (e *AdvancedBanditEngine) GetObjectiveScores(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (map[uuid.UUID]map[ObjectiveType]*ObjectiveScore, error) {
-	if e.hybridStrategy == nil {
-		return nil, fmt.Errorf("hybrid objective not enabled")
+	hybridStrategy, err := e.getHybridStrategy(ctx, experimentID)
+	if err != nil {
+		return nil, err
 	}
 
 	arms, err := e.repo.GetArms(ctx, experimentID)
@@ -280,7 +368,7 @@ func (e *AdvancedBanditEngine) GetObjectiveScores(
 
 	result := make(map[uuid.UUID]map[ObjectiveType]*ObjectiveScore)
 	for _, arm := range arms {
-		scores, err := e.hybridStrategy.GetObjectiveScores(ctx, arm.ID)
+		scores, err := hybridStrategy.GetObjectiveScores(ctx, arm.ID)
 		if err != nil {
 			e.logger.Warn("Failed to get objective scores",
 				zap.String("arm_id", arm.ID.String()),
@@ -292,6 +380,42 @@ func (e *AdvancedBanditEngine) GetObjectiveScores(
 	}
 
 	return result, nil
+}
+
+// SetObjectiveConfig persists optimization objective settings for an experiment.
+func (e *AdvancedBanditEngine) SetObjectiveConfig(
+	ctx context.Context,
+	experimentID uuid.UUID,
+	objectiveType ObjectiveType,
+	objectiveWeights map[string]float64,
+) (*ExperimentConfig, error) {
+	switch objectiveType {
+	case ObjectiveConversion, ObjectiveLTV, ObjectiveRevenue, ObjectiveHybrid:
+	default:
+		return nil, fmt.Errorf("invalid objective type: %s", objectiveType)
+	}
+
+	config := &ExperimentConfig{
+		ID:               experimentID,
+		ObjectiveType:    objectiveType,
+		ObjectiveWeights: objectiveWeights,
+	}
+
+	if objectiveType == ObjectiveHybrid {
+		hybridStrategy := NewHybridObjectiveStrategy(e.repo, e.cache, e.logger, config, e.base)
+		if err := hybridStrategy.ValidateWeights(config.ObjectiveWeights); err != nil {
+			return nil, err
+		}
+		config.ObjectiveWeights = hybridStrategy.NormalizeWeights(config.ObjectiveWeights)
+	} else {
+		config.ObjectiveWeights = nil
+	}
+
+	if err := e.repo.UpdateObjectiveConfig(ctx, experimentID, config.ObjectiveType, config.ObjectiveWeights); err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }
 
 // GetMetrics returns production metrics for the engine
@@ -306,15 +430,128 @@ func (e *AdvancedBanditEngine) GetMetrics(ctx context.Context, experimentID uuid
 	}
 
 	// Get additional metrics if strategies are enabled
-	if e.delayedStrategy != nil {
-		if stats, err := e.delayedStrategy.GetStats(ctx); err == nil {
+	if delayedStrategy, err := e.getDelayedStrategy(); err == nil {
+		if stats, err := delayedStrategy.GetStats(ctx); err == nil {
 			if expired, ok := stats["expired_unprocessed"].(int); ok {
 				metrics.PendingRewards = int64(expired)
 			}
 		}
 	}
 
+	if windowStrategy, err := e.getWindowStrategy(ctx, experimentID); err == nil {
+		arms, armsErr := e.repo.GetArms(ctx, experimentID)
+		if armsErr == nil && len(arms) > 0 {
+			totalUtilization := 0.0
+			count := 0.0
+			for _, arm := range arms {
+				utilization, utilErr := windowStrategy.GetUtilization(ctx, arm.ID)
+				if utilErr != nil {
+					continue
+				}
+				totalUtilization += utilization
+				count++
+			}
+			if count > 0 {
+				metrics.WindowUtilization = totalUtilization / count
+			}
+		}
+	}
+
 	return metrics, nil
+}
+
+func (e *AdvancedBanditEngine) GetWindowInfo(
+	ctx context.Context,
+	experimentID uuid.UUID,
+) (map[uuid.UUID]*WindowStats, error) {
+	windowStrategy, err := e.getWindowStrategy(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	arms, err := e.repo.GetArms(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[uuid.UUID]*WindowStats, len(arms))
+	for _, arm := range arms {
+		info, infoErr := windowStrategy.GetWindowInfo(ctx, arm.ID)
+		if infoErr != nil {
+			return nil, infoErr
+		}
+		result[arm.ID] = info
+	}
+
+	return result, nil
+}
+
+func (e *AdvancedBanditEngine) TrimWindow(ctx context.Context, experimentID uuid.UUID) error {
+	windowStrategy, err := e.getWindowStrategy(ctx, experimentID)
+	if err != nil {
+		return err
+	}
+
+	arms, err := e.repo.GetArms(ctx, experimentID)
+	if err != nil {
+		return err
+	}
+
+	for _, arm := range arms {
+		if trimErr := windowStrategy.TrimWindow(ctx, arm.ID); trimErr != nil {
+			return trimErr
+		}
+	}
+
+	return nil
+}
+
+func (e *AdvancedBanditEngine) ExportWindowEvents(
+	ctx context.Context,
+	experimentID uuid.UUID,
+	limit int64,
+) (map[uuid.UUID][]RewardEvent, error) {
+	windowStrategy, err := e.getWindowStrategy(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	arms, err := e.repo.GetArms(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[uuid.UUID][]RewardEvent, len(arms))
+	for _, arm := range arms {
+		events, exportErr := windowStrategy.ExportEvents(ctx, arm.ID, limit)
+		if exportErr != nil {
+			return nil, exportErr
+		}
+		result[arm.ID] = events
+	}
+
+	return result, nil
+}
+
+func (e *AdvancedBanditEngine) GetPendingReward(ctx context.Context, pendingID uuid.UUID) (*PendingReward, error) {
+	delayedStrategy, err := e.getDelayedStrategy()
+	if err != nil {
+		return nil, err
+	}
+
+	return delayedStrategy.GetPendingReward(ctx, pendingID)
+}
+
+func (e *AdvancedBanditEngine) GetUserPendingRewards(
+	ctx context.Context,
+	userID uuid.UUID,
+) ([]*PendingReward, error) {
+	delayedStrategy, err := e.getDelayedStrategy()
+	if err != nil {
+		return nil, err
+	}
+
+	return delayedStrategy.GetPendingRewardsByUser(ctx, userID, uuid.Nil)
 }
 
 // calculateBalanceIndex measures how evenly users are distributed
@@ -354,19 +591,19 @@ func (e *AdvancedBanditEngine) calculateBalanceIndex(stats map[uuid.UUID]*ArmSta
 
 // BanditMetrics represents production metrics for monitoring
 type BanditMetrics struct {
-	Regret             float64
-	ExplorationRate    float64
-	ConvergenceGap     float64
-	BalanceIndex       float64
-	WindowUtilization  float64
-	PendingRewards     int64
+	Regret            float64
+	ExplorationRate   float64
+	ConvergenceGap    float64
+	BalanceIndex      float64
+	WindowUtilization float64
+	PendingRewards    int64
 }
 
 // RunMaintenance performs periodic maintenance tasks
 func (e *AdvancedBanditEngine) RunMaintenance(ctx context.Context) error {
 	// Process expired pending rewards
-	if e.delayedStrategy != nil {
-		processed, err := e.delayedStrategy.ProcessExpiredRewards(ctx, e.base, 100)
+	if delayedStrategy, err := e.getDelayedStrategy(); err == nil {
+		processed, err := delayedStrategy.ProcessExpiredRewards(ctx, e.base, 100)
 		if err != nil {
 			e.logger.Error("Failed to process expired rewards", zap.Error(err))
 		} else if processed > 0 {

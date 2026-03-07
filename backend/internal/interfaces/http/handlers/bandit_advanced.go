@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -139,8 +141,7 @@ func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.R
 
 // GetObjectiveScores returns objective scores for all arms
 func (h *BanditAdvancedHandler) GetObjectiveScores(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	experimentID, err := uuid.Parse(vars["id"])
+	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
 		return
@@ -157,16 +158,15 @@ func (h *BanditAdvancedHandler) GetObjectiveScores(w http.ResponseWriter, r *htt
 
 // SetObjectiveConfig updates the objective configuration for an experiment
 func (h *BanditAdvancedHandler) SetObjectiveConfig(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	experimentID, err := uuid.Parse(vars["id"])
+	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
 		return
 	}
 
 	var req struct {
-		ObjectiveType    service.ObjectiveType    `json:"objective_type"`
-		ObjectiveWeights map[string]float64      `json:"objective_weights"`
+		ObjectiveType    service.ObjectiveType `json:"objective_type"`
+		ObjectiveWeights map[string]float64    `json:"objective_weights"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -174,89 +174,97 @@ func (h *BanditAdvancedHandler) SetObjectiveConfig(w http.ResponseWriter, r *htt
 		return
 	}
 
-	_ = &service.ExperimentConfig{
-		ID:              experimentID,
-		ObjectiveType:   req.ObjectiveType,
-		ObjectiveWeights: req.ObjectiveWeights,
+	config, err := h.engine.SetObjectiveConfig(r.Context(), experimentID, req.ObjectiveType, req.ObjectiveWeights)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
-	// Update engine configuration
-	// This would require a method on the engine to update config
-	// For now, just acknowledge
-
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"message":       "Configuration updated",
-		"experiment_id": experimentID,
-		"objective_type": req.ObjectiveType,
-		"weights":       req.ObjectiveWeights,
+		"message":        "Configuration updated",
+		"experiment_id":  experimentID,
+		"objective_type": config.ObjectiveType,
+		"weights":        config.ObjectiveWeights,
 	})
 }
 
 // GetWindowInfo returns window information for an experiment
 func (h *BanditAdvancedHandler) GetWindowInfo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	experimentID, err := uuid.Parse(vars["id"])
+	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
 		return
 	}
 
-	// Get arms for the experiment
-	// This would require access to the repository
-	// For now, return a placeholder
+	info, err := h.engine.GetWindowInfo(r.Context(), experimentID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"experiment_id": experimentID,
-		"message":       "Window info - implement with repository access",
+		"windows":       info,
 	})
 }
 
 // TrimWindow trims the sliding window for an experiment
 func (h *BanditAdvancedHandler) TrimWindow(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	_, err := uuid.Parse(vars["id"])
+	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
 		return
 	}
 
-	// Trim windows for all arms
-	// This would require access to the window strategy
+	if err := h.engine.TrimWindow(r.Context(), experimentID); err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"message": "Window trimmed successfully",
+		"experiment_id": experimentID,
+		"message":       "Window trimmed successfully",
 	})
 }
 
 // ExportWindowEvents exports events from the sliding window
 func (h *BanditAdvancedHandler) ExportWindowEvents(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	experimentID, err := uuid.Parse(vars["id"])
+	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
 		return
 	}
 
-	// Parse limit from query params
-	// limit := 100
+	limit := int64(100)
+	if rawLimit := r.URL.Query().Get("limit"); rawLimit != "" {
+		parsedLimit, parseErr := strconv.ParseInt(rawLimit, 10, 64)
+		if parseErr != nil || parsedLimit <= 0 {
+			respondError(w, http.StatusBadRequest, "Invalid limit")
+			return
+		}
+		limit = parsedLimit
+	}
 
-	// Export events
-	// This would require access to the window strategy
+	events, err := h.engine.ExportWindowEvents(r.Context(), experimentID, limit)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"experiment_id": experimentID,
-		"events":        []interface{}{},
-		"message":       "Window events export - implement with window strategy access",
+		"events":        events,
+		"limit":         limit,
 	})
 }
 
 // ProcessConversion processes a delayed conversion
 func (h *BanditAdvancedHandler) ProcessConversion(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		TransactionID      uuid.UUID `json:"transaction_id"`
-		UserID             uuid.UUID `json:"user_id"`
-		ConversionValue    float64   `json:"conversion_value"`
-		Currency           string    `json:"currency"`
+		TransactionID   uuid.UUID `json:"transaction_id"`
+		UserID          uuid.UUID `json:"user_id"`
+		ConversionValue float64   `json:"conversion_value"`
+		Currency        string    `json:"currency"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -276,52 +284,51 @@ func (h *BanditAdvancedHandler) ProcessConversion(w http.ResponseWriter, r *http
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"message":       "Conversion processed successfully",
+		"message":        "Conversion processed successfully",
 		"transaction_id": req.TransactionID,
 	})
 }
 
 // GetPendingReward returns a pending reward by ID
 func (h *BanditAdvancedHandler) GetPendingReward(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	pendingID, err := uuid.Parse(vars["id"])
+	pendingID, err := parseUUIDPathParamAfter(r, "pending")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid pending reward ID")
 		return
 	}
 
-	// Get pending reward
-	// This would require access to the delayed reward strategy
+	pendingReward, err := h.engine.GetPendingReward(r.Context(), pendingID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
-	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"pending_id": pendingID,
-		"message":    "Pending reward - implement with delayed strategy access",
-	})
+	respondJSON(w, http.StatusOK, pendingReward)
 }
 
 // GetUserPendingRewards returns all pending rewards for a user
 func (h *BanditAdvancedHandler) GetUserPendingRewards(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID, err := uuid.Parse(vars["id"])
+	userID, err := parseUUIDPathParamAfter(r, "users")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid user ID")
 		return
 	}
 
-	// Get pending rewards for user
-	// This would require access to the delayed reward strategy
+	rewards, err := h.engine.GetUserPendingRewards(r.Context(), userID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"user_id":  userID,
-		"rewards":  []interface{}{},
-		"message": "User pending rewards - implement with delayed strategy access",
+		"user_id": userID,
+		"rewards": rewards,
 	})
 }
 
 // GetMetrics returns production metrics for an experiment
 func (h *BanditAdvancedHandler) GetMetrics(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	experimentID, err := uuid.Parse(vars["id"])
+	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
 		return
@@ -344,7 +351,7 @@ func (h *BanditAdvancedHandler) RunMaintenance(w http.ResponseWriter, r *http.Re
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"message": "Maintenance completed successfully",
+		"message":   "Maintenance completed successfully",
 		"timestamp": time.Now(),
 	})
 }
@@ -361,4 +368,21 @@ func respondError(w http.ResponseWriter, status int, message string) {
 	respondJSON(w, status, map[string]interface{}{
 		"error": message,
 	})
+}
+
+func parseUUIDPathParamAfter(r *http.Request, segment string) (uuid.UUID, error) {
+	if vars := mux.Vars(r); len(vars) > 0 {
+		if raw, ok := vars["id"]; ok && raw != "" {
+			return uuid.Parse(raw)
+		}
+	}
+
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	for index := 0; index < len(parts)-1; index++ {
+		if parts[index] == segment {
+			return uuid.Parse(parts[index+1])
+		}
+	}
+
+	return uuid.Parse("")
 }

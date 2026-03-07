@@ -71,6 +71,7 @@ func main() {
 		banditService,
 		banditRepo,
 		banditCache,
+		redisClient,
 		currencyService,
 		logging.Logger,
 		&service.EngineConfig{

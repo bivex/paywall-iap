@@ -25,6 +25,7 @@ type BanditRepository interface {
 
 	// Advanced bandit methods
 	GetExperimentConfig(ctx context.Context, experimentID uuid.UUID) (*ExperimentConfig, error)
+	UpdateObjectiveConfig(ctx context.Context, experimentID uuid.UUID, objectiveType ObjectiveType, objectiveWeights map[string]float64) error
 	GetUserContext(ctx context.Context, userID uuid.UUID) (*UserContext, error)
 	SetUserContext(ctx context.Context, uctx *UserContext) error
 }
@@ -94,25 +95,25 @@ type WindowStrategy interface {
 
 // UserContext captures user attributes for contextual bandits
 type UserContext struct {
-	UserID          uuid.UUID
-	Country         string
-	Device          string
-	AppVersion      string
+	UserID           uuid.UUID
+	Country          string
+	Device           string
+	AppVersion       string
 	DaysSinceInstall int
-	TotalSpent      float64
-	LastPurchaseAt  *time.Time
-	CustomFeatures  map[string]interface{}
+	TotalSpent       float64
+	LastPurchaseAt   *time.Time
+	CustomFeatures   map[string]interface{}
 }
 
 // RewardEvent represents a reward event with metadata
 type RewardEvent struct {
-	UserID           uuid.UUID
-	ArmID            uuid.UUID
-	RewardValue      float64
-	Currency         string
-	Timestamp        time.Time
-	ConversionDelay  *time.Duration
-	Metadata         map[string]interface{}
+	UserID          uuid.UUID
+	ArmID           uuid.UUID
+	RewardValue     float64
+	Currency        string
+	Timestamp       time.Time
+	ConversionDelay *time.Duration
+	Metadata        map[string]interface{}
 }
 
 // ObjectiveType defines the optimization objective
@@ -120,9 +121,9 @@ type ObjectiveType string
 
 const (
 	ObjectiveConversion ObjectiveType = "conversion"
-	ObjectiveLTV       ObjectiveType = "ltv"
-	ObjectiveRevenue   ObjectiveType = "revenue"
-	ObjectiveHybrid    ObjectiveType = "hybrid"
+	ObjectiveLTV        ObjectiveType = "ltv"
+	ObjectiveRevenue    ObjectiveType = "revenue"
+	ObjectiveHybrid     ObjectiveType = "hybrid"
 )
 
 // WindowType defines the windowing strategy
@@ -136,21 +137,21 @@ const (
 
 // WindowConfig configures sliding window behavior
 type WindowConfig struct {
-	Type      WindowType
-	Size      int           // Number of events or seconds
-	MinSamples int          // Minimum samples before using window
+	Type       WindowType
+	Size       int // Number of events or seconds
+	MinSamples int // Minimum samples before using window
 }
 
 // ExperimentConfig defines per-experiment configuration for advanced features
 type ExperimentConfig struct {
-	ID                uuid.UUID
-	ObjectiveType     ObjectiveType
-	ObjectiveWeights  map[string]float64 // For hybrid: {"conversion": 0.5, "ltv": 0.3, "revenue": 0.2}
-	WindowConfig      *WindowConfig
-	EnableContextual  bool
-	EnableDelayed     bool
-	EnableCurrency    bool
-	ExplorationAlpha  float64 // For LinUCB: exploration parameter
+	ID               uuid.UUID
+	ObjectiveType    ObjectiveType
+	ObjectiveWeights map[string]float64 // For hybrid: {"conversion": 0.5, "ltv": 0.3, "revenue": 0.2}
+	WindowConfig     *WindowConfig
+	EnableContextual bool
+	EnableDelayed    bool
+	EnableCurrency   bool
+	ExplorationAlpha float64 // For LinUCB: exploration parameter
 }
 
 // ThompsonSamplingBandit implements the Thompson Sampling algorithm

@@ -169,6 +169,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		banditService,
 		banditRepo,
 		banditCache,
+		redisClient,
 		currencyService,
 		logging.Logger,
 		&service.EngineConfig{
