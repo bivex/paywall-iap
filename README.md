@@ -1,4 +1,4 @@
-# IAP System
+# Paywall System
 
 In-App Purchase system for iOS and Android with Go backend, Next.js admin dashboard, PostgreSQL, and Redis.
 
