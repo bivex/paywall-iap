@@ -1,5 +1,5 @@
 "use client";
-import { useTranslations } from "next-intl";
+
 import {
   Activity,
   AlertTriangle,
@@ -10,8 +10,8 @@ import {
   DollarSign,
   FlaskConical,
   Gift,
-  LayoutDashboard,
   Layers,
+  LayoutDashboard,
   ScrollText,
   Settings,
   Settings2,
@@ -21,7 +21,9 @@ import {
   Users,
   Webhook,
 } from "lucide-react";
-import type { NavGroup } from "./sidebar-items";
+import { useTranslations } from "next-intl";
+
+import { isComingSoonUrl, type NavGroup } from "./sidebar-items";
 
 export function useSidebarItems(): NavGroup[] {
   const g = useTranslations("nav.groups");
@@ -34,7 +36,12 @@ export function useSidebarItems(): NavGroup[] {
       items: [
         { title: i("dashboard"), url: "/dashboard/default", icon: LayoutDashboard },
         { title: i("analyticsReports"), url: "/dashboard/analytics", icon: TrendingUp },
-        { title: i("matomoAnalytics"), url: "/dashboard/matomo", icon: ChartNoAxesCombined },
+        {
+          title: i("matomoAnalytics"),
+          url: "/dashboard/matomo",
+          icon: ChartNoAxesCombined,
+          comingSoon: isComingSoonUrl("/dashboard/matomo"),
+        },
         { title: i("platformSettings"), url: "/dashboard/settings", icon: Settings },
       ],
     },
@@ -53,9 +60,24 @@ export function useSidebarItems(): NavGroup[] {
         { title: i("overview"), url: "/dashboard/revenue-ops", icon: Layers },
         { title: i("subscriptions"), url: "/dashboard/subscriptions", icon: CreditCard },
         { title: i("transactions"), url: "/dashboard/transactions", icon: DollarSign },
-        { title: i("dunning"), url: "/dashboard/dunning", icon: AlertTriangle },
-        { title: i("winback"), url: "/dashboard/winback", icon: Gift },
-        { title: i("pricingTiers"), url: "/dashboard/pricing", icon: Tag },
+        {
+          title: i("dunning"),
+          url: "/dashboard/dunning",
+          icon: AlertTriangle,
+          comingSoon: isComingSoonUrl("/dashboard/dunning"),
+        },
+        {
+          title: i("winback"),
+          url: "/dashboard/winback",
+          icon: Gift,
+          comingSoon: isComingSoonUrl("/dashboard/winback"),
+        },
+        {
+          title: i("pricingTiers"),
+          url: "/dashboard/pricing",
+          icon: Tag,
+          comingSoon: isComingSoonUrl("/dashboard/pricing"),
+        },
         { title: i("webhooks"), url: "/dashboard/webhooks", icon: Webhook },
       ],
     },
@@ -63,12 +85,42 @@ export function useSidebarItems(): NavGroup[] {
       id: 4,
       label: g("experimentStudio"),
       items: [
-        { title: i("abTests"), url: "/dashboard/experiments", icon: FlaskConical },
-        { title: i("studio"), url: "/dashboard/experiments/studio", icon: Settings2 },
-        { title: i("banditModel"), url: "/dashboard/experiments/bandit", icon: Brain },
-        { title: i("delayedFeedback"), url: "/dashboard/experiments/feedback", icon: Activity },
-        { title: i("slidingWindow"), url: "/dashboard/experiments/sliding-window", icon: BarChart2 },
-        { title: i("multiObjective"), url: "/dashboard/experiments/multi-objective", icon: Target },
+        {
+          title: i("abTests"),
+          url: "/dashboard/experiments",
+          icon: FlaskConical,
+          comingSoon: isComingSoonUrl("/dashboard/experiments"),
+        },
+        {
+          title: i("studio"),
+          url: "/dashboard/experiments/studio",
+          icon: Settings2,
+          comingSoon: isComingSoonUrl("/dashboard/experiments/studio"),
+        },
+        {
+          title: i("banditModel"),
+          url: "/dashboard/experiments/bandit",
+          icon: Brain,
+          comingSoon: isComingSoonUrl("/dashboard/experiments/bandit"),
+        },
+        {
+          title: i("delayedFeedback"),
+          url: "/dashboard/experiments/feedback",
+          icon: Activity,
+          comingSoon: isComingSoonUrl("/dashboard/experiments/feedback"),
+        },
+        {
+          title: i("slidingWindow"),
+          url: "/dashboard/experiments/sliding-window",
+          icon: BarChart2,
+          comingSoon: isComingSoonUrl("/dashboard/experiments/sliding-window"),
+        },
+        {
+          title: i("multiObjective"),
+          url: "/dashboard/experiments/multi-objective",
+          icon: Target,
+          comingSoon: isComingSoonUrl("/dashboard/experiments/multi-objective"),
+        },
       ],
     },
   ];
