@@ -157,6 +157,8 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	// Initialize services
 	analyticsService := service.NewAnalyticsService(analyticsRepo, subscriptionRepo)
 	auditService := service.NewAuditService(dbPool)
+	winbackRepo := repository.NewWinbackOfferRepository(dbPool)
+	winbackService := service.NewWinbackService(winbackRepo, userRepo, subscriptionRepo)
 
 	// Bandit components
 	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
@@ -219,6 +221,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		service.NewRevenueOpsService(dbPool),
 		service.NewAnalyticsReportService(dbPool),
 		service.NewUserProfileService(dbPool),
+		winbackService,
 		asynqClient,
 	)
 	webhookHandler := app_handler.NewWebhookHandler(
@@ -389,11 +392,13 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 		admin.GET("/webhooks", d.adminHandler.ListWebhooks)
 		admin.GET("/analytics/report", d.adminHandler.GetAnalyticsReport)
 		admin.GET("/revenue-ops", d.adminHandler.GetRevenueOps)
-			admin.GET("/pricing-tiers", d.adminHandler.ListPricingTiers)
-			admin.POST("/pricing-tiers", d.adminHandler.CreatePricingTier)
-			admin.PUT("/pricing-tiers/:id", d.adminHandler.UpdatePricingTier)
-			admin.POST("/pricing-tiers/:id/activate", d.adminHandler.ActivatePricingTier)
-			admin.POST("/pricing-tiers/:id/deactivate", d.adminHandler.DeactivatePricingTier)
+		admin.GET("/pricing-tiers", d.adminHandler.ListPricingTiers)
+		admin.POST("/pricing-tiers", d.adminHandler.CreatePricingTier)
+		admin.PUT("/pricing-tiers/:id", d.adminHandler.UpdatePricingTier)
+		admin.POST("/pricing-tiers/:id/activate", d.adminHandler.ActivatePricingTier)
+		admin.POST("/pricing-tiers/:id/deactivate", d.adminHandler.DeactivatePricingTier)
+		admin.GET("/winback-campaigns", d.adminHandler.ListWinbackCampaigns)
+		admin.POST("/winback-campaigns", d.adminHandler.LaunchWinbackCampaign)
 		admin.GET("/settings", d.adminHandler.GetPlatformSettings)
 		admin.PUT("/settings", d.adminHandler.UpdatePlatformSettings)
 		admin.POST("/settings/password", d.adminHandler.ChangeAdminPassword)

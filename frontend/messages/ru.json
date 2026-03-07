@@ -690,37 +690,54 @@
     "pagination": "Показано 1–5 из 140 событий"
   },
   "winback": {
-    "title": "Конструктор кампаний возврата",
-    "newCampaign": "+ Новая кампания",
-    "campaigns": {
-      "title": "Кампании"
+    "title": "Кампании возврата",
+    "subtitle": "Запускайте реальные winback-offers для недавно отменивших подписку пользователей и отслеживайте результаты по campaign_id.",
+    "actions": {
+      "launch": "Запустить кампанию",
+      "reset": "Сбросить"
     },
-    "editCampaign": {
-      "title": "Редактировать кампанию: Summer Winback 2025",
-      "namePlaceholder": "Название кампании",
-      "discountTypePlaceholder": "Тип скидки: процент",
-      "percentage": "Процент (%)",
-      "fixed": "Фиксированная ($)",
-      "valuePlaceholder": "Значение: 30"
+    "feedback": {
+      "launching": "Запуск...",
+      "campaignLaunched": "Winback-кампания запущена.",
+      "launchFailed": "Не удалось запустить winback-кампанию."
     },
-    "targeting": {
-      "title": "Таргетинг: Ушедшие пользователи",
-      "churnedMin": "Мин. дней с оттока",
-      "churnedMax": "Макс. дней с оттока",
-      "platformPlaceholder": "Платформа: Все",
-      "all": "Все",
-      "ios": "iOS",
-      "android": "Android",
-      "expiresAt": "Дата истечения",
-      "enableAbTest": "Включить A/B тест"
+    "states": {
+      "loadFailed": "Не удалось загрузить winback-кампании.",
+      "empty": "Winback-кампании ещё не запускались."
     },
-    "preview": {
-      "title": "Предпросмотр",
-      "message": "📱 Мы скучаем! Получите скидку 30% на подписку.",
-      "eligibleUsers": "Подходящих пользователей: ~1 247  ·  Предложение истекает: 01.09.2025"
+    "summary": {
+      "campaigns": "Кампании",
+      "offers": "Офферы",
+      "activeOffers": "Активные офферы",
+      "acceptedOffers": "Принятые офферы"
     },
-    "saveCampaign": "Сохранить кампанию",
-    "launchNow": "Запустить сейчас",
-    "cancel": "Отмена"
+    "table": {
+      "title": "Живые winback-кампании",
+      "description": "Эти строки в реальном времени группируются из backend-таблицы winback_offers по campaign_id.",
+      "campaignId": "Campaign ID",
+      "discount": "Скидка",
+      "total": "Всего",
+      "active": "Активные",
+      "accepted": "Принятые",
+      "expired": "Истекли",
+      "declined": "Отклонены",
+      "launched": "Запущена",
+      "expires": "Последнее истечение"
+    },
+    "discount": {
+      "percentage": "Процент",
+      "fixed": "Фиксированная сумма",
+      "fixedShort": "Фикс."
+    },
+    "form": {
+      "title": "Запуск winback-кампании",
+      "description": "Эта форма напрямую соответствует backend-сервису winback и создаёт офферы для пользователей с недавно отменённой подпиской.",
+      "campaignId": "Campaign ID",
+      "campaignIdPlaceholder": "spring_reactivation_2026",
+      "discountType": "Тип скидки",
+      "discountValue": "Значение скидки",
+      "durationDays": "Длительность оффера (дней)",
+      "daysSinceChurn": "Отменили за последние (дней)"
+    }
   }
 }

@@ -690,37 +690,54 @@
     "pagination": "Showing 1–5 of 140 events"
   },
   "winback": {
-    "title": "Winback Campaign Builder",
-    "newCampaign": "+ New Campaign",
-    "campaigns": {
-      "title": "Campaigns"
+    "title": "Winback Campaigns",
+    "subtitle": "Launch real winback offers for recently cancelled users and monitor grouped offer outcomes by campaign ID.",
+    "actions": {
+      "launch": "Launch Campaign",
+      "reset": "Reset"
     },
-    "editCampaign": {
-      "title": "Edit Campaign: Summer Winback 2025",
-      "namePlaceholder": "Campaign Name",
-      "discountTypePlaceholder": "Discount Type: percentage",
-      "percentage": "Percentage (%)",
-      "fixed": "Fixed ($)",
-      "valuePlaceholder": "Value: 30"
+    "feedback": {
+      "launching": "Launching...",
+      "campaignLaunched": "Winback campaign launched.",
+      "launchFailed": "Failed to launch winback campaign."
     },
-    "targeting": {
-      "title": "Targeting: Churned Users",
-      "churnedMin": "Churned days min",
-      "churnedMax": "Churned days max",
-      "platformPlaceholder": "Platform: All",
-      "all": "All",
-      "ios": "iOS",
-      "android": "Android",
-      "expiresAt": "Expires At",
-      "enableAbTest": "Enable A/B Test"
+    "states": {
+      "loadFailed": "Failed to load winback campaigns.",
+      "empty": "No winback campaigns launched yet."
     },
-    "preview": {
-      "title": "Preview Card",
-      "message": "📱 We miss you! Get 30% back on your subscription.",
-      "eligibleUsers": "Eligible users: ~1,247  ·  Offer expires: 2025-09-01"
+    "summary": {
+      "campaigns": "Campaigns",
+      "offers": "Offers",
+      "activeOffers": "Active Offers",
+      "acceptedOffers": "Accepted Offers"
     },
-    "saveCampaign": "Save Campaign",
-    "launchNow": "Launch Now",
-    "cancel": "Cancel"
+    "table": {
+      "title": "Live Winback Campaigns",
+      "description": "These rows are grouped live from the backend winback_offers table by campaign_id.",
+      "campaignId": "Campaign ID",
+      "discount": "Discount",
+      "total": "Total",
+      "active": "Active",
+      "accepted": "Accepted",
+      "expired": "Expired",
+      "declined": "Declined",
+      "launched": "Launched",
+      "expires": "Latest Expiry"
+    },
+    "discount": {
+      "percentage": "Percentage",
+      "fixed": "Fixed amount",
+      "fixedShort": "Fixed"
+    },
+    "form": {
+      "title": "Launch Winback Campaign",
+      "description": "This form maps directly to the backend winback service and creates offers for users with recently cancelled subscriptions.",
+      "campaignId": "Campaign ID",
+      "campaignIdPlaceholder": "spring_reactivation_2026",
+      "discountType": "Discount Type",
+      "discountValue": "Discount Value",
+      "durationDays": "Offer Duration (days)",
+      "daysSinceChurn": "Cancelled Within (days)"
+    }
   }
 }

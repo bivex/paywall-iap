@@ -100,6 +100,7 @@ func TestAdminSettingsHandler(t *testing.T) {
 		nil,
 		nil,
 		nil,
+		nil,
 	)
 
 	admin := router.Group("/v1/admin")

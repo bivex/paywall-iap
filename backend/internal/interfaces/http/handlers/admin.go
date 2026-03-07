@@ -34,6 +34,7 @@ type AdminHandler struct {
 	revenueOpsService      *service.RevenueOpsService
 	analyticsReportService *service.AnalyticsReportService
 	userProfileService     *service.UserProfileService
+	winbackService         *service.WinbackService
 	asynqClient            *asynq.Client
 }
 
@@ -49,6 +50,7 @@ func NewAdminHandler(
 	revenueOpsService *service.RevenueOpsService,
 	analyticsReportService *service.AnalyticsReportService,
 	userProfileService *service.UserProfileService,
+	winbackService *service.WinbackService,
 	asynqClient *asynq.Client,
 ) *AdminHandler {
 	return &AdminHandler{
@@ -62,6 +64,7 @@ func NewAdminHandler(
 		revenueOpsService:      revenueOpsService,
 		analyticsReportService: analyticsReportService,
 		userProfileService:     userProfileService,
+		winbackService:         winbackService,
 		asynqClient:            asynqClient,
 	}
 }
@@ -325,115 +328,115 @@ func (h *AdminHandler) GetDashboardMetrics(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"active_users":  activeUsers,
-		"active_subs":   activeSubs,
-		"mrr":           revenue.MRR,
-		"arr":           revenue.ARR,
-		"churn_risk":    churnRisk,
-		"mrr_trend":     mrrTrend,
-		"status_counts": statusCounts,
-		"audit_log":     auditLog,
+		"active_users":   activeUsers,
+		"active_subs":    activeSubs,
+		"mrr":            revenue.MRR,
+		"arr":            revenue.ARR,
+		"churn_risk":     churnRisk,
+		"mrr_trend":      mrrTrend,
+		"status_counts":  statusCounts,
+		"audit_log":      auditLog,
 		"webhook_health": webhookHealth,
-		"last_updated":  now,
+		"last_updated":   now,
 	})
 }
 
 // GetAuditLog returns a paginated list of admin audit log entries with optional filters.
 // Query params: page (1-based), limit (default 20), action, search, from, to (RFC3339)
 func (h *AdminHandler) GetAuditLog(c *gin.Context) {
-ctx := c.Request.Context()
+	ctx := c.Request.Context()
 
-page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-if page < 1 {
-page = 1
-}
-limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-if limit < 1 || limit > 100 {
-limit = 20
-}
-offset := (page - 1) * limit
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
 
-action := c.Query("action")
-search := c.Query("search")
+	action := c.Query("action")
+	search := c.Query("search")
 
-var from, to time.Time
-if v := c.Query("from"); v != "" {
-from, _ = time.Parse(time.RFC3339, v)
-}
-if v := c.Query("to"); v != "" {
-to, _ = time.Parse(time.RFC3339, v)
-}
+	var from, to time.Time
+	if v := c.Query("from"); v != "" {
+		from, _ = time.Parse(time.RFC3339, v)
+	}
+	if v := c.Query("to"); v != "" {
+		to, _ = time.Parse(time.RFC3339, v)
+	}
 
-pageResult, err := h.analyticsService.GetAuditLogPaginated(ctx, offset, limit, action, search, from, to)
-if err != nil {
-response.InternalError(c, "Failed to get audit log")
-return
-}
+	pageResult, err := h.analyticsService.GetAuditLogPaginated(ctx, offset, limit, action, search, from, to)
+	if err != nil {
+		response.InternalError(c, "Failed to get audit log")
+		return
+	}
 
-totalPages := int((pageResult.TotalCount + int64(limit) - 1) / int64(limit))
+	totalPages := int((pageResult.TotalCount + int64(limit) - 1) / int64(limit))
 
-c.JSON(http.StatusOK, gin.H{
-"rows":        pageResult.Rows,
-"total":       pageResult.TotalCount,
-"page":        page,
-"limit":       limit,
-"total_pages": totalPages,
-})
+	c.JSON(http.StatusOK, gin.H{
+		"rows":        pageResult.Rows,
+		"total":       pageResult.TotalCount,
+		"page":        page,
+		"limit":       limit,
+		"total_pages": totalPages,
+	})
 }
 
 // SearchUsers returns a filtered, paginated list of users.
 // Query: page, limit, search (email/platform_user_id), platform (ios/android/web), role
 func (h *AdminHandler) SearchUsers(c *gin.Context) {
-ctx := c.Request.Context()
+	ctx := c.Request.Context()
 
-page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-if page < 1 {
-page = 1
-}
-limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-if limit < 1 || limit > 200 {
-limit = 20
-}
-offset := (page - 1) * limit
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 200 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
 
-search := c.Query("search")
-platform := c.Query("platform")
-role := c.Query("role")
+	search := c.Query("search")
+	platform := c.Query("platform")
+	role := c.Query("role")
 
-args := []interface{}{}
-where := []string{}
-idx := 1
+	args := []interface{}{}
+	where := []string{}
+	idx := 1
 
-if search != "" {
-args = append(args, "%"+search+"%")
-where = append(where, fmt.Sprintf("(u.email ILIKE $%d OR u.platform_user_id ILIKE $%d)", idx, idx))
-idx++
-}
-if platform != "" {
-args = append(args, platform)
-where = append(where, fmt.Sprintf("u.platform = $%d", idx))
-idx++
-}
-if role != "" {
-args = append(args, role)
-where = append(where, fmt.Sprintf("u.role = $%d", idx))
-idx++
-}
+	if search != "" {
+		args = append(args, "%"+search+"%")
+		where = append(where, fmt.Sprintf("(u.email ILIKE $%d OR u.platform_user_id ILIKE $%d)", idx, idx))
+		idx++
+	}
+	if platform != "" {
+		args = append(args, platform)
+		where = append(where, fmt.Sprintf("u.platform = $%d", idx))
+		idx++
+	}
+	if role != "" {
+		args = append(args, role)
+		where = append(where, fmt.Sprintf("u.role = $%d", idx))
+		idx++
+	}
 
-whereSQL := ""
-if len(where) > 0 {
-whereSQL = "WHERE " + strings.Join(where, " AND ")
-}
+	whereSQL := ""
+	if len(where) > 0 {
+		whereSQL = "WHERE " + strings.Join(where, " AND ")
+	}
 
-var total int64
-countQ := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s`, whereSQL)
-if err := h.dbPool.QueryRow(ctx, countQ, args...).Scan(&total); err != nil {
-response.InternalError(c, "Failed to count users")
-return
-}
+	var total int64
+	countQ := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s`, whereSQL)
+	if err := h.dbPool.QueryRow(ctx, countQ, args...).Scan(&total); err != nil {
+		response.InternalError(c, "Failed to count users")
+		return
+	}
 
-args = append(args, limit, offset)
-dataQ := fmt.Sprintf(`
+	args = append(args, limit, offset)
+	dataQ := fmt.Sprintf(`
 SELECT
 u.id, u.platform_user_id, u.platform, u.email, u.role,
 u.ltv, u.app_version, u.created_at,
@@ -451,208 +454,207 @@ ORDER BY u.created_at DESC
 LIMIT $%d OFFSET $%d
 `, whereSQL, idx, idx+1)
 
-rows, err := h.dbPool.Query(ctx, dataQ, args...)
-if err != nil {
-response.InternalError(c, "Failed to list users")
-return
-}
-defer rows.Close()
+	rows, err := h.dbPool.Query(ctx, dataQ, args...)
+	if err != nil {
+		response.InternalError(c, "Failed to list users")
+		return
+	}
+	defer rows.Close()
 
-type UserRow struct {
-ID             string  `json:"id"`
-PlatformUserID string  `json:"platform_user_id"`
-Platform       string  `json:"platform"`
-Email          string  `json:"email"`
-Role           string  `json:"role"`
-LTV            float64 `json:"ltv"`
-AppVersion     string  `json:"app_version"`
-CreatedAt      string  `json:"created_at"`
-SubStatus      string  `json:"sub_status"`
-SubExpiresAt   string  `json:"sub_expires_at"`
-}
+	type UserRow struct {
+		ID             string  `json:"id"`
+		PlatformUserID string  `json:"platform_user_id"`
+		Platform       string  `json:"platform"`
+		Email          string  `json:"email"`
+		Role           string  `json:"role"`
+		LTV            float64 `json:"ltv"`
+		AppVersion     string  `json:"app_version"`
+		CreatedAt      string  `json:"created_at"`
+		SubStatus      string  `json:"sub_status"`
+		SubExpiresAt   string  `json:"sub_expires_at"`
+	}
 
-var uid uuid.UUID
-result := make([]UserRow, 0, limit)
-for rows.Next() {
-var r UserRow
-var createdAt time.Time
-if err := rows.Scan(&uid, &r.PlatformUserID, &r.Platform, &r.Email, &r.Role,
-&r.LTV, &r.AppVersion, &createdAt, &r.SubStatus, &r.SubExpiresAt); err != nil {
-response.InternalError(c, "Failed to scan user")
-return
-}
-r.ID = uid.String()
-r.CreatedAt = createdAt.Format(time.RFC3339)
-result = append(result, r)
-}
+	var uid uuid.UUID
+	result := make([]UserRow, 0, limit)
+	for rows.Next() {
+		var r UserRow
+		var createdAt time.Time
+		if err := rows.Scan(&uid, &r.PlatformUserID, &r.Platform, &r.Email, &r.Role,
+			&r.LTV, &r.AppVersion, &createdAt, &r.SubStatus, &r.SubExpiresAt); err != nil {
+			response.InternalError(c, "Failed to scan user")
+			return
+		}
+		r.ID = uid.String()
+		r.CreatedAt = createdAt.Format(time.RFC3339)
+		result = append(result, r)
+	}
 
-totalPages := int((total + int64(limit) - 1) / int64(limit))
-c.JSON(http.StatusOK, gin.H{
-"users":       result,
-"total":       total,
-"page":        page,
-"limit":       limit,
-"total_pages": totalPages,
-})
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
+	c.JSON(http.StatusOK, gin.H{
+		"users":       result,
+		"total":       total,
+		"page":        page,
+		"limit":       limit,
+		"total_pages": totalPages,
+	})
 }
-
 
 // ForceCancel hard-cancels a user's active subscription immediately.
 // Body: {"reason": "..."}
 func (h *AdminHandler) ForceCancel(c *gin.Context) {
-userID, err := uuid.Parse(c.Param("id"))
-if err != nil {
-response.BadRequest(c, "Invalid user ID")
-return
-}
-var req struct {
-Reason string `json:"reason"`
-}
-_ = c.ShouldBindJSON(&req)
-if req.Reason == "" {
-req.Reason = "admin_force_cancel"
-}
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+	var req struct {
+		Reason string `json:"reason"`
+	}
+	_ = c.ShouldBindJSON(&req)
+	if req.Reason == "" {
+		req.Reason = "admin_force_cancel"
+	}
 
-sub, err := h.subscriptionRepo.GetActiveByUserID(c.Request.Context(), userID)
-if err != nil {
-response.NotFound(c, "No active subscription found")
-return
-}
-if err := h.subscriptionRepo.Cancel(c.Request.Context(), sub.ID); err != nil {
-response.InternalError(c, "Failed to cancel subscription")
-return
-}
-adminID, _ := c.Get("admin_id")
-if aid, ok := adminID.(uuid.UUID); ok {
-_ = h.auditService.LogAction(c.Request.Context(), aid, "revoke_subscription", "user", &userID, map[string]interface{}{
-"reason": req.Reason, "subscription_id": sub.ID,
-})
-}
-c.JSON(http.StatusOK, gin.H{"ok": true})
+	sub, err := h.subscriptionRepo.GetActiveByUserID(c.Request.Context(), userID)
+	if err != nil {
+		response.NotFound(c, "No active subscription found")
+		return
+	}
+	if err := h.subscriptionRepo.Cancel(c.Request.Context(), sub.ID); err != nil {
+		response.InternalError(c, "Failed to cancel subscription")
+		return
+	}
+	adminID, _ := c.Get("admin_id")
+	if aid, ok := adminID.(uuid.UUID); ok {
+		_ = h.auditService.LogAction(c.Request.Context(), aid, "revoke_subscription", "user", &userID, map[string]interface{}{
+			"reason": req.Reason, "subscription_id": sub.ID,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 // ForceRenew extends the active subscription's expires_at by the given days (default 30).
 // Body: {"days": 30, "reason": "..."}
 func (h *AdminHandler) ForceRenew(c *gin.Context) {
-ctx := c.Request.Context()
-userID, err := uuid.Parse(c.Param("id"))
-if err != nil {
-response.BadRequest(c, "Invalid user ID")
-return
-}
-var req struct {
-Days   int    `json:"days"`
-Reason string `json:"reason"`
-}
-_ = c.ShouldBindJSON(&req)
-if req.Days <= 0 {
-req.Days = 30
-}
-if req.Reason == "" {
-req.Reason = "admin_force_renew"
-}
+	ctx := c.Request.Context()
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+	var req struct {
+		Days   int    `json:"days"`
+		Reason string `json:"reason"`
+	}
+	_ = c.ShouldBindJSON(&req)
+	if req.Days <= 0 {
+		req.Days = 30
+	}
+	if req.Reason == "" {
+		req.Reason = "admin_force_renew"
+	}
 
-sub, err := h.subscriptionRepo.GetActiveByUserID(ctx, userID)
-if err != nil {
-// No active sub → try to find latest expired and reactivate
-var subID uuid.UUID
-var expiresAt time.Time
-err2 := h.dbPool.QueryRow(ctx,
-`SELECT id, expires_at FROM subscriptions WHERE user_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, userID,
-).Scan(&subID, &expiresAt)
-if err2 != nil {
-response.NotFound(c, "No subscription found")
-return
-}
-newExpires := time.Now().UTC().AddDate(0, 0, req.Days)
-_, err3 := h.dbPool.Exec(ctx,
-`UPDATE subscriptions SET status='active', expires_at=$1, updated_at=now() WHERE id=$2`,
-newExpires, subID)
-if err3 != nil {
-response.InternalError(c, "Failed to renew subscription")
-return
-}
-adminID, _ := c.Get("admin_id")
-if aid, ok := adminID.(uuid.UUID); ok {
-_ = h.auditService.LogAction(ctx, aid, "manual_renewal", "subscription", &userID, map[string]interface{}{
-"reason": req.Reason, "days": req.Days, "sub_id": subID,
-})
-}
-c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
-return
-}
+	sub, err := h.subscriptionRepo.GetActiveByUserID(ctx, userID)
+	if err != nil {
+		// No active sub → try to find latest expired and reactivate
+		var subID uuid.UUID
+		var expiresAt time.Time
+		err2 := h.dbPool.QueryRow(ctx,
+			`SELECT id, expires_at FROM subscriptions WHERE user_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, userID,
+		).Scan(&subID, &expiresAt)
+		if err2 != nil {
+			response.NotFound(c, "No subscription found")
+			return
+		}
+		newExpires := time.Now().UTC().AddDate(0, 0, req.Days)
+		_, err3 := h.dbPool.Exec(ctx,
+			`UPDATE subscriptions SET status='active', expires_at=$1, updated_at=now() WHERE id=$2`,
+			newExpires, subID)
+		if err3 != nil {
+			response.InternalError(c, "Failed to renew subscription")
+			return
+		}
+		adminID, _ := c.Get("admin_id")
+		if aid, ok := adminID.(uuid.UUID); ok {
+			_ = h.auditService.LogAction(ctx, aid, "manual_renewal", "subscription", &userID, map[string]interface{}{
+				"reason": req.Reason, "days": req.Days, "sub_id": subID,
+			})
+		}
+		c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
+		return
+	}
 
-// Active sub: extend expires_at
-newExpires := sub.ExpiresAt.AddDate(0, 0, req.Days)
-_, err = h.dbPool.Exec(ctx,
-`UPDATE subscriptions SET expires_at=$1, updated_at=now() WHERE id=$2`,
-newExpires, sub.ID)
-if err != nil {
-response.InternalError(c, "Failed to extend subscription")
-return
-}
-adminID, _ := c.Get("admin_id")
-if aid, ok := adminID.(uuid.UUID); ok {
-_ = h.auditService.LogAction(ctx, aid, "manual_renewal", "subscription", &userID, map[string]interface{}{
-"reason": req.Reason, "days": req.Days, "sub_id": sub.ID,
-})
-}
-c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
+	// Active sub: extend expires_at
+	newExpires := sub.ExpiresAt.AddDate(0, 0, req.Days)
+	_, err = h.dbPool.Exec(ctx,
+		`UPDATE subscriptions SET expires_at=$1, updated_at=now() WHERE id=$2`,
+		newExpires, sub.ID)
+	if err != nil {
+		response.InternalError(c, "Failed to extend subscription")
+		return
+	}
+	adminID, _ := c.Get("admin_id")
+	if aid, ok := adminID.(uuid.UUID); ok {
+		_ = h.auditService.LogAction(ctx, aid, "manual_renewal", "subscription", &userID, map[string]interface{}{
+			"reason": req.Reason, "days": req.Days, "sub_id": sub.ID,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
 }
 
 // GrantGracePeriod grants a grace period of given days to a user's subscription.
 // Body: {"days": 7, "reason": "..."}
 func (h *AdminHandler) GrantGracePeriod(c *gin.Context) {
-ctx := c.Request.Context()
-userID, err := uuid.Parse(c.Param("id"))
-if err != nil {
-response.BadRequest(c, "Invalid user ID")
-return
-}
-var req struct {
-Days   int    `json:"days"`
-Reason string `json:"reason"`
-}
-_ = c.ShouldBindJSON(&req)
-if req.Days <= 0 {
-req.Days = 7
-}
-if req.Reason == "" {
-req.Reason = "admin_grant_grace"
-}
+	ctx := c.Request.Context()
+	userID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+	var req struct {
+		Days   int    `json:"days"`
+		Reason string `json:"reason"`
+	}
+	_ = c.ShouldBindJSON(&req)
+	if req.Days <= 0 {
+		req.Days = 7
+	}
+	if req.Reason == "" {
+		req.Reason = "admin_grant_grace"
+	}
 
-// Get active or most recent subscription
-var subID uuid.UUID
-err = h.dbPool.QueryRow(ctx,
-`SELECT id FROM subscriptions WHERE user_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, userID,
-).Scan(&subID)
-if err != nil {
-response.NotFound(c, "No subscription found")
-return
-}
+	// Get active or most recent subscription
+	var subID uuid.UUID
+	err = h.dbPool.QueryRow(ctx,
+		`SELECT id FROM subscriptions WHERE user_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, userID,
+	).Scan(&subID)
+	if err != nil {
+		response.NotFound(c, "No subscription found")
+		return
+	}
 
-// Upsert: deactivate any existing active grace period first
-_, _ = h.dbPool.Exec(ctx,
-`UPDATE grace_periods SET status='expired', updated_at=now() WHERE user_id=$1 AND status='active'`, userID)
+	// Upsert: deactivate any existing active grace period first
+	_, _ = h.dbPool.Exec(ctx,
+		`UPDATE grace_periods SET status='expired', updated_at=now() WHERE user_id=$1 AND status='active'`, userID)
 
-gracExpires := time.Now().UTC().AddDate(0, 0, req.Days)
-var graceID uuid.UUID
-err = h.dbPool.QueryRow(ctx, `
+	gracExpires := time.Now().UTC().AddDate(0, 0, req.Days)
+	var graceID uuid.UUID
+	err = h.dbPool.QueryRow(ctx, `
 INSERT INTO grace_periods (user_id, subscription_id, status, expires_at)
 VALUES ($1, $2, 'active', $3)
 RETURNING id`,
-userID, subID, gracExpires,
-).Scan(&graceID)
-if err != nil {
-response.InternalError(c, "Failed to grant grace period")
-return
-}
+		userID, subID, gracExpires,
+	).Scan(&graceID)
+	if err != nil {
+		response.InternalError(c, "Failed to grant grace period")
+		return
+	}
 
-// Set subscription to grace status
-_, _ = h.dbPool.Exec(ctx,
-`UPDATE subscriptions SET status='grace', updated_at=now() WHERE id=$1`, subID)
+	// Set subscription to grace status
+	_, _ = h.dbPool.Exec(ctx,
+		`UPDATE subscriptions SET status='grace', updated_at=now() WHERE id=$1`, subID)
 
-adminID, _ := c.Get("admin_id")
+	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
 		_ = h.auditService.LogAction(ctx, aid, "grant_subscription", "user", &userID, map[string]interface{}{
 			"reason": req.Reason, "days": req.Days, "grace_id": graceID, "type": "grace_period",
@@ -840,42 +842,42 @@ func (h *AdminHandler) ListWebhooks(c *gin.Context) {
 // ReplayWebhook re-enqueues an unprocessed webhook event for processing.
 // POST /v1/admin/webhooks/:id/replay
 func (h *AdminHandler) ReplayWebhook(c *gin.Context) {
-ctx := c.Request.Context()
-id, err := uuid.Parse(c.Param("id"))
-if err != nil {
-response.BadRequest(c, "Invalid webhook ID")
-return
-}
+	ctx := c.Request.Context()
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid webhook ID")
+		return
+	}
 
-var provider, eventType, eventID string
-var processedAt *time.Time
-err = h.dbPool.QueryRow(ctx,
-`SELECT provider, event_type, event_id, processed_at FROM webhook_events WHERE id = $1`, id,
-).Scan(&provider, &eventType, &eventID, &processedAt)
-if err != nil {
-response.NotFound(c, "Webhook event not found")
-return
-}
+	var provider, eventType, eventID string
+	var processedAt *time.Time
+	err = h.dbPool.QueryRow(ctx,
+		`SELECT provider, event_type, event_id, processed_at FROM webhook_events WHERE id = $1`, id,
+	).Scan(&provider, &eventType, &eventID, &processedAt)
+	if err != nil {
+		response.NotFound(c, "Webhook event not found")
+		return
+	}
 
-payload, _ := json.Marshal(map[string]string{
-"provider":   provider,
-"event_type": eventType,
-"event_id":   eventID,
-})
-if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, payload)); err != nil {
-response.InternalError(c, "Failed to enqueue replay task")
-return
-}
+	payload, _ := json.Marshal(map[string]string{
+		"provider":   provider,
+		"event_type": eventType,
+		"event_id":   eventID,
+	})
+	if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, payload)); err != nil {
+		response.InternalError(c, "Failed to enqueue replay task")
+		return
+	}
 
-// Log admin action
-adminID, _ := c.Get("admin_id")
-if aid, ok := adminID.(uuid.UUID); ok {
-_ = h.auditService.LogAction(ctx, aid, "replay_webhook", "webhook_event", &id, map[string]interface{}{
-"provider": provider, "event_type": eventType, "event_id": eventID,
-})
-}
+	// Log admin action
+	adminID, _ := c.Get("admin_id")
+	if aid, ok := adminID.(uuid.UUID); ok {
+		_ = h.auditService.LogAction(ctx, aid, "replay_webhook", "webhook_event", &id, map[string]interface{}{
+			"provider": provider, "event_type": eventType, "event_id": eventID,
+		})
+	}
 
-c.JSON(200, gin.H{"ok": true, "queued": eventID})
+	c.JSON(200, gin.H{"ok": true, "queued": eventID})
 }
 
 // GetSubscriptionDetail returns full detail for a single subscription by ID.
@@ -889,27 +891,27 @@ func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
 	}
 
 	type TxRow struct {
-		ID          string  `json:"id"`
-		Provider    string  `json:"provider"`
-		ProviderTxID string `json:"provider_tx_id"`
-		Amount      float64 `json:"amount"`
-		Currency    string  `json:"currency"`
-		Status      string  `json:"status"`
-		CreatedAt   string  `json:"created_at"`
+		ID           string  `json:"id"`
+		Provider     string  `json:"provider"`
+		ProviderTxID string  `json:"provider_tx_id"`
+		Amount       float64 `json:"amount"`
+		Currency     string  `json:"currency"`
+		Status       string  `json:"status"`
+		CreatedAt    string  `json:"created_at"`
 	}
 
 	type Detail struct {
-		ID          string  `json:"id"`
-		Status      string  `json:"status"`
-		Source      string  `json:"source"`
-		Platform    string  `json:"platform"`
-		PlanType    string  `json:"plan_type"`
-		ExpiresAt   string  `json:"expires_at"`
-		CreatedAt   string  `json:"created_at"`
-		UpdatedAt   string  `json:"updated_at"`
-		UserID      string  `json:"user_id"`
-		Email       string  `json:"email"`
-		LTV         float64 `json:"ltv"`
+		ID           string  `json:"id"`
+		Status       string  `json:"status"`
+		Source       string  `json:"source"`
+		Platform     string  `json:"platform"`
+		PlanType     string  `json:"plan_type"`
+		ExpiresAt    string  `json:"expires_at"`
+		CreatedAt    string  `json:"created_at"`
+		UpdatedAt    string  `json:"updated_at"`
+		UserID       string  `json:"user_id"`
+		Email        string  `json:"email"`
+		LTV          float64 `json:"ltv"`
 		Transactions []TxRow `json:"transactions"`
 	}
 
@@ -968,80 +970,80 @@ func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
 // ListSubscriptions returns a paginated, filterable list of all subscriptions.
 // GET /admin/subscriptions?page=1&limit=20&status=active&source=iap&platform=ios&plan_type=monthly&search=email&date_from=2024-01-01&date_to=2024-12-31
 func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
-ctx := c.Request.Context()
+	ctx := c.Request.Context()
 
-page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-if page < 1 {
-page = 1
-}
-limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-if limit < 1 || limit > 200 {
-limit = 20
-}
-offset := (page - 1) * limit
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 200 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
 
-status := c.Query("status")
-source := c.Query("source")
-platform := c.Query("platform")
-planType := c.Query("plan_type")
-search := c.Query("search")
-dateFrom := c.Query("date_from")
-dateTo := c.Query("date_to")
+	status := c.Query("status")
+	source := c.Query("source")
+	platform := c.Query("platform")
+	planType := c.Query("plan_type")
+	search := c.Query("search")
+	dateFrom := c.Query("date_from")
+	dateTo := c.Query("date_to")
 
-args := []interface{}{}
-where := []string{"s.deleted_at IS NULL"}
-idx := 1
+	args := []interface{}{}
+	where := []string{"s.deleted_at IS NULL"}
+	idx := 1
 
-if status != "" {
-args = append(args, status)
-where = append(where, fmt.Sprintf("s.status = $%d", idx))
-idx++
-}
-if source != "" {
-args = append(args, source)
-where = append(where, fmt.Sprintf("s.source = $%d", idx))
-idx++
-}
-if platform != "" {
-args = append(args, platform)
-where = append(where, fmt.Sprintf("s.platform = $%d", idx))
-idx++
-}
-if planType != "" {
-args = append(args, planType)
-where = append(where, fmt.Sprintf("s.plan_type = $%d", idx))
-idx++
-}
-if search != "" {
-args = append(args, "%"+search+"%")
-where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
-idx++
-}
-if dateFrom != "" {
-args = append(args, dateFrom)
-where = append(where, fmt.Sprintf("s.expires_at >= $%d::date", idx))
-idx++
-}
-if dateTo != "" {
-args = append(args, dateTo)
-where = append(where, fmt.Sprintf("s.expires_at < ($%d::date + INTERVAL '1 day')", idx))
-idx++
-}
+	if status != "" {
+		args = append(args, status)
+		where = append(where, fmt.Sprintf("s.status = $%d", idx))
+		idx++
+	}
+	if source != "" {
+		args = append(args, source)
+		where = append(where, fmt.Sprintf("s.source = $%d", idx))
+		idx++
+	}
+	if platform != "" {
+		args = append(args, platform)
+		where = append(where, fmt.Sprintf("s.platform = $%d", idx))
+		idx++
+	}
+	if planType != "" {
+		args = append(args, planType)
+		where = append(where, fmt.Sprintf("s.plan_type = $%d", idx))
+		idx++
+	}
+	if search != "" {
+		args = append(args, "%"+search+"%")
+		where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
+		idx++
+	}
+	if dateFrom != "" {
+		args = append(args, dateFrom)
+		where = append(where, fmt.Sprintf("s.expires_at >= $%d::date", idx))
+		idx++
+	}
+	if dateTo != "" {
+		args = append(args, dateTo)
+		where = append(where, fmt.Sprintf("s.expires_at < ($%d::date + INTERVAL '1 day')", idx))
+		idx++
+	}
 
-whereSQL := "WHERE " + strings.Join(where, " AND ")
+	whereSQL := "WHERE " + strings.Join(where, " AND ")
 
-var total int64
-countQ := fmt.Sprintf(
-`SELECT COUNT(*) FROM subscriptions s JOIN users u ON u.id = s.user_id %s`,
-whereSQL,
-)
-if err := h.dbPool.QueryRow(ctx, countQ, args...).Scan(&total); err != nil {
-response.InternalError(c, "Failed to count subscriptions")
-return
-}
+	var total int64
+	countQ := fmt.Sprintf(
+		`SELECT COUNT(*) FROM subscriptions s JOIN users u ON u.id = s.user_id %s`,
+		whereSQL,
+	)
+	if err := h.dbPool.QueryRow(ctx, countQ, args...).Scan(&total); err != nil {
+		response.InternalError(c, "Failed to count subscriptions")
+		return
+	}
 
-args = append(args, limit, offset)
-dataQ := fmt.Sprintf(`
+	args = append(args, limit, offset)
+	dataQ := fmt.Sprintf(`
 SELECT
 s.id, s.status, s.source, s.platform, s.plan_type,
 s.expires_at, s.created_at,
@@ -1054,54 +1056,54 @@ ORDER BY s.created_at DESC
 LIMIT $%d OFFSET $%d
 `, whereSQL, idx, idx+1)
 
-rows, err := h.dbPool.Query(ctx, dataQ, args...)
-if err != nil {
-response.InternalError(c, "Failed to list subscriptions")
-return
-}
-defer rows.Close()
+	rows, err := h.dbPool.Query(ctx, dataQ, args...)
+	if err != nil {
+		response.InternalError(c, "Failed to list subscriptions")
+		return
+	}
+	defer rows.Close()
 
-type SubRow struct {
-ID        string  `json:"id"`
-Status    string  `json:"status"`
-Source    string  `json:"source"`
-Platform  string  `json:"platform"`
-PlanType  string  `json:"plan_type"`
-ExpiresAt string  `json:"expires_at"`
-CreatedAt string  `json:"created_at"`
-UserID    string  `json:"user_id"`
-Email     string  `json:"email"`
-LTV       float64 `json:"ltv"`
-}
+	type SubRow struct {
+		ID        string  `json:"id"`
+		Status    string  `json:"status"`
+		Source    string  `json:"source"`
+		Platform  string  `json:"platform"`
+		PlanType  string  `json:"plan_type"`
+		ExpiresAt string  `json:"expires_at"`
+		CreatedAt string  `json:"created_at"`
+		UserID    string  `json:"user_id"`
+		Email     string  `json:"email"`
+		LTV       float64 `json:"ltv"`
+	}
 
-var subID, userID uuid.UUID
-result := make([]SubRow, 0, limit)
-for rows.Next() {
-var r SubRow
-var expiresAt, createdAt time.Time
-if err := rows.Scan(
-&subID, &r.Status, &r.Source, &r.Platform, &r.PlanType,
-&expiresAt, &createdAt,
-&userID, &r.Email, &r.LTV,
-); err != nil {
-response.InternalError(c, "Failed to scan subscription row")
-return
-}
-r.ID = subID.String()
-r.UserID = userID.String()
-r.ExpiresAt = expiresAt.Format(time.RFC3339)
-r.CreatedAt = createdAt.Format(time.RFC3339)
-result = append(result, r)
-}
+	var subID, userID uuid.UUID
+	result := make([]SubRow, 0, limit)
+	for rows.Next() {
+		var r SubRow
+		var expiresAt, createdAt time.Time
+		if err := rows.Scan(
+			&subID, &r.Status, &r.Source, &r.Platform, &r.PlanType,
+			&expiresAt, &createdAt,
+			&userID, &r.Email, &r.LTV,
+		); err != nil {
+			response.InternalError(c, "Failed to scan subscription row")
+			return
+		}
+		r.ID = subID.String()
+		r.UserID = userID.String()
+		r.ExpiresAt = expiresAt.Format(time.RFC3339)
+		r.CreatedAt = createdAt.Format(time.RFC3339)
+		result = append(result, r)
+	}
 
-totalPages := int((total + int64(limit) - 1) / int64(limit))
-c.JSON(http.StatusOK, gin.H{
-"subscriptions": result,
-"total":         total,
-"page":          page,
-"limit":         limit,
-"total_pages":   totalPages,
-})
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
+	c.JSON(http.StatusOK, gin.H{
+		"subscriptions": result,
+		"total":         total,
+		"page":          page,
+		"limit":         limit,
+		"total_pages":   totalPages,
+	})
 }
 
 // GetTransactionDetail returns full detail for a single transaction: tx data + user + subscription.
@@ -1183,84 +1185,85 @@ func (h *AdminHandler) GetTransactionDetail(c *gin.Context) {
 
 	c.JSON(200, d)
 }
+
 // GET /admin/transactions?page=1&limit=20&status=success&source=iap&platform=ios&search=email&date_from=2024-01-01&date_to=2024-12-31
 func (h *AdminHandler) ListTransactions(c *gin.Context) {
-ctx := c.Request.Context()
+	ctx := c.Request.Context()
 
-page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-if page < 1 {
-page = 1
-}
-limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-if limit < 1 || limit > 200 {
-limit = 20
-}
-offset := (page - 1) * limit
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 200 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
 
-status := c.Query("status")
-source := c.Query("source")
-platform := c.Query("platform")
-search := c.Query("search")
-dateFrom := c.Query("date_from")
-dateTo := c.Query("date_to")
+	status := c.Query("status")
+	source := c.Query("source")
+	platform := c.Query("platform")
+	search := c.Query("search")
+	dateFrom := c.Query("date_from")
+	dateTo := c.Query("date_to")
 
-args := []interface{}{}
-where := []string{}
-idx := 1
+	args := []interface{}{}
+	where := []string{}
+	idx := 1
 
-if status != "" {
-args = append(args, status)
-where = append(where, fmt.Sprintf("t.status = $%d", idx))
-idx++
-}
-if source != "" {
-args = append(args, source)
-where = append(where, fmt.Sprintf("s.source = $%d", idx))
-idx++
-}
-if platform != "" {
-args = append(args, platform)
-where = append(where, fmt.Sprintf("s.platform = $%d", idx))
-idx++
-}
-if search != "" {
-args = append(args, "%"+search+"%")
-where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
-idx++
-}
-if dateFrom != "" {
-args = append(args, dateFrom)
-where = append(where, fmt.Sprintf("t.created_at >= $%d::date", idx))
-idx++
-}
-if dateTo != "" {
-args = append(args, dateTo)
-where = append(where, fmt.Sprintf("t.created_at < ($%d::date + INTERVAL '1 day')", idx))
-idx++
-}
+	if status != "" {
+		args = append(args, status)
+		where = append(where, fmt.Sprintf("t.status = $%d", idx))
+		idx++
+	}
+	if source != "" {
+		args = append(args, source)
+		where = append(where, fmt.Sprintf("s.source = $%d", idx))
+		idx++
+	}
+	if platform != "" {
+		args = append(args, platform)
+		where = append(where, fmt.Sprintf("s.platform = $%d", idx))
+		idx++
+	}
+	if search != "" {
+		args = append(args, "%"+search+"%")
+		where = append(where, fmt.Sprintf("u.email ILIKE $%d", idx))
+		idx++
+	}
+	if dateFrom != "" {
+		args = append(args, dateFrom)
+		where = append(where, fmt.Sprintf("t.created_at >= $%d::date", idx))
+		idx++
+	}
+	if dateTo != "" {
+		args = append(args, dateTo)
+		where = append(where, fmt.Sprintf("t.created_at < ($%d::date + INTERVAL '1 day')", idx))
+		idx++
+	}
 
-whereSQL := ""
-if len(where) > 0 {
-whereSQL = "WHERE " + strings.Join(where, " AND ")
-}
+	whereSQL := ""
+	if len(where) > 0 {
+		whereSQL = "WHERE " + strings.Join(where, " AND ")
+	}
 
-baseQ := fmt.Sprintf(`
+	baseQ := fmt.Sprintf(`
 FROM transactions t
 JOIN users u ON u.id = t.user_id
 JOIN subscriptions s ON s.id = t.subscription_id
 %s`, whereSQL)
 
-// totals for reconciliation summary
-type Summary struct {
-TotalCount     int64   `json:"total_count"`
-SuccessCount   int64   `json:"success_count"`
-FailedCount    int64   `json:"failed_count"`
-RefundedCount  int64   `json:"refunded_count"`
-TotalRevenue   float64 `json:"total_revenue"`
-TotalRefunded  float64 `json:"total_refunded"`
-}
-var summary Summary
-sumQ := fmt.Sprintf(`
+	// totals for reconciliation summary
+	type Summary struct {
+		TotalCount    int64   `json:"total_count"`
+		SuccessCount  int64   `json:"success_count"`
+		FailedCount   int64   `json:"failed_count"`
+		RefundedCount int64   `json:"refunded_count"`
+		TotalRevenue  float64 `json:"total_revenue"`
+		TotalRefunded float64 `json:"total_refunded"`
+	}
+	var summary Summary
+	sumQ := fmt.Sprintf(`
 SELECT
 COUNT(*),
 COUNT(*) FILTER (WHERE t.status = 'success'),
@@ -1269,16 +1272,16 @@ COUNT(*) FILTER (WHERE t.status = 'refunded'),
 COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'success'), 0),
 COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'refunded'), 0)
 %s`, baseQ)
-if err := h.dbPool.QueryRow(ctx, sumQ, args...).Scan(
-&summary.TotalCount, &summary.SuccessCount, &summary.FailedCount,
-&summary.RefundedCount, &summary.TotalRevenue, &summary.TotalRefunded,
-); err != nil {
-response.InternalError(c, "Failed to get transaction summary")
-return
-}
+	if err := h.dbPool.QueryRow(ctx, sumQ, args...).Scan(
+		&summary.TotalCount, &summary.SuccessCount, &summary.FailedCount,
+		&summary.RefundedCount, &summary.TotalRevenue, &summary.TotalRefunded,
+	); err != nil {
+		response.InternalError(c, "Failed to get transaction summary")
+		return
+	}
 
-args = append(args, limit, offset)
-dataQ := fmt.Sprintf(`
+	args = append(args, limit, offset)
+	dataQ := fmt.Sprintf(`
 SELECT
 t.id, t.amount, t.currency, t.status,
 COALESCE(t.provider_tx_id, '') AS provider_tx_id,
@@ -1291,59 +1294,59 @@ s.id AS subscription_id
 ORDER BY t.created_at DESC
 LIMIT $%d OFFSET $%d`, baseQ, idx, idx+1)
 
-rows, err := h.dbPool.Query(ctx, dataQ, args...)
-if err != nil {
-response.InternalError(c, "Failed to list transactions")
-return
-}
-defer rows.Close()
+	rows, err := h.dbPool.Query(ctx, dataQ, args...)
+	if err != nil {
+		response.InternalError(c, "Failed to list transactions")
+		return
+	}
+	defer rows.Close()
 
-type TxRow struct {
-ID          string  `json:"id"`
-Amount      float64 `json:"amount"`
-Currency    string  `json:"currency"`
-Status      string  `json:"status"`
-ProviderTxID string `json:"provider_tx_id"`
-ReceiptHash string  `json:"receipt_hash"`
-CreatedAt   string  `json:"created_at"`
-UserID      string  `json:"user_id"`
-Email       string  `json:"email"`
-Source      string  `json:"source"`
-Platform    string  `json:"platform"`
-PlanType    string  `json:"plan_type"`
-SubscriptionID string `json:"subscription_id"`
-}
+	type TxRow struct {
+		ID             string  `json:"id"`
+		Amount         float64 `json:"amount"`
+		Currency       string  `json:"currency"`
+		Status         string  `json:"status"`
+		ProviderTxID   string  `json:"provider_tx_id"`
+		ReceiptHash    string  `json:"receipt_hash"`
+		CreatedAt      string  `json:"created_at"`
+		UserID         string  `json:"user_id"`
+		Email          string  `json:"email"`
+		Source         string  `json:"source"`
+		Platform       string  `json:"platform"`
+		PlanType       string  `json:"plan_type"`
+		SubscriptionID string  `json:"subscription_id"`
+	}
 
-result := make([]TxRow, 0, limit)
-for rows.Next() {
-var r TxRow
-var txID, userID, subScanID uuid.UUID
-var createdAt time.Time
-if err := rows.Scan(
-&txID, &r.Amount, &r.Currency, &r.Status,
-&r.ProviderTxID, &r.ReceiptHash, &createdAt,
-&userID, &r.Email,
-&r.Source, &r.Platform, &r.PlanType, &subScanID,
-); err != nil {
-response.InternalError(c, "Failed to scan transaction row")
-return
-}
-r.ID = txID.String()
-r.UserID = userID.String()
-r.SubscriptionID = subScanID.String()
-r.CreatedAt = createdAt.Format(time.RFC3339)
-result = append(result, r)
-}
+	result := make([]TxRow, 0, limit)
+	for rows.Next() {
+		var r TxRow
+		var txID, userID, subScanID uuid.UUID
+		var createdAt time.Time
+		if err := rows.Scan(
+			&txID, &r.Amount, &r.Currency, &r.Status,
+			&r.ProviderTxID, &r.ReceiptHash, &createdAt,
+			&userID, &r.Email,
+			&r.Source, &r.Platform, &r.PlanType, &subScanID,
+		); err != nil {
+			response.InternalError(c, "Failed to scan transaction row")
+			return
+		}
+		r.ID = txID.String()
+		r.UserID = userID.String()
+		r.SubscriptionID = subScanID.String()
+		r.CreatedAt = createdAt.Format(time.RFC3339)
+		result = append(result, r)
+	}
 
-totalPages := int((summary.TotalCount + int64(limit) - 1) / int64(limit))
-c.JSON(http.StatusOK, gin.H{
-"transactions": result,
-"summary":      summary,
-"total":        summary.TotalCount,
-"page":         page,
-"limit":        limit,
-"total_pages":  totalPages,
-})
+	totalPages := int((summary.TotalCount + int64(limit) - 1) / int64(limit))
+	c.JSON(http.StatusOK, gin.H{
+		"transactions": result,
+		"summary":      summary,
+		"total":        summary.TotalCount,
+		"page":         page,
+		"limit":        limit,
+		"total_pages":  totalPages,
+	})
 }
 
 // GetUserProfile returns a full 360° user profile: identity, subscriptions, transactions, audit log, dunning.
