@@ -177,32 +177,72 @@
     }
   },
   "experiments": {
-    "title": "A/B Test Discovery",
-    "newTest": "+ New Test",
-    "tabs": {
-      "all": "All",
-      "running": "🟢 Running",
-      "draft": "🟡 Draft",
-      "completed": "⚫ Completed"
+    "title": "A/B Tests",
+    "subtitle": "Manage real database-backed experiments stored in ab_tests and ab_test_arms, and monitor the live aggregate stats recorded for each experiment.",
+    "actions": {
+      "create": "Create Experiment",
+      "reset": "Reset"
     },
-    "card": {
-      "type": "Type:",
-      "arms": "Arms:",
-      "confidence": "Confidence:",
-      "threshold": "Threshold:",
-      "notStarted": "Not started",
-      "viewDetails": "View Details",
-      "stopTest": "Stop Test",
-      "editDraft": "Edit Draft",
-      "launch": "Launch"
+    "summary": {
+      "total": "Experiments",
+      "running": "Running",
+      "draft": "Draft",
+      "revenue": "Tracked Revenue"
     },
     "status": {
-      "running": "🟢 Running",
-      "draft": "🟡 Draft",
-      "completed": "⚫ Completed"
+      "running": "Running",
+      "draft": "Draft",
+      "paused": "Paused",
+      "completed": "Completed"
     },
-    "completedArchive": "7 completed tests — contact engineering for archive access.",
-    "pagination": "Showing 1–5 of 12"
+    "states": {
+      "loadFailed": "Failed to load experiments.",
+      "empty": "No experiments created yet."
+    },
+    "feedback": {
+      "creating": "Creating...",
+      "experimentCreated": "Experiment created.",
+      "createFailed": "Failed to create experiment."
+    },
+    "table": {
+      "title": "Live Experiments",
+      "description": "These rows come from the backend ab_tests, ab_test_arms, ab_test_assignments, and ab_test_arm_stats tables.",
+      "name": "Experiment",
+      "status": "Status",
+      "algorithm": "Algorithm",
+      "arms": "Arms",
+      "samples": "Samples",
+      "conversions": "Conversions",
+      "assignments": "Active Assignments",
+      "revenue": "Revenue",
+      "confidence": "Confidence",
+      "updated": "Updated",
+      "banditEnabled": "Bandit enabled",
+      "banditDisabled": "Fixed allocation",
+      "controlArm": "Control:",
+      "variantArm": "Variant:",
+      "noWinner": "No winner yet"
+    },
+    "form": {
+      "title": "Create A/B Experiment",
+      "description": "This form writes directly to ab_tests and ab_test_arms. It intentionally captures only the fields that are truly persisted today.",
+      "name": "Experiment Name",
+      "namePlaceholder": "Homepage pricing emphasis",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "What are you testing and why?",
+      "status": "Initial Status",
+      "algorithm": "Algorithm",
+      "minSampleSize": "Minimum Sample Size",
+      "confidenceThreshold": "Confidence Threshold (%)",
+      "startAt": "Start At",
+      "endAt": "End At",
+      "isBandit": "Enable bandit optimization",
+      "controlTitle": "Control Arm",
+      "variantTitle": "Variant Arm",
+      "armName": "Arm Name",
+      "armDescription": "Arm Description",
+      "trafficWeight": "Traffic Weight"
+    }
   },
   "experimentStudio": {
     "title": "A/B Test Studio",

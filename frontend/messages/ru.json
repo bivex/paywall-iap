@@ -177,32 +177,72 @@
     }
   },
   "experiments": {
-    "title": "Обзор A/B тестов",
-    "newTest": "+ Новый тест",
-    "tabs": {
-      "all": "Все",
-      "running": "🟢 Запущен",
-      "draft": "🟡 Черновик",
-      "completed": "⚫ Завершён"
+    "title": "A/B тесты",
+    "subtitle": "Управляйте реальными экспериментами из базы ab_tests и ab_test_arms и отслеживайте живую агрегированную статистику по каждому эксперименту.",
+    "actions": {
+      "create": "Создать эксперимент",
+      "reset": "Сбросить"
     },
-    "card": {
-      "type": "Тип:",
-      "arms": "Ветви:",
-      "confidence": "Уверенность:",
-      "threshold": "Порог:",
-      "notStarted": "Не запущен",
-      "viewDetails": "Подробнее",
-      "stopTest": "Остановить тест",
-      "editDraft": "Редактировать черновик",
-      "launch": "Запустить"
+    "summary": {
+      "total": "Эксперименты",
+      "running": "Запущены",
+      "draft": "Черновики",
+      "revenue": "Учтённая выручка"
     },
     "status": {
-      "running": "🟢 Запущен",
-      "draft": "🟡 Черновик",
-      "completed": "⚫ Завершён"
+      "running": "Запущен",
+      "draft": "Черновик",
+      "paused": "Пауза",
+      "completed": "Завершён"
     },
-    "completedArchive": "7 завершённых тестов — обратитесь к команде разработки для доступа к архиву.",
-    "pagination": "Показано 1–5 из 12"
+    "states": {
+      "loadFailed": "Не удалось загрузить эксперименты.",
+      "empty": "Эксперименты ещё не созданы."
+    },
+    "feedback": {
+      "creating": "Создание...",
+      "experimentCreated": "Эксперимент создан.",
+      "createFailed": "Не удалось создать эксперимент."
+    },
+    "table": {
+      "title": "Живые эксперименты",
+      "description": "Эти строки берутся из backend-таблиц ab_tests, ab_test_arms, ab_test_assignments и ab_test_arm_stats.",
+      "name": "Эксперимент",
+      "status": "Статус",
+      "algorithm": "Алгоритм",
+      "arms": "Ветви",
+      "samples": "Сэмплы",
+      "conversions": "Конверсии",
+      "assignments": "Активные назначения",
+      "revenue": "Выручка",
+      "confidence": "Уверенность",
+      "updated": "Обновлён",
+      "banditEnabled": "Bandit включён",
+      "banditDisabled": "Фиксированное распределение",
+      "controlArm": "Контроль:",
+      "variantArm": "Вариант:",
+      "noWinner": "Победитель ещё не определён"
+    },
+    "form": {
+      "title": "Создать A/B эксперимент",
+      "description": "Эта форма пишет напрямую в ab_tests и ab_test_arms. Здесь оставлены только поля, которые реально сохраняются сегодня.",
+      "name": "Название эксперимента",
+      "namePlaceholder": "Акцент на годовой подписке на главной",
+      "descriptionLabel": "Описание",
+      "descriptionPlaceholder": "Что именно вы тестируете и зачем?",
+      "status": "Начальный статус",
+      "algorithm": "Алгоритм",
+      "minSampleSize": "Минимальный размер выборки",
+      "confidenceThreshold": "Порог уверенности (%)",
+      "startAt": "Старт",
+      "endAt": "Завершение",
+      "isBandit": "Включить bandit-оптимизацию",
+      "controlTitle": "Контрольная ветвь",
+      "variantTitle": "Вариант",
+      "armName": "Название ветви",
+      "armDescription": "Описание ветви",
+      "trafficWeight": "Вес трафика"
+    }
   },
   "experimentStudio": {
     "title": "Студия A/B тестов",

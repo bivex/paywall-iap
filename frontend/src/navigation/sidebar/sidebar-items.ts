@@ -48,7 +48,6 @@ export interface NavGroup {
 
 export const comingSoonUrls = new Set([
   "/dashboard/matomo",
-  "/dashboard/experiments",
   "/dashboard/experiments/studio",
   "/dashboard/experiments/bandit",
   "/dashboard/experiments/feedback",
@@ -96,7 +95,7 @@ export const sidebarItems: NavGroup[] = [
     id: 4,
     label: "Experiment Studio",
     items: [
-      { title: "A/B Tests", url: "/dashboard/experiments", icon: FlaskConical, comingSoon: true },
+      { title: "A/B Tests", url: "/dashboard/experiments", icon: FlaskConical },
       { title: "Studio", url: "/dashboard/experiments/studio", icon: Settings2, comingSoon: true },
       { title: "Bandit Model", url: "/dashboard/experiments/bandit", icon: Brain, comingSoon: true },
       { title: "Delayed Feedback", url: "/dashboard/experiments/feedback", icon: Activity, comingSoon: true },
