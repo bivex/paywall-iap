@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -20,12 +21,57 @@ type PostgresBanditRepository struct {
 	logger *zap.Logger
 }
 
+type pendingRewardScanner interface {
+	Scan(dest ...any) error
+}
+
 // NewPostgresBanditRepository creates a new PostgreSQL-backed bandit repository
 func NewPostgresBanditRepository(pool *pgxpool.Pool, logger *zap.Logger) *PostgresBanditRepository {
 	return &PostgresBanditRepository{
 		pool:   pool,
 		logger: logger,
 	}
+}
+
+func scanPendingReward(scanner pendingRewardScanner, reward *service.PendingReward) error {
+	var conversionValue sql.NullFloat64
+	var conversionCurrency sql.NullString
+	var convertedAt sql.NullTime
+	var processedAt sql.NullTime
+
+	err := scanner.Scan(
+		&reward.ID,
+		&reward.ExperimentID,
+		&reward.ArmID,
+		&reward.UserID,
+		&reward.AssignedAt,
+		&reward.ExpiresAt,
+		&reward.Converted,
+		&conversionValue,
+		&conversionCurrency,
+		&convertedAt,
+		&processedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	if conversionValue.Valid {
+		reward.ConversionValue = conversionValue.Float64
+	}
+	if conversionCurrency.Valid {
+		reward.ConversionCurrency = conversionCurrency.String
+	}
+	if convertedAt.Valid {
+		t := convertedAt.Time
+		reward.ConvertedAt = &t
+	}
+	if processedAt.Valid {
+		t := processedAt.Time
+		reward.ProcessedAt = &t
+	}
+
+	return nil
 }
 
 // GetArms retrieves all arms for an experiment
@@ -747,19 +793,7 @@ func (r *PostgresBanditRepository) GetPendingReward(ctx context.Context, id uuid
 	`
 
 	var reward service.PendingReward
-	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&reward.ID,
-		&reward.ExperimentID,
-		&reward.ArmID,
-		&reward.UserID,
-		&reward.AssignedAt,
-		&reward.ExpiresAt,
-		&reward.Converted,
-		&reward.ConversionValue,
-		&reward.ConversionCurrency,
-		&reward.ConvertedAt,
-		&reward.ProcessedAt,
-	)
+	err := scanPendingReward(r.pool.QueryRow(ctx, query, id), &reward)
 
 	if err == pgx.ErrNoRows {
 		return nil, fmt.Errorf("pending reward not found")
@@ -782,7 +816,12 @@ func (r *PostgresBanditRepository) GetPendingRewardsByUser(ctx context.Context, 
 		ORDER BY assigned_at DESC
 	`
 
-	rows, err := r.pool.Query(ctx, query, userID, experimentID)
+	var experimentParam interface{}
+	if experimentID != uuid.Nil {
+		experimentParam = experimentID
+	}
+
+	rows, err := r.pool.Query(ctx, query, userID, experimentParam)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query pending rewards: %w", err)
 	}
@@ -791,19 +830,7 @@ func (r *PostgresBanditRepository) GetPendingRewardsByUser(ctx context.Context, 
 	var rewards []*service.PendingReward
 	for rows.Next() {
 		var reward service.PendingReward
-		if err := rows.Scan(
-			&reward.ID,
-			&reward.ExperimentID,
-			&reward.ArmID,
-			&reward.UserID,
-			&reward.AssignedAt,
-			&reward.ExpiresAt,
-			&reward.Converted,
-			&reward.ConversionValue,
-			&reward.ConversionCurrency,
-			&reward.ConvertedAt,
-			&reward.ProcessedAt,
-		); err != nil {
+		if err := scanPendingReward(rows, &reward); err != nil {
 			return nil, fmt.Errorf("failed to scan pending reward: %w", err)
 		}
 		rewards = append(rewards, &reward)
@@ -832,19 +859,7 @@ func (r *PostgresBanditRepository) GetExpiredPendingRewards(ctx context.Context,
 	var rewards []*service.PendingReward
 	for rows.Next() {
 		var reward service.PendingReward
-		if err := rows.Scan(
-			&reward.ID,
-			&reward.ExperimentID,
-			&reward.ArmID,
-			&reward.UserID,
-			&reward.AssignedAt,
-			&reward.ExpiresAt,
-			&reward.Converted,
-			&reward.ConversionValue,
-			&reward.ConversionCurrency,
-			&reward.ConvertedAt,
-			&reward.ProcessedAt,
-		); err != nil {
+		if err := scanPendingReward(rows, &reward); err != nil {
 			return nil, fmt.Errorf("failed to scan pending reward: %w", err)
 		}
 		rewards = append(rewards, &reward)

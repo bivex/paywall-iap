@@ -134,6 +134,7 @@ func TestAdvancedBanditEngine_GetObjectiveScores_LazilyLoadsExperimentConfig(t *
 	require.Contains(t, scores[armID], ObjectiveConversion)
 	require.Contains(t, scores[armID], ObjectiveLTV)
 	require.Contains(t, scores[armID], ObjectiveRevenue)
+	require.Contains(t, scores[armID], ObjectiveHybrid)
 }
 
 func TestAdvancedBanditEngine_GetPendingReward_UsesLazyDelayedStrategy(t *testing.T) {

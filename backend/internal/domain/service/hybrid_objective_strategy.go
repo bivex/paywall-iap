@@ -12,35 +12,35 @@ import (
 // HybridObjectiveStrategy implements multi-objective optimization
 // Supports combining conversion rate, LTV, and revenue into a single score
 type HybridObjectiveStrategy struct {
-	repo           BanditRepository
-	cache          BanditCache
-	logger         *zap.Logger
-	config         *ExperimentConfig
-	baseBandit     *ThompsonSamplingBandit
+	repo       BanditRepository
+	cache      BanditCache
+	logger     *zap.Logger
+	config     *ExperimentConfig
+	baseBandit *ThompsonSamplingBandit
 }
 
 // ObjectiveScore represents the score for a single objective
 type ObjectiveScore struct {
 	ObjectiveType ObjectiveType
-	Score        float64
-	Alpha        float64
-	Beta         float64
-	Samples      int
-	Conversions  int
-	Revenue      float64
-	AvgLTV       float64
+	Score         float64
+	Alpha         float64
+	Beta          float64
+	Samples       int
+	Conversions   int
+	Revenue       float64
+	AvgLTV        float64
 }
 
 // ArmObjectiveStats represents per-objective statistics for an arm
 type ArmObjectiveStats struct {
-	ArmID        uuid.UUID
+	ArmID         uuid.UUID
 	ObjectiveType ObjectiveType
-	Alpha        float64
-	Beta         float64
-	Samples      int
-	Conversions  int
-	TotalRevenue float64
-	AvgLTV       float64
+	Alpha         float64
+	Beta          float64
+	Samples       int
+	Conversions   int
+	TotalRevenue  float64
+	AvgLTV        float64
 }
 
 // ObjectiveRepository defines the repository interface for objective stats
@@ -68,8 +68,8 @@ func NewHybridObjectiveStrategy(
 	if config.ObjectiveType == ObjectiveHybrid && config.ObjectiveWeights == nil {
 		config.ObjectiveWeights = map[string]float64{
 			"conversion": 0.5,
-			"ltv":       0.3,
-			"revenue":   0.2,
+			"ltv":        0.3,
+			"revenue":    0.2,
 		}
 	}
 
@@ -272,14 +272,14 @@ func (s *HybridObjectiveStrategy) RecordObjectiveReward(
 	if err != nil {
 		// Initialize new stats
 		stats = &ArmObjectiveStats{
-			ArmID:        armID,
+			ArmID:         armID,
 			ObjectiveType: objectiveType,
-			Alpha:        1.0,
-			Beta:         1.0,
-			Samples:      0,
-			Conversions:  0,
-			TotalRevenue: 0,
-			AvgLTV:       0,
+			Alpha:         1.0,
+			Beta:          1.0,
+			Samples:       0,
+			Conversions:   0,
+			TotalRevenue:  0,
+			AvgLTV:        0,
 		}
 	}
 
@@ -328,47 +328,106 @@ func (s *HybridObjectiveStrategy) GetObjectiveScores(
 	conversionScore := s.baseBandit.SampleBeta(stats.Alpha, stats.Beta)
 	scores[ObjectiveConversion] = &ObjectiveScore{
 		ObjectiveType: ObjectiveConversion,
-		Score:        conversionScore,
-		Alpha:        stats.Alpha,
-		Beta:         stats.Beta,
-		Samples:      stats.Samples,
-		Conversions:  stats.Conversions,
-		Revenue:      stats.Revenue,
+		Score:         conversionScore,
+		Alpha:         stats.Alpha,
+		Beta:          stats.Beta,
+		Samples:       stats.Samples,
+		Conversions:   stats.Conversions,
+		Revenue:       stats.Revenue,
 	}
 
-	// Get objective-specific stats if available
-	objRepo, ok := s.repo.(ObjectiveRepository)
-	if ok {
-		objStats, err := objRepo.GetAllObjectiveStats(ctx, armID)
+	shouldIncludeObjective := func(objective ObjectiveType) bool {
+		if s.config == nil {
+			return objective == ObjectiveConversion
+		}
+
+		if s.config.ObjectiveType == objective || s.config.ObjectiveType == ObjectiveHybrid {
+			return true
+		}
+
+		if s.config.ObjectiveType == ObjectiveHybrid && s.config.ObjectiveWeights != nil {
+			_, ok := s.config.ObjectiveWeights[string(objective)]
+			return ok
+		}
+
+		return false
+	}
+
+	getObjectiveStats := func(objective ObjectiveType) *ArmObjectiveStats {
+		objRepo, ok := s.repo.(ObjectiveRepository)
+		if !ok {
+			return &ArmObjectiveStats{
+				ArmID:         armID,
+				ObjectiveType: objective,
+				Alpha:         stats.Alpha,
+				Beta:          stats.Beta,
+				Samples:       stats.Samples,
+				Conversions:   stats.Conversions,
+				TotalRevenue:  stats.Revenue,
+				AvgLTV:        stats.AvgReward,
+			}
+		}
+
+		objStats, err := objRepo.GetObjectiveStats(ctx, armID, objective)
+		if err != nil || objStats == nil {
+			return &ArmObjectiveStats{
+				ArmID:         armID,
+				ObjectiveType: objective,
+				Alpha:         stats.Alpha,
+				Beta:          stats.Beta,
+				Samples:       stats.Samples,
+				Conversions:   stats.Conversions,
+				TotalRevenue:  stats.Revenue,
+				AvgLTV:        stats.AvgReward,
+			}
+		}
+
+		return objStats
+	}
+
+	if shouldIncludeObjective(ObjectiveLTV) {
+		ltvScore, err := s.calculateLVTScore(ctx, armID)
 		if err == nil {
-			for objType, objStat := range objStats {
-				conversionProb := objStat.Alpha / (objStat.Alpha + objStat.Beta)
+			objStat := getObjectiveStats(ObjectiveLTV)
+			scores[ObjectiveLTV] = &ObjectiveScore{
+				ObjectiveType: ObjectiveLTV,
+				Score:         ltvScore,
+				Alpha:         objStat.Alpha,
+				Beta:          objStat.Beta,
+				Samples:       objStat.Samples,
+				Conversions:   objStat.Conversions,
+				AvgLTV:        objStat.AvgLTV,
+			}
+		}
+	}
 
-				switch objType {
-				case ObjectiveLTV:
-					score := &ObjectiveScore{
-						ObjectiveType: ObjectiveLTV,
-						Score:        conversionProb * objStat.AvgLTV,
-						Alpha:        objStat.Alpha,
-						Beta:         objStat.Beta,
-						Samples:      objStat.Samples,
-						Conversions:  objStat.Conversions,
-						AvgLTV:       objStat.AvgLTV,
-					}
-					scores[ObjectiveLTV] = score
+	if shouldIncludeObjective(ObjectiveRevenue) {
+		revenueScore, err := s.calculateRevenueScore(ctx, armID)
+		if err == nil {
+			objStat := getObjectiveStats(ObjectiveRevenue)
+			scores[ObjectiveRevenue] = &ObjectiveScore{
+				ObjectiveType: ObjectiveRevenue,
+				Score:         revenueScore,
+				Alpha:         objStat.Alpha,
+				Beta:          objStat.Beta,
+				Samples:       objStat.Samples,
+				Conversions:   objStat.Conversions,
+				Revenue:       objStat.TotalRevenue,
+			}
+		}
+	}
 
-				case ObjectiveRevenue:
-					score := &ObjectiveScore{
-						ObjectiveType: ObjectiveRevenue,
-						Score:        conversionProb * (objStat.TotalRevenue / float64(objStat.Samples)),
-						Alpha:        objStat.Alpha,
-						Beta:         objStat.Beta,
-						Samples:      objStat.Samples,
-						Conversions:  objStat.Conversions,
-						Revenue:      objStat.TotalRevenue,
-					}
-					scores[ObjectiveRevenue] = score
-				}
+	if s.config != nil && s.config.ObjectiveType == ObjectiveHybrid {
+		hybridScore, err := s.calculateHybridScore(ctx, armID)
+		if err == nil {
+			scores[ObjectiveHybrid] = &ObjectiveScore{
+				ObjectiveType: ObjectiveHybrid,
+				Score:         hybridScore,
+				Alpha:         stats.Alpha,
+				Beta:          stats.Beta,
+				Samples:       stats.Samples,
+				Conversions:   stats.Conversions,
+				Revenue:       stats.Revenue,
 			}
 		}
 	}
