@@ -351,44 +351,63 @@
     }
   },
   "pricing": {
-    "title": "Pricing Plan Editor",
-    "newPlan": "+ New Plan",
-    "plans": {
-      "title": "Plans"
+    "title": "Pricing Tiers",
+    "subtitle": "Manage live pricing tiers stored in the admin database.",
+    "actions": {
+      "newTier": "New Tier",
+      "create": "Create Tier",
+      "save": "Save Changes",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "activate": "Activate",
+      "deactivate": "Deactivate"
+    },
+    "feedback": {
+      "creating": "Creating...",
+      "saving": "Saving...",
+      "tierCreated": "Pricing tier created.",
+      "tierUpdated": "Pricing tier updated.",
+      "statusUpdated": "Tier status updated.",
+      "saveFailed": "Failed to save pricing tier.",
+      "statusFailed": "Failed to update tier status."
+    },
+    "states": {
+      "loadFailed": "Failed to load pricing tiers.",
+      "empty": "No pricing tiers created yet."
+    },
+    "summary": {
+      "total": "Total Tiers",
+      "active": "Active",
+      "inactive": "Inactive"
     },
     "table": {
+      "title": "Live Pricing Tiers",
+      "description": "These rows are loaded from and persisted to the backend pricing_tiers table.",
       "name": "Name",
-      "price": "Price",
-      "interval": "Interval",
-      "trial": "Trial",
-      "activeSubs": "Active Subs",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "currency": "Currency",
+      "features": "Features",
       "status": "Status",
-      "actions": "Actions",
-      "days": "days"
+      "updated": "Updated",
+      "actions": "Actions"
     },
     "status": {
       "active": "Active",
       "inactive": "Inactive"
     },
-    "edit": "Edit",
-    "deactivate": "Deactivate",
-    "activate": "Activate",
-    "editPlan": {
-      "title": "Edit Plan: Pro Monthly",
-      "planName": "Plan Name",
-      "price": "Price",
+    "form": {
+      "titleNew": "Create Pricing Tier",
+      "titleEdit": "Edit Pricing Tier",
+      "description": "Define the commercial copy, price points, and feature list for each tier.",
+      "name": "Tier Name",
       "currency": "Currency",
-      "interval": "Interval",
-      "trialDays": "Trial Days",
-      "gracePeriodEnabled": "Grace Period Enabled",
-      "graceDuration": "Grace Duration (days)",
-      "save": "Save Plan",
-      "cancel": "Cancel"
-    },
-    "intervals": {
-      "monthly": "Monthly",
-      "annual": "Annual",
-      "weekly": "Weekly"
+      "monthlyPrice": "Monthly Price",
+      "annualPrice": "Annual Price",
+      "descriptionLabel": "Description",
+      "features": "Features",
+      "featuresPlaceholder": "One feature per line",
+      "active": "Tier is active"
     }
   },
   "revenueOps": {

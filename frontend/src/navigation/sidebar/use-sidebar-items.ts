@@ -67,12 +67,7 @@ export function useSidebarItems(): NavGroup[] {
           icon: Gift,
           comingSoon: isComingSoonUrl("/dashboard/winback"),
         },
-        {
-          title: i("pricingTiers"),
-          url: "/dashboard/pricing",
-          icon: Tag,
-          comingSoon: isComingSoonUrl("/dashboard/pricing"),
-        },
+        { title: i("pricingTiers"), url: "/dashboard/pricing", icon: Tag },
         { title: i("webhooks"), url: "/dashboard/webhooks", icon: Webhook },
       ],
     },
