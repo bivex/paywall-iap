@@ -60,12 +60,7 @@ export function useSidebarItems(): NavGroup[] {
         { title: i("overview"), url: "/dashboard/revenue-ops", icon: Layers },
         { title: i("subscriptions"), url: "/dashboard/subscriptions", icon: CreditCard },
         { title: i("transactions"), url: "/dashboard/transactions", icon: DollarSign },
-        {
-          title: i("dunning"),
-          url: "/dashboard/dunning",
-          icon: AlertTriangle,
-          comingSoon: isComingSoonUrl("/dashboard/dunning"),
-        },
+        { title: i("dunning"), url: "/dashboard/dunning", icon: AlertTriangle },
         {
           title: i("winback"),
           url: "/dashboard/winback",

@@ -1,44 +1,44 @@
+import Link from "next/link";
+
+import {
+  Activity,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Clock,
+  Loader2,
+  RefreshCw,
+  Webhook,
+  XCircle,
+} from "lucide-react";
+
+import { getRevenueOps } from "@/actions/revenue-ops";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertCircle, CheckCircle2, Clock, RefreshCw,
-  Webhook, Activity, AlertTriangle, XCircle, Loader2,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-} from "lucide-react";
-import Link from "next/link";
-import { getRevenueOps } from "@/actions/revenue-ops";
-import type { DunningRow, WebhookRow } from "@/actions/revenue-ops";
-import { ReplayWebhookButton } from "./_components/replay-webhook-button";
-import { WebhookTable, PendingWebhookTable } from "./_components/webhook-table";
-import { SortHeader } from "@/components/ui/sort-header";
 
-/* ─── helpers ─────────────────────────────────────────── */
-function fmtDate(iso: string | null) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-US", {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
-  });
-}
+import { DunningQueueCard, getActiveDunningCount, sortDunningRows } from "./_components/dunning-queue-card";
+import { PendingWebhookTable, WebhookTable } from "./_components/webhook-table";
 
 const PROVIDER_COLOR: Record<string, string> = {
   stripe: "bg-violet-500/10 text-violet-600 border-violet-500/20",
-  apple:  "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  apple: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   google: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-};
-
-const DUNNING_STATUS_COLOR: Record<string, string> = {
-  pending:     "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
-  in_progress: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  recovered:   "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-  failed:      "bg-red-500/10 text-red-600 border-red-500/20",
 };
 
 /* ─── pagination bar ─────────────────────────────────── */
 function PaginationBar({
-  page, totalPages, total, pageSize, paramKey, extraParams = "",
+  page,
+  totalPages,
+  total,
+  pageSize,
+  paramKey,
+  extraParams = "",
 }: {
   page: number;
   totalPages: number;
@@ -48,7 +48,7 @@ function PaginationBar({
   extraParams?: string;
 }) {
   const from = Math.min((page - 1) * pageSize + 1, total);
-  const to   = Math.min(page * pageSize, total);
+  const to = Math.min(page * pageSize, total);
 
   function href(p: number) {
     const extra = extraParams ? `&${extraParams}` : "";
@@ -56,17 +56,36 @@ function PaginationBar({
   }
 
   return (
-    <div className="flex items-center justify-between px-1 pt-3 border-t">
-      <p className="text-xs text-muted-foreground">
-        Showing <span className="font-medium text-foreground">{from}–{to}</span> of{" "}
-        <span className="font-medium text-foreground">{total}</span>
+    <div className="flex items-center justify-between border-t px-1 pt-3">
+      <p className="text-muted-foreground text-xs">
+        Showing{" "}
+        <span className="font-medium text-foreground">
+          {from}–{to}
+        </span>{" "}
+        of <span className="font-medium text-foreground">{total}</span>
       </p>
       <div className="flex items-center gap-1">
         <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
-          {page > 1 ? <Link href={href(1)}><ChevronsLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronsLeft className="h-3.5 w-3.5" /></span>}
+          {page > 1 ? (
+            <Link href={href(1)}>
+              <ChevronsLeft className="h-3.5 w-3.5" />
+            </Link>
+          ) : (
+            <span>
+              <ChevronsLeft className="h-3.5 w-3.5" />
+            </span>
+          )}
         </Button>
         <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
-          {page > 1 ? <Link href={href(page - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronLeft className="h-3.5 w-3.5" /></span>}
+          {page > 1 ? (
+            <Link href={href(page - 1)}>
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Link>
+          ) : (
+            <span>
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </span>
+          )}
         </Button>
 
         {/* page numbers */}
@@ -94,11 +113,39 @@ function PaginationBar({
           );
         })}
 
-        <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
-          {page < totalPages ? <Link href={href(page + 1)}><ChevronRight className="h-3.5 w-3.5" /></Link> : <span><ChevronRight className="h-3.5 w-3.5" /></span>}
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-7 w-7"
+          disabled={page >= totalPages}
+          asChild={page < totalPages}
+        >
+          {page < totalPages ? (
+            <Link href={href(page + 1)}>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Link>
+          ) : (
+            <span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </span>
+          )}
         </Button>
-        <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
-          {page < totalPages ? <Link href={href(totalPages)}><ChevronsRight className="h-3.5 w-3.5" /></Link> : <span><ChevronsRight className="h-3.5 w-3.5" /></span>}
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-7 w-7"
+          disabled={page >= totalPages}
+          asChild={page < totalPages}
+        >
+          {page < totalPages ? (
+            <Link href={href(totalPages)}>
+              <ChevronsRight className="h-3.5 w-3.5" />
+            </Link>
+          ) : (
+            <span>
+              <ChevronsRight className="h-3.5 w-3.5" />
+            </span>
+          )}
         </Button>
       </div>
     </div>
@@ -113,7 +160,7 @@ export default async function RevenueOpsPage({
 }) {
   const sp = await searchParams;
   const whPage = Math.max(1, parseInt(sp.wh_page ?? "1", 10) || 1);
-  const whSort = (sp.wh_sort as "status" | "provider" | "event_type" | "created_at" | "actions" | undefined);
+  const whSort = sp.wh_sort as "status" | "provider" | "event_type" | "created_at" | "actions" | undefined;
   const whPending = sp.wh_pending === "1";
   const dunningSort = sp.dunning_sort ?? "date_desc"; // newest first
 
@@ -129,14 +176,8 @@ export default async function RevenueOpsPage({
   }
 
   const { dunning, webhooks, matomo } = report;
-  const activeDunning = dunning.stats.pending + dunning.stats.in_progress;
-
-  // Sort dunning queue by next_attempt_at
-  const sortedDunning = [...dunning.queue].sort((a, b) => {
-    const ta = a.next_attempt_at ? new Date(a.next_attempt_at).getTime() : 0;
-    const tb = b.next_attempt_at ? new Date(b.next_attempt_at).getTime() : 0;
-    return dunningSort === "date_asc" ? ta - tb : tb - ta;
-  });
+  const activeDunning = getActiveDunningCount(dunning.stats);
+  const sortedDunning = sortDunningRows(dunning.queue, dunningSort);
 
   const buildDunningSortUrl = (s: string) => {
     const qs = new URLSearchParams();
@@ -153,22 +194,26 @@ export default async function RevenueOpsPage({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Revenue Ops</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <h1 className="font-semibold text-2xl tracking-tight">Revenue Ops</h1>
+          <p className="mt-0.5 text-muted-foreground text-sm">
             Dunning queue · Webhook inbox · Matomo event pipeline · live DB data
           </p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex shrink-0 gap-2">
           {activeDunning > 0 && (
-            <Badge variant="outline" className="text-xs text-amber-600 border-amber-500/40 bg-amber-500/5">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mr-1.5 inline-block animate-pulse" />
+            <Badge variant="outline" className="border-amber-500/40 bg-amber-500/5 text-amber-600 text-xs">
+              <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
               {activeDunning} dunning active
             </Badge>
           )}
           {webhooks.unprocessed > 0 && (
-            <Badge variant="outline" className="text-xs text-red-600 border-red-500/40 bg-red-500/5 cursor-pointer" asChild>
+            <Badge
+              variant="outline"
+              className="cursor-pointer border-red-500/40 bg-red-500/5 text-red-600 text-xs"
+              asChild
+            >
               <Link href={`?wh_page=${whPage}&wh_sort=status&wh_pending=1#webhooks`}>
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500 mr-1.5 inline-block animate-pulse" />
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
                 {webhooks.unprocessed} webhook{webhooks.unprocessed > 1 ? "s" : ""} pending
               </Link>
             </Badge>
@@ -179,18 +224,44 @@ export default async function RevenueOpsPage({
       {/* Summary stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Active Dunning",      value: activeDunning,           icon: RefreshCw,    color: activeDunning > 0 ? "text-amber-500" : "text-muted-foreground", bg: "bg-amber-500/10"   },
-          { label: "Recovered",           value: dunning.stats.recovered, icon: CheckCircle2, color: "text-emerald-500",                                              bg: "bg-emerald-500/10" },
-          { label: "Webhooks Unprocessed",value: webhooks.unprocessed,    icon: Webhook,      color: webhooks.unprocessed > 0 ? "text-red-500" : "text-muted-foreground", bg: "bg-red-500/10" },
-          { label: "Total Webhooks",      value: webhooks.total,          icon: Activity,     color: "text-blue-500",                                                bg: "bg-blue-500/10"    },
+          {
+            label: "Active Dunning",
+            value: activeDunning,
+            icon: RefreshCw,
+            color: activeDunning > 0 ? "text-amber-500" : "text-muted-foreground",
+            bg: "bg-amber-500/10",
+          },
+          {
+            label: "Recovered",
+            value: dunning.stats.recovered,
+            icon: CheckCircle2,
+            color: "text-emerald-500",
+            bg: "bg-emerald-500/10",
+          },
+          {
+            label: "Webhooks Unprocessed",
+            value: webhooks.unprocessed,
+            icon: Webhook,
+            color: webhooks.unprocessed > 0 ? "text-red-500" : "text-muted-foreground",
+            bg: "bg-red-500/10",
+          },
+          {
+            label: "Total Webhooks",
+            value: webhooks.total,
+            icon: Activity,
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
+          },
         ].map((s) => {
           const Icon = s.icon;
           return (
             <Card key={s.label} className="py-4">
-              <CardContent className="px-4 py-0 flex items-center justify-between">
+              <CardContent className="flex items-center justify-between px-4 py-0">
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{s.label}</p>
-                  <p className={`text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
+                  <p className="mb-1 font-semibold text-muted-foreground text-xs uppercase tracking-widest">
+                    {s.label}
+                  </p>
+                  <p className={`font-bold text-2xl tabular-nums ${s.color}`}>{s.value}</p>
                 </div>
                 <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.bg}`}>
                   <Icon className={`h-4 w-4 ${s.color}`} />
@@ -206,7 +277,7 @@ export default async function RevenueOpsPage({
           <TabsTrigger value="webhooks">
             Webhooks
             {webhooks.unprocessed > 0 && (
-              <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+              <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 font-bold text-[10px] text-white">
                 {webhooks.unprocessed}
               </span>
             )}
@@ -214,7 +285,7 @@ export default async function RevenueOpsPage({
           <TabsTrigger value="dunning">
             Dunning
             {activeDunning > 0 && (
-              <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+              <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 font-bold text-[10px] text-white">
                 {activeDunning}
               </span>
             )}
@@ -230,18 +301,23 @@ export default async function RevenueOpsPage({
               const unproc = p.total - p.processed;
               return (
                 <Card key={p.provider} className="py-3">
-                  <CardContent className="px-4 py-0 flex items-center justify-between">
+                  <CardContent className="flex items-center justify-between px-4 py-0">
                     <div>
-                      <Badge className={`${PROVIDER_COLOR[p.provider.toLowerCase()] ?? "bg-muted"} border text-xs capitalize mb-1`}>
+                      <Badge
+                        className={`${PROVIDER_COLOR[p.provider.toLowerCase()] ?? "bg-muted"} mb-1 border text-xs capitalize`}
+                      >
                         {p.provider}
                       </Badge>
-                      <p className="text-lg font-bold tabular-nums">{p.total}</p>
-                      <p className="text-xs text-muted-foreground">{p.processed} processed · {unproc} pending</p>
+                      <p className="font-bold text-lg tabular-nums">{p.total}</p>
+                      <p className="text-muted-foreground text-xs">
+                        {p.processed} processed · {unproc} pending
+                      </p>
                     </div>
-                    {unproc > 0
-                      ? <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
-                      : <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
-                    }
+                    {unproc > 0 ? (
+                      <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500" />
+                    ) : (
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -253,8 +329,8 @@ export default async function RevenueOpsPage({
             <Card id="pending-webhooks">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                  <CardTitle className="text-sm font-semibold text-amber-600">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+                  <CardTitle className="font-semibold text-amber-600 text-sm">
                     Pending Webhooks — {(webhooks.pending_events ?? []).length} unprocessed
                   </CardTitle>
                 </div>
@@ -268,13 +344,13 @@ export default async function RevenueOpsPage({
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold">Recent Webhook Events</CardTitle>
-                <span className="text-xs text-muted-foreground">
+                <CardTitle className="font-semibold text-sm">Recent Webhook Events</CardTitle>
+                <span className="text-muted-foreground text-xs">
                   Page {webhooks.page} of {webhooks.total_pages} · {webhooks.total} total
                 </span>
               </div>
             </CardHeader>
-            <CardContent className="pt-0 space-y-0">
+            <CardContent className="space-y-0 pt-0">
               <WebhookTable rows={webhooks.events} initialSort={whSort} initialFilterPending={whPending} />
               <PaginationBar
                 page={webhooks.page}
@@ -282,10 +358,9 @@ export default async function RevenueOpsPage({
                 total={webhooks.total}
                 pageSize={webhooks.page_size}
                 paramKey="wh_page"
-                extraParams={[
-                  whSort    ? `wh_sort=${whSort}`       : "",
-                  whPending ? `wh_pending=1`            : "",
-                ].filter(Boolean).join("&")}
+                extraParams={[whSort ? `wh_sort=${whSort}` : "", whPending ? `wh_pending=1` : ""]
+                  .filter(Boolean)
+                  .join("&")}
               />
             </CardContent>
           </Card>
@@ -293,40 +368,56 @@ export default async function RevenueOpsPage({
 
         {/* ── DUNNING QUEUE ── */}
         <TabsContent value="dunning" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold">Active Dunning Queue</CardTitle>
-                <div className="flex gap-3 text-xs text-muted-foreground">
-                  <span>Pending: <span className="font-medium text-foreground">{dunning.stats.pending}</span></span>
-                  <span>In Progress: <span className="font-medium text-foreground">{dunning.stats.in_progress}</span></span>
-                  <span>Recovered: <span className="font-medium text-emerald-500">{dunning.stats.recovered}</span></span>
-                  <span>Failed: <span className="font-medium text-red-500">{dunning.stats.failed}</span></span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <DunningTable rows={sortedDunning} sort={dunningSort} buildSortUrl={buildDunningSortUrl} />
-            </CardContent>
-          </Card>
+          <DunningQueueCard
+            rows={sortedDunning}
+            stats={dunning.stats}
+            sort={dunningSort}
+            buildSortUrl={buildDunningSortUrl}
+          />
         </TabsContent>
 
         {/* ── MATOMO PIPELINE ── */}
         <TabsContent value="matomo" className="mt-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: "Pending",    value: matomo.stats.pending,    icon: Clock,       color: "text-amber-500",  bg: "bg-amber-500/10"  },
-              { label: "Processing", value: matomo.stats.processing, icon: Loader2,     color: "text-blue-500",   bg: "bg-blue-500/10"   },
-              { label: "Sent",       value: matomo.stats.sent,       icon: CheckCircle2,color: "text-emerald-500",bg: "bg-emerald-500/10" },
-              { label: "Failed",     value: matomo.stats.failed,     icon: XCircle,     color: "text-red-500",    bg: "bg-red-500/10"    },
+              {
+                label: "Pending",
+                value: matomo.stats.pending,
+                icon: Clock,
+                color: "text-amber-500",
+                bg: "bg-amber-500/10",
+              },
+              {
+                label: "Processing",
+                value: matomo.stats.processing,
+                icon: Loader2,
+                color: "text-blue-500",
+                bg: "bg-blue-500/10",
+              },
+              {
+                label: "Sent",
+                value: matomo.stats.sent,
+                icon: CheckCircle2,
+                color: "text-emerald-500",
+                bg: "bg-emerald-500/10",
+              },
+              {
+                label: "Failed",
+                value: matomo.stats.failed,
+                icon: XCircle,
+                color: "text-red-500",
+                bg: "bg-red-500/10",
+              },
             ].map((s) => {
               const Icon = s.icon;
               return (
                 <Card key={s.label} className="py-4">
-                  <CardContent className="px-4 py-0 flex items-center justify-between">
+                  <CardContent className="flex items-center justify-between px-4 py-0">
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{s.label}</p>
-                      <p className={`text-2xl font-bold tabular-nums ${s.color}`}>{s.value}</p>
+                      <p className="mb-1 font-semibold text-muted-foreground text-xs uppercase tracking-widest">
+                        {s.label}
+                      </p>
+                      <p className={`font-bold text-2xl tabular-nums ${s.color}`}>{s.value}</p>
                     </div>
                     <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.bg}`}>
                       <Icon className={`h-4 w-4 ${s.color}`} />
@@ -338,7 +429,7 @@ export default async function RevenueOpsPage({
           </div>
           {matomo.stats.total === 0 && (
             <Card className="mt-4">
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              <CardContent className="py-12 text-center text-muted-foreground text-sm">
                 No Matomo staged events in the pipeline.
               </CardContent>
             </Card>
@@ -351,58 +442,3 @@ export default async function RevenueOpsPage({
 
 /* ─── sub-components ──────────────────────────────────── */
 // WebhookTable is a client component in _components/webhook-table.tsx (sortable)
-
-function DunningTable({ rows, sort, buildSortUrl }: { rows: DunningRow[]; sort?: string; buildSortUrl?: (s: string) => string }) {
-  if (rows.length === 0) {
-    return (
-      <div className="py-12 text-center">
-        <CheckCircle2 className="h-8 w-8 mx-auto text-emerald-500 mb-2" />
-        <p className="text-sm text-muted-foreground">No active dunning — all subscriptions are healthy.</p>
-      </div>
-    );
-  }
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <TableHead>User</TableHead>
-          <TableHead>Plan</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Attempt</TableHead>
-          <TableHead>
-            {sort && buildSortUrl ? (
-              <SortHeader label="Next Retry" sortKey="date" currentSort={sort} ascHref={buildSortUrl("date_asc")} descHref={buildSortUrl("date_desc")} />
-            ) : "Next Retry"}
-          </TableHead>
-          <TableHead>Last Attempt</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((d) => (
-          <TableRow key={d.id}>
-            <TableCell className="text-sm">{d.email}</TableCell>
-            <TableCell>
-              <Badge variant="secondary" className="text-xs capitalize">{d.plan_type}</Badge>
-            </TableCell>
-            <TableCell>
-              <Badge className={`${DUNNING_STATUS_COLOR[d.status] ?? "bg-muted"} border text-xs`}>
-                {d.status.replace("_", " ")}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-sm font-mono tabular-nums">
-              {d.attempt_count}/{d.max_attempts}
-            </TableCell>
-            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(d.next_attempt_at)}</TableCell>
-            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(d.last_attempt_at)}</TableCell>
-            <TableCell>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href={`/dashboard/users/${d.user_id}`}>View User →</Link>
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}

@@ -48,7 +48,6 @@ export interface NavGroup {
 
 export const comingSoonUrls = new Set([
   "/dashboard/matomo",
-  "/dashboard/dunning",
   "/dashboard/winback",
   "/dashboard/pricing",
   "/dashboard/experiments",
@@ -89,7 +88,7 @@ export const sidebarItems: NavGroup[] = [
       { title: "Overview", url: "/dashboard/revenue-ops", icon: Layers },
       { title: "Subscriptions", url: "/dashboard/subscriptions", icon: CreditCard },
       { title: "Transactions", url: "/dashboard/transactions", icon: DollarSign },
-      { title: "Dunning", url: "/dashboard/dunning", icon: AlertTriangle, comingSoon: true },
+      { title: "Dunning", url: "/dashboard/dunning", icon: AlertTriangle },
       { title: "Winback", url: "/dashboard/winback", icon: Gift, comingSoon: true },
       { title: "Pricing Tiers", url: "/dashboard/pricing", icon: Tag, comingSoon: true },
       { title: "Webhooks", url: "/dashboard/webhooks", icon: Webhook },

@@ -139,32 +139,42 @@
     "pagination": "Showing 1–6 of 842 entries"
   },
   "dunning": {
-    "title": "Dunning Campaign Config",
-    "retryRules": {
-      "title": "Retry Rules",
-      "attempt": "Attempt",
-      "interval": "Interval (days)",
-      "action": "Action",
-      "notification": "Notification"
+    "title": "Dunning Queue",
+    "subtitle": "Standalone live recovery queue powered by the same Revenue Ops data.",
+    "badges": {
+      "active": "dunning active"
     },
-    "gracePeriod": {
-      "title": "Grace Period Config",
-      "durationPlaceholder": "Grace Duration (days): 7",
-      "maxPlaceholder": "Max grace periods: 2",
-      "notifyOnStart": "Notify on grace start"
+    "actions": {
+      "openRevenueOps": "Open Revenue Ops"
     },
-    "escalation": {
-      "title": "Escalation Rules",
-      "rule1": "• After 4 failed attempts → winback campaign trigger",
-      "rule2": "• After grace end → admin_alert + subscription cancel"
+    "states": {
+      "loadFailed": "Failed to load — make sure you are logged in."
     },
-    "flowPreview": {
-      "title": "Flow Preview"
+    "summary": {
+      "active": "Active Dunning",
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "recovered": "Recovered",
+      "failed": "Failed"
     },
-    "currentlyInDunning": "Currently in Dunning:",
-    "currentlyInDunningUsers": "43 users",
-    "saveConfig": "Save Config",
-    "previewEmailTemplate": "Preview Email Template"
+    "queue": {
+      "title": "Active Dunning Queue",
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "recovered": "Recovered",
+      "failed": "Failed",
+      "empty": "No active dunning — all subscriptions are healthy.",
+      "viewUser": "View User",
+      "table": {
+        "user": "User",
+        "plan": "Plan",
+        "status": "Status",
+        "attempt": "Attempt",
+        "nextRetry": "Next Retry",
+        "lastAttempt": "Last Attempt",
+        "actions": "Actions"
+      }
+    }
   },
   "experiments": {
     "title": "A/B Test Discovery",

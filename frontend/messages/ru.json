@@ -139,32 +139,42 @@
     "pagination": "Показано 1–6 из 842 записей"
   },
   "dunning": {
-    "title": "Настройка dunning-кампании",
-    "retryRules": {
-      "title": "Правила повторных попыток",
-      "attempt": "Попытка",
-      "interval": "Интервал (дней)",
-      "action": "Действие",
-      "notification": "Уведомление"
+    "title": "Очередь dunning",
+    "subtitle": "Отдельная живая очередь восстановления платежей на тех же данных, что и Revenue Ops.",
+    "badges": {
+      "active": "активно в dunning"
     },
-    "gracePeriod": {
-      "title": "Настройка льготного периода",
-      "durationPlaceholder": "Длительность льготного периода (дней): 7",
-      "maxPlaceholder": "Макс. льготных периодов: 2",
-      "notifyOnStart": "Уведомлять при начале льготного периода"
+    "actions": {
+      "openRevenueOps": "Открыть Revenue Ops"
     },
-    "escalation": {
-      "title": "Правила эскалации",
-      "rule1": "• После 4 неудачных попыток → запуск кампании возврата",
-      "rule2": "• После окончания льготного периода → admin_alert + отмена подписки"
+    "states": {
+      "loadFailed": "Не удалось загрузить данные — проверьте, что вы авторизованы."
     },
-    "flowPreview": {
-      "title": "Предпросмотр процесса"
+    "summary": {
+      "active": "Активный dunning",
+      "pending": "Ожидают",
+      "inProgress": "В процессе",
+      "recovered": "Восстановлены",
+      "failed": "Неуспешны"
     },
-    "currentlyInDunning": "Сейчас в dunning:",
-    "currentlyInDunningUsers": "43 пользователя",
-    "saveConfig": "Сохранить настройки",
-    "previewEmailTemplate": "Предпросмотр шаблона письма"
+    "queue": {
+      "title": "Активная очередь dunning",
+      "pending": "Ожидают",
+      "inProgress": "В процессе",
+      "recovered": "Восстановлены",
+      "failed": "Неуспешны",
+      "empty": "Активных dunning-кейсов нет — все подписки в порядке.",
+      "viewUser": "Профиль пользователя",
+      "table": {
+        "user": "Пользователь",
+        "plan": "Тариф",
+        "status": "Статус",
+        "attempt": "Попытка",
+        "nextRetry": "Следующий повтор",
+        "lastAttempt": "Последняя попытка",
+        "actions": "Действия"
+      }
+    }
   },
   "experiments": {
     "title": "Обзор A/B тестов",
