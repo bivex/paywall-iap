@@ -176,7 +176,7 @@ func (h *BanditAdvancedHandler) SetObjectiveConfig(w http.ResponseWriter, r *htt
 
 	config, err := h.engine.SetObjectiveConfig(r.Context(), experimentID, req.ObjectiveType, req.ObjectiveWeights)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, err.Error())
+		respondError(w, statusForServiceError(err, http.StatusBadRequest), err.Error())
 		return
 	}
 
@@ -299,7 +299,7 @@ func (h *BanditAdvancedHandler) GetPendingReward(w http.ResponseWriter, r *http.
 
 	pendingReward, err := h.engine.GetPendingReward(r.Context(), pendingID)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, err.Error())
+		respondError(w, statusForServiceError(err, http.StatusInternalServerError), err.Error())
 		return
 	}
 
@@ -318,6 +318,9 @@ func (h *BanditAdvancedHandler) GetUserPendingRewards(w http.ResponseWriter, r *
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
+	}
+	if rewards == nil {
+		rewards = []*service.PendingReward{}
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
@@ -385,4 +388,16 @@ func parseUUIDPathParamAfter(r *http.Request, segment string) (uuid.UUID, error)
 	}
 
 	return uuid.Parse("")
+}
+
+func statusForServiceError(err error, defaultStatus int) int {
+	if err == nil {
+		return defaultStatus
+	}
+
+	if strings.Contains(strings.ToLower(err.Error()), "not found") {
+		return http.StatusNotFound
+	}
+
+	return defaultStatus
 }

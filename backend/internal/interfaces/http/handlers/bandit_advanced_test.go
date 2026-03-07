@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -35,3 +36,19 @@ func TestParseUUIDPathParamAfter_ReturnsErrorForMissingSegment(t *testing.T) {
 
 	require.Error(t, err)
 }
+
+func TestStatusForServiceError_ReturnsNotFoundForNotFoundErrors(t *testing.T) {
+	status := statusForServiceError(assertAnError("experiment not found"), http.StatusBadRequest)
+
+	require.Equal(t, http.StatusNotFound, status)
+}
+
+func TestStatusForServiceError_PreservesDefaultForOtherErrors(t *testing.T) {
+	status := statusForServiceError(assertAnError("validation failed"), http.StatusBadRequest)
+
+	require.Equal(t, http.StatusBadRequest, status)
+}
+
+type assertAnError string
+
+func (e assertAnError) Error() string { return string(e) }
