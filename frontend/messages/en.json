@@ -245,47 +245,98 @@
     }
   },
   "experimentStudio": {
-    "title": "A/B Test Studio",
-    "backToExperiments": "← Back to Experiments",
-    "config": {
-      "title": "Test Configuration",
-      "testName": "Test Name",
-      "testNamePlaceholder": "e.g. Pricing A/B: Pro Annual vs Monthly",
-      "testType": "Test Type",
-      "selectType": "Select type",
-      "typePricing": "Pricing",
-      "typeWinback": "Winback",
-      "typePaywall": "Paywall",
-      "typeOnboarding": "Onboarding",
-      "trafficSplit": "Traffic Split (%)",
-      "confidenceThreshold": "Confidence Threshold (%)"
+    "title": "Experiment Studio",
+    "subtitle": "Live control room for persisted experiments. This page intentionally focuses on orchestration, health, and runtime visibility instead of pretending a full visual builder already exists.",
+    "actions": {
+      "openExperiments": "Open A/B Tests",
+      "openBandit": "Open Bandit Model",
+      "refresh": "Refresh"
     },
-    "control": {
-      "title": "Control (A)",
-      "variantName": "Variant name: Control",
-      "planKey": "Plan / config key",
-      "priceOverride": "Price override (optional)"
+    "selector": {
+      "title": "Selected Experiment",
+      "description": "Pick any persisted experiment to inspect its lifecycle, saved arm plan, and live runtime availability.",
+      "placeholder": "Select experiment"
     },
-    "variant": {
-      "title": "Variant (B)",
-      "variantName": "Variant name: Variant A",
-      "planKey": "Plan / config key",
-      "priceOverride": "Price override (optional)"
+    "status": {
+      "running": "Running",
+      "draft": "Draft",
+      "paused": "Paused",
+      "completed": "Completed"
     },
-    "targeting": {
-      "title": "Targeting",
-      "platformAll": "Platform: All",
-      "countryCode": "Country code (optional)",
-      "newUsersOnly": "New users only: days since reg ≤",
-      "holdout": "Enable holdout group (5%)",
-      "all": "All",
-      "ios": "iOS",
-      "android": "Android",
-      "web": "Web"
+    "mode": {
+      "bandit": "Bandit-enabled",
+      "classic": "Classic A/B"
     },
-    "saveDraft": "Save Draft",
-    "launchTest": "Launch Test",
-    "cancel": "Cancel"
+    "summary": {
+      "mode": "Mode",
+      "arms": "Arms",
+      "samples": "Samples",
+      "revenue": "Revenue",
+      "runtime": "Runtime",
+      "unavailable": "Unavailable"
+    },
+    "lifecycle": {
+      "title": "Lifecycle",
+      "description": "Saved timestamps and scheduling state for the selected experiment.",
+      "created": "Created",
+      "updated": "Updated",
+      "start": "Start At",
+      "end": "End At"
+    },
+    "capabilities": {
+      "title": "Runtime Capability Matrix",
+      "description": "Each row below reflects an actual backend endpoint call in the current environment.",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "statistics": "Bandit statistics",
+      "metrics": "Advanced metrics",
+      "objectives": "Objective scores",
+      "windowInfo": "Sliding-window info"
+    },
+    "arms": {
+      "title": "Saved Arm Plan",
+      "description": "These arms come from the persisted admin experiments table. Live win probabilities are shown only when the bandit statistics endpoint is available."
+    },
+    "table": {
+      "arm": "Arm",
+      "type": "Type",
+      "weight": "Configured Weight",
+      "samples": "Samples",
+      "conversions": "Conversions",
+      "winProbability": "Win Probability",
+      "revenue": "Revenue",
+      "control": "Control",
+      "variant": "Variant"
+    },
+    "runtime": {
+      "title": "Runtime Signals",
+      "description": "Best-effort runtime indicators from bandit endpoints that are already wired.",
+      "leadingArm": "Leading Arm",
+      "balanceIndex": "Balance Index",
+      "pendingRewards": "Pending Rewards",
+      "banditNote": "Bandit statistics are live, but some advanced routes may still be partially wired in the backend runtime.",
+      "classicNote": "This experiment is not bandit-enabled, so Studio only shows the persisted experiment plan and generic service health."
+    },
+    "notes": {
+      "title": "Operational Notes",
+      "description": "Studio explains what is actually wired today and where to perform supported actions.",
+      "builderTitle": "Experiment creation/editing",
+      "builderBody": "Use A/B Tests to create persisted experiments. Studio is not pretending to be a draft editor with save/launch mutations that do not exist yet.",
+      "banditTitle": "Bandit monitoring",
+      "banditBody": "Use Bandit Model for dedicated bandit telemetry. Studio surfaces only the minimum runtime status needed for orchestration.",
+      "advancedTitle": "Advanced endpoints",
+      "advancedBody": "Objective scoring and sliding-window routes are shown exactly as they behave in the current runtime, including failures or placeholder responses.",
+      "readOnly": "Read-only by design for now. This page is a truthful control room, not a fake workflow builder."
+    },
+    "states": {
+      "loading": "Loading experiment studio…",
+      "loadFailed": "Failed to load experiment studio data.",
+      "emptyTitle": "No experiments yet",
+      "emptyBody": "Create your first experiment in A/B Tests before using Studio."
+    },
+    "feedback": {
+      "loadFailed": "Failed to refresh studio data."
+    }
   },
   "bandit": {
     "title": "Bandit Model",
@@ -344,6 +395,7 @@
       "readOnlyNotice": "Read-only for now: use A/B Tests to create experiments. Runtime bandit assignments and rewards continue to flow through the existing backend endpoints."
     },
     "states": {
+      "loading": "Loading bandit experiments…",
       "loadFailed": "Failed to load bandit experiments.",
       "emptyTitle": "No bandit experiments yet",
       "emptyBody": "Create an experiment with bandit mode enabled in A/B Tests before using this page."
@@ -353,59 +405,304 @@
     }
   },
   "feedback": {
-    "title": "Feedback Form Builder",
-    "previewForm": "Preview Form",
-    "addQuestion": "+ Add Question",
-    "formSettings": {
-      "title": "Form Settings",
-      "formName": "Form Name",
-      "trigger": "Trigger",
-      "displayDelay": "Display Delay (sec)"
+    "title": "Delayed Feedback",
+    "subtitle": "Live operator console for delayed conversions. This page surfaces what the backend actually supports today instead of pretending there is a survey/form builder behind it.",
+    "actions": {
+      "openExperiments": "Open A/B Tests",
+      "openBandit": "Open Bandit Model",
+      "refresh": "Refresh",
+      "processConversion": "Process Conversion",
+      "processing": "Processing..."
     },
-    "question": "Question",
-    "saveForm": "Save Form",
-    "cancel": "Cancel"
-  },
-  "slidingWindow": {
-    "title": "Sliding Window Test Config",
-    "params": {
-      "title": "Window Parameters",
-      "windowSize": "Window Size (days)",
-      "stepSize": "Step Size (days)",
-      "minObservations": "Min Observations",
-      "significance": "Significance α"
+    "status": {
+      "running": "Running",
+      "draft": "Draft",
+      "paused": "Paused",
+      "completed": "Completed"
     },
-    "autoStop": "Auto-stop when significance reached",
-    "driftDetect": "Enable drift detection",
-    "currentProgress": {
-      "title": "Current Window Progress",
-      "observations": "Observations",
-      "pValue": "p-value",
-      "winner": "Winner so far"
+    "selector": {
+      "title": "Tracked Experiment",
+      "description": "Select any bandit-enabled experiment to inspect the delayed-feedback runtime around it.",
+      "placeholder": "Select bandit experiment"
     },
-    "saveConfig": "Save Config",
-    "resetWindow": "Reset Window"
-  },
-  "multiObjective": {
-    "title": "Multi-Objective Optimization",
-    "card": {
-      "title": "Objectives & Weights"
+    "summary": {
+      "runtime": "Runtime",
+      "samples": "Samples",
+      "conversions": "Conversions",
+      "revenue": "Revenue",
+      "unavailable": "Unavailable"
     },
-    "current": "Current:",
-    "baseline": "Baseline:",
-    "paretoFront": {
-      "title": "Pareto Front Variants"
+    "probes": {
+      "title": "Delayed Feedback Endpoints",
+      "description": "Each row below reflects either a real runtime GET probe or an explicitly manual-only mutation path.",
+      "states": {
+        "available": "Available",
+        "manual": "Manual",
+        "unavailable": "Unavailable"
+      },
+      "conversionIngest": {
+        "label": "Conversion ingest (POST /v1/bandit/conversions)"
+      },
+      "pendingById": {
+        "label": "Pending reward lookup by ID"
+      },
+      "userPending": {
+        "label": "Pending rewards lookup by user"
+      }
+    },
+    "process": {
+      "title": "Manual Conversion Processing",
+      "description": "This form sends a real delayed conversion request to the backend. Use it only when you intend to process a live transaction.",
+      "transactionId": "Transaction ID",
+      "userId": "User ID",
+      "value": "Conversion Value",
+      "currency": "Currency",
+      "warning": "No dry-run exists today. Submitting this form calls the live conversion endpoint immediately.",
+      "resultSuccess": "Conversion processed",
+      "resultFailure": "Conversion rejected"
+    },
+    "arms": {
+      "title": "Experiment Arm Context",
+      "description": "The table below uses live bandit statistics when available so operators can see what conversion processing would affect."
     },
     "table": {
-      "variant": "Variant",
-      "conv": "Conv%",
-      "revUser": "Rev/User",
-      "churn": "Churn%",
-      "paretoScore": "Pareto Score"
+      "arm": "Arm",
+      "weight": "Configured Weight",
+      "samples": "Samples",
+      "conversions": "Conversions",
+      "conversionRate": "Conversion Rate",
+      "winProbability": "Win Probability",
+      "revenue": "Revenue",
+      "control": "Control",
+      "variant": "Variant"
     },
-    "autoSelect": "Auto-select Pareto winner on threshold",
-    "saveConfig": "Save Config",
-    "runAnalysis": "Run Analysis"
+    "notes": {
+      "title": "Operational Notes",
+      "description": "This page documents the current delayed-feedback runtime exactly as it exists today.",
+      "pendingTitle": "Pending reward reads",
+      "pendingBody": "The backend repository supports pending rewards, but the currently exposed read endpoints are not yet returning live reward records in this runtime path.",
+      "conversionTitle": "Conversion writes",
+      "conversionBody": "The conversion endpoint is real. If delayed feedback is disabled in the current backend runtime, the response will say so instead of faking success.",
+      "operatorTitle": "Operator workflow",
+      "operatorBody": "Use this page to inspect support status and manually process a real conversion when you already have trusted transaction and user identifiers."
+    },
+    "states": {
+      "loading": "Loading delayed feedback...",
+      "loadFailed": "Failed to load delayed feedback data.",
+      "emptyTitle": "No bandit experiments yet",
+      "emptyBody": "Create a bandit-enabled experiment before using Delayed Feedback."
+    },
+    "feedback": {
+      "loadFailed": "Failed to refresh delayed feedback data.",
+      "processed": "Conversion request sent.",
+      "submitFailed": "Failed to submit conversion request."
+    }
+  },
+  "slidingWindow": {
+    "title": "Sliding Window",
+    "subtitle": "Live runtime view for sliding-window support. This page surfaces what the backend window routes actually do today instead of pretending configuration mutations already exist.",
+    "actions": {
+      "openExperiments": "Open A/B Tests",
+      "openBandit": "Open Bandit Model",
+      "refresh": "Refresh"
+    },
+    "status": {
+      "running": "Running",
+      "draft": "Draft",
+      "paused": "Paused",
+      "completed": "Completed"
+    },
+    "selector": {
+      "title": "Tracked Experiment",
+      "description": "Select any bandit-enabled experiment to inspect sliding-window route availability around it.",
+      "placeholder": "Select bandit experiment"
+    },
+    "summary": {
+      "runtime": "Runtime",
+      "samples": "Samples",
+      "revenue": "Revenue",
+      "readRoutes": "Read Routes",
+      "unavailable": "Unavailable"
+    },
+    "probes": {
+      "title": "Window Endpoint Matrix",
+      "description": "Each row reflects a real runtime probe or an explicitly manual-only mutation path.",
+      "states": {
+        "available": "Available",
+        "manual": "Manual",
+        "unavailable": "Unavailable"
+      },
+      "windowInfo": {
+        "label": "Window info (GET /v1/bandit/experiments/:id/window/info)"
+      },
+      "windowEvents": {
+        "label": "Window events export (GET /v1/bandit/experiments/:id/window/events)"
+      },
+      "trimWindow": {
+        "label": "Trim window (POST /v1/bandit/experiments/:id/window/trim)"
+      }
+    },
+    "arms": {
+      "title": "Experiment Arm Context",
+      "description": "The table below uses live bandit statistics when available so operators can see the experiment state adjacent to sliding-window operations."
+    },
+    "table": {
+      "arm": "Arm",
+      "weight": "Configured Weight",
+      "samples": "Samples",
+      "conversions": "Conversions",
+      "conversionRate": "Conversion Rate",
+      "winProbability": "Win Probability",
+      "revenue": "Revenue",
+      "control": "Control",
+      "variant": "Variant"
+    },
+    "notes": {
+      "title": "Operational Notes",
+      "description": "This page documents the current sliding-window runtime exactly as it exists today.",
+      "strategyTitle": "Backend strategy exists",
+      "strategyBody": "The repository contains a real sliding-window strategy and maintenance jobs, but admin-facing runtime routes are only useful if they are correctly wired in the running API.",
+      "readRoutesTitle": "Read route truthfulness",
+      "readRoutesBody": "Window info and event export are probed directly from the live backend. If they fail, this page shows the real response instead of fake window metrics.",
+      "trimTitle": "Trim mutation",
+      "trimBody": "Trim is intentionally not auto-called from a read-only page load. The route exists in code, but this screen does not pretend it is safe or fully wired for operators yet."
+    },
+    "readiness": {
+      "title": "Window Readiness",
+      "description": "A compact summary of how usable the sliding-window API is in the current runtime.",
+      "readRoutes": "Readable window routes",
+      "topArm": "Top arm by win probability",
+      "body": "Use Bandit Model for live probability telemetry. Sliding Window only reports whether the dedicated window routes are truly usable in this environment."
+    },
+    "states": {
+      "loading": "Loading sliding window...",
+      "loadFailed": "Failed to load sliding window data.",
+      "emptyTitle": "No bandit experiments yet",
+      "emptyBody": "Create a bandit-enabled experiment before using Sliding Window."
+    },
+    "feedback": {
+      "loadFailed": "Failed to refresh sliding window data."
+    }
+  },
+  "multiObjective": {
+    "title": "Multi-Objective",
+    "subtitle": "Live runtime view for hybrid objective support. This page reports what the backend objective routes and strategy wiring actually support today instead of pretending a full optimizer workflow already exists.",
+    "actions": {
+      "openExperiments": "Open A/B Tests",
+      "openBandit": "Open Bandit Model",
+      "refresh": "Refresh"
+    },
+    "status": {
+      "running": "Running",
+      "draft": "Draft",
+      "paused": "Paused",
+      "completed": "Completed"
+    },
+    "selector": {
+      "title": "Tracked Experiment",
+      "description": "Select any bandit-enabled experiment to inspect hybrid objective route availability around it.",
+      "placeholder": "Select bandit experiment"
+    },
+    "summary": {
+      "runtime": "Runtime",
+      "samples": "Samples",
+      "revenue": "Revenue",
+      "objectiveRoute": "Objective Scores Route",
+      "available": "Available",
+      "unavailable": "Unavailable"
+    },
+    "probes": {
+      "title": "Objective Endpoint Matrix",
+      "description": "Each row reflects a real runtime probe or an explicitly manual-only mutation path.",
+      "states": {
+        "available": "Available",
+        "manual": "Manual",
+        "unavailable": "Unavailable"
+      },
+      "objectiveScores": {
+        "label": "Objective scores (GET /v1/bandit/experiments/:id/objectives)"
+      },
+      "objectiveConfig": {
+        "label": "Objective config update (PUT /v1/bandit/experiments/:id/objectives/config)"
+      }
+    },
+    "catalog": {
+      "title": "Supported Objective Model",
+      "description": "These objective types come from the backend hybrid strategy and experiment configuration model.",
+      "derived": "Derived",
+      "defaultHybridWeight": "Default hybrid weight:",
+      "objectives": {
+        "conversion": {
+          "label": "Conversion",
+          "body": "Base Thompson Sampling reward objective. Used as the fallback and one of the hybrid dimensions."
+        },
+        "ltv": {
+          "label": "LTV",
+          "body": "Expected value objective based on conversion probability multiplied by average lifetime value."
+        },
+        "revenue": {
+          "label": "Revenue",
+          "body": "Revenue-weighted objective derived from conversion probability and normalized revenue per sample."
+        },
+        "hybrid": {
+          "label": "Hybrid",
+          "body": "Weighted combination of conversion, LTV, and revenue. Backend defaults are 50% / 30% / 20% when hybrid is enabled without explicit weights."
+        }
+      }
+    },
+    "context": {
+      "title": "Experiment Arm Context",
+      "description": "The table below uses live bandit statistics when available so operators can inspect experiment state adjacent to objective scoring."
+    },
+    "table": {
+      "arm": "Arm",
+      "weight": "Configured Weight",
+      "samples": "Samples",
+      "conversions": "Conversions",
+      "conversionRate": "Conversion Rate",
+      "winProbability": "Win Probability",
+      "revenue": "Revenue",
+      "control": "Control",
+      "variant": "Variant"
+    },
+    "scores": {
+      "title": "Live Objective Scoreboard",
+      "description": "If the objective scores route is actually wired in the current runtime, the table below shows returned per-arm scores.",
+      "unavailable": "Objective scores are not available in the current runtime. This page does not fabricate Pareto fronts or hybrid rankings when the backend route fails.",
+      "table": {
+        "arm": "Arm",
+        "conversion": "Conversion Score",
+        "ltv": "LTV Score",
+        "revenue": "Revenue Score",
+        "hybrid": "Hybrid Score"
+      }
+    },
+    "notes": {
+      "title": "Operational Notes",
+      "description": "This page documents the current multi-objective runtime exactly as it exists today.",
+      "strategyTitle": "Hybrid strategy exists",
+      "strategyBody": "The backend repository contains a real HybridObjectiveStrategy and advanced engine support for objective reward updates.",
+      "runtimeTitle": "Route truthfulness",
+      "runtimeBody": "Objective score availability is probed directly from the live backend. If the route fails for the current experiment, this page shows that failure instead of fake optimization output.",
+      "configTitle": "Config updates",
+      "configBody": "The admin experiments payload currently does not expose persisted objective config to this screen, and config mutation is intentionally not auto-triggered from a read-only page load."
+    },
+    "readiness": {
+      "title": "Objective Readiness",
+      "description": "A compact summary of how usable the multi-objective API is in the current runtime.",
+      "objectiveScores": "Readable objective routes",
+      "topArm": "Top arm by win probability",
+      "body": "Use Bandit Model for live probability telemetry. Multi-Objective only reports whether dedicated objective scoring is truly usable in this environment."
+    },
+    "states": {
+      "loading": "Loading multi-objective...",
+      "loadFailed": "Failed to load multi-objective data.",
+      "emptyTitle": "No bandit experiments yet",
+      "emptyBody": "Create a bandit-enabled experiment before using Multi-Objective."
+    },
+    "feedback": {
+      "loadFailed": "Failed to refresh multi-objective data."
+    }
   },
   "matomo": {
     "title": "Matomo Analytics",

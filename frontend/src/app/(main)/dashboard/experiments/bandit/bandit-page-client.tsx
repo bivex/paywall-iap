@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import Link from "next/link";
 
@@ -8,7 +8,6 @@ import { Brain, FlaskConical, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { getBanditSnapshotAction } from "@/actions/bandit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,25 +87,70 @@ function mergeArmStats(experiment: ExperimentSummary | null, snapshot: BanditSna
   });
 }
 
+async function fetchBanditJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { cache: "no-store" });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      (body as { message?: string; error?: string }).message ??
+        (body as { error?: string }).error ??
+        `HTTP ${res.status}`,
+    );
+  }
+
+  return ((body as { data?: T }).data ?? body) as T;
+}
+
 export function BanditPageClient({
-  initialExperiments,
-  initialSelectedExperimentId,
-  initialSnapshot,
-  loadFailed,
+  initialExperiments = [],
+  initialSelectedExperimentId = null,
+  initialSnapshot = null,
+  loadFailed: initialLoadFailed = false,
 }: {
-  initialExperiments: ExperimentSummary[];
-  initialSelectedExperimentId: string | null;
-  initialSnapshot: BanditSnapshot | null;
-  loadFailed: boolean;
+  initialExperiments?: ExperimentSummary[];
+  initialSelectedExperimentId?: string | null;
+  initialSnapshot?: BanditSnapshot | null;
+  loadFailed?: boolean;
 }) {
   const t = useTranslations("bandit");
+  const [experiments, setExperiments] = useState(initialExperiments);
   const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
   const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
+  const [isBootstrapping, setIsBootstrapping] = useState(
+    initialExperiments.length === 0 &&
+      initialSelectedExperimentId === null &&
+      initialSnapshot === null &&
+      !initialLoadFailed,
+  );
   const [isPending, startTransition] = useTransition();
 
+  useEffect(() => {
+    if (!isBootstrapping) return;
+
+    startTransition(async () => {
+      try {
+        const data = await fetchBanditJson<{
+          experiments: ExperimentSummary[];
+          selectedExperimentId: string | null;
+          snapshot: BanditSnapshot | null;
+          loadFailed: boolean;
+        }>("/api/admin/bandit/dashboard");
+        setExperiments(data.experiments);
+        setSelectedId(data.selectedExperimentId ?? "");
+        setSnapshot(data.snapshot);
+        setLoadFailed(data.loadFailed);
+      } catch {
+        setLoadFailed(true);
+      } finally {
+        setIsBootstrapping(false);
+      }
+    });
+  }, [isBootstrapping]);
+
   const selectedExperiment = useMemo(
-    () => initialExperiments.find((experiment) => experiment.id === selectedId) ?? null,
-    [initialExperiments, selectedId],
+    () => experiments.find((experiment) => experiment.id === selectedId) ?? null,
+    [experiments, selectedId],
   );
   const armRows = useMemo(() => mergeArmStats(selectedExperiment, snapshot), [selectedExperiment, snapshot]);
   const topArm = useMemo(
@@ -122,12 +166,14 @@ export function BanditPageClient({
     setSelectedId(experimentId);
     setSnapshot(null);
     startTransition(async () => {
-      const nextSnapshot = await getBanditSnapshotAction(experimentId);
-      if (!nextSnapshot) {
+      try {
+        const nextSnapshot = await fetchBanditJson<BanditSnapshot>(
+          `/api/admin/bandit/snapshot?experimentId=${encodeURIComponent(experimentId)}`,
+        );
+        setSnapshot(nextSnapshot);
+      } catch {
         toast.error(t("feedback.loadFailed"));
-        return;
       }
-      setSnapshot(nextSnapshot);
     });
   };
 
@@ -153,7 +199,11 @@ export function BanditPageClient({
         </Card>
       ) : null}
 
-      {initialExperiments.length === 0 ? (
+      {isBootstrapping ? (
+        <Card>
+          <CardContent className="pt-6 text-muted-foreground text-sm">{t("states.loading")}</CardContent>
+        </Card>
+      ) : experiments.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">{t("states.emptyTitle")}</CardTitle>
@@ -181,7 +231,7 @@ export function BanditPageClient({
                   <SelectValue placeholder={t("selector.placeholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {initialExperiments.map((experiment) => (
+                  {experiments.map((experiment) => (
                     <SelectItem key={experiment.id} value={experiment.id}>
                       {experiment.name}
                     </SelectItem>

@@ -245,47 +245,98 @@
     }
   },
   "experimentStudio": {
-    "title": "Студия A/B тестов",
-    "backToExperiments": "← Назад к экспериментам",
-    "config": {
-      "title": "Конфигурация теста",
-      "testName": "Название теста",
-      "testNamePlaceholder": "напр. Ценообразование A/B: Pro Annual vs Monthly",
-      "testType": "Тип теста",
-      "selectType": "Выберите тип",
-      "typePricing": "Ценообразование",
-      "typeWinback": "Возврат",
-      "typePaywall": "Paywall",
-      "typeOnboarding": "Онбординг",
-      "trafficSplit": "Распределение трафика (%)",
-      "confidenceThreshold": "Порог уверенности (%)"
+    "title": "Experiment Studio",
+    "subtitle": "Live control room для сохранённых experiments. Эта страница намеренно фокусируется на orchestration, health и runtime visibility, а не притворяется полноценным visual builder'ом.",
+    "actions": {
+      "openExperiments": "Открыть A/B Tests",
+      "openBandit": "Открыть Bandit Model",
+      "refresh": "Обновить"
     },
-    "control": {
-      "title": "Контроль (A)",
-      "variantName": "Название варианта: Контроль",
-      "planKey": "Тариф / ключ конфига",
-      "priceOverride": "Переопределение цены (необязательно)"
+    "selector": {
+      "title": "Выбранный эксперимент",
+      "description": "Выберите любой сохранённый experiment, чтобы посмотреть lifecycle, saved arm plan и live runtime availability.",
+      "placeholder": "Выберите experiment"
     },
-    "variant": {
-      "title": "Вариант (B)",
-      "variantName": "Название варианта: Вариант A",
-      "planKey": "Тариф / ключ конфига",
-      "priceOverride": "Переопределение цены (необязательно)"
+    "status": {
+      "running": "Запущен",
+      "draft": "Черновик",
+      "paused": "На паузе",
+      "completed": "Завершён"
     },
-    "targeting": {
-      "title": "Таргетинг",
-      "platformAll": "Платформа: Все",
-      "countryCode": "Код страны (необязательно)",
-      "newUsersOnly": "Только новые пользователи: дней с регистрации ≤",
-      "holdout": "Включить holdout-группу (5%)",
-      "all": "Все",
-      "ios": "iOS",
-      "android": "Android",
-      "web": "Web"
+    "mode": {
+      "bandit": "Bandit-enabled",
+      "classic": "Классический A/B"
     },
-    "saveDraft": "Сохранить черновик",
-    "launchTest": "Запустить тест",
-    "cancel": "Отмена"
+    "summary": {
+      "mode": "Режим",
+      "arms": "Ветки",
+      "samples": "Сэмплы",
+      "revenue": "Выручка",
+      "runtime": "Runtime",
+      "unavailable": "Недоступно"
+    },
+    "lifecycle": {
+      "title": "Lifecycle",
+      "description": "Сохранённые timestamps и scheduling state для выбранного эксперимента.",
+      "created": "Создан",
+      "updated": "Обновлён",
+      "start": "Старт",
+      "end": "Окончание"
+    },
+    "capabilities": {
+      "title": "Матрица runtime-возможностей",
+      "description": "Каждая строка ниже отражает реальный вызов backend endpoint в текущем окружении.",
+      "available": "Доступно",
+      "unavailable": "Недоступно",
+      "statistics": "Bandit statistics",
+      "metrics": "Advanced metrics",
+      "objectives": "Objective scores",
+      "windowInfo": "Sliding-window info"
+    },
+    "arms": {
+      "title": "Сохранённый план веток",
+      "description": "Эти arms берутся из persisted admin experiments table. Live win probabilities показываются только когда доступен bandit statistics endpoint."
+    },
+    "table": {
+      "arm": "Ветка",
+      "type": "Тип",
+      "weight": "Сохранённый вес",
+      "samples": "Сэмплы",
+      "conversions": "Конверсии",
+      "winProbability": "Вероятность победы",
+      "revenue": "Выручка",
+      "control": "Контроль",
+      "variant": "Вариант"
+    },
+    "runtime": {
+      "title": "Runtime-сигналы",
+      "description": "Best-effort runtime indicators из bandit endpoints, которые уже реально подключены.",
+      "leadingArm": "Лидирующая ветка",
+      "balanceIndex": "Balance Index",
+      "pendingRewards": "Ожидающие rewards",
+      "banditNote": "Bandit statistics живые, но некоторые advanced routes в backend runtime всё ещё могут быть подключены частично.",
+      "classicNote": "Этот experiment не bandit-enabled, поэтому Studio показывает только сохранённый план эксперимента и общее service health."
+    },
+    "notes": {
+      "title": "Операционные заметки",
+      "description": "Studio объясняет, что реально подключено сегодня и где выполнять поддерживаемые действия.",
+      "builderTitle": "Создание/редактирование эксперимента",
+      "builderBody": "Используйте A/B Tests для создания persisted experiments. Studio не притворяется draft editor'ом с save/launch mutations, которых пока нет.",
+      "banditTitle": "Bandit monitoring",
+      "banditBody": "Используйте Bandit Model для отдельного bandit telemetry. Studio показывает только минимальный runtime status, нужный для orchestration.",
+      "advancedTitle": "Advanced endpoints",
+      "advancedBody": "Objective scoring и sliding-window routes показываются ровно так, как они ведут себя в текущем runtime, включая ошибки или placeholder responses.",
+      "readOnly": "Пока read-only по дизайну. Эта страница — честный control room, а не fake workflow builder."
+    },
+    "states": {
+      "loading": "Загрузка experiment studio…",
+      "loadFailed": "Не удалось загрузить данные experiment studio.",
+      "emptyTitle": "Экспериментов пока нет",
+      "emptyBody": "Сначала создайте experiment в A/B Tests, а затем используйте Studio."
+    },
+    "feedback": {
+      "loadFailed": "Не удалось обновить studio data."
+    }
   },
   "bandit": {
     "title": "Bandit Model",
@@ -344,6 +395,7 @@
       "readOnlyNotice": "Пока read-only: используйте A/B Tests для создания экспериментов. Runtime bandit assignments и rewards продолжают идти через существующие backend endpoints."
     },
     "states": {
+      "loading": "Загрузка bandit experiments…",
       "loadFailed": "Не удалось загрузить bandit experiments.",
       "emptyTitle": "Bandit experiments пока нет",
       "emptyBody": "Сначала создайте эксперимент с включённым bandit mode в A/B Tests, затем используйте этот экран."
@@ -353,59 +405,304 @@
     }
   },
   "feedback": {
-    "title": "Конструктор форм обратной связи",
-    "previewForm": "Предпросмотр формы",
-    "addQuestion": "+ Добавить вопрос",
-    "formSettings": {
-      "title": "Настройки формы",
-      "formName": "Название формы",
-      "trigger": "Триггер",
-      "displayDelay": "Задержка отображения (сек)"
+    "title": "Delayed Feedback",
+    "subtitle": "Live operator console для delayed conversions. Эта страница показывает только то, что backend реально поддерживает сегодня, а не притворяется survey/form builder'ом.",
+    "actions": {
+      "openExperiments": "Открыть A/B Tests",
+      "openBandit": "Открыть Bandit Model",
+      "refresh": "Обновить",
+      "processConversion": "Обработать conversion",
+      "processing": "Обработка..."
     },
-    "question": "Вопрос",
-    "saveForm": "Сохранить форму",
-    "cancel": "Отмена"
-  },
-  "slidingWindow": {
-    "title": "Настройка теста скользящего окна",
-    "params": {
-      "title": "Параметры окна",
-      "windowSize": "Размер окна (дней)",
-      "stepSize": "Шаг (дней)",
-      "minObservations": "Мин. наблюдений",
-      "significance": "Значимость α"
+    "status": {
+      "running": "Запущен",
+      "draft": "Черновик",
+      "paused": "На паузе",
+      "completed": "Завершён"
     },
-    "autoStop": "Авто-остановка при достижении значимости",
-    "driftDetect": "Включить обнаружение дрейфа",
-    "currentProgress": {
-      "title": "Прогресс текущего окна",
-      "observations": "Наблюдения",
-      "pValue": "p-значение",
-      "winner": "Лидер пока"
+    "selector": {
+      "title": "Отслеживаемый эксперимент",
+      "description": "Выберите любой bandit-enabled experiment, чтобы посмотреть delayed-feedback runtime вокруг него.",
+      "placeholder": "Выберите bandit experiment"
     },
-    "saveConfig": "Сохранить настройки",
-    "resetWindow": "Сбросить окно"
-  },
-  "multiObjective": {
-    "title": "Мультицелевая оптимизация",
-    "card": {
-      "title": "Цели и веса"
+    "summary": {
+      "runtime": "Runtime",
+      "samples": "Сэмплы",
+      "conversions": "Конверсии",
+      "revenue": "Выручка",
+      "unavailable": "Недоступно"
     },
-    "current": "Текущее:",
-    "baseline": "Базовое:",
-    "paretoFront": {
-      "title": "Варианты на фронте Парето"
+    "probes": {
+      "title": "Delayed Feedback endpoints",
+      "description": "Каждая строка ниже отражает либо реальный runtime GET probe, либо явно manual-only mutation path.",
+      "states": {
+        "available": "Доступно",
+        "manual": "Вручную",
+        "unavailable": "Недоступно"
+      },
+      "conversionIngest": {
+        "label": "Conversion ingest (POST /v1/bandit/conversions)"
+      },
+      "pendingById": {
+        "label": "Lookup pending reward по ID"
+      },
+      "userPending": {
+        "label": "Lookup pending rewards по user"
+      }
+    },
+    "process": {
+      "title": "Ручная обработка conversion",
+      "description": "Эта форма отправляет реальный delayed conversion request в backend. Используйте её только если действительно хотите обработать live transaction.",
+      "transactionId": "Transaction ID",
+      "userId": "User ID",
+      "value": "Значение conversion",
+      "currency": "Валюта",
+      "warning": "Dry-run сейчас нет. Отправка этой формы сразу вызывает live conversion endpoint.",
+      "resultSuccess": "Conversion обработан",
+      "resultFailure": "Conversion отклонён"
+    },
+    "arms": {
+      "title": "Контекст веток эксперимента",
+      "description": "Таблица ниже использует live bandit statistics, когда они доступны, чтобы оператор видел, на что повлияет обработка conversion."
     },
     "table": {
-      "variant": "Вариант",
-      "conv": "Конв.%",
-      "revUser": "Выр./польз.",
-      "churn": "Отток%",
-      "paretoScore": "Оценка Парето"
+      "arm": "Ветка",
+      "weight": "Сохранённый вес",
+      "samples": "Сэмплы",
+      "conversions": "Конверсии",
+      "conversionRate": "Конверсия",
+      "winProbability": "Вероятность победы",
+      "revenue": "Выручка",
+      "control": "Контроль",
+      "variant": "Вариант"
     },
-    "autoSelect": "Авто-выбор победителя Парето по порогу",
-    "saveConfig": "Сохранить настройки",
-    "runAnalysis": "Запустить анализ"
+    "notes": {
+      "title": "Операционные заметки",
+      "description": "Эта страница описывает текущий delayed-feedback runtime ровно таким, какой он есть сегодня.",
+      "pendingTitle": "Чтение pending rewards",
+      "pendingBody": "Backend repository поддерживает pending rewards, но опубликованные read endpoints в текущем runtime path пока не отдают live reward records.",
+      "conversionTitle": "Запись conversions",
+      "conversionBody": "Conversion endpoint реальный. Если delayed feedback отключён в текущем backend runtime, ответ так и скажет, а не притворится успешным.",
+      "operatorTitle": "Операторский workflow",
+      "operatorBody": "Используйте эту страницу, чтобы проверить support status и вручную обработать реальную conversion, когда у вас уже есть доверенные transaction и user identifiers."
+    },
+    "states": {
+      "loading": "Загрузка delayed feedback...",
+      "loadFailed": "Не удалось загрузить delayed feedback data.",
+      "emptyTitle": "Bandit experiments пока нет",
+      "emptyBody": "Сначала создайте bandit-enabled experiment, а затем используйте Delayed Feedback."
+    },
+    "feedback": {
+      "loadFailed": "Не удалось обновить delayed feedback data.",
+      "processed": "Conversion request отправлен.",
+      "submitFailed": "Не удалось отправить conversion request."
+    }
+  },
+  "slidingWindow": {
+    "title": "Sliding Window",
+    "subtitle": "Live runtime view для sliding-window support. Эта страница показывает, как window routes реально ведут себя сегодня, а не притворяется готовым configuration editor'ом.",
+    "actions": {
+      "openExperiments": "Открыть A/B Tests",
+      "openBandit": "Открыть Bandit Model",
+      "refresh": "Обновить"
+    },
+    "status": {
+      "running": "Запущен",
+      "draft": "Черновик",
+      "paused": "На паузе",
+      "completed": "Завершён"
+    },
+    "selector": {
+      "title": "Отслеживаемый эксперимент",
+      "description": "Выберите любой bandit-enabled experiment, чтобы проверить доступность sliding-window routes вокруг него.",
+      "placeholder": "Выберите bandit experiment"
+    },
+    "summary": {
+      "runtime": "Runtime",
+      "samples": "Сэмплы",
+      "revenue": "Выручка",
+      "readRoutes": "Read routes",
+      "unavailable": "Недоступно"
+    },
+    "probes": {
+      "title": "Матрица window endpoints",
+      "description": "Каждая строка отражает реальный runtime probe или явно manual-only mutation path.",
+      "states": {
+        "available": "Доступно",
+        "manual": "Вручную",
+        "unavailable": "Недоступно"
+      },
+      "windowInfo": {
+        "label": "Window info (GET /v1/bandit/experiments/:id/window/info)"
+      },
+      "windowEvents": {
+        "label": "Export window events (GET /v1/bandit/experiments/:id/window/events)"
+      },
+      "trimWindow": {
+        "label": "Trim window (POST /v1/bandit/experiments/:id/window/trim)"
+      }
+    },
+    "arms": {
+      "title": "Контекст веток эксперимента",
+      "description": "Таблица ниже использует live bandit statistics, когда они доступны, чтобы оператор видел состояние эксперимента рядом со sliding-window operations."
+    },
+    "table": {
+      "arm": "Ветка",
+      "weight": "Сохранённый вес",
+      "samples": "Сэмплы",
+      "conversions": "Конверсии",
+      "conversionRate": "Конверсия",
+      "winProbability": "Вероятность победы",
+      "revenue": "Выручка",
+      "control": "Контроль",
+      "variant": "Вариант"
+    },
+    "notes": {
+      "title": "Операционные заметки",
+      "description": "Эта страница документирует текущий sliding-window runtime ровно таким, какой он есть сегодня.",
+      "strategyTitle": "Backend strategy существует",
+      "strategyBody": "В repository есть реальная sliding-window strategy и maintenance jobs, но admin-facing runtime routes полезны только если они корректно подключены в запущенном API.",
+      "readRoutesTitle": "Честность read routes",
+      "readRoutesBody": "Window info и export events проверяются напрямую через live backend. Если они падают, страница показывает реальный ответ вместо вымышленных window metrics.",
+      "trimTitle": "Trim mutation",
+      "trimBody": "Trim намеренно не вызывается автоматически при read-only загрузке. Route существует в коде, но этот экран не притворяется, что она уже безопасна или полноценно wired для операторов."
+    },
+    "readiness": {
+      "title": "Готовность window API",
+      "description": "Короткая сводка о том, насколько sliding-window API пригоден к использованию в текущем runtime.",
+      "readRoutes": "Читаемые window routes",
+      "topArm": "Лидирующая ветка по win probability",
+      "body": "Используйте Bandit Model для live probability telemetry. Sliding Window сообщает только то, насколько dedicated window routes реально пригодны в этом окружении."
+    },
+    "states": {
+      "loading": "Загрузка sliding window...",
+      "loadFailed": "Не удалось загрузить sliding window data.",
+      "emptyTitle": "Bandit experiments пока нет",
+      "emptyBody": "Сначала создайте bandit-enabled experiment, а затем используйте Sliding Window."
+    },
+    "feedback": {
+      "loadFailed": "Не удалось обновить sliding window data."
+    }
+  },
+  "multiObjective": {
+    "title": "Multi-Objective",
+    "subtitle": "Live runtime view для hybrid objective support. Эта страница показывает, что backend objective routes и strategy wiring реально поддерживают сегодня, а не притворяется полноценным optimizer workflow.",
+    "actions": {
+      "openExperiments": "Открыть A/B Tests",
+      "openBandit": "Открыть Bandit Model",
+      "refresh": "Обновить"
+    },
+    "status": {
+      "running": "Запущен",
+      "draft": "Черновик",
+      "paused": "На паузе",
+      "completed": "Завершён"
+    },
+    "selector": {
+      "title": "Отслеживаемый эксперимент",
+      "description": "Выберите любой bandit-enabled experiment, чтобы проверить доступность hybrid objective routes вокруг него.",
+      "placeholder": "Выберите bandit experiment"
+    },
+    "summary": {
+      "runtime": "Runtime",
+      "samples": "Сэмплы",
+      "revenue": "Выручка",
+      "objectiveRoute": "Objective scores route",
+      "available": "Доступно",
+      "unavailable": "Недоступно"
+    },
+    "probes": {
+      "title": "Матрица objective endpoints",
+      "description": "Каждая строка отражает реальный runtime probe или явно manual-only mutation path.",
+      "states": {
+        "available": "Доступно",
+        "manual": "Вручную",
+        "unavailable": "Недоступно"
+      },
+      "objectiveScores": {
+        "label": "Objective scores (GET /v1/bandit/experiments/:id/objectives)"
+      },
+      "objectiveConfig": {
+        "label": "Обновление objective config (PUT /v1/bandit/experiments/:id/objectives/config)"
+      }
+    },
+    "catalog": {
+      "title": "Поддерживаемая objective model",
+      "description": "Эти objective types приходят из backend hybrid strategy и experiment configuration model.",
+      "derived": "Derived",
+      "defaultHybridWeight": "Default hybrid weight:",
+      "objectives": {
+        "conversion": {
+          "label": "Conversion",
+          "body": "Базовая reward objective для Thompson Sampling. Используется как fallback и как одно из измерений hybrid-модели."
+        },
+        "ltv": {
+          "label": "LTV",
+          "body": "Objective ожидаемой ценности на основе вероятности conversion, умноженной на average lifetime value."
+        },
+        "revenue": {
+          "label": "Revenue",
+          "body": "Revenue-weighted objective, вычисляемая из вероятности conversion и normalized revenue per sample."
+        },
+        "hybrid": {
+          "label": "Hybrid",
+          "body": "Взвешенная комбинация conversion, LTV и revenue. Backend по умолчанию использует 50% / 30% / 20%, если hybrid включён без явных weights."
+        }
+      }
+    },
+    "context": {
+      "title": "Контекст веток эксперимента",
+      "description": "Таблица ниже использует live bandit statistics, когда они доступны, чтобы оператор видел состояние эксперимента рядом с objective scoring."
+    },
+    "table": {
+      "arm": "Ветка",
+      "weight": "Сохранённый вес",
+      "samples": "Сэмплы",
+      "conversions": "Конверсии",
+      "conversionRate": "Конверсия",
+      "winProbability": "Вероятность победы",
+      "revenue": "Выручка",
+      "control": "Контроль",
+      "variant": "Вариант"
+    },
+    "scores": {
+      "title": "Live objective scoreboard",
+      "description": "Если objective scores route реально подключён в текущем runtime, таблица ниже показывает возвращённые per-arm scores.",
+      "unavailable": "Objective scores недоступны в текущем runtime. Эта страница не выдумывает Pareto fronts или hybrid rankings, когда backend route падает.",
+      "table": {
+        "arm": "Ветка",
+        "conversion": "Conversion score",
+        "ltv": "LTV score",
+        "revenue": "Revenue score",
+        "hybrid": "Hybrid score"
+      }
+    },
+    "notes": {
+      "title": "Операционные заметки",
+      "description": "Эта страница документирует текущий multi-objective runtime ровно таким, какой он есть сегодня.",
+      "strategyTitle": "Hybrid strategy существует",
+      "strategyBody": "В backend repository есть реальная HybridObjectiveStrategy и поддержка advanced engine для objective reward updates.",
+      "runtimeTitle": "Честность runtime routes",
+      "runtimeBody": "Доступность objective scores проверяется напрямую через live backend. Если route падает для текущего эксперимента, страница показывает это вместо fake optimization output.",
+      "configTitle": "Config updates",
+      "configBody": "Текущий admin experiments payload не отдаёт persisted objective config на этот экран, а config mutation намеренно не вызывается автоматически из read-only page load."
+    },
+    "readiness": {
+      "title": "Готовность objective API",
+      "description": "Короткая сводка о том, насколько multi-objective API пригоден к использованию в текущем runtime.",
+      "objectiveScores": "Читаемые objective routes",
+      "topArm": "Лидирующая ветка по win probability",
+      "body": "Используйте Bandit Model для live probability telemetry. Multi-Objective сообщает только то, насколько dedicated objective scoring реально пригоден в этом окружении."
+    },
+    "states": {
+      "loading": "Загрузка multi-objective...",
+      "loadFailed": "Не удалось загрузить multi-objective data.",
+      "emptyTitle": "Bandit experiments пока нет",
+      "emptyBody": "Сначала создайте bandit-enabled experiment, а затем используйте Multi-Objective."
+    },
+    "feedback": {
+      "loadFailed": "Не удалось обновить multi-objective data."
+    }
   },
   "matomo": {
     "title": "Matomo Analytics",

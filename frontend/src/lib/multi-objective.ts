@@ -1,0 +1,44 @@
+import type { BanditSnapshot } from "@/lib/bandit";
+import type { ExperimentSummary } from "@/lib/experiments";
+
+export interface ObjectiveEndpointProbe {
+  state: "available" | "manual" | "unavailable";
+  status: number | null;
+  message: string;
+}
+
+export interface ObjectiveServiceHealth {
+  service: string;
+  status: string;
+}
+
+export interface ObjectiveScoreEntry {
+  objectiveType: string;
+  score: number | null;
+  alpha: number | null;
+  beta: number | null;
+  samples: number | null;
+  conversions: number | null;
+  revenue: number | null;
+  avgLtv: number | null;
+}
+
+export type ObjectiveScoresByArm = Record<string, Record<string, ObjectiveScoreEntry>>;
+
+export interface MultiObjectiveSnapshot {
+  experiment: ExperimentSummary;
+  banditSnapshot: BanditSnapshot | null;
+  serviceHealth: ObjectiveServiceHealth | null;
+  objectiveScores: ObjectiveScoresByArm | null;
+  probes: {
+    objectiveScores: ObjectiveEndpointProbe;
+    objectiveConfig: ObjectiveEndpointProbe;
+  };
+}
+
+export interface MultiObjectiveDashboardData {
+  experiments: ExperimentSummary[];
+  selectedExperimentId: string | null;
+  snapshot: MultiObjectiveSnapshot | null;
+  loadFailed: boolean;
+}

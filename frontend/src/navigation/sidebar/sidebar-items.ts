@@ -46,12 +46,7 @@ export interface NavGroup {
   items: NavMainItem[];
 }
 
-export const comingSoonUrls = new Set([
-  "/dashboard/experiments/studio",
-  "/dashboard/experiments/feedback",
-  "/dashboard/experiments/sliding-window",
-  "/dashboard/experiments/multi-objective",
-]);
+export const comingSoonUrls = new Set<string>();
 
 export function isComingSoonUrl(url: string): boolean {
   return comingSoonUrls.has(url);
@@ -94,11 +89,11 @@ export const sidebarItems: NavGroup[] = [
     label: "Experiment Studio",
     items: [
       { title: "A/B Tests", url: "/dashboard/experiments", icon: FlaskConical },
-      { title: "Studio", url: "/dashboard/experiments/studio", icon: Settings2, comingSoon: true },
+      { title: "Studio", url: "/dashboard/experiments/studio", icon: Settings2 },
       { title: "Bandit Model", url: "/dashboard/experiments/bandit", icon: Brain },
-      { title: "Delayed Feedback", url: "/dashboard/experiments/feedback", icon: Activity, comingSoon: true },
-      { title: "Sliding Window", url: "/dashboard/experiments/sliding-window", icon: BarChart2, comingSoon: true },
-      { title: "Multi-Objective", url: "/dashboard/experiments/multi-objective", icon: Target, comingSoon: true },
+      { title: "Delayed Feedback", url: "/dashboard/experiments/feedback", icon: Activity },
+      { title: "Sliding Window", url: "/dashboard/experiments/sliding-window", icon: BarChart2 },
+      { title: "Multi-Objective", url: "/dashboard/experiments/multi-objective", icon: Target },
     ],
   },
 ];

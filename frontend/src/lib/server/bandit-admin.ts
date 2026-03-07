@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import { cookies } from "next/headers";
 
@@ -7,7 +7,7 @@ import type { ExperimentSummary } from "@/lib/experiments";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
-async function getAdminToken(): Promise<string | undefined> {
+async function getAdminToken() {
   const cookieStore = await cookies();
   return cookieStore.get("admin_access_token")?.value;
 }
@@ -47,7 +47,7 @@ function normalizeMetrics(payload: unknown): BanditMetrics {
   };
 }
 
-export async function getBanditExperiments(): Promise<ExperimentSummary[] | null> {
+export async function getBanditExperimentsFromCookies(): Promise<ExperimentSummary[] | null> {
   const token = await getAdminToken();
   if (!token) return null;
 
@@ -64,11 +64,8 @@ export async function getBanditExperiments(): Promise<ExperimentSummary[] | null
   }
 }
 
-export async function getBanditSnapshotAction(experimentId: string): Promise<BanditSnapshot | null> {
-  const token = await getAdminToken();
-  if (!token) return null;
-
-  const experiments = await getBanditExperiments();
+export async function getBanditSnapshotFromCookies(experimentId: string): Promise<BanditSnapshot | null> {
+  const experiments = await getBanditExperimentsFromCookies();
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
@@ -96,13 +93,8 @@ export async function getBanditSnapshotAction(experimentId: string): Promise<Ban
   return { experiment, statistics, metrics };
 }
 
-export async function getBanditDashboardData(): Promise<{
-  experiments: ExperimentSummary[];
-  selectedExperimentId: string | null;
-  snapshot: BanditSnapshot | null;
-  loadFailed: boolean;
-}> {
-  const experiments = await getBanditExperiments();
+export async function getBanditDashboardFromCookies() {
+  const experiments = await getBanditExperimentsFromCookies();
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
@@ -112,7 +104,7 @@ export async function getBanditDashboardData(): Promise<{
     return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
   }
 
-  const snapshot = await getBanditSnapshotAction(selected.id);
+  const snapshot = await getBanditSnapshotFromCookies(selected.id);
   return {
     experiments,
     selectedExperimentId: selected.id,
