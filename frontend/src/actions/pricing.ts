@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 
 import type { PricingTier, PricingTierInput } from "@/lib/pricing-tiers";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
