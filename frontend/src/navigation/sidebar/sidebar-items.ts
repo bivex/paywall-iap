@@ -47,9 +47,7 @@ export interface NavGroup {
 }
 
 export const comingSoonUrls = new Set([
-  "/dashboard/matomo",
   "/dashboard/experiments/studio",
-  "/dashboard/experiments/bandit",
   "/dashboard/experiments/feedback",
   "/dashboard/experiments/sliding-window",
   "/dashboard/experiments/multi-objective",
@@ -66,7 +64,7 @@ export const sidebarItems: NavGroup[] = [
     items: [
       { title: "Dashboard", url: "/dashboard/default", icon: LayoutDashboard },
       { title: "Analytics Reports", url: "/dashboard/analytics", icon: TrendingUp },
-      { title: "Matomo Analytics", url: "/dashboard/matomo", icon: ChartNoAxesCombined, comingSoon: true },
+      { title: "Matomo Analytics", url: "/dashboard/matomo", icon: ChartNoAxesCombined },
       { title: "Platform Settings", url: "/dashboard/settings", icon: Settings },
     ],
   },
@@ -97,7 +95,7 @@ export const sidebarItems: NavGroup[] = [
     items: [
       { title: "A/B Tests", url: "/dashboard/experiments", icon: FlaskConical },
       { title: "Studio", url: "/dashboard/experiments/studio", icon: Settings2, comingSoon: true },
-      { title: "Bandit Model", url: "/dashboard/experiments/bandit", icon: Brain, comingSoon: true },
+      { title: "Bandit Model", url: "/dashboard/experiments/bandit", icon: Brain },
       { title: "Delayed Feedback", url: "/dashboard/experiments/feedback", icon: Activity, comingSoon: true },
       { title: "Sliding Window", url: "/dashboard/experiments/sliding-window", icon: BarChart2, comingSoon: true },
       { title: "Multi-Objective", url: "/dashboard/experiments/multi-objective", icon: Target, comingSoon: true },

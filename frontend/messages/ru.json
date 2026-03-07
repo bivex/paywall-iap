@@ -288,21 +288,69 @@
     "cancel": "Отмена"
   },
   "bandit": {
-    "title": "Настройка бандитского алгоритма",
-    "statusRunning": "🟢 Запущен",
-    "card": {
-      "title": "Бандит: Оптимизация цен (Thompson Sampling)"
+    "title": "Bandit Model",
+    "subtitle": "Read-only мониторинг live bandit experiments на основе сохранённых experiment arms, Thompson-статистики и engine metrics.",
+    "actions": {
+      "refresh": "Обновить",
+      "openExperiments": "Открыть A/B Tests"
     },
-    "algorithmPlaceholder": "Алгоритм: Thompson Sampling",
-    "algorithmThompson": "Thompson Sampling",
-    "algorithmUcb1": "UCB1",
-    "algorithmEpsilon": "ε-Жадный",
-    "explorationRate": "Коэффициент исследования ε",
-    "minPulls": "Мин. попыток на ветку",
-    "armPerformance": "Производительность веток",
-    "pause": "Пауза",
-    "stopBandit": "Остановить бандита",
-    "saveConfig": "Сохранить настройки"
+    "status": {
+      "running": "Запущен",
+      "draft": "Черновик",
+      "paused": "На паузе",
+      "completed": "Завершён"
+    },
+    "selector": {
+      "title": "Отслеживаемый эксперимент",
+      "description": "Выберите любой эксперимент с включённым bandit mode. Этот экран показывает только те маршруты, которые уже реально подключены в backend.",
+      "placeholder": "Выберите bandit experiment"
+    },
+    "summary": {
+      "samples": "Сэмплы",
+      "conversions": "Конверсии",
+      "revenue": "Выручка",
+      "leadingArm": "Лидирующая ветка",
+      "balanceIndex": "Balance Index",
+      "unavailable": "Недоступно"
+    },
+    "arms": {
+      "title": "Производительность веток",
+      "description": "Вероятность победы берётся из live Monte Carlo statistics endpoint. Traffic weight отражает сохранённую конфигурацию эксперимента, а не скрытый runtime override."
+    },
+    "table": {
+      "arm": "Ветка",
+      "weight": "Сохранённый вес",
+      "samples": "Сэмплы",
+      "conversions": "Конверсии",
+      "conversionRate": "Конверсия",
+      "winProbability": "Вероятность победы",
+      "revenue": "Выручка",
+      "control": "Контроль",
+      "variant": "Вариант"
+    },
+    "metrics": {
+      "title": "Метрики движка",
+      "description": "Эти значения берутся из advanced bandit metrics endpoint, если он доступен.",
+      "balanceIndex": "Balance Index",
+      "pendingRewards": "Ожидающие rewards",
+      "note": "Сейчас backend надёжнее всего отдаёт balance index и pending rewards. Более продвинутые ручки вроде exploration rate пока не настраиваются из этой admin page."
+    },
+    "config": {
+      "title": "Сохранённая конфигурация эксперимента",
+      "description": "Эта страница отражает persisted experiment settings, но не притворяется, что уже поддерживает pause/stop/save actions, если они не подключены.",
+      "algorithm": "Алгоритм",
+      "minSampleSize": "Мин. размер выборки",
+      "confidence": "Порог confidence",
+      "readOnlyNotice": "Пока read-only: используйте A/B Tests для создания экспериментов. Runtime bandit assignments и rewards продолжают идти через существующие backend endpoints."
+    },
+    "states": {
+      "loadFailed": "Не удалось загрузить bandit experiments.",
+      "emptyTitle": "Bandit experiments пока нет",
+      "emptyBody": "Сначала создайте эксперимент с включённым bandit mode в A/B Tests, затем используйте этот экран."
+    },
+    "feedback": {
+      "loadFailed": "Не удалось обновить bandit data."
+    }
   },
   "feedback": {
     "title": "Конструктор форм обратной связи",
@@ -360,34 +408,41 @@
     "runAnalysis": "Запустить анализ"
   },
   "matomo": {
-    "title": "Аналитика Matomo",
-    "dateRangePlaceholder": "Период: Последние 30 дней",
-    "last7": "Последние 7 дней",
-    "last30": "Последние 30 дней",
-    "last90": "Последние 90 дней",
-    "openMatomo": "Открыть Matomo",
-    "kpi": {
-      "uniqueVisitors": "Уникальные посетители",
-      "pageViews": "Просмотры страниц",
-      "avgSession": "Ср. сессия",
-      "bounceRate": "Отказы"
+    "title": "Matomo Analytics",
+    "subtitle": "Открывайте реальный дашборд Matomo, используя сохранённые platform settings. Эта страница намеренно не рисует вымышленные KPI, когда доступны только настройки интеграции.",
+    "ranges": {
+      "last7": "Последние 7 дней",
+      "last30": "Последние 30 дней",
+      "last90": "Последние 90 дней"
+    },
+    "actions": {
+      "openSettings": "Открыть настройки",
+      "openMatomo": "Открыть Matomo"
+    },
+    "summary": {
+      "status": "Статус",
+      "configured": "Настроено",
+      "notConfigured": "Не настроено",
+      "siteId": "Site ID",
+      "authToken": "Auth Token",
+      "saved": "Сохранён",
+      "missing": "Отсутствует"
+    },
+    "connection": {
+      "title": "Детали подключения",
+      "description": "Эти значения берутся из сохранённых admin platform settings. Auth token никогда не выводится в браузер; страница показывает только факт его наличия.",
+      "urlLabel": "Matomo URL",
+      "notSet": "Не задан",
+      "behaviorTitle": "Поведение",
+      "behaviorBody": "Используйте Open Matomo для реального дашборда. Встраивание ниже работает best-effort и зависит от того, разрешает ли ваш Matomo iframe и есть ли у вас активная Matomo-сессия в браузере."
     },
     "embed": {
-      "title": "Встроенная панель Matomo",
-      "envHint": "Укажите MATOMO_URL + MATOMO_SITE_ID в env для включения iframe",
-      "iframeLabel": "📊 Matomo Iframe",
-      "notConfigured": "MATOMO_URL не настроен",
-      "configure": "Настроить Matomo"
-    },
-    "topPages": {
-      "title": "Топ страниц"
-    },
-    "trafficSources": {
-      "title": "Источники трафика",
-      "direct": "Прямой",
-      "organic": "Органический поиск",
-      "referral": "Реферальный",
-      "social": "Социальные сети"
+      "title": "Встроенный live-дашборд",
+      "description": "URL для embed собирается из сохранённых Matomo URL и Site ID для выбранного диапазона дат.",
+      "notConfiguredTitle": "Matomo ещё не настроен",
+      "notConfiguredBody": "Сначала укажите Matomo URL и Site ID в Settings, а затем открывайте live dashboard с этого экрана.",
+      "configure": "Настроить Matomo",
+      "bestEffortNotice": "Если iframe блокируется Matomo или ваша сессия там не авторизована, используйте кнопку Open Matomo."
     }
   },
   "pricing": {
