@@ -131,6 +131,19 @@ CREATE INDEX idx_webhook_events_unprocessed
     ON webhook_events(processed_at)
     WHERE processed_at IS NULL;
 
+-- ============================================================
+-- Table: admin_settings
+-- ============================================================
+
+CREATE TABLE admin_settings (
+    key         TEXT PRIMARY KEY,
+    value       JSONB NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE admin_settings IS 'Persisted admin dashboard configuration and settings';
+
 
 -- ------------------------------------------------------------
 -- Migration: 005_create_pricing_tiers.up.sql

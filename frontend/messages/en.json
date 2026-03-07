@@ -445,6 +445,23 @@
       "notifications": "Notifications",
       "security": "Security"
     },
+    "descriptions": {
+      "general": "Load and persist the core platform configuration used by the admin workspace.",
+      "integrations": "Store provider credentials and tracking configuration in one place.",
+      "notifications": "Choose which operational events should notify the admin team.",
+      "security": "Persist safe security preferences and rotate the admin password securely."
+    },
+    "actions": {
+      "saveIntegrations": "Save Integrations",
+      "saveSecurity": "Save Security Settings"
+    },
+    "feedback": {
+      "saving": "Saving...",
+      "settingsSaved": "Settings saved successfully.",
+      "passwordSaved": "Password updated successfully.",
+      "saveFailed": "Failed to save settings.",
+      "passwordFailed": "Failed to update password."
+    },
     "general": {
       "title": "Platform Config",
       "platformName": "Platform Name",

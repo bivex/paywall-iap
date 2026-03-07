@@ -109,34 +109,34 @@ func mustInitRedis(ctx context.Context, redisCfg config.RedisConfig) *redis.Opti
 
 // dependencies holds all initialized dependencies
 type dependencies struct {
-	queries              *generated.Queries
-	userRepo             domainRepo.UserRepository
-	subscriptionRepo     domainRepo.SubscriptionRepository
-	transactionRepo      domainRepo.TransactionRepository
-	analyticsRepo        domainRepo.AnalyticsRepository
-	banditRepo           service.BanditRepository
-	adminCredRepo        domainRepo.AdminCredentialRepository
+	queries          *generated.Queries
+	userRepo         domainRepo.UserRepository
+	subscriptionRepo domainRepo.SubscriptionRepository
+	transactionRepo  domainRepo.TransactionRepository
+	analyticsRepo    domainRepo.AnalyticsRepository
+	banditRepo       service.BanditRepository
+	adminCredRepo    domainRepo.AdminCredentialRepository
 
-	analyticsService     *service.AnalyticsService
-	auditService         *service.AuditService
-	banditService        *service.ThompsonSamplingBandit
-	advancedBandit       *service.AdvancedBanditEngine
-	currencyService      *service.CurrencyRateService
+	analyticsService *service.AnalyticsService
+	auditService     *service.AuditService
+	banditService    *service.ThompsonSamplingBandit
+	advancedBandit   *service.AdvancedBanditEngine
+	currencyService  *service.CurrencyRateService
 
-	jwtMiddleware        *middleware.JWTMiddleware
-	rateLimiter          *middleware.RateLimiter
+	jwtMiddleware *middleware.JWTMiddleware
+	rateLimiter   *middleware.RateLimiter
 
-	registerCmd          *command.RegisterCommand
-	cancelSubCmd          *command.CancelSubscriptionCommand
-	verifyIAPCmd          *command.VerifyIAPCommand
-	adminLoginCmd         *command.AdminLoginCommand
+	registerCmd   *command.RegisterCommand
+	cancelSubCmd  *command.CancelSubscriptionCommand
+	verifyIAPCmd  *command.VerifyIAPCommand
+	adminLoginCmd *command.AdminLoginCommand
 
-	getSubQuery           *query.GetSubscriptionQuery
-	checkAccessQuery      *query.CheckAccessQuery
+	getSubQuery      *query.GetSubscriptionQuery
+	checkAccessQuery *query.CheckAccessQuery
 
 	authHandler           *app_handler.AuthHandler
 	iapHandler            *app_handler.IAPHandler
-	subscriptionHandler  *app_handler.SubscriptionHandler
+	subscriptionHandler   *app_handler.SubscriptionHandler
 	adminHandler          *app_handler.AdminHandler
 	webhookHandler        *app_handler.WebhookHandler
 	banditHandler         *app_handler.BanditHandler
@@ -232,21 +232,21 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	banditAdvancedHandler := app_handler.NewBanditAdvancedHandler(advancedBanditEngine, currencyService, logging.Logger)
 
 	return &dependencies{
-		queries:              queries,
-		userRepo:             userRepo,
-		subscriptionRepo:     subscriptionRepo,
-		transactionRepo:      transactionRepo,
-		analyticsRepo:        analyticsRepo,
-		banditRepo:           banditRepo,
-		adminCredRepo:        adminCredRepo,
-		analyticsService:     analyticsService,
-		auditService:         auditService,
-		banditService:        banditService,
-		advancedBandit:       advancedBanditEngine,
-		currencyService:      currencyService,
-		jwtMiddleware:        jwtMiddleware,
-		rateLimiter:          rateLimiter,
-		registerCmd:          registerCmd,
+		queries:               queries,
+		userRepo:              userRepo,
+		subscriptionRepo:      subscriptionRepo,
+		transactionRepo:       transactionRepo,
+		analyticsRepo:         analyticsRepo,
+		banditRepo:            banditRepo,
+		adminCredRepo:         adminCredRepo,
+		analyticsService:      analyticsService,
+		auditService:          auditService,
+		banditService:         banditService,
+		advancedBandit:        advancedBanditEngine,
+		currencyService:       currencyService,
+		jwtMiddleware:         jwtMiddleware,
+		rateLimiter:           rateLimiter,
+		registerCmd:           registerCmd,
 		cancelSubCmd:          cancelSubCmd,
 		verifyIAPCmd:          verifyIAPCmd,
 		adminLoginCmd:         adminLoginCmd,
@@ -254,7 +254,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		checkAccessQuery:      checkAccessQuery,
 		authHandler:           authHandler,
 		iapHandler:            iapHandler,
-		subscriptionHandler:  subscriptionHandler,
+		subscriptionHandler:   subscriptionHandler,
 		adminHandler:          adminHandler,
 		webhookHandler:        webhookHandler,
 		banditHandler:         banditHandler,
@@ -389,6 +389,9 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 		admin.GET("/webhooks", d.adminHandler.ListWebhooks)
 		admin.GET("/analytics/report", d.adminHandler.GetAnalyticsReport)
 		admin.GET("/revenue-ops", d.adminHandler.GetRevenueOps)
+		admin.GET("/settings", d.adminHandler.GetPlatformSettings)
+		admin.PUT("/settings", d.adminHandler.UpdatePlatformSettings)
+		admin.POST("/settings/password", d.adminHandler.ChangeAdminPassword)
 		admin.POST("/webhooks/:id/replay", d.adminHandler.ReplayWebhook)
 		admin.GET("/health", d.adminHandler.GetHealth)
 	}

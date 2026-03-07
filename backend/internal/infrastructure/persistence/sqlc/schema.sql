@@ -56,6 +56,13 @@ CREATE TABLE webhook_events (
 CREATE UNIQUE INDEX idx_webhook_events_unique
     ON webhook_events(provider, event_id);
 
+CREATE TABLE admin_settings (
+    key         TEXT PRIMARY KEY,
+    value       JSONB NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE analytics_aggregates (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     metric_name     TEXT NOT NULL,
