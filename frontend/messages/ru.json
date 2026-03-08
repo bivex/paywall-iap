@@ -759,12 +759,14 @@
         "label": "Objective scores (GET /v1/bandit/experiments/:id/objectives)"
       },
       "objectiveConfig": {
-        "label": "Обновление objective config (PUT /v1/bandit/experiments/:id/objectives/config)"
+        "label": "Чтение objective config (GET /v1/bandit/experiments/:id/objectives/config)"
       }
     },
     "config": {
       "title": "Objective config",
-      "description": "Отправьте реальное обновление objective configuration для выбранного эксперимента.",
+      "description": "Посмотрите живой сохранённый objective config выбранного эксперимента, а затем при необходимости отправьте реальное обновление.",
+      "loadedTitle": "Загружен live config",
+      "loadedBody": "Текущий сохранённый objective — {objective}. Форма теперь инициализируется из этого live config, а не из жёстко заданных значений по умолчанию.",
       "objectiveType": "Тип objective",
       "weights": {
         "conversion": "Вес conversion",
@@ -833,7 +835,7 @@
       "runtimeTitle": "Честность runtime routes",
       "runtimeBody": "Доступность objective scores проверяется напрямую через live backend. Если route падает для текущего эксперимента, страница показывает это вместо fake optimization output.",
       "configTitle": "Config updates",
-      "configBody": "Текущий admin experiments payload всё ещё не отдаёт persisted objective config в initial read, но страница теперь даёт явную форму, которая вызывает реальную config mutation при сохранении оператором."
+      "configBody": "Эта страница теперь загружает живой сохранённый objective config перед редактированием и по-прежнему использует реальную config mutation при сохранении оператором."
     },
     "readiness": {
       "title": "Готовность objective API",

@@ -3,6 +3,7 @@ import "server-only";
 import type {
   MultiObjectiveDashboardData,
   MultiObjectiveSnapshot,
+  ObjectiveCurrentConfig,
   ObjectiveEndpointProbe,
   ObjectiveScoreEntry,
   ObjectiveScoresByArm,
@@ -29,10 +30,6 @@ async function parseResponse<T>(res: Response): Promise<{ ok: true; data: T } | 
 
 function pickDefaultExperiment<T extends { status: string }>(items: T[]) {
   return items.find((item) => item.status === "running") ?? items[0] ?? null;
-}
-
-function manualProbe(message: string): ObjectiveEndpointProbe {
-  return { state: "manual", status: null, message };
 }
 
 function toNumber(value: unknown) {
@@ -72,6 +69,28 @@ function normalizeObjectiveScores(payload: unknown): ObjectiveScoresByArm {
   return result;
 }
 
+function normalizeObjectiveConfig(payload: unknown): ObjectiveCurrentConfig {
+  const raw = (payload ?? {}) as Record<string, unknown>;
+  const weightsRaw = (raw.weights ?? raw.ObjectiveWeights) as Record<string, unknown> | null | undefined;
+
+  return {
+    experimentId:
+      (typeof raw.experimentId === "string" && raw.experimentId) ||
+      (typeof raw.experiment_id === "string" && raw.experiment_id) ||
+      (typeof raw.ID === "string" && raw.ID) ||
+      "",
+    objectiveType: ((typeof raw.objectiveType === "string" && raw.objectiveType) ||
+      (typeof raw.objective_type === "string" && raw.objective_type) ||
+      (typeof raw.ObjectiveType === "string" && raw.ObjectiveType) ||
+      "conversion") as ObjectiveCurrentConfig["objectiveType"],
+    weights: {
+      conversion: toNumber(weightsRaw?.conversion ?? weightsRaw?.Conversion) ?? 0.5,
+      ltv: toNumber(weightsRaw?.ltv ?? weightsRaw?.LTV) ?? 0.3,
+      revenue: toNumber(weightsRaw?.revenue ?? weightsRaw?.Revenue) ?? 0.2,
+    },
+  };
+}
+
 async function fetchProbe<T>(url: string): Promise<{ probe: ObjectiveEndpointProbe; data: T | null }> {
   try {
     const res = await fetch(url, { cache: "no-store" });
@@ -107,10 +126,11 @@ export async function getMultiObjectiveSnapshotFromCookies(
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
-  const [banditSnapshot, serviceHealth, objectiveScoresResult] = await Promise.all([
+  const [banditSnapshot, serviceHealth, objectiveScoresResult, objectiveConfigResult] = await Promise.all([
     getBanditSnapshotFromCookies(experimentId),
     getServiceHealth(),
     fetchProbe<unknown>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/objectives`),
+    fetchProbe<unknown>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/objectives/config`),
   ]);
 
   return {
@@ -118,9 +138,10 @@ export async function getMultiObjectiveSnapshotFromCookies(
     banditSnapshot,
     serviceHealth,
     objectiveScores: objectiveScoresResult.data ? normalizeObjectiveScores(objectiveScoresResult.data) : null,
+    currentConfig: objectiveConfigResult.data ? normalizeObjectiveConfig(objectiveConfigResult.data) : null,
     probes: {
       objectiveScores: objectiveScoresResult.probe,
-      objectiveConfig: manualProbe("Live PUT route exists. Use the objective config form on this page to call it."),
+      objectiveConfig: objectiveConfigResult.probe,
     },
   };
 }

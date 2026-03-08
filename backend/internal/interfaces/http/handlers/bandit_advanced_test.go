@@ -36,7 +36,9 @@ func (r *routerPathTestRepo) GetArmStats(_ context.Context, armID uuid.UUID) (*s
 
 func (r *routerPathTestRepo) UpdateArmStats(_ context.Context, _ *service.ArmStats) error { return nil }
 
-func (r *routerPathTestRepo) CreateAssignment(_ context.Context, _ *service.Assignment) error { return nil }
+func (r *routerPathTestRepo) CreateAssignment(_ context.Context, _ *service.Assignment) error {
+	return nil
+}
 
 func (r *routerPathTestRepo) GetActiveAssignment(_ context.Context, _, _ uuid.UUID) (*service.Assignment, error) {
 	return nil, nil
@@ -64,7 +66,9 @@ func (r *routerPathTestRepo) GetUserContext(_ context.Context, userID uuid.UUID)
 	return &service.UserContext{UserID: userID}, nil
 }
 
-func (r *routerPathTestRepo) SetUserContext(_ context.Context, _ *service.UserContext) error { return nil }
+func (r *routerPathTestRepo) SetUserContext(_ context.Context, _ *service.UserContext) error {
+	return nil
+}
 
 type routerPathTestCache struct{}
 
@@ -183,6 +187,54 @@ func TestGetObjectiveScores_GinWrappedRouteAcceptsValidExperimentID(t *testing.T
 	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &body), "body=%s", res.Body.String())
 	require.Contains(t, body, armID.String(), "expected arm scores in response body=%s", res.Body.String())
 	require.Contains(t, body[armID.String()], string(service.ObjectiveHybrid), "body=%s", res.Body.String())
+}
+
+func TestGetObjectiveConfig_GinWrappedRouteAcceptsValidExperimentID(t *testing.T) {
+	t.Helper()
+	gin.SetMode(gin.TestMode)
+
+	experimentID := uuid.New()
+
+	repo := &routerPathTestRepo{
+		experimentID: experimentID,
+		config: &service.ExperimentConfig{
+			ID:            experimentID,
+			ObjectiveType: service.ObjectiveHybrid,
+			ObjectiveWeights: map[string]float64{
+				"conversion": 0.5,
+				"ltv":        0.3,
+				"revenue":    0.2,
+			},
+		},
+	}
+	cache := &routerPathTestCache{}
+	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
+	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{EnableHybrid: true})
+	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
+
+	router := gin.New()
+	v1 := router.Group("/v1")
+	bandit := v1.Group("/bandit")
+	bandit.GET("/experiments/:id/objectives/config", gin.WrapF(handler.GetObjectiveConfig))
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/bandit/experiments/"+experimentID.String()+"/objectives/config", nil)
+	res := httptest.NewRecorder()
+
+	router.ServeHTTP(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code, "body=%s", res.Body.String())
+
+	var body struct {
+		ExperimentID  string             `json:"experiment_id"`
+		ObjectiveType string             `json:"objective_type"`
+		Weights       map[string]float64 `json:"weights"`
+	}
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &body), "body=%s", res.Body.String())
+	require.Equal(t, experimentID.String(), body.ExperimentID)
+	require.Equal(t, string(service.ObjectiveHybrid), body.ObjectiveType)
+	require.InDelta(t, 0.5, body.Weights["conversion"], 0.0001)
+	require.InDelta(t, 0.3, body.Weights["ltv"], 0.0001)
+	require.InDelta(t, 0.2, body.Weights["revenue"], 0.0001)
 }
 
 type assertAnError string

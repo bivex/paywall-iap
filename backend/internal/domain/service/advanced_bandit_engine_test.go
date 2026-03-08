@@ -137,6 +137,22 @@ func TestAdvancedBanditEngine_GetObjectiveScores_LazilyLoadsExperimentConfig(t *
 	require.Contains(t, scores[armID], ObjectiveHybrid)
 }
 
+func TestAdvancedBanditEngine_GetObjectiveConfig_ReturnsDefaultWhenUnset(t *testing.T) {
+	experimentID := uuid.New()
+	repo := &advancedEngineTestRepo{}
+	cache := &advancedEngineTestCache{}
+	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
+	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{EnableHybrid: true})
+
+	config, err := engine.GetObjectiveConfig(context.Background(), experimentID)
+
+	require.NoError(t, err)
+	require.NotNil(t, config)
+	require.Equal(t, experimentID, config.ID)
+	require.Equal(t, ObjectiveConversion, config.ObjectiveType)
+	require.Nil(t, config.ObjectiveWeights)
+}
+
 func TestAdvancedBanditEngine_GetPendingReward_UsesLazyDelayedStrategy(t *testing.T) {
 	pendingID := uuid.New()
 	userID := uuid.New()

@@ -533,6 +533,10 @@ func (e *AdvancedBanditEngine) ExportWindowEvents(
 	return result, nil
 }
 
+func (e *AdvancedBanditEngine) GetObjectiveConfig(ctx context.Context, experimentID uuid.UUID) (*ExperimentConfig, error) {
+	return e.getExperimentConfig(ctx, experimentID)
+}
+
 func (e *AdvancedBanditEngine) GetPendingReward(ctx context.Context, pendingID uuid.UUID) (*PendingReward, error) {
 	delayedStrategy, err := e.getDelayedStrategy()
 	if err != nil {

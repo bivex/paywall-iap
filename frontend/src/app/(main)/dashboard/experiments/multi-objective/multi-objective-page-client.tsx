@@ -21,9 +21,17 @@ import type {
   MultiObjectiveDashboardData,
   MultiObjectiveSnapshot,
   ObjectiveConfigResult,
+  ObjectiveCurrentConfig,
   ObjectiveEndpointProbe,
   ObjectiveType,
 } from "@/lib/multi-objective";
+
+const DEFAULT_OBJECTIVE_TYPE: ObjectiveType = "conversion";
+const DEFAULT_OBJECTIVE_WEIGHTS = {
+  conversion: "0.5",
+  ltv: "0.3",
+  revenue: "0.2",
+} as const;
 
 const SUPPORTED_OBJECTIVES = [
   { key: "conversion", defaultWeight: 0.5, weightPercent: 50 },
@@ -100,6 +108,14 @@ function formatScore(value: number | null | undefined) {
   return value.toFixed(3);
 }
 
+function buildWeightInputs(config: ObjectiveCurrentConfig | null | undefined) {
+  return {
+    conversion: String(config?.weights.conversion ?? DEFAULT_OBJECTIVE_WEIGHTS.conversion),
+    ltv: String(config?.weights.ltv ?? DEFAULT_OBJECTIVE_WEIGHTS.ltv),
+    revenue: String(config?.weights.revenue ?? DEFAULT_OBJECTIVE_WEIGHTS.revenue),
+  };
+}
+
 function mergeArmStats(experiment: ExperimentSummary | null, snapshot: MultiObjectiveSnapshot | null) {
   if (!experiment) return [];
 
@@ -150,8 +166,10 @@ export function MultiObjectivePageClient({
   const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
-  const [objectiveType, setObjectiveType] = useState<ObjectiveType>("hybrid");
-  const [weightInputs, setWeightInputs] = useState({ conversion: "0.5", ltv: "0.3", revenue: "0.2" });
+  const [objectiveType, setObjectiveType] = useState<ObjectiveType>(
+    initialSnapshot?.currentConfig?.objectiveType ?? DEFAULT_OBJECTIVE_TYPE,
+  );
+  const [weightInputs, setWeightInputs] = useState(buildWeightInputs(initialSnapshot?.currentConfig));
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [configResult, setConfigResult] = useState<ObjectiveConfigResult | null>(null);
 
@@ -172,6 +190,11 @@ export function MultiObjectivePageClient({
       }
     });
   }, [isBootstrapping]);
+
+  useEffect(() => {
+    setObjectiveType(snapshot?.currentConfig?.objectiveType ?? DEFAULT_OBJECTIVE_TYPE);
+    setWeightInputs(buildWeightInputs(snapshot?.currentConfig));
+  }, [snapshot]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,
@@ -419,6 +442,17 @@ export function MultiObjectivePageClient({
                   <CardDescription>{t("config.description")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {snapshot?.currentConfig ? (
+                    <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                      <p className="font-medium text-foreground text-xs">{t("config.loadedTitle")}</p>
+                      <p className="mt-1">
+                        {t("config.loadedBody", {
+                          objective: t(`catalog.objectives.${snapshot.currentConfig.objectiveType}.label`),
+                        })}
+                      </p>
+                    </div>
+                  ) : null}
+
                   <div className="space-y-1">
                     <p className="font-medium text-xs">{t("config.objectiveType")}</p>
                     <Select value={objectiveType} onValueChange={(value) => setObjectiveType(value as ObjectiveType)}>

@@ -25,6 +25,12 @@ export interface ObjectiveScoreEntry {
   avgLtv: number | null;
 }
 
+export interface ObjectiveCurrentConfig {
+  experimentId: string;
+  objectiveType: ObjectiveType;
+  weights: Record<string, number>;
+}
+
 export type ObjectiveScoresByArm = Record<string, Record<string, ObjectiveScoreEntry>>;
 
 export interface MultiObjectiveSnapshot {
@@ -32,6 +38,7 @@ export interface MultiObjectiveSnapshot {
   banditSnapshot: BanditSnapshot | null;
   serviceHealth: ObjectiveServiceHealth | null;
   objectiveScores: ObjectiveScoresByArm | null;
+  currentConfig: ObjectiveCurrentConfig | null;
   probes: {
     objectiveScores: ObjectiveEndpointProbe;
     objectiveConfig: ObjectiveEndpointProbe;

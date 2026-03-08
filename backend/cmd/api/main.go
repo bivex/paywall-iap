@@ -339,6 +339,7 @@ func setupBanditRoutes(v1 *gin.RouterGroup, d *dependencies) {
 		bandit.POST("/currency/update", gin.WrapF(d.banditAdvancedHandler.UpdateCurrencyRates))
 		bandit.POST("/currency/convert", gin.WrapF(d.banditAdvancedHandler.ConvertCurrency))
 		bandit.GET("/experiments/:id/objectives", gin.WrapF(d.banditAdvancedHandler.GetObjectiveScores))
+		bandit.GET("/experiments/:id/objectives/config", gin.WrapF(d.banditAdvancedHandler.GetObjectiveConfig))
 		bandit.PUT("/experiments/:id/objectives/config", gin.WrapF(d.banditAdvancedHandler.SetObjectiveConfig))
 		bandit.GET("/experiments/:id/window/info", gin.WrapF(d.banditAdvancedHandler.GetWindowInfo))
 		bandit.POST("/experiments/:id/window/trim", gin.WrapF(d.banditAdvancedHandler.TrimWindow))

@@ -43,6 +43,7 @@ func (h *BanditAdvancedHandler) RegisterRoutes(router *mux.Router) {
 
 	// Objective management
 	router.HandleFunc("/api/bandit/experiments/{id}/objectives", h.GetObjectiveScores).Methods("GET")
+	router.HandleFunc("/api/bandit/experiments/{id}/objectives/config", h.GetObjectiveConfig).Methods("GET")
 	router.HandleFunc("/api/bandit/experiments/{id}/objectives/config", h.SetObjectiveConfig).Methods("PUT")
 
 	// Window management
@@ -154,6 +155,27 @@ func (h *BanditAdvancedHandler) GetObjectiveScores(w http.ResponseWriter, r *htt
 	}
 
 	respondJSON(w, http.StatusOK, scores)
+}
+
+// GetObjectiveConfig returns the persisted objective configuration for an experiment.
+func (h *BanditAdvancedHandler) GetObjectiveConfig(w http.ResponseWriter, r *http.Request) {
+	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
+		return
+	}
+
+	config, err := h.engine.GetObjectiveConfig(r.Context(), experimentID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"experiment_id":  experimentID,
+		"objective_type": config.ObjectiveType,
+		"weights":        config.ObjectiveWeights,
+	})
 }
 
 // SetObjectiveConfig updates the objective configuration for an experiment
