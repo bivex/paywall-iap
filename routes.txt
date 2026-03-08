@@ -59,6 +59,7 @@ GET     /v1/bandit/experiments/:id/window/events            main.setupBanditRout
 GET     /v1/bandit/experiments/:id/window/info              main.setupBanditRoutes.WrapF.func7
 POST    /v1/bandit/experiments/:id/window/trim              main.setupBanditRoutes.WrapF.func8
 GET     /v1/bandit/health                                   github.com/bivex/paywall-iap/internal/interfaces/http/handlers.(*BanditHandler).Health-fm
+POST    /v1/bandit/impression                               github.com/bivex/paywall-iap/internal/interfaces/http/handlers.(*BanditHandler).Impression-fm
 POST    /v1/bandit/maintenance                              main.setupBanditRoutes.WrapF.func14
 GET     /v1/bandit/pending/:id                              main.setupBanditRoutes.WrapF.func11
 POST    /v1/bandit/reward                                   github.com/bivex/paywall-iap/internal/interfaces/http/handlers.(*BanditHandler).Reward-fm
@@ -72,4 +73,4 @@ POST    /webhook/apple                                      github.com/bivex/pay
 POST    /webhook/google                                     github.com/bivex/paywall-iap/internal/interfaces/http/handlers.(*WebhookHandler).GoogleWebhook-fm
 POST    /webhook/stripe                                     github.com/bivex/paywall-iap/internal/interfaces/http/handlers.(*WebhookHandler).StripeWebhook-fm
 
-TOTAL  71  
+TOTAL  72  

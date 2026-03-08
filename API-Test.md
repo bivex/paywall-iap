@@ -22,7 +22,29 @@ curl -fsS http://localhost:8081/health
 
 Если health-check не проходит, контрактный прогон дальше не имеет смысла.
 
-## 3. Основной контрактный прогон
+## 3. Снять актуальный dump routes
+
+Из корня репозитория:
+
+```bash
+make dump-routes
+```
+
+По умолчанию dump пишется в `routes.txt`.
+
+Это полезно делать:
+
+- перед сравнением runtime routes и `/openapi.yaml`
+- после добавления новых handler'ов / router registration
+- после изменений в `backend/cmd/api/main.go`
+
+Если нужен другой файл:
+
+```bash
+make dump-routes ROUTES_OUT=my-routes.txt
+```
+
+## 4. Основной контрактный прогон
 
 Базовый запуск из корня репозитория:
 
@@ -36,7 +58,7 @@ bash ./scripts/test_api_contract_schemathesis.sh
 bash ./scripts/test_api_contract_schemathesis.sh --max-failures 1
 ```
 
-## 4. Что script делает автоматически
+## 5. Что script делает автоматически
 
 По умолчанию `scripts/test_api_contract_schemathesis.sh`:
 
@@ -55,7 +77,7 @@ bash ./scripts/test_api_contract_schemathesis.sh --max-failures 1
 - убрать ложные admin auth warnings
 - тестировать subscription endpoints на живых seeded данных
 
-## 5. Когда нужен кастомный запуск
+## 6. Когда нужен кастомный запуск
 
 Если нужно тестировать только часть API, можно передать обычные аргументы Schemathesis:
 
@@ -69,7 +91,7 @@ bash ./scripts/test_api_contract_schemathesis.sh --include-path-regex '^/v1/admi
 
 Важно: если переданы свои `--include-*`, `--exclude-*`, кастомные header'ы или token'ы, script переключается в single-run режим и **не** делает дефолтное split-by-suite поведение.
 
-## 6. Полезные env vars
+## 7. Полезные env vars
 
 Можно переопределять:
 
@@ -91,7 +113,7 @@ bash ./scripts/test_api_contract_schemathesis.sh --include-path-regex '^/v1/admi
 API_BASE=http://localhost:8081 SCHEMATHESIS_PHASES=coverage,fuzzing bash ./scripts/test_api_contract_schemathesis.sh
 ```
 
-## 7. Как мы читаем результат
+## 8. Как мы читаем результат
 
 ### Success
 
@@ -111,12 +133,18 @@ API_BASE=http://localhost:8081 SCHEMATHESIS_PHASES=coverage,fuzzing bash ./scrip
    - `Missing test data`
    - `Schema validation mismatch`
 
-## 8. Если schema менялась
+## 9. Если schema или routes менялись
 
 После изменения OpenAPI или handler'ов полезно пересобрать API:
 
 ```bash
 docker compose -f infra/docker-compose/docker-compose.local.yml up -d --build api
+```
+
+После изменения router/handler'ов полезно заново снять dump:
+
+```bash
+make dump-routes
 ```
 
 И затем повторить прогон:
@@ -125,13 +153,14 @@ docker compose -f infra/docker-compose/docker-compose.local.yml up -d --build ap
 bash ./scripts/test_api_contract_schemathesis.sh
 ```
 
-## 9. Минимальный рабочий цикл
+## 10. Минимальный рабочий цикл
 
 Обычно тестим так:
 
 ```bash
 docker compose -f infra/docker-compose/docker-compose.local.yml up -d --build api
 curl -fsS http://localhost:8081/health
+make dump-routes
 bash ./scripts/test_api_contract_schemathesis.sh --max-failures 1
 ```
 
