@@ -1,6 +1,21 @@
+/**
+ * Copyright (c) 2026 Bivex
+ *
+ * Author: Bivex
+ * Available for contact via email: support@b-b.top
+ * For up-to-date contact information:
+ * https://github.com/bivex
+ *
+ * Created: 2026-03-08 09:10
+ * Last Updated: 2026-03-08 09:10
+ *
+ * Licensed under the MIT License.
+ * Commercial licensing available upon request.
+ */
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -146,32 +161,55 @@ export function PricingTierManager({
     defaultValues: initialTiers[0] ? tierToFormValues(initialTiers[0]) : EMPTY_FORM_VALUES,
   });
 
+  const applyFormValues = useCallback(
+    (values: PricingFormValues) => {
+      form.reset(values);
+      form.setValue("name", values.name);
+      form.setValue("description", values.description);
+      form.setValue("monthly_price", values.monthly_price);
+      form.setValue("annual_price", values.annual_price);
+      form.setValue("currency", values.currency);
+      form.setValue("features", values.features);
+      form.setValue("is_active", values.is_active);
+    },
+    [form],
+  );
+
   useEffect(() => {
     setTiers(initialTiers);
 
     if (initialTiers.length === 0) {
-      setEditingTierId(null);
-      form.reset(EMPTY_FORM_VALUES);
+      if (editingTierId !== null) {
+        setEditingTierId(null);
+      }
+      applyFormValues(EMPTY_FORM_VALUES);
       return;
     }
 
-    setEditingTierId((currentId) => {
-      const nextTier = initialTiers.find((tier) => tier.id === currentId) ?? initialTiers[0];
-      form.reset(tierToFormValues(nextTier));
-      return nextTier.id;
-    });
-  }, [form, initialTiers]);
+    if (editingTierId === null) {
+      applyFormValues(EMPTY_FORM_VALUES);
+      return;
+    }
+
+    const nextTier = initialTiers.find((tier) => tier.id === editingTierId) ?? initialTiers[0];
+
+    if (editingTierId !== nextTier.id) {
+      setEditingTierId(nextTier.id);
+    }
+
+    applyFormValues(tierToFormValues(nextTier));
+  }, [applyFormValues, editingTierId, initialTiers]);
 
   const activeCount = tiers.filter((tier) => tier.is_active).length;
 
   function resetToNewTier() {
     setEditingTierId(null);
-    form.reset(EMPTY_FORM_VALUES);
+    applyFormValues(EMPTY_FORM_VALUES);
   }
 
   function selectTier(tier: PricingTier) {
     setEditingTierId(tier.id);
-    form.reset(tierToFormValues(tier));
+    applyFormValues(tierToFormValues(tier));
   }
 
   const saveTier = form.handleSubmit(async (values) => {
@@ -191,7 +229,7 @@ export function PricingTierManager({
       editingTierId ? current.map((tier) => (tier.id === nextTier.id ? nextTier : tier)) : [nextTier, ...current],
     );
     setEditingTierId(nextTier.id);
-    form.reset(tierToFormValues(nextTier));
+    applyFormValues(tierToFormValues(nextTier));
     toast.success(editingTierId ? t("feedback.tierUpdated") : t("feedback.tierCreated"));
     router.refresh();
   });
@@ -211,7 +249,7 @@ export function PricingTierManager({
     const updatedTier = result.data;
     setTiers((current) => current.map((item) => (item.id === updatedTier.id ? updatedTier : item)));
     if (editingTierId === updatedTier.id) {
-      form.reset(tierToFormValues(updatedTier));
+      applyFormValues(tierToFormValues(updatedTier));
     }
     toast.success(t("feedback.statusUpdated"));
     router.refresh();
@@ -346,31 +384,61 @@ export function PricingTierManager({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
                 <p className="font-medium text-xs">{t("form.name")}</p>
-                <Input {...form.register("name")} />
+                <Controller
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => <Input {...field} value={field.value} />}
+                />
                 {fieldError(form.formState.errors.name)}
               </div>
               <div className="space-y-1">
                 <p className="font-medium text-xs">{t("form.currency")}</p>
-                <Input className="w-24" maxLength={3} {...form.register("currency")} />
+                <Controller
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => <Input {...field} className="w-24" maxLength={3} value={field.value} />}
+                />
                 {fieldError(form.formState.errors.currency)}
               </div>
               <div className="space-y-1">
                 <p className="font-medium text-xs">{t("form.monthlyPrice")}</p>
-                <Input inputMode="decimal" placeholder="9.99" {...form.register("monthly_price")} />
+                <Controller
+                  control={form.control}
+                  name="monthly_price"
+                  render={({ field }) => (
+                    <Input {...field} inputMode="decimal" placeholder="9.99" value={field.value} />
+                  )}
+                />
                 {fieldError(form.formState.errors.monthly_price)}
               </div>
               <div className="space-y-1">
                 <p className="font-medium text-xs">{t("form.annualPrice")}</p>
-                <Input inputMode="decimal" placeholder="99.99" {...form.register("annual_price")} />
+                <Controller
+                  control={form.control}
+                  name="annual_price"
+                  render={({ field }) => (
+                    <Input {...field} inputMode="decimal" placeholder="99.99" value={field.value} />
+                  )}
+                />
                 {fieldError(form.formState.errors.annual_price)}
               </div>
               <div className="space-y-1 md:col-span-2">
                 <p className="font-medium text-xs">{t("form.descriptionLabel")}</p>
-                <Textarea rows={3} {...form.register("description")} />
+                <Controller
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => <Textarea {...field} rows={3} value={field.value} />}
+                />
               </div>
               <div className="space-y-1 md:col-span-2">
                 <p className="font-medium text-xs">{t("form.features")}</p>
-                <Textarea rows={5} placeholder={t("form.featuresPlaceholder")} {...form.register("features")} />
+                <Controller
+                  control={form.control}
+                  name="features"
+                  render={({ field }) => (
+                    <Textarea {...field} rows={5} placeholder={t("form.featuresPlaceholder")} value={field.value} />
+                  )}
+                />
               </div>
             </div>
 
