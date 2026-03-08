@@ -65,6 +65,19 @@ type AdminExperimentLifecycleAudit struct {
 	CreatedAt      time.Time              `json:"created_at"`
 }
 
+type AdminExperimentWinnerRecommendationAudit struct {
+	Source                     string                 `json:"source"`
+	Recommended                bool                   `json:"recommended"`
+	Reason                     string                 `json:"reason"`
+	WinningArmID               *uuid.UUID             `json:"winning_arm_id,omitempty"`
+	ConfidencePercent          *float64               `json:"confidence_percent,omitempty"`
+	ConfidenceThresholdPercent float64                `json:"confidence_threshold_percent"`
+	ObservedSamples            int                    `json:"observed_samples"`
+	MinSampleSize              int                    `json:"min_sample_size"`
+	Details                    map[string]interface{} `json:"details,omitempty"`
+	OccurredAt                 time.Time              `json:"occurred_at"`
+}
+
 func scanAdminExperimentLifecycleAudit(scanner interface{ Scan(dest ...any) error }) (AdminExperimentLifecycleAudit, error) {
 	var audit AdminExperimentLifecycleAudit
 	var idempotencyKey sql.NullString
@@ -90,6 +103,43 @@ func scanAdminExperimentLifecycleAudit(scanner interface{ Scan(dest ...any) erro
 	if len(detailsJSON) > 0 {
 		if err := json.Unmarshal(detailsJSON, &audit.Details); err != nil {
 			return AdminExperimentLifecycleAudit{}, err
+		}
+	}
+	return audit, nil
+}
+
+func scanAdminExperimentWinnerRecommendationAudit(scanner interface{ Scan(dest ...any) error }) (AdminExperimentWinnerRecommendationAudit, error) {
+	var audit AdminExperimentWinnerRecommendationAudit
+	var winningArmID uuid.NullUUID
+	var confidencePercent sql.NullFloat64
+	var detailsJSON []byte
+
+	err := scanner.Scan(
+		&audit.Source,
+		&audit.Recommended,
+		&audit.Reason,
+		&winningArmID,
+		&confidencePercent,
+		&audit.ConfidenceThresholdPercent,
+		&audit.ObservedSamples,
+		&audit.MinSampleSize,
+		&detailsJSON,
+		&audit.OccurredAt,
+	)
+	if err != nil {
+		return AdminExperimentWinnerRecommendationAudit{}, err
+	}
+	if winningArmID.Valid {
+		value := winningArmID.UUID
+		audit.WinningArmID = &value
+	}
+	if confidencePercent.Valid {
+		value := confidencePercent.Float64
+		audit.ConfidencePercent = &value
+	}
+	if len(detailsJSON) > 0 {
+		if err := json.Unmarshal(detailsJSON, &audit.Details); err != nil {
+			return AdminExperimentWinnerRecommendationAudit{}, err
 		}
 	}
 	return audit, nil
@@ -482,15 +532,19 @@ func (h *AdminHandler) getAdminExperimentByID(c *gin.Context, experimentID uuid.
 		return AdminExperiment{}, err
 	}
 	experiment.Arms = arms
-	if err := h.enrichWinnerRecommendation(c.Request.Context(), &experiment); err != nil {
+	if err := h.enrichWinnerRecommendation(c.Request.Context(), &experiment, "admin_experiments_detail"); err != nil {
 		return AdminExperiment{}, err
 	}
 	return experiment, nil
 }
 
-func (h *AdminHandler) enrichWinnerRecommendation(ctx context.Context, experiment *AdminExperiment) error {
+func (h *AdminHandler) enrichWinnerRecommendation(ctx context.Context, experiment *AdminExperiment, source ...string) error {
 	if experiment == nil || h.winnerRecommendationService == nil {
 		return nil
+	}
+	recommendationSource := "admin_experiments_api"
+	if len(source) > 0 && strings.TrimSpace(source[0]) != "" {
+		recommendationSource = strings.TrimSpace(source[0])
 	}
 
 	var winnerConfidence *float64
@@ -501,6 +555,7 @@ func (h *AdminHandler) enrichWinnerRecommendation(ctx context.Context, experimen
 
 	input := service.ExperimentWinnerRecommendationInput{
 		ExperimentID:        experiment.ID,
+		Source:              recommendationSource,
 		Status:              experiment.Status,
 		IsBandit:            experiment.IsBandit,
 		MinSampleSize:       experiment.MinSampleSize,
@@ -523,6 +578,37 @@ func (h *AdminHandler) enrichWinnerRecommendation(ctx context.Context, experimen
 	}
 	experiment.WinnerRecommendation = recommendation
 	return nil
+}
+
+func (h *AdminHandler) listExperimentWinnerRecommendationAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentWinnerRecommendationAudit, error) {
+	rows, err := h.dbPool.Query(ctx.Request.Context(), `
+		SELECT source,
+		       recommended,
+		       reason,
+		       winning_arm_id,
+		       confidence_percent,
+		       confidence_threshold_percent,
+		       observed_samples,
+		       min_sample_size,
+		       details,
+		       occurred_at
+		FROM experiment_winner_recommendation_log
+		WHERE experiment_id = $1
+		ORDER BY occurred_at DESC, id DESC`, experimentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	history := make([]AdminExperimentWinnerRecommendationAudit, 0)
+	for rows.Next() {
+		audit, err := scanAdminExperimentWinnerRecommendationAudit(rows)
+		if err != nil {
+			return nil, err
+		}
+		history = append(history, audit)
+	}
+	return history, rows.Err()
 }
 
 func (h *AdminHandler) listExperimentLifecycleAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentLifecycleAudit, error) {
@@ -579,6 +665,31 @@ func (h *AdminHandler) GetAdminExperimentLifecycleAuditHistory(c *gin.Context) {
 	response.OK(c, history)
 }
 
+func (h *AdminHandler) GetAdminExperimentWinnerRecommendationAuditHistory(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+
+	if err := h.dbPool.QueryRow(c.Request.Context(), `SELECT 1 FROM ab_tests WHERE id = $1`, experimentID).Scan(new(int)); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.NotFound(c, "Experiment not found")
+			return
+		}
+		response.InternalError(c, "Failed to load experiment")
+		return
+	}
+
+	history, err := h.listExperimentWinnerRecommendationAuditHistory(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load experiment winner recommendation history")
+		return
+	}
+
+	response.OK(c, history)
+}
+
 func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
 	rows, err := h.dbPool.Query(c.Request.Context(), adminExperimentListQuery(h.hasAssignmentTable(c)))
 	if err != nil {
@@ -600,7 +711,7 @@ func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
 			return
 		}
 		experiment.Arms = arms
-		if err := h.enrichWinnerRecommendation(c.Request.Context(), &experiment); err != nil {
+			if err := h.enrichWinnerRecommendation(c.Request.Context(), &experiment, "admin_experiments_list"); err != nil {
 			response.InternalError(c, "Failed to load experiments")
 			return
 		}

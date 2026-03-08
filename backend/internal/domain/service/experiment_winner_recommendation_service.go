@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,6 +29,7 @@ type ExperimentWinnerRecommendationArm struct {
 
 type ExperimentWinnerRecommendationInput struct {
 	ExperimentID        uuid.UUID
+	Source              string
 	Status              string
 	IsBandit            bool
 	MinSampleSize       int
@@ -48,6 +50,24 @@ type WinnerRecommendation struct {
 	MinSampleSize              int        `json:"min_sample_size"`
 }
 
+type WinnerRecommendationEvent struct {
+	ExperimentID               uuid.UUID
+	Source                     string
+	Recommended                bool
+	Reason                     string
+	WinningArmID               *uuid.UUID
+	ConfidencePercent          *float64
+	ConfidenceThresholdPercent float64
+	ObservedSamples            int
+	MinSampleSize              int
+	Details                    map[string]interface{}
+	OccurredAt                 time.Time
+}
+
+type winnerRecommendationEventAppender interface {
+	AppendWinnerRecommendationEvent(ctx context.Context, event *WinnerRecommendationEvent) error
+}
+
 type WinnerProbabilityCalculator interface {
 	CalculateWinProbability(ctx context.Context, experimentID uuid.UUID, simulations int) (map[uuid.UUID]float64, error)
 }
@@ -55,6 +75,7 @@ type WinnerProbabilityCalculator interface {
 type ExperimentWinnerRecommendationService struct {
 	calculator  WinnerProbabilityCalculator
 	simulations int
+	appender    winnerRecommendationEventAppender
 }
 
 type recommendationNoopBanditCache struct{}
@@ -77,11 +98,19 @@ func (recommendationNoopBanditCache) SetAssignment(context.Context, string, uuid
 
 func NewExperimentWinnerRecommendationService(banditRepo BanditRepository) *ExperimentWinnerRecommendationService {
 	bandit := NewThompsonSamplingBandit(banditRepo, recommendationNoopBanditCache{}, zap.NewNop())
-	return &ExperimentWinnerRecommendationService{calculator: bandit, simulations: 2000}
+	service := &ExperimentWinnerRecommendationService{calculator: bandit, simulations: 2000}
+	if appender, ok := banditRepo.(winnerRecommendationEventAppender); ok {
+		service.appender = appender
+	}
+	return service
 }
 
 func NewExperimentWinnerRecommendationServiceWithCalculator(calculator WinnerProbabilityCalculator) *ExperimentWinnerRecommendationService {
 	return &ExperimentWinnerRecommendationService{calculator: calculator, simulations: 2000}
+}
+
+func NewExperimentWinnerRecommendationServiceWithCalculatorAndAppender(calculator WinnerProbabilityCalculator, appender winnerRecommendationEventAppender) *ExperimentWinnerRecommendationService {
+	return &ExperimentWinnerRecommendationService{calculator: calculator, simulations: 2000, appender: appender}
 }
 
 func (s *ExperimentWinnerRecommendationService) Recommend(ctx context.Context, input ExperimentWinnerRecommendationInput) (*WinnerRecommendation, error) {
@@ -98,20 +127,20 @@ func (s *ExperimentWinnerRecommendationService) Recommend(ctx context.Context, i
 	switch input.Status {
 	case "draft":
 		recommendation.Reason = WinnerRecommendationReasonDraftExperiment
-		return recommendation, nil
+		return s.finalizeRecommendation(ctx, input, recommendation)
 	case "running", "paused", "completed":
 	default:
 		recommendation.Reason = WinnerRecommendationReasonStatusNotEligible
-		return recommendation, nil
+		return s.finalizeRecommendation(ctx, input, recommendation)
 	}
 
 	if len(input.Arms) < 2 {
 		recommendation.Reason = WinnerRecommendationReasonInsufficientArms
-		return recommendation, nil
+		return s.finalizeRecommendation(ctx, input, recommendation)
 	}
 	if input.TotalSamples <= 0 {
 		recommendation.Reason = WinnerRecommendationReasonInsufficientData
-		return recommendation, nil
+		return s.finalizeRecommendation(ctx, input, recommendation)
 	}
 
 	winProbabilities, err := s.calculator.CalculateWinProbability(ctx, input.ExperimentID, s.simulations)
@@ -122,7 +151,7 @@ func (s *ExperimentWinnerRecommendationService) Recommend(ctx context.Context, i
 	bestArmID, bestProbability, found := highestProbability(winProbabilities)
 	if !found {
 		recommendation.Reason = WinnerRecommendationReasonInsufficientData
-		return recommendation, nil
+		return s.finalizeRecommendation(ctx, input, recommendation)
 	}
 
 	recommendation.WinningArmID = &bestArmID
@@ -140,15 +169,50 @@ func (s *ExperimentWinnerRecommendationService) Recommend(ctx context.Context, i
 
 	if input.TotalSamples < input.MinSampleSize {
 		recommendation.Reason = WinnerRecommendationReasonInsufficientSampleSize
-		return recommendation, nil
+		return s.finalizeRecommendation(ctx, input, recommendation)
 	}
 	if confidence < input.ConfidenceThreshold {
 		recommendation.Reason = WinnerRecommendationReasonConfidenceBelowThreshold
-		return recommendation, nil
+		return s.finalizeRecommendation(ctx, input, recommendation)
 	}
 
 	recommendation.Recommended = true
 	recommendation.Reason = WinnerRecommendationReasonRecommendWinner
+	return s.finalizeRecommendation(ctx, input, recommendation)
+}
+
+func (s *ExperimentWinnerRecommendationService) finalizeRecommendation(ctx context.Context, input ExperimentWinnerRecommendationInput, recommendation *WinnerRecommendation) (*WinnerRecommendation, error) {
+	if recommendation == nil || s.appender == nil {
+		return recommendation, nil
+	}
+	source := strings.TrimSpace(input.Source)
+	if source == "" {
+		source = "winner_recommendation_service"
+	}
+	details := map[string]interface{}{
+		"status":                    input.Status,
+		"arms_count":                len(input.Arms),
+		"is_bandit":                 input.IsBandit,
+		"used_persisted_confidence": input.WinnerConfidence != nil,
+	}
+	if recommendation.WinningArmName != nil {
+		details["winning_arm_name"] = *recommendation.WinningArmName
+	}
+	if err := s.appender.AppendWinnerRecommendationEvent(ctx, &WinnerRecommendationEvent{
+		ExperimentID:               input.ExperimentID,
+		Source:                     source,
+		Recommended:                recommendation.Recommended,
+		Reason:                     recommendation.Reason,
+		WinningArmID:               recommendation.WinningArmID,
+		ConfidencePercent:          recommendation.ConfidencePercent,
+		ConfidenceThresholdPercent: recommendation.ConfidenceThresholdPercent,
+		ObservedSamples:            recommendation.ObservedSamples,
+		MinSampleSize:              recommendation.MinSampleSize,
+		Details:                    details,
+		OccurredAt:                 time.Now().UTC(),
+	}); err != nil {
+		return nil, fmt.Errorf("failed to append winner recommendation event: %w", err)
+	}
 	return recommendation, nil
 }
 

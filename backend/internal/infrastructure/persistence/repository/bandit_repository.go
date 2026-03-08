@@ -398,6 +398,51 @@ func (r *PostgresBanditRepository) AppendImpressionEvent(ctx context.Context, ev
 	return nil
 }
 
+func (r *PostgresBanditRepository) AppendWinnerRecommendationEvent(ctx context.Context, event *service.WinnerRecommendationEvent) error {
+	var detailsJSON []byte
+	var err error
+	if event.Details != nil {
+		detailsJSON, err = json.Marshal(event.Details)
+		if err != nil {
+			return fmt.Errorf("failed to marshal winner recommendation details: %w", err)
+		}
+	}
+
+	_, err = r.pool.Exec(ctx, `
+		INSERT INTO experiment_winner_recommendation_log (
+			experiment_id,
+			source,
+			recommended,
+			reason,
+			winning_arm_id,
+			confidence_percent,
+			confidence_threshold_percent,
+			observed_samples,
+			min_sample_size,
+			details,
+			occurred_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	`,
+		event.ExperimentID,
+		event.Source,
+		event.Recommended,
+		event.Reason,
+		event.WinningArmID,
+		event.ConfidencePercent,
+		event.ConfidenceThresholdPercent,
+		event.ObservedSamples,
+		event.MinSampleSize,
+		detailsJSON,
+		normalizeOccurredAt(event.OccurredAt),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to append winner recommendation event: %w", err)
+	}
+
+	return nil
+}
+
 func (r *PostgresBanditRepository) ProcessPendingConversion(ctx context.Context, transactionID, userID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) (*service.PendingReward, bool, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
