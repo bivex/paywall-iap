@@ -848,6 +848,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '409': { $ref: '#/components/responses/Error409' }
         '422':
           description: Validation failed
           content:

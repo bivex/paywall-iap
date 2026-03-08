@@ -7,7 +7,7 @@ bin/
 *.dylib
 *.test
 *.out
-
+tmp/
 # Go
 go.work
 go.work.sum

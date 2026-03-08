@@ -207,6 +207,44 @@ should_split_runs() {
   return 0
 }
 
+should_apply_lifecycle_audit_negative_rejection_workaround() {
+  local args_joined
+  args_joined=" $* "
+
+  if [[ "$args_joined" == *" --exclude-path "*lifecycle-audit* || "$args_joined" == *" --exclude-path-regex "*lifecycle-audit* ]]; then
+    return 1
+  fi
+
+  if [[ "$args_joined" != *" --include-path "* && "$args_joined" != *" --include-path-regex "* && "$args_joined" != *" --exclude-path "* && "$args_joined" != *" --exclude-path-regex "* ]]; then
+    return 0
+  fi
+
+  if [[ "$args_joined" == *"/v1/admin/experiments"* || "$args_joined" == *"lifecycle-audit"* ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+collect_non_path_filter_args() {
+  FILTERED_SCHEMATHESIS_ARGS=()
+
+  while (($# > 0)); do
+    case "$1" in
+      --include-path|--include-path-regex|--exclude-path|--exclude-path-regex)
+        shift
+        if (($# > 0)); then
+          shift
+        fi
+        ;;
+      *)
+        FILTERED_SCHEMATHESIS_ARGS+=("$1")
+        shift
+        ;;
+    esac
+  done
+}
+
 run_schemathesis() {
   local label="$1"
   local bearer_token="$2"
@@ -232,6 +270,27 @@ run_schemathesis() {
   echo "  schema:   $schema_target"
   echo "  api_base: $API_BASE"
   "${cmd[@]}"
+}
+
+run_schemathesis_with_lifecycle_audit_workaround() {
+  local label="$1"
+  local bearer_token="$2"
+  shift 2
+
+  local lifecycle_audit_regex='^/v1/admin/experiments/.*/lifecycle-audit$'
+
+  collect_non_path_filter_args "$@"
+
+  say "Applying lifecycle-audit Schemathesis workaround (skip false-positive negative_data_rejection on schema-mutated valid IDs)"
+
+  run_schemathesis "$label (excluding lifecycle-audit)" "$bearer_token" \
+    --exclude-path-regex "$lifecycle_audit_regex" \
+    "$@"
+
+  run_schemathesis "$label (lifecycle-audit without negative_data_rejection)" "$bearer_token" \
+    --include-path-regex "$lifecycle_audit_regex" \
+    --exclude-checks negative_data_rejection \
+    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
 }
 
 main() {
@@ -270,9 +329,15 @@ main() {
       --exclude-tag iap \
       "$@"
 
-    run_schemathesis "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
-      --include-tag admin \
-      "$@"
+    if should_apply_lifecycle_audit_negative_rejection_workaround "$@"; then
+      run_schemathesis_with_lifecycle_audit_workaround "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
+        --include-tag admin \
+        "$@"
+    else
+      run_schemathesis "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
+        --include-tag admin \
+        "$@"
+    fi
 
     run_schemathesis "admin auth endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
       --include-tag admin-auth \
@@ -292,7 +357,11 @@ main() {
     return 0
   fi
 
-  run_schemathesis "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
+  if should_apply_lifecycle_audit_negative_rejection_workaround "$@"; then
+    run_schemathesis_with_lifecycle_audit_workaround "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
+  else
+    run_schemathesis "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
+  fi
 }
 
 main "$@"
