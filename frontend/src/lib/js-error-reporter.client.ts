@@ -15,8 +15,7 @@ type ReportPayload = {
   time: string;
 };
 
-const COLLECTOR_URL =
-  process.env.NEXT_PUBLIC_JS_ERROR_COLLECTOR_URL ?? "http://localhost:8088/frontend-error";
+const COLLECTOR_URL = process.env.NEXT_PUBLIC_JS_ERROR_COLLECTOR_URL ?? "http://localhost:8088/frontend-error";
 
 const recentFingerprints = new Map<string, number>();
 const DEDUPE_WINDOW_MS = 5_000;
@@ -69,6 +68,15 @@ export function normalizeUnknownError(error: unknown): { name?: string; message:
   }
 
   return {
-    message: typeof error === "string" ? error : JSON.stringify(error),
+    message: safeSerializeUnknown(error),
   };
+}
+
+function safeSerializeUnknown(value: unknown): string {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }

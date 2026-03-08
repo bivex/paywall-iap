@@ -48,6 +48,7 @@ export interface ExperimentArm {
   description: string;
   is_control: boolean;
   traffic_weight: number;
+  pricing_tier_id?: string | null;
   samples: number;
   conversions: number;
   revenue: number;
@@ -125,10 +126,12 @@ export function formatExperimentLifecycleCode(value?: string | null): string {
 }
 
 export interface ExperimentArmInput {
+  id?: string;
   name: string;
   description: string;
   is_control: boolean;
   traffic_weight: number;
+  pricing_tier_id?: string | null;
 }
 
 export interface ExperimentInput {
@@ -153,6 +156,7 @@ export interface ExperimentUpdateInput {
   confidence_threshold_percent: number;
   start_at: string | null;
   end_at: string | null;
+  arms?: ExperimentArmInput[];
 }
 
 export const EMPTY_EXPERIMENT_INPUT: ExperimentInput = {

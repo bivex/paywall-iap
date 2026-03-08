@@ -4,7 +4,7 @@ import { type FormEvent, useEffect, useMemo, useState, useTransition } from "rea
 
 import Link from "next/link";
 
-import { Activity, Brain, CalendarClock, FlaskConical, RefreshCw, Settings2 } from "lucide-react";
+import { Activity, Brain, CalendarClock, FlaskConical, Plus, RefreshCw, Settings2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -28,9 +28,17 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import type {
+  DraftExperimentArmForm,
   ExperimentStudioDashboardData,
   ExperimentStudioSnapshot,
   StudioEndpointProbe,
+} from "@/lib/experiment-studio";
+import {
+  buildDraftExperimentArms,
+  createEmptyDraftExperimentArm,
+  serializeDraftExperimentArms,
+  toExperimentUpdateArms,
+  validateDraftExperimentArms,
 } from "@/lib/experiment-studio";
 import {
   type ExperimentAlgorithm,
@@ -151,6 +159,8 @@ function weightShare(arms: ExperimentSummary["arms"], trafficWeight: number) {
   return total > 0 ? trafficWeight / total : 0;
 }
 
+const NO_PRICING_TIER_VALUE = "__no_pricing_tier__";
+
 type DraftMetadataFormValues = {
   name: string;
   description: string;
@@ -193,6 +203,16 @@ function leadingArm(snapshot: ExperimentStudioSnapshot | null) {
       .map((arm) => ({ arm, probability: probabilities[arm.id] ?? -1 }))
       .sort((left, right) => right.probability - left.probability)[0] ?? null
   );
+}
+
+function pricingTierLabel(
+  t: ReturnType<typeof useTranslations>,
+  pricingTiers: PricingTier[],
+  pricingTierId: string | null | undefined,
+) {
+  if (!pricingTierId) return t("table.unlinked");
+  const tier = pricingTiers.find((item) => item.id === pricingTierId);
+  return tier?.name ?? t("table.unknownTier");
 }
 
 export function StudioPageClient({
@@ -263,21 +283,45 @@ export function StudioPageClient({
     () => (selectedExperiment ? buildDraftMetadataForm(selectedExperiment) : null),
     [selectedExperiment],
   );
+  const draftArmBaseline = useMemo(
+    () => (selectedExperiment ? buildDraftExperimentArms(selectedExperiment) : null),
+    [selectedExperiment],
+  );
   const [draftMetadata, setDraftMetadata] = useState<DraftMetadataFormValues | null>(draftMetadataBaseline);
+  const [draftArms, setDraftArms] = useState<DraftExperimentArmForm[] | null>(draftArmBaseline);
 
   useEffect(() => {
     setDraftMetadata(draftMetadataBaseline);
   }, [draftMetadataBaseline]);
 
   useEffect(() => {
+    setDraftArms(draftArmBaseline);
+  }, [draftArmBaseline]);
+
+  useEffect(() => {
     setLockReason(selectedExperiment?.automation_policy?.lock_reason ?? "");
     setLockUntil(toDatetimeLocalValue(selectedExperiment?.automation_policy?.locked_until));
   }, [selectedExperiment?.automation_policy?.lock_reason, selectedExperiment?.automation_policy?.locked_until]);
 
-  const isDraftDirty =
+  const draftArmValidationCode = draftArms ? validateDraftExperimentArms(draftArms) : null;
+  const draftArmValidationMessage = draftArmValidationCode ? t(`arms.validation.${draftArmValidationCode}`) : null;
+  const totalDraftWeight = useMemo(
+    () =>
+      (draftArms ?? []).reduce((sum, arm) => {
+        const weight = Number(arm.traffic_weight);
+        return sum + (Number.isFinite(weight) ? Math.max(weight, 0) : 0);
+      }, 0),
+    [draftArms],
+  );
+  const isDraftMetadataDirty =
     draftMetadata !== null &&
     draftMetadataBaseline !== null &&
     JSON.stringify(draftMetadata) !== JSON.stringify(draftMetadataBaseline);
+  const isDraftArmDirty =
+    draftArms !== null &&
+    draftArmBaseline !== null &&
+    serializeDraftExperimentArms(draftArms) !== serializeDraftExperimentArms(draftArmBaseline);
+  const isDraftDirty = isDraftMetadataDirty || isDraftArmDirty;
 
   function syncExperiment(updatedExperiment: ExperimentSummary) {
     setExperiments((current) => current.map((item) => (item.id === updatedExperiment.id ? updatedExperiment : item)));
@@ -406,9 +450,42 @@ export function StudioPageClient({
     refreshSnapshot(result.data.experiment.id);
   }
 
-  async function saveDraftMetadata(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedExperiment || selectedExperiment.status !== "draft" || !draftMetadata) return;
+  function resetDraftBuilder() {
+    setDraftMetadata(draftMetadataBaseline);
+    setDraftArms(draftArmBaseline);
+  }
+
+  function updateDraftArm(clientId: string, patch: Partial<DraftExperimentArmForm>) {
+    setDraftArms((current) =>
+      current ? current.map((arm) => (arm.client_id === clientId ? { ...arm, ...patch } : arm)) : current,
+    );
+  }
+
+  function setControlArm(clientId: string) {
+    setDraftArms((current) =>
+      current ? current.map((arm) => ({ ...arm, is_control: arm.client_id === clientId })) : current,
+    );
+  }
+
+  function addDraftArm() {
+    setDraftArms((current) => (current ? [...current, createEmptyDraftExperimentArm(current.length)] : current));
+  }
+
+  function removeDraftArm(clientId: string) {
+    setDraftArms((current) => {
+      if (!current || current.length <= 2) return current;
+      const next = current.filter((arm) => arm.client_id !== clientId);
+      if (next.some((arm) => arm.is_control)) return next;
+      return next.map((arm, index) => (index === 0 ? { ...arm, is_control: true } : arm));
+    });
+  }
+
+  async function saveDraftExperiment() {
+    if (!selectedExperiment || selectedExperiment.status !== "draft" || !draftMetadata || !draftArms) return;
+    if (draftArmValidationMessage) {
+      toast.error(draftArmValidationMessage);
+      return;
+    }
 
     setPendingSave(true);
     const result = await updateExperimentAction(selectedExperiment.id, {
@@ -420,6 +497,7 @@ export function StudioPageClient({
       confidence_threshold_percent: Number(draftMetadata.confidence_threshold_percent),
       start_at: draftMetadata.start_at ? new Date(draftMetadata.start_at).toISOString() : null,
       end_at: draftMetadata.end_at ? new Date(draftMetadata.end_at).toISOString() : null,
+      arms: toExperimentUpdateArms(draftArms),
     });
     setPendingSave(false);
 
@@ -431,6 +509,11 @@ export function StudioPageClient({
     syncExperiment(result.data);
     toast.success(t("feedback.saved"));
     refreshSnapshot(result.data.id);
+  }
+
+  async function handleDraftSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await saveDraftExperiment();
   }
 
   const capabilityRows: Array<{ key: string; probe: StudioEndpointProbe }> = snapshot
@@ -569,8 +652,8 @@ export function StudioPageClient({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {selectedExperiment.status === "draft" && draftMetadata ? (
-                    <form className="space-y-4" onSubmit={(event) => void saveDraftMetadata(event)}>
+                    {selectedExperiment.status === "draft" && draftMetadata ? (
+                    <form className="space-y-4" onSubmit={(event) => void handleDraftSubmit(event)}>
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-1">
                           <p className="font-medium text-xs">{t("editor.name")}</p>
@@ -686,7 +769,11 @@ export function StudioPageClient({
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        <Button type="submit" size="sm" disabled={pendingSave || isPending || !isDraftDirty}>
+                        <Button
+                          type="submit"
+                          size="sm"
+                          disabled={pendingSave || isPending || !isDraftDirty || draftArmValidationMessage !== null}
+                        >
                           {pendingSave ? t("feedback.saving") : t("actions.save")}
                         </Button>
                         <Button
@@ -694,7 +781,7 @@ export function StudioPageClient({
                           size="sm"
                           variant="outline"
                           disabled={pendingSave || !isDraftDirty}
-                          onClick={() => setDraftMetadata(draftMetadataBaseline)}
+                          onClick={resetDraftBuilder}
                         >
                           {t("actions.reset")}
                         </Button>
@@ -951,52 +1038,196 @@ export function StudioPageClient({
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm">{t("arms.title")}</CardTitle>
-                  <CardDescription>{t("arms.description")}</CardDescription>
+                  <CardDescription>
+                    {selectedExperiment.status === "draft" ? t("arms.draftDescription") : t("arms.description")}
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("table.arm")}</TableHead>
-                        <TableHead>{t("table.type")}</TableHead>
-                        <TableHead>{t("table.weight")}</TableHead>
-                        <TableHead>{t("table.samples")}</TableHead>
-                        <TableHead>{t("table.conversions")}</TableHead>
-                        <TableHead>{t("table.winProbability")}</TableHead>
-                        <TableHead>{t("table.revenue")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedExperiment.arms.map((arm) => {
-                        const share = weightShare(selectedExperiment.arms, arm.traffic_weight);
-                        const winProbability =
-                          snapshot?.banditSnapshot?.statistics?.win_probabilities?.[arm.id] ?? null;
-                        return (
-                          <TableRow key={arm.id}>
-                            <TableCell>
-                              <div>
-                                <p className="font-medium">{arm.name}</p>
-                                <p className="max-w-sm text-muted-foreground text-xs">{arm.description || "—"}</p>
+                <CardContent className="space-y-4">
+                  {selectedExperiment.status === "draft" && draftArms ? (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed p-4">
+                        <div>
+                          <p className="font-medium text-sm">{t("arms.builderTitle")}</p>
+                          <p className="mt-1 text-muted-foreground text-xs">{t("arms.draftHelp")}</p>
+                          <p className="mt-2 text-muted-foreground text-xs">
+                            {t("arms.weightTotal", { total: totalDraftWeight.toFixed(2) })}
+                          </p>
+                        </div>
+                        <Button type="button" size="sm" variant="outline" onClick={addDraftArm}>
+                          <Plus className="size-4" />
+                          {t("arms.addArm")}
+                        </Button>
+                      </div>
+
+                      {pricingLoadFailed ? (
+                        <div className="rounded-md border border-destructive/40 p-3 text-destructive text-xs">
+                          {t("arms.pricingLoadFailed")}
+                        </div>
+                      ) : null}
+
+                      {draftArmValidationMessage ? (
+                        <div className="rounded-md border border-destructive/40 p-3 text-destructive text-xs">
+                          {draftArmValidationMessage}
+                        </div>
+                      ) : null}
+
+                      {draftArms.map((arm, index) => (
+                        <div key={arm.client_id} className="rounded-md border p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="font-medium text-sm">{t("arms.armLabel", { index: index + 1 })}</p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <Badge variant={arm.is_control ? "default" : "outline"}>
+                                  {arm.is_control ? t("arms.controlBadge") : t("arms.variantBadge")}
+                                </Badge>
+                                <Badge variant="outline">{arm.id ? t("arms.persistedBadge") : t("arms.newBadge")}</Badge>
                               </div>
-                            </TableCell>
-                            <TableCell>{arm.is_control ? t("table.control") : t("table.variant")}</TableCell>
-                            <TableCell className="min-w-36">
-                              <div className="space-y-1">
-                                <Progress value={share * 100} className="h-2" />
-                                <p className="text-muted-foreground text-xs">
-                                  {arm.traffic_weight.toFixed(2)} · {formatPercent(share, 0)}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>{arm.samples.toLocaleString("en-US")}</TableCell>
-                            <TableCell>{arm.conversions.toLocaleString("en-US")}</TableCell>
-                            <TableCell>{formatPercent(winProbability)}</TableCell>
-                            <TableCell>{formatRevenue(arm.revenue)}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {!arm.is_control ? (
+                                <Button type="button" size="sm" variant="outline" onClick={() => setControlArm(arm.client_id)}>
+                                  {t("arms.setControl")}
+                                </Button>
+                              ) : null}
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={pendingSave || draftArms.length <= 2}
+                                onClick={() => removeDraftArm(arm.client_id)}
+                              >
+                                <Trash2 className="size-4" />
+                                {t("arms.remove")}
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 grid gap-4 md:grid-cols-2">
+                            <div className="space-y-1">
+                              <p className="font-medium text-xs">{t("arms.name")}</p>
+                              <Input
+                                placeholder={t("arms.namePlaceholder")}
+                                value={arm.name}
+                                onChange={(event) => updateDraftArm(arm.client_id, { name: event.target.value })}
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <p className="font-medium text-xs">{t("arms.pricingTier")}</p>
+                              <Select
+                                value={arm.pricing_tier_id ?? NO_PRICING_TIER_VALUE}
+                                onValueChange={(value) =>
+                                  updateDraftArm(arm.client_id, {
+                                    pricing_tier_id: value === NO_PRICING_TIER_VALUE ? null : value,
+                                  })
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t("arms.pricingTierPlaceholder")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={NO_PRICING_TIER_VALUE}>{t("arms.noPricingTier")}</SelectItem>
+                                  {pricingTiers.map((tier) => (
+                                    <SelectItem key={tier.id} value={tier.id}>
+                                      {tier.name}
+                                      {tier.is_active ? "" : ` · ${t("arms.inactiveTier")}`}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="space-y-1 md:col-span-2">
+                              <p className="font-medium text-xs">{t("arms.descriptionLabel")}</p>
+                              <Textarea
+                                placeholder={t("arms.descriptionPlaceholder")}
+                                rows={3}
+                                value={arm.description}
+                                onChange={(event) => updateDraftArm(arm.client_id, { description: event.target.value })}
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <p className="font-medium text-xs">{t("arms.weight")}</p>
+                              <Input
+                                inputMode="decimal"
+                                placeholder={t("arms.weightPlaceholder")}
+                                value={arm.traffic_weight}
+                                onChange={(event) => updateDraftArm(arm.client_id, { traffic_weight: event.target.value })}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={pendingSave || isPending || !isDraftDirty || draftArmValidationMessage !== null}
+                          onClick={() => void saveDraftExperiment()}
+                        >
+                          {pendingSave ? t("feedback.saving") : t("actions.save")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={pendingSave || !isDraftDirty}
+                          onClick={resetDraftBuilder}
+                        >
+                          {t("actions.reset")}
+                        </Button>
+                        <span className="self-center text-muted-foreground text-xs">{t("arms.saveHint")}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t("table.arm")}</TableHead>
+                          <TableHead>{t("table.type")}</TableHead>
+                          <TableHead>{t("table.weight")}</TableHead>
+                          <TableHead>{t("table.pricingTier")}</TableHead>
+                          <TableHead>{t("table.samples")}</TableHead>
+                          <TableHead>{t("table.conversions")}</TableHead>
+                          <TableHead>{t("table.winProbability")}</TableHead>
+                          <TableHead>{t("table.revenue")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedExperiment.arms.map((arm) => {
+                          const share = weightShare(selectedExperiment.arms, arm.traffic_weight);
+                          const winProbability =
+                            snapshot?.banditSnapshot?.statistics?.win_probabilities?.[arm.id] ?? null;
+                          return (
+                            <TableRow key={arm.id}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">{arm.name}</p>
+                                  <p className="max-w-sm text-muted-foreground text-xs">{arm.description || "—"}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell>{arm.is_control ? t("table.control") : t("table.variant")}</TableCell>
+                              <TableCell className="min-w-36">
+                                <div className="space-y-1">
+                                  <Progress value={share * 100} className="h-2" />
+                                  <p className="text-muted-foreground text-xs">
+                                    {arm.traffic_weight.toFixed(2)} · {formatPercent(share, 0)}
+                                  </p>
+                                </div>
+                              </TableCell>
+                              <TableCell>{pricingTierLabel(t, pricingTiers, arm.pricing_tier_id)}</TableCell>
+                              <TableCell>{arm.samples.toLocaleString("en-US")}</TableCell>
+                              <TableCell>{arm.conversions.toLocaleString("en-US")}</TableCell>
+                              <TableCell>{formatPercent(winProbability)}</TableCell>
+                              <TableCell>{formatRevenue(arm.revenue)}</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
 
