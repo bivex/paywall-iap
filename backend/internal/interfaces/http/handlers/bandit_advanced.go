@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"math"
 	"math/big"
 	"net/http"
@@ -23,6 +24,11 @@ type BanditAdvancedHandler struct {
 	engine          *service.AdvancedBanditEngine
 	currencyService *service.CurrencyRateService
 	logger          *zap.Logger
+}
+
+type runMaintenanceRequest struct {
+	Scope          string `json:"scope"`
+	OlderThanHours int    `json:"older_than_hours,omitempty"`
 }
 
 const maxConvertibleCurrencyAmount = 1000000000
@@ -415,7 +421,51 @@ func (h *BanditAdvancedHandler) GetMetrics(w http.ResponseWriter, r *http.Reques
 
 // RunMaintenance triggers maintenance tasks
 func (h *BanditAdvancedHandler) RunMaintenance(w http.ResponseWriter, r *http.Request) {
-	summary, err := h.engine.RunMaintenanceDetailed(r.Context())
+	if h.engine == nil {
+		respondError(w, http.StatusServiceUnavailable, "Bandit engine not available")
+		return
+	}
+
+	var req runMaintenanceRequest
+	if err := decodeOptionalJSONBody(r, &req); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	scope := strings.TrimSpace(strings.ToLower(req.Scope))
+	if scope == "" {
+		scope = "full"
+	}
+
+	var (
+		summary any
+		err     error
+	)
+	switch scope {
+	case "full":
+		summary, err = h.engine.RunMaintenanceDetailed(r.Context())
+	case "cleanup_old_context_data":
+		deleted, cleanupErr := h.engine.CleanupOldContextData(r.Context(), hoursToDuration(req.OlderThanHours))
+		if cleanupErr != nil {
+			err = cleanupErr
+			break
+		}
+		summary = map[string]any{
+			"stale_contexts_deleted": deleted,
+		}
+	case "cleanup_expired_assignments":
+		deleted, cleanupErr := h.engine.CleanupExpiredAssignments(r.Context(), hoursToDuration(req.OlderThanHours))
+		if cleanupErr != nil {
+			err = cleanupErr
+			break
+		}
+		summary = map[string]any{
+			"expired_assignments_deleted": deleted,
+		}
+	default:
+		respondError(w, http.StatusBadRequest, "Invalid maintenance scope")
+		return
+	}
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -423,9 +473,39 @@ func (h *BanditAdvancedHandler) RunMaintenance(w http.ResponseWriter, r *http.Re
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"message":   "Maintenance completed successfully",
+		"scope":     scope,
 		"summary":   summary,
 		"timestamp": time.Now(),
 	})
+}
+
+func decodeOptionalJSONBody(r *http.Request, dst any) error {
+	if r.Body == nil {
+		return nil
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	if len(strings.TrimSpace(string(body))) == 0 {
+		return nil
+	}
+	decoder := json.NewDecoder(strings.NewReader(string(body)))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(dst); err != nil {
+		return err
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return errors.New("unexpected trailing JSON")
+	}
+	return nil
+}
+
+func hoursToDuration(hours int) time.Duration {
+	if hours <= 0 {
+		return 0
+	}
+	return time.Duration(hours) * time.Hour
 }
 
 // Helper functions

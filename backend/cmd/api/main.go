@@ -2,12 +2,17 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"sort"
 	"syscall"
+	"text/tabwriter"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
@@ -32,6 +37,18 @@ import (
 )
 
 func main() {
+	dumpRoutes := flag.Bool("dump-routes", false, "Print registered HTTP routes and exit")
+	flag.Parse()
+	if *dumpRoutes {
+		cfg := dumpRoutesConfig()
+		mustInitLogger(&cfg.Sentry)
+		defer logging.Sync()
+
+		router := setupRouter(cfg, dumpRoutesDependencies(), nil)
+		printRoutes(os.Stdout, router)
+		return
+	}
+
 	cfg := mustLoadConfig()
 	mustInitLogger(&cfg.Sentry)
 	defer logging.Sync()
@@ -54,8 +71,58 @@ func main() {
 
 	deps := initDependencies(cfg, dbPool, redisClient, asynqClient)
 	router := setupRouter(cfg, deps, redisClient)
+	if *dumpRoutes {
+		printRoutes(os.Stdout, router)
+		return
+	}
 
 	startServer(cfg, router)
+}
+
+func dumpRoutesConfig() *config.Config {
+	return &config.Config{
+		JWT: config.JWTConfig{
+			Secret:    "dump-routes-secret-dump-routes-secret",
+			AccessTTL: 15 * time.Minute,
+		},
+		Sentry: config.SentryConfig{
+			Environment: "dump-routes",
+		},
+	}
+}
+
+func dumpRoutesDependencies() *dependencies {
+	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	return &dependencies{
+		jwtMiddleware: middleware.NewJWTMiddleware("dump-routes-secret-dump-routes-secret", nil, 15*time.Minute),
+		rateLimiter:   middleware.NewRateLimiter(redisClient, true),
+
+		authHandler:           (*app_handler.AuthHandler)(nil),
+		iapHandler:            (*app_handler.IAPHandler)(nil),
+		subscriptionHandler:   (*app_handler.SubscriptionHandler)(nil),
+		adminHandler:          (*app_handler.AdminHandler)(nil),
+		webhookHandler:        (*app_handler.WebhookHandler)(nil),
+		banditHandler:         (*app_handler.BanditHandler)(nil),
+		banditAdvancedHandler: (*app_handler.BanditAdvancedHandler)(nil),
+	}
+}
+
+func printRoutes(w io.Writer, router *gin.Engine) {
+	routes := append([]gin.RouteInfo(nil), router.Routes()...)
+	sort.Slice(routes, func(i, j int) bool {
+		if routes[i].Path == routes[j].Path {
+			return routes[i].Method < routes[j].Method
+		}
+		return routes[i].Path < routes[j].Path
+	})
+
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	_, _ = fmt.Fprintln(tw, "METHOD\tPATH\tHANDLER")
+	for _, route := range routes {
+		_, _ = fmt.Fprintf(tw, "%s\t%s\t%s\n", route.Method, route.Path, route.Handler)
+	}
+	_, _ = fmt.Fprintf(tw, "\nTOTAL\t%d\t\n", len(routes))
+	_ = tw.Flush()
 }
 
 // mustLoadConfig loads and returns configuration, exiting on failure

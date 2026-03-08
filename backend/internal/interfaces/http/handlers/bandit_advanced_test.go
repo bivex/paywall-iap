@@ -20,10 +20,14 @@ import (
 )
 
 type routerPathTestRepo struct {
-	experimentID uuid.UUID
-	config       *service.ExperimentConfig
-	arms         []service.Arm
-	statsByArmID map[uuid.UUID]*service.ArmStats
+	experimentID              uuid.UUID
+	config                    *service.ExperimentConfig
+	arms                      []service.Arm
+	statsByArmID              map[uuid.UUID]*service.ArmStats
+	cleanupContextsDeleted    int64
+	cleanupAssignmentsDeleted int64
+	lastContextOlderThan      time.Duration
+	lastAssignmentOlderThan   time.Duration
 }
 
 func (r *routerPathTestRepo) GetArms(_ context.Context, experimentID uuid.UUID) ([]service.Arm, error) {
@@ -71,6 +75,24 @@ func (r *routerPathTestRepo) GetUserContext(_ context.Context, userID uuid.UUID)
 
 func (r *routerPathTestRepo) SetUserContext(_ context.Context, _ *service.UserContext) error {
 	return nil
+}
+
+func (r *routerPathTestRepo) CleanupStaleUserContext(_ context.Context, olderThan time.Duration) (int64, error) {
+	r.lastContextOlderThan = olderThan
+	return r.cleanupContextsDeleted, nil
+}
+
+func (r *routerPathTestRepo) ListWindowMaintenanceExperimentIDs(_ context.Context, _ int) ([]uuid.UUID, error) {
+	return nil, nil
+}
+
+func (r *routerPathTestRepo) ListObjectiveSyncExperimentIDs(_ context.Context, _ int) ([]uuid.UUID, error) {
+	return nil, nil
+}
+
+func (r *routerPathTestRepo) CleanupExpiredAssignments(_ context.Context, olderThan time.Duration) (int64, error) {
+	r.lastAssignmentOlderThan = olderThan
+	return r.cleanupAssignmentsDeleted, nil
 }
 
 type routerPathTestCache struct{}
@@ -356,6 +378,83 @@ func TestExportWindowEvents_RejectsEmptyLimit(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
 	require.JSONEq(t, `{"error":"Invalid limit"}`, res.Body.String())
+}
+
+func TestRunMaintenance_TargetedCleanupOldContextData(t *testing.T) {
+	t.Helper()
+
+	repo := &routerPathTestRepo{cleanupContextsDeleted: 5}
+	cache := &routerPathTestCache{}
+	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
+	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{})
+	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/maintenance", strings.NewReader(`{"scope":"cleanup_old_context_data","older_than_hours":48}`))
+	res := httptest.NewRecorder()
+
+	handler.RunMaintenance(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code, "body=%s", res.Body.String())
+	var body struct {
+		Scope   string         `json:"scope"`
+		Summary map[string]any `json:"summary"`
+	}
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &body), "body=%s", res.Body.String())
+	require.Equal(t, "cleanup_old_context_data", body.Scope)
+	require.Equal(t, float64(5), body.Summary["stale_contexts_deleted"])
+	require.Equal(t, 48*time.Hour, repo.lastContextOlderThan)
+}
+
+func TestRunMaintenance_TargetedCleanupExpiredAssignments(t *testing.T) {
+	t.Helper()
+
+	repo := &routerPathTestRepo{cleanupAssignmentsDeleted: 3}
+	cache := &routerPathTestCache{}
+	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
+	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{})
+	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/maintenance", strings.NewReader(`{"scope":"cleanup_expired_assignments","older_than_hours":12}`))
+	res := httptest.NewRecorder()
+
+	handler.RunMaintenance(res, req)
+
+	require.Equal(t, http.StatusOK, res.Code, "body=%s", res.Body.String())
+	var body struct {
+		Scope   string         `json:"scope"`
+		Summary map[string]any `json:"summary"`
+	}
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &body), "body=%s", res.Body.String())
+	require.Equal(t, "cleanup_expired_assignments", body.Scope)
+	require.Equal(t, float64(3), body.Summary["expired_assignments_deleted"])
+	require.Equal(t, 12*time.Hour, repo.lastAssignmentOlderThan)
+}
+
+func TestRunMaintenance_RejectsUnknownScope(t *testing.T) {
+	t.Helper()
+
+	handler := NewBanditAdvancedHandler(nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/maintenance", strings.NewReader(`{"scope":"cleanup_everything"}`))
+	res := httptest.NewRecorder()
+
+	handler.RunMaintenance(res, req)
+
+	require.Equal(t, http.StatusServiceUnavailable, res.Code, "body=%s", res.Body.String())
+}
+
+func TestRunMaintenance_RejectsInvalidScopeWhenEnginePresent(t *testing.T) {
+	t.Helper()
+
+	repo := &routerPathTestRepo{}
+	cache := &routerPathTestCache{}
+	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
+	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{})
+	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/maintenance", strings.NewReader(`{"scope":"cleanup_everything"}`))
+	res := httptest.NewRecorder()
+
+	handler.RunMaintenance(res, req)
+
+	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
+	require.JSONEq(t, `{"error":"Invalid maintenance scope"}`, res.Body.String())
 }
 
 type assertAnError string
