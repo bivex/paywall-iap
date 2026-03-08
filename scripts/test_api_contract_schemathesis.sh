@@ -14,6 +14,7 @@ SCHEMATHESIS_HEADER="${SCHEMATHESIS_HEADER:-}"
 EXPLICIT_SCHEMATHESIS_AUTH_TOKEN="$SCHEMATHESIS_AUTH_TOKEN"
 EXPLICIT_SCHEMATHESIS_HEADER="$SCHEMATHESIS_HEADER"
 SCHEMATHESIS_PHASES="${SCHEMATHESIS_PHASES:-examples,coverage,fuzzing}"
+SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA="${SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA:-missing_auth,validation_mismatch,missing_deserializer,unused_openapi_auth,unsupported_regex}"
 SKIP_HEALTHCHECK="${SKIP_HEALTHCHECK:-0}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@paywall.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin12345}"
@@ -402,6 +403,7 @@ run_schemathesis_with_stateful_admin_experiment_action_splits() {
     reseed_admin_experiment_contract_fixtures
     say "Running isolated stateful action via harness subprocess ($(basename "$action_path"))"
     bash "$0" \
+      --warnings "$SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA" \
       --include-path "$action_path" \
       "${FILTERED_SCHEMATHESIS_ARGS[@]}"
   done
