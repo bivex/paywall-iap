@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 
 import Link from "next/link";
 
@@ -8,10 +8,16 @@ import { Brain, FlaskConical, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { completeExperimentAction, pauseExperimentAction, resumeExperimentAction } from "@/actions/experiments";
+import {
+  completeExperimentAction,
+  pauseExperimentAction,
+  resumeExperimentAction,
+  updateExperimentAction,
+} from "@/actions/experiments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -88,6 +94,20 @@ function mergeArmStats(experiment: ExperimentSummary | null, snapshot: BanditSna
   });
 }
 
+type DraftBanditConfigForm = {
+  algorithm_type: ExperimentAlgorithm;
+  min_sample_size: string;
+  confidence_threshold_percent: string;
+};
+
+function buildDraftBanditConfig(experiment: ExperimentSummary): DraftBanditConfigForm {
+  return {
+    algorithm_type: experiment.algorithm_type ?? "thompson_sampling",
+    min_sample_size: experiment.min_sample_size.toString(),
+    confidence_threshold_percent: experiment.confidence_threshold_percent.toString(),
+  };
+}
+
 async function fetchBanditJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });
   const body = await res.json().catch(() => ({}));
@@ -122,6 +142,7 @@ export function BanditPageClient({
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
   const [pendingLifecycleAction, setPendingLifecycleAction] = useState<"pause" | "resume" | "complete" | null>(null);
+  const [pendingSave, setPendingSave] = useState(false);
 
   useEffect(() => {
     if (!isBootstrapping) return;
@@ -173,6 +194,27 @@ export function BanditPageClient({
   const totalSamples = armRows.reduce((sum, arm) => sum + arm.samples, 0);
   const totalConversions = armRows.reduce((sum, arm) => sum + arm.conversions, 0);
   const totalRevenue = armRows.reduce((sum, arm) => sum + arm.revenue, 0);
+  const draftConfigBaseline = useMemo(
+    () => (selectedExperiment ? buildDraftBanditConfig(selectedExperiment) : null),
+    [selectedExperiment],
+  );
+  const [draftConfig, setDraftConfig] = useState<DraftBanditConfigForm | null>(draftConfigBaseline);
+
+  useEffect(() => {
+    setDraftConfig(draftConfigBaseline);
+  }, [draftConfigBaseline]);
+
+  const isDraftConfigDirty =
+    draftConfig !== null &&
+    draftConfigBaseline !== null &&
+    JSON.stringify(draftConfig) !== JSON.stringify(draftConfigBaseline);
+
+  function syncExperiment(updatedExperiment: ExperimentSummary) {
+    setExperiments((current) => current.map((item) => (item.id === updatedExperiment.id ? updatedExperiment : item)));
+    setSnapshot((current) =>
+      current?.experiment.id === updatedExperiment.id ? { ...current, experiment: updatedExperiment } : current,
+    );
+  }
 
   const loadSnapshot = (experimentId: string) => {
     setSelectedId(experimentId);
@@ -206,11 +248,35 @@ export function BanditPageClient({
       return;
     }
 
-    setExperiments((current) => current.map((item) => (item.id === result.data.id ? result.data : item)));
-    setSnapshot((current) =>
-      current?.experiment.id === result.data.id ? { ...current, experiment: result.data } : current,
-    );
+    syncExperiment(result.data);
     toast.success(t("feedback.statusUpdated"));
+    loadSnapshot(result.data.id);
+  }
+
+  async function saveDraftConfig(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedExperiment || selectedExperiment.status !== "draft" || !draftConfig) return;
+
+    setPendingSave(true);
+    const result = await updateExperimentAction(selectedExperiment.id, {
+      name: selectedExperiment.name,
+      description: selectedExperiment.description,
+      algorithm_type: draftConfig.algorithm_type,
+      is_bandit: selectedExperiment.is_bandit,
+      min_sample_size: Number(draftConfig.min_sample_size),
+      confidence_threshold_percent: Number(draftConfig.confidence_threshold_percent),
+      start_at: selectedExperiment.start_at,
+      end_at: selectedExperiment.end_at,
+    });
+    setPendingSave(false);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.saveFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    toast.success(t("feedback.saved"));
     loadSnapshot(result.data.id);
   }
 
@@ -387,20 +453,87 @@ export function BanditPageClient({
                   <CardDescription>{t("config.description")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between rounded-md border p-3">
-                    <span>{t("config.algorithm")}</span>
-                    <span className="font-mono">{formatAlgorithm(selectedExperiment?.algorithm_type ?? null)}</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-md border p-3">
-                    <span>{t("config.minSampleSize")}</span>
-                    <span className="font-mono">{selectedExperiment?.min_sample_size ?? "—"}</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-md border p-3">
-                    <span>{t("config.confidence")}</span>
-                    <span className="font-mono">
-                      {selectedExperiment ? `${selectedExperiment.confidence_threshold_percent.toFixed(0)}%` : "—"}
-                    </span>
-                  </div>
+                  {selectedExperiment?.status === "draft" && draftConfig ? (
+                    <form className="space-y-3" onSubmit={(event) => void saveDraftConfig(event)}>
+                      <div className="space-y-1 rounded-md border p-3">
+                        <p className="font-medium text-xs">{t("config.algorithm")}</p>
+                        <Select
+                          value={draftConfig.algorithm_type}
+                          onValueChange={(value) =>
+                            setDraftConfig((current) =>
+                              current ? { ...current, algorithm_type: value as ExperimentAlgorithm } : current,
+                            )
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="thompson_sampling">Thompson Sampling</SelectItem>
+                            <SelectItem value="ucb">UCB</SelectItem>
+                            <SelectItem value="epsilon_greedy">Epsilon Greedy</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1 rounded-md border p-3">
+                        <p className="font-medium text-xs">{t("config.minSampleSize")}</p>
+                        <Input
+                          inputMode="numeric"
+                          placeholder="100"
+                          value={draftConfig.min_sample_size}
+                          onChange={(event) =>
+                            setDraftConfig((current) =>
+                              current ? { ...current, min_sample_size: event.target.value } : current,
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1 rounded-md border p-3">
+                        <p className="font-medium text-xs">{t("config.confidence")}</p>
+                        <Input
+                          inputMode="decimal"
+                          placeholder="95"
+                          value={draftConfig.confidence_threshold_percent}
+                          onChange={(event) =>
+                            setDraftConfig((current) =>
+                              current ? { ...current, confidence_threshold_percent: event.target.value } : current,
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="submit" size="sm" disabled={pendingSave || isPending || !isDraftConfigDirty}>
+                          {pendingSave ? t("feedback.saving") : t("actions.save")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={pendingSave || !isDraftConfigDirty}
+                          onClick={() => setDraftConfig(draftConfigBaseline)}
+                        >
+                          {t("actions.reset")}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between rounded-md border p-3">
+                        <span>{t("config.algorithm")}</span>
+                        <span className="font-mono">{formatAlgorithm(selectedExperiment?.algorithm_type ?? null)}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-md border p-3">
+                        <span>{t("config.minSampleSize")}</span>
+                        <span className="font-mono">{selectedExperiment?.min_sample_size ?? "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-md border p-3">
+                        <span>{t("config.confidence")}</span>
+                        <span className="font-mono">
+                          {selectedExperiment ? `${selectedExperiment.confidence_threshold_percent.toFixed(0)}%` : "—"}
+                        </span>
+                      </div>
+                    </>
+                  )}
                   <div className="rounded-md border p-3">
                     <p className="font-medium text-sm">{t("config.controlsTitle")}</p>
                     <p className="mt-1 text-muted-foreground text-xs">{t("config.controlsDescription")}</p>
@@ -425,7 +558,7 @@ export function BanditPageClient({
                   </div>
                   <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
                     <Brain className="mb-2 size-4" />
-                    {t("config.readOnlyNotice")}
+                    {selectedExperiment?.status === "draft" ? t("config.draftNotice") : t("config.readOnlyNotice")}
                   </div>
                 </CardContent>
               </Card>

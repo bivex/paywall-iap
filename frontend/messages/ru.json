@@ -398,6 +398,8 @@
     "actions": {
       "refresh": "Обновить",
       "openExperiments": "Открыть A/B Tests",
+      "save": "Сохранить конфиг",
+      "reset": "Сбросить",
       "start": "Запустить",
       "pause": "Пауза",
       "resume": "Продолжить",
@@ -446,14 +448,15 @@
     },
     "config": {
       "title": "Сохранённая конфигурация эксперимента",
-      "description": "Эта страница отражает persisted experiment settings и теперь показывает реальные lifecycle actions эксперимента, которые уже подключены.",
+      "description": "Эта страница отражает persisted experiment settings и показывает реальные lifecycle actions эксперимента, которые уже подключены. Для bandit-черновиков здесь теперь можно обновлять и сохранённый конфиг.",
       "algorithm": "Алгоритм",
       "minSampleSize": "Мин. размер выборки",
       "confidence": "Порог confidence",
       "controlsTitle": "Управление lifecycle",
       "controlsDescription": "Эти кнопки вызывают те же реальные lifecycle mutations, что и в A/B Tests, а затем перезагружают свежий bandit snapshot.",
       "noActions": "Для текущего статуса lifecycle-действия недоступны.",
-      "readOnlyNotice": "Редактирование конфигурации здесь по-прежнему read-only: используйте A/B Tests для создания и изменения экспериментов. Runtime bandit assignments и rewards продолжают идти через существующие backend endpoints."
+      "draftNotice": "Здесь редактируется только сохранённый конфиг черновика. Runtime bandit assignments, rewards и более продвинутые настройки движка по-прежнему идут через существующие backend endpoints.",
+      "readOnlyNotice": "Здесь можно редактировать только bandit-эксперименты в статусе черновика. Для активных экспериментов используйте lifecycle controls, а для более широкого дизайна — A/B Tests."
     },
     "states": {
       "loading": "Загрузка bandit experiments…",
@@ -463,8 +466,11 @@
     },
     "feedback": {
       "loadFailed": "Не удалось обновить bandit data.",
+      "saving": "Сохранение...",
+      "saved": "Конфиг bandit-черновика обновлён.",
       "statusUpdating": "Обновление...",
       "statusUpdated": "Статус эксперимента обновлён.",
+      "saveFailed": "Не удалось обновить конфиг bandit-черновика.",
       "statusFailed": "Не удалось обновить статус эксперимента."
     }
   },

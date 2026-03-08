@@ -500,8 +500,8 @@ export function PaywallCreatorPageClient({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
-        <Card>
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,0.82fr)_minmax(460px,1.18fr)]">
+        <Card className="border-dashed xl:order-1">
           <CardHeader>
             <CardTitle className="text-sm">{t("editor.title")}</CardTitle>
             <CardDescription>{t("editor.description")}</CardDescription>
@@ -526,7 +526,7 @@ export function PaywallCreatorPageClient({
             )}
 
             <Textarea
-              className="min-h-[640px] font-mono text-xs leading-6"
+              className="min-h-[560px] font-mono text-[11px] leading-6 xl:min-h-[620px]"
               spellCheck={false}
               value={schemaText}
               onChange={(event) => setSchemaText(event.target.value)}
@@ -534,7 +534,7 @@ export function PaywallCreatorPageClient({
           </CardContent>
         </Card>
 
-        <Tabs className="gap-4" defaultValue="web">
+        <Tabs className="gap-4 xl:sticky xl:top-6 xl:self-start" defaultValue="web">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="font-semibold text-lg">{t("preview.title")}</h2>
@@ -546,7 +546,7 @@ export function PaywallCreatorPageClient({
             </TabsList>
           </div>
 
-          <Card>
+          <Card className="overflow-hidden border-primary/20 bg-linear-to-b from-primary/5 via-background to-background shadow-lg shadow-primary/5">
             <CardContent className="space-y-4 pt-6">
               <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{previewConfig.platform}</Badge>
@@ -555,12 +555,16 @@ export function PaywallCreatorPageClient({
                 {!parsed.success ? <Badge variant="outline">{t("preview.fallback")}</Badge> : null}
               </div>
 
-              <ScrollArea className="h-[760px] pr-4">
+              <ScrollArea className="h-[min(78vh,860px)] pr-4">
                 <TabsContent value="web" className="mt-0">
-                  <WebPreview paywall={previewConfig} />
+                  <div className="rounded-[32px] bg-muted/30 p-3 sm:p-4">
+                    <WebPreview paywall={previewConfig} />
+                  </div>
                 </TabsContent>
                 <TabsContent value="mobile" className="mt-0">
-                  <MobilePreview paywall={previewConfig} />
+                  <div className="rounded-[32px] bg-muted/30 p-3 sm:p-4">
+                    <MobilePreview paywall={previewConfig} />
+                  </div>
                 </TabsContent>
               </ScrollArea>
             </CardContent>

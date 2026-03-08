@@ -398,6 +398,8 @@
     "actions": {
       "refresh": "Refresh",
       "openExperiments": "Open A/B Tests",
+      "save": "Save config",
+      "reset": "Reset",
       "start": "Start",
       "pause": "Pause",
       "resume": "Resume",
@@ -446,14 +448,15 @@
     },
     "config": {
       "title": "Saved Experiment Config",
-      "description": "This page reflects persisted experiment settings and now exposes the real experiment lifecycle actions that are already wired.",
+      "description": "This page reflects persisted experiment settings and now exposes the real experiment lifecycle actions already wired. Draft bandit experiments can also update their saved config here.",
       "algorithm": "Algorithm",
       "minSampleSize": "Min Sample Size",
       "confidence": "Confidence Threshold",
       "controlsTitle": "Lifecycle controls",
       "controlsDescription": "These buttons call the same real lifecycle mutations used by A/B Tests and then reload the latest bandit snapshot.",
       "noActions": "No lifecycle actions available for the current status.",
-      "readOnlyNotice": "Configuration editing is still read-only here: use A/B Tests to create or edit experiments. Runtime bandit assignments and rewards continue to flow through the existing backend endpoints."
+      "draftNotice": "Only the persisted draft config is editable here. Runtime bandit assignments, rewards, and more advanced engine knobs still flow through the existing backend endpoints.",
+      "readOnlyNotice": "Only draft bandit experiments can be edited here. Use lifecycle controls for active experiments and A/B Tests for broader experiment design."
     },
     "states": {
       "loading": "Loading bandit experiments…",
@@ -463,8 +466,11 @@
     },
     "feedback": {
       "loadFailed": "Failed to refresh bandit data.",
+      "saving": "Saving...",
+      "saved": "Bandit draft config updated.",
       "statusUpdating": "Updating...",
       "statusUpdated": "Experiment status updated.",
+      "saveFailed": "Failed to update bandit draft config.",
       "statusFailed": "Failed to update experiment status."
     }
   },

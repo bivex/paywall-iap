@@ -8,8 +8,9 @@
 #   4. Starts postgres + redis + mocks + api + worker
 #   5. Runs migrations, auto-fixes known dirty-flag issues
 #   6. Seeds superadmin if not present
-#   7. Starts Next.js frontend with hot-reload
-#   8. Prints health summary + URLs
+#   7. Seeds demo pricing tiers for Paywall Creator
+#   8. Starts Next.js frontend with hot-reload
+#   9. Prints health summary + URLs
 #
 # Usage:
 #   ./run_dev.sh                         # defaults: admin@paywall.local / admin12345
@@ -188,7 +189,12 @@ else
   ok "Superadmin already exists ($EXISTING found) — skipping"
 fi
 
-# ── Step 7: Start frontend ─────────────────────────────────────────────────────
+# ── Step 7: Seed pricing tiers ─────────────────────────────────────────────────
+info "Seeding pricing tiers for Paywall Creator..."
+DB_CONTAINER="$DB_CONTAINER" bash "$SCRIPT_DIR/scripts/seed_tiers.sh"
+ok "Pricing tiers seeded"
+
+# ── Step 8: Start frontend ─────────────────────────────────────────────────────
 export FRONTEND_PORT
 export NEXT_PUBLIC_API_URL="http://localhost:${API_PORT_HOST}"
 export BACKEND_URL="http://paywall-api-1:8080"
@@ -200,7 +206,7 @@ info "Starting frontend container..."
 docker compose -f "$FRONTEND_COMPOSE" up -d
 ok "Frontend container started"
 
-# ── Step 8: Health checks ──────────────────────────────────────────────────────
+# ── Step 9: Health checks ──────────────────────────────────────────────────────
 wait_for_http "http://localhost:${API_PORT_HOST}/health" "Backend API" 30
 wait_for_http "http://localhost:${FRONTEND_PORT}"        "Frontend"    90
 
