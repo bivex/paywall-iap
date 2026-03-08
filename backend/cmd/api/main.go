@@ -397,6 +397,7 @@ func setupBanditRoutes(v1 *gin.RouterGroup, d *dependencies) {
 	bandit := v1.Group("/bandit")
 	{
 		bandit.POST("/assign", d.banditHandler.Assign)
+		bandit.POST("/impression", d.banditHandler.Impression)
 		bandit.POST("/reward", d.banditHandler.Reward)
 		bandit.GET("/statistics", d.banditHandler.Statistics)
 		bandit.GET("/health", d.banditHandler.Health)

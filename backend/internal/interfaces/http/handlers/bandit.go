@@ -22,6 +22,7 @@ type BanditHandler struct {
 // BanditService defines the interface for bandit operations
 type BanditService interface {
 	SelectArm(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, error)
+	TrackImpression(ctx context.Context, experimentID, armID, userID uuid.UUID, event *service.ImpressionEvent) error
 	UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error
 	UpdateRewardWithEvent(ctx context.Context, experimentID, armID uuid.UUID, reward float64, event *service.ConversionEvent) error
 	GetArmStatistics(ctx context.Context, experimentID uuid.UUID) (map[uuid.UUID]*service.ArmStats, error)
@@ -120,6 +121,82 @@ type RewardResponse struct {
 	ArmID        string  `json:"arm_id"`
 	Reward       float64 `json:"reward"`
 	Updated      bool    `json:"updated"`
+}
+
+type ImpressionRequest struct {
+	ExperimentID string                 `json:"experiment_id" binding:"required,uuid"`
+	ArmID        string                 `json:"arm_id" binding:"required,uuid"`
+	UserID       string                 `json:"user_id" binding:"required,uuid"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+}
+
+type ImpressionResponse struct {
+	ExperimentID string `json:"experiment_id"`
+	ArmID        string `json:"arm_id"`
+	UserID       string `json:"user_id"`
+	Tracked      bool   `json:"tracked"`
+}
+
+// Impression records an exposure/impression for an assigned arm
+// @Summary Record impression for arm
+// @Tags bandit
+// @Accept json
+// @Produce json
+// @Param request body ImpressionRequest true "Impression request"
+// @Success 200 {object} response.SuccessResponse{data=ImpressionResponse}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /api/v1/bandit/impression [post]
+func (h *BanditHandler) Impression(c *gin.Context) {
+	var req ImpressionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request format: "+err.Error())
+		return
+	}
+
+	experimentID, err := uuid.Parse(req.ExperimentID)
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+
+	armID, err := uuid.Parse(req.ArmID)
+	if err != nil {
+		response.BadRequest(c, "Invalid arm ID")
+		return
+	}
+
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
+	err = h.banditService.TrackImpression(c.Request.Context(), experimentID, armID, userID, &service.ImpressionEvent{
+		ExperimentID: experimentID,
+		ArmID:        armID,
+		UserID:       userID,
+		EventType:    service.ImpressionEventTypeImpression,
+		Metadata:     req.Metadata,
+		OccurredAt:   time.Now().UTC(),
+	})
+	if err != nil {
+		if errors.Is(err, service.ErrBanditArmNotFound) || errors.Is(err, service.ErrExperimentArmsNotFound) {
+			response.NotFound(c, "Arm not found")
+			return
+		}
+
+		response.InternalError(c, "Failed to record impression: "+err.Error())
+		return
+	}
+
+	response.OK(c, ImpressionResponse{
+		ExperimentID: req.ExperimentID,
+		ArmID:        req.ArmID,
+		UserID:       req.UserID,
+		Tracked:      true,
+	})
 }
 
 // Reward records a reward (conversion or revenue) for an arm

@@ -82,6 +82,12 @@ const (
 	AssignmentEventTypeAssigned AssignmentEventType = "assigned"
 )
 
+type ImpressionEventType string
+
+const (
+	ImpressionEventTypeImpression ImpressionEventType = "impression"
+)
+
 // =====================================================
 // Advanced Bandit Plugin Interfaces
 // =====================================================
@@ -153,6 +159,19 @@ type ConversionEvent struct {
 
 type conversionEventAppender interface {
 	AppendConversionEvent(ctx context.Context, event *ConversionEvent) error
+}
+
+type ImpressionEvent struct {
+	ExperimentID uuid.UUID
+	ArmID        uuid.UUID
+	UserID       uuid.UUID
+	EventType    ImpressionEventType
+	Metadata     map[string]interface{}
+	OccurredAt   time.Time
+}
+
+type impressionEventAppender interface {
+	AppendImpressionEvent(ctx context.Context, event *ImpressionEvent) error
 }
 
 // ObjectiveType defines the optimization objective
@@ -313,6 +332,68 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 // reward <= 0 counts as a non-conversion (beta increment)
 func (b *ThompsonSamplingBandit) UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error {
 	return b.UpdateRewardWithEvent(ctx, experimentID, armID, reward, nil)
+}
+
+func (b *ThompsonSamplingBandit) TrackImpression(
+	ctx context.Context,
+	experimentID, armID, userID uuid.UUID,
+	event *ImpressionEvent,
+) error {
+	arms, err := b.repo.GetArms(ctx, experimentID)
+	if err != nil {
+		return err
+	}
+	if len(arms) == 0 {
+		return ErrExperimentArmsNotFound
+	}
+
+	armFound := false
+	for _, arm := range arms {
+		if arm.ID == armID {
+			armFound = true
+			break
+		}
+	}
+	if !armFound {
+		return ErrBanditArmNotFound
+	}
+
+	appender, ok := b.repo.(impressionEventAppender)
+	if !ok {
+		return fmt.Errorf("impression event logging not supported")
+	}
+
+	normalizedEvent := ImpressionEvent{
+		ExperimentID: experimentID,
+		ArmID:        armID,
+		UserID:       userID,
+		EventType:    ImpressionEventTypeImpression,
+		OccurredAt:   time.Now().UTC(),
+	}
+	if event != nil {
+		normalizedEvent = *event
+		if normalizedEvent.ExperimentID == uuid.Nil {
+			normalizedEvent.ExperimentID = experimentID
+		}
+		if normalizedEvent.ArmID == uuid.Nil {
+			normalizedEvent.ArmID = armID
+		}
+		if normalizedEvent.UserID == uuid.Nil {
+			normalizedEvent.UserID = userID
+		}
+		if normalizedEvent.EventType == "" {
+			normalizedEvent.EventType = ImpressionEventTypeImpression
+		}
+		if normalizedEvent.OccurredAt.IsZero() {
+			normalizedEvent.OccurredAt = time.Now().UTC()
+		}
+	}
+
+	if err := appender.AppendImpressionEvent(ctx, &normalizedEvent); err != nil {
+		return fmt.Errorf("failed to append impression event: %w", err)
+	}
+
+	return nil
 }
 
 func (b *ThompsonSamplingBandit) UpdateRewardWithEvent(

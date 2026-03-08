@@ -86,6 +86,61 @@ func TestPostgresBanditRepository_CreateAssignmentPersistsImmutableEvent(t *test
 	assert.Equal(t, assignedAt, occurredAt.UTC())
 }
 
+func TestPostgresBanditRepository_AppendImpressionEventPersistsImmutableEvent(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup, err := testutil.SetupTestDB(ctx)
+	require.NoError(t, err)
+	defer cleanup()
+
+	_, err = db.Exec(ctx, `
+		CREATE EXTENSION IF NOT EXISTS pgcrypto;
+		CREATE TABLE ab_tests (id UUID PRIMARY KEY, name TEXT NOT NULL);
+		CREATE TABLE ab_test_arms (id UUID PRIMARY KEY, experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE, name TEXT NOT NULL);
+		CREATE TABLE bandit_impression_events (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+			arm_id UUID NOT NULL REFERENCES ab_test_arms(id) ON DELETE CASCADE,
+			user_id UUID NOT NULL,
+			event_type TEXT NOT NULL,
+			metadata JSONB,
+			occurred_at TIMESTAMPTZ NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
+	`)
+	require.NoError(t, err)
+
+	experimentID := uuid.New()
+	armID := uuid.New()
+	userID := uuid.New()
+	occurredAt := time.Date(2026, 3, 8, 19, 0, 0, 0, time.UTC)
+
+	_, err = db.Exec(ctx, `INSERT INTO ab_tests (id, name) VALUES ($1, 'Bandit impression test')`, experimentID)
+	require.NoError(t, err)
+	_, err = db.Exec(ctx, `INSERT INTO ab_test_arms (id, experiment_id, name) VALUES ($1, $2, 'Variant A')`, armID, experimentID)
+	require.NoError(t, err)
+
+	repo := repository.NewPostgresBanditRepository(db, zap.NewNop())
+	err = repo.AppendImpressionEvent(ctx, &service.ImpressionEvent{
+		ExperimentID: experimentID,
+		ArmID:        armID,
+		UserID:       userID,
+		EventType:    service.ImpressionEventTypeImpression,
+		Metadata:     map[string]interface{}{"placement": "paywall"},
+		OccurredAt:   occurredAt,
+	})
+	require.NoError(t, err)
+
+	var eventType string
+	var storedUserID uuid.UUID
+	var storedOccurredAt time.Time
+	var metadata []byte
+	require.NoError(t, db.QueryRow(ctx, `SELECT event_type, user_id, occurred_at, metadata FROM bandit_impression_events WHERE experiment_id = $1 AND arm_id = $2`, experimentID, armID).Scan(&eventType, &storedUserID, &storedOccurredAt, &metadata))
+	assert.Equal(t, string(service.ImpressionEventTypeImpression), eventType)
+	assert.Equal(t, userID, storedUserID)
+	assert.Equal(t, occurredAt, storedOccurredAt.UTC())
+	assert.JSONEq(t, `{"placement":"paywall"}`, string(metadata))
+}
+
 func TestPostgresBanditRepository_ProcessPendingConversionPersistsImmutableEvent(t *testing.T) {
 	ctx := context.Background()
 	db, cleanup, err := testutil.SetupTestDB(ctx)

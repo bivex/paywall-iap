@@ -188,6 +188,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/bandit/impression:
+    post:
+      tags: [bandit]
+      summary: Record impression for an arm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImpressionRequest'
+      responses:
+        '200':
+          description: Impression recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImpressionEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Experiment or arm not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /v1/bandit/reward:
     post:
       tags: [bandit]
@@ -1146,6 +1181,750 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminHealthResponse'
+  /v1/admin/users:
+    get:
+      tags: [admin]
+      summary: List users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/users/search:
+    get:
+      tags: [admin]
+      summary: Search users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: platform
+          in: query
+          schema: { type: string }
+        - name: role
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Filtered user list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/users/{id}/profile:
+    get:
+      tags: [admin]
+      summary: Get user profile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400':
+          description: Invalid user id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/admin/users/{id}/grant:
+    post:
+      tags: [admin]
+      summary: Grant subscription to user
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminGrantSubscriptionRequest'
+      responses:
+        '204':
+          description: Subscription granted
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/users/{id}/revoke:
+    post:
+      tags: [admin]
+      summary: Revoke subscription from user
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminReasonRequest'
+      responses:
+        '204':
+          description: Subscription revoked
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/users/{id}/force-cancel:
+    post:
+      tags: [admin]
+      summary: Force cancel active subscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminReasonRequest'
+      responses:
+        '200':
+          description: Subscription canceled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/users/{id}/force-renew:
+    post:
+      tags: [admin]
+      summary: Force renew subscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminForceRenewRequest'
+      responses:
+        '200':
+          description: Subscription renewed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/users/{id}/grant-grace:
+    post:
+      tags: [admin]
+      summary: Grant grace period
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminGrantGraceRequest'
+      responses:
+        '200':
+          description: Grace period granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/dashboard/metrics:
+    get:
+      tags: [admin]
+      summary: Admin dashboard metrics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/audit-log:
+    get:
+      tags: [admin]
+      summary: Get audit log
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100 }
+        - name: action
+          in: query
+          schema: { type: string }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: Audit log page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/subscriptions:
+    get:
+      tags: [admin]
+      summary: List subscriptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: source
+          in: query
+          schema: { type: string }
+        - name: platform
+          in: query
+          schema: { type: string }
+        - name: plan_type
+          in: query
+          schema: { type: string }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: date_from
+          in: query
+          schema: { type: string, format: date }
+        - name: date_to
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Subscriptions page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/subscriptions/{id}:
+    get:
+      tags: [admin]
+      summary: Get subscription detail
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Subscription detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400':
+          description: Missing or invalid subscription id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/admin/transactions:
+    get:
+      tags: [admin]
+      summary: List transactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: source
+          in: query
+          schema: { type: string }
+        - name: platform
+          in: query
+          schema: { type: string }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: date_from
+          in: query
+          schema: { type: string, format: date }
+        - name: date_to
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Transactions page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/transactions/{id}:
+    get:
+      tags: [admin]
+      summary: Get transaction detail
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Transaction detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400':
+          description: Missing or invalid transaction id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/admin/webhooks:
+    get:
+      tags: [admin]
+      summary: List webhook deliveries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+        - name: provider
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending, processed, failed] }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: date_from
+          in: query
+          schema: { type: string, format: date }
+        - name: date_to
+          in: query
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Webhook deliveries page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/webhooks/{id}/replay:
+    post:
+      tags: [admin]
+      summary: Replay webhook delivery
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Replay queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/analytics/report:
+    get:
+      tags: [admin]
+      summary: Get analytics report
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Analytics report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/revenue-ops:
+    get:
+      tags: [admin]
+      summary: Get revenue operations dashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: wh_page
+          in: query
+          schema: { type: integer, minimum: 1 }
+        - name: wh_page_size
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100 }
+        - name: wh_pending
+          in: query
+          schema:
+            oneOf:
+              - type: string
+                enum: ['0', '1']
+              - type: boolean
+      responses:
+        '200':
+          description: Revenue operations report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/admin/experiments/{id}/lifecycle-audit:
+    get:
+      tags: [admin]
+      summary: Get experiment lifecycle audit history
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Lifecycle audit history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/experiments/{id}/lock:
+    post:
+      tags: [admin]
+      summary: Lock experiment automation
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LockAdminExperimentRequest'
+      responses:
+        '200':
+          description: Experiment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/experiments/{id}/unlock:
+    post:
+      tags: [admin]
+      summary: Unlock experiment automation
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Experiment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/experiments/{id}/repair:
+    post:
+      tags: [admin]
+      summary: Repair experiment derived state
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Experiment repaired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/winback-campaigns:
+    get:
+      tags: [admin]
+      summary: List winback campaigns
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Winback campaign list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+    post:
+      tags: [admin]
+      summary: Launch winback campaign
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LaunchWinbackCampaignRequest'
+      responses:
+        '200':
+          description: Winback campaign launched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/winback-campaigns/{campaignId}/deactivate:
+    post:
+      tags: [admin]
+      summary: Deactivate winback campaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: campaignId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Winback campaign deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericObject'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /webhook/stripe:
+    post:
+      tags: [webhooks]
+      summary: Stripe webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StripeWebhookRequest'
+      responses:
+        '200':
+          description: Webhook received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookAckResponse'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+  /webhook/apple:
+    post:
+      tags: [webhooks]
+      summary: Apple webhook
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              minLength: 5
+              pattern: '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$'
+      responses:
+        '200':
+          description: Webhook received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookAckResponse'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+  /webhook/google:
+    post:
+      tags: [webhooks]
+      summary: Google webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleWebhookRequest'
+      responses:
+        '200':
+          description: Webhook received
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookAckResponse'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
 components:
   securitySchemes:
     BearerAuth:
@@ -1356,6 +2135,37 @@ components:
           type: string
           format: uuid
         is_new:
+          type: boolean
+    ImpressionRequest:
+      type: object
+      required: [experiment_id, arm_id, user_id]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        arm_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        metadata:
+          type: object
+          additionalProperties: true
+    ImpressionResponse:
+      type: object
+      required: [experiment_id, arm_id, user_id, tracked]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        arm_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        tracked:
           type: boolean
     RewardRequest:
       type: object
@@ -2063,6 +2873,113 @@ components:
         status: { type: string }
         database: { type: string }
         redis: { type: string }
+    GenericObject:
+      type: object
+      additionalProperties: true
+    AdminGrantSubscriptionRequest:
+      type: object
+      required: [product_id, plan_type, expires_at]
+      properties:
+        product_id:
+          type: string
+          minLength: 1
+        plan_type:
+          type: string
+          enum: [monthly, annual, lifetime]
+        expires_at:
+          type: string
+          format: date-time
+    AdminReasonRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+    AdminForceRenewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        days:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+    AdminGrantGraceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        days:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+    LockAdminExperimentRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        locked_until:
+          type: string
+          format: date-time
+          nullable: true
+        reason:
+          type: string
+    LaunchWinbackCampaignRequest:
+      type: object
+      required: [campaign_id, discount_type, discount_value, duration_days, days_since_churn]
+      additionalProperties: false
+      properties:
+        campaign_id:
+          type: string
+          minLength: 1
+        discount_type:
+          type: string
+          enum: [percentage, fixed]
+        discount_value:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+        duration_days:
+          type: integer
+          minimum: 1
+        days_since_churn:
+          type: integer
+          minimum: 1
+    StripeWebhookRequest:
+      type: object
+      required: [id, type]
+      additionalProperties: true
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          minLength: 1
+    GoogleWebhookRequest:
+      type: object
+      required: [message]
+      additionalProperties: true
+      properties:
+        message:
+          type: object
+          required: [data, messageId]
+          additionalProperties: true
+          properties:
+            data:
+              type: string
+              minLength: 1
+            messageId:
+              type: string
+              minLength: 1
+        subscription:
+          type: string
+    WebhookAckResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [received]
     SimpleError:
       type: object
       required: [error]
@@ -2114,6 +3031,14 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/AssignResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    ImpressionEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/ImpressionResponse'
         meta:
           $ref: '#/components/schemas/Meta'
     RewardEnvelope:

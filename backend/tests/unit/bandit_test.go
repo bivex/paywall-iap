@@ -85,6 +85,11 @@ func (m *MockBanditRepository) AppendConversionEvent(ctx context.Context, event 
 	return args.Error(0)
 }
 
+func (m *MockBanditRepository) AppendImpressionEvent(ctx context.Context, event *service.ImpressionEvent) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
 // MockBanditCache is a mock for BanditCache
 type MockBanditCache struct {
 	mock.Mock
@@ -242,6 +247,46 @@ func TestSelectArm(t *testing.T) {
 
 		assert.ErrorIs(t, err, service.ErrExperimentArmsNotFound)
 		assert.Equal(t, uuid.Nil, armID)
+		repo.AssertExpectations(t)
+	})
+}
+
+func TestTrackImpression(t *testing.T) {
+	ctx := context.Background()
+	repo := new(MockBanditRepository)
+	cache := NewMockBanditCache()
+	logger := zap.NewNop()
+	bandit := service.NewThompsonSamplingBandit(repo, cache, logger)
+	experimentID := uuid.New()
+	armID := uuid.New()
+	userID := uuid.New()
+
+	t.Run("AppendsImmutableImpressionEvent", func(t *testing.T) {
+		repo.ExpectedCalls = nil
+		repo.Calls = nil
+		repo.On("GetArms", ctx, experimentID).Return([]service.Arm{{ID: armID, ExperimentID: experimentID, Name: "Control"}}, nil)
+		repo.On("AppendImpressionEvent", ctx, mock.MatchedBy(func(event *service.ImpressionEvent) bool {
+			return event.ExperimentID == experimentID &&
+				event.ArmID == armID &&
+				event.UserID == userID &&
+				event.EventType == service.ImpressionEventTypeImpression &&
+				event.Metadata["placement"] == "paywall"
+		})).Return(nil)
+
+		err := bandit.TrackImpression(ctx, experimentID, armID, userID, &service.ImpressionEvent{Metadata: map[string]interface{}{"placement": "paywall"}})
+
+		assert.NoError(t, err)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("ReturnsNotFoundForUnknownArm", func(t *testing.T) {
+		repo.ExpectedCalls = nil
+		repo.Calls = nil
+		repo.On("GetArms", ctx, experimentID).Return([]service.Arm{{ID: uuid.New(), ExperimentID: experimentID, Name: "Other"}}, nil)
+
+		err := bandit.TrackImpression(ctx, experimentID, armID, userID, nil)
+
+		assert.ErrorIs(t, err, service.ErrBanditArmNotFound)
 		repo.AssertExpectations(t)
 	})
 }

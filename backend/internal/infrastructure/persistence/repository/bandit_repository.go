@@ -363,6 +363,41 @@ func (r *PostgresBanditRepository) AppendConversionEvent(ctx context.Context, ev
 	return nil
 }
 
+func (r *PostgresBanditRepository) AppendImpressionEvent(ctx context.Context, event *service.ImpressionEvent) error {
+	var metadataJSON []byte
+	var err error
+	if event.Metadata != nil {
+		metadataJSON, err = json.Marshal(event.Metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal impression event metadata: %w", err)
+		}
+	}
+
+	_, err = r.pool.Exec(ctx, `
+		INSERT INTO bandit_impression_events (
+			experiment_id,
+			arm_id,
+			user_id,
+			event_type,
+			metadata,
+			occurred_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`,
+		event.ExperimentID,
+		event.ArmID,
+		event.UserID,
+		event.EventType,
+		metadataJSON,
+		normalizeOccurredAt(event.OccurredAt),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to append impression event: %w", err)
+	}
+
+	return nil
+}
+
 func (r *PostgresBanditRepository) ProcessPendingConversion(ctx context.Context, transactionID, userID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) (*service.PendingReward, bool, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
