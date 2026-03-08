@@ -147,6 +147,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	admin.GET("/experiments", handler.ListAdminExperiments)
 	admin.POST("/experiments", handler.CreateAdminExperiment)
 	admin.PUT("/experiments/:id", handler.UpdateAdminExperiment)
+	admin.GET("/experiments/:id/lifecycle-audit", handler.GetAdminExperimentLifecycleAuditHistory)
 	admin.POST("/experiments/:id/pause", handler.PauseAdminExperiment)
 	admin.POST("/experiments/:id/resume", handler.ResumeAdminExperiment)
 	admin.POST("/experiments/:id/complete", handler.CompleteAdminExperiment)
@@ -253,7 +254,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	})
 
 	t.Run("GET returns latest lifecycle audit reason when present", func(t *testing.T) {
-		_, err := db.Exec(ctx, `
+		_, err = db.Exec(ctx, `
 			INSERT INTO experiment_lifecycle_audit_log (
 				experiment_id, actor_type, source, action, from_status, to_status, idempotency_key, details
 			) VALUES ($1, 'system', 'experiment_automation_reconciler', 'status_transition', 'draft', 'running', $2, '{"reason":"auto_start"}'::jsonb)
@@ -284,6 +285,35 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			assert.Equal(t, "auto_start", experiment.LatestLifecycleAudit.Details["reason"])
 		}
 		assert.True(t, found)
+	})
+
+	t.Run("GET lifecycle audit history returns newest-first entries", func(t *testing.T) {
+		_, err := db.Exec(ctx, `DELETE FROM experiment_lifecycle_audit_log WHERE experiment_id = $1`, draftExperiment.ID)
+		require.NoError(t, err)
+
+		_, err = db.Exec(ctx, `
+			INSERT INTO experiment_lifecycle_audit_log (
+				experiment_id, actor_type, source, action, from_status, to_status, idempotency_key, details, created_at
+			) VALUES
+			($1, 'system', 'experiment_automation_reconciler', 'status_transition', 'draft', 'running', $2, '{"reason":"auto_start"}'::jsonb, '2026-01-03T10:00:00Z'),
+			($1, 'admin', 'admin_experiments_api', 'status_transition', 'running', 'paused', $3, '{"reason":"manual_paused"}'::jsonb, '2026-01-04T10:00:00Z')
+		`, draftExperiment.ID, "experiment:"+draftExperiment.ID.String()+":seed-running", "experiment:"+draftExperiment.ID.String()+":seed-paused")
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments/"+draftExperiment.ID.String()+"/lifecycle-audit", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data []handlers.AdminExperimentLifecycleAudit `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		require.Len(t, resp.Data, 2)
+		assert.Equal(t, "admin", resp.Data[0].ActorType)
+		assert.Equal(t, "manual_paused", resp.Data[0].Details["reason"])
+		assert.Equal(t, "system", resp.Data[1].ActorType)
+		assert.Equal(t, "auto_start", resp.Data[1].Details["reason"])
 	})
 
 	t.Run("PUT rejects invalid draft metadata payload", func(t *testing.T) {

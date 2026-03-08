@@ -1,5 +1,5 @@
 import type { BanditSnapshot } from "@/lib/bandit";
-import type { ExperimentSummary } from "@/lib/experiments";
+import type { ExperimentLifecycleAudit, ExperimentSummary } from "@/lib/experiments";
 import type { PricingTier } from "@/lib/pricing-tiers";
 
 export interface StudioEndpointProbe {
@@ -15,6 +15,7 @@ export interface StudioBanditHealth {
 
 export interface ExperimentStudioSnapshot {
   experiment: ExperimentSummary;
+  lifecycleHistory: ExperimentLifecycleAudit[];
   banditHealth: StudioBanditHealth | null;
   banditSnapshot: BanditSnapshot | null;
   endpoints: {

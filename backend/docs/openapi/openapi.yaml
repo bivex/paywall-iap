@@ -60,6 +60,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /v1/auth/refresh:
     post:
       tags: [auth]
@@ -178,6 +184,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Experiment not found or has no arms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal error
           content:
@@ -203,6 +215,12 @@ paths:
                 $ref: '#/components/schemas/RewardEnvelope'
         '400':
           description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Experiment or arm not found
           content:
             application/json:
               schema:
@@ -1253,6 +1271,7 @@ components:
           type: string
           minLength: 1
         email:
+          nullable: true
           oneOf:
             - type: string
               maxLength: 0

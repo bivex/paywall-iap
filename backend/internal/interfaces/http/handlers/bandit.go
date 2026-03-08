@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -78,6 +79,11 @@ func (h *BanditHandler) Assign(c *gin.Context) {
 	// Get arm assignment using Thompson Sampling
 	armID, err := h.banditService.SelectArm(c.Request.Context(), experimentID, userID)
 	if err != nil {
+		if errors.Is(err, service.ErrExperimentArmsNotFound) {
+			response.NotFound(c, "Experiment not found or has no arms")
+			return
+		}
+
 		response.InternalError(c, "Failed to assign arm: "+err.Error())
 		return
 	}

@@ -103,7 +103,9 @@ func (m *MockBanditCache) GetArmStats(ctx context.Context, key string) (*service
 
 func (m *MockBanditCache) SetArmStats(ctx context.Context, key string, stats *service.ArmStats, ttl time.Duration) error {
 	m.data[key] = stats
-	m.Called(ctx, key, stats, ttl)
+	if len(m.ExpectedCalls) > 0 {
+		m.Called(ctx, key, stats, ttl)
+	}
 	return nil
 }
 
@@ -116,7 +118,9 @@ func (m *MockBanditCache) GetAssignment(ctx context.Context, key string) (uuid.U
 
 func (m *MockBanditCache) SetAssignment(ctx context.Context, key string, armID uuid.UUID, ttl time.Duration) error {
 	m.assignments[key] = armID
-	m.Called(ctx, key, armID, ttl)
+	if len(m.ExpectedCalls) > 0 {
+		m.Called(ctx, key, armID, ttl)
+	}
 	return nil
 }
 
@@ -207,6 +211,21 @@ func TestSelectArm(t *testing.T) {
 		assignmentKey := "ab:assign:" + experimentID.String() + ":" + userID.String()
 		cachedArmID, _ := cache.GetAssignment(ctx, assignmentKey)
 		assert.Equal(t, arm1ID, cachedArmID)
+	})
+
+	t.Run("returns typed error when experiment has no arms", func(t *testing.T) {
+		repo = new(MockBanditRepository)
+		cache = NewMockBanditCache()
+		bandit = service.NewThompsonSamplingBandit(repo, cache, logger)
+
+		repo.On("GetActiveAssignment", ctx, experimentID, userID).Return(nil, service.ErrAssignmentNotFound)
+		repo.On("GetArms", ctx, experimentID).Return([]service.Arm{}, nil)
+
+		armID, err := bandit.SelectArm(ctx, experimentID, userID)
+
+		assert.ErrorIs(t, err, service.ErrExperimentArmsNotFound)
+		assert.Equal(t, uuid.Nil, armID)
+		repo.AssertExpectations(t)
 	})
 }
 

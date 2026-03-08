@@ -30,13 +30,13 @@ import type {
   StudioEndpointProbe,
 } from "@/lib/experiment-studio";
 import {
+  type ExperimentAlgorithm,
+  type ExperimentStatus,
+  type ExperimentSummary,
   formatExperimentLifecycleCode,
   getExperimentLifecycleReason,
   getExperimentLifecycleReasonKey,
   getExperimentLifecycleSourceKey,
-  type ExperimentAlgorithm,
-  type ExperimentStatus,
-  type ExperimentSummary,
 } from "@/lib/experiments";
 import type { PricingTier } from "@/lib/pricing-tiers";
 
@@ -108,7 +108,19 @@ function formatLifecycleReason(t: ReturnType<typeof useTranslations>, experiment
 
 function formatLifecycleSource(t: ReturnType<typeof useTranslations>, experiment: ExperimentSummary) {
   const sourceKey = getExperimentLifecycleSourceKey(experiment.latest_lifecycle_audit?.source);
-  return sourceKey ? t(`lifecycle.${sourceKey}`) : formatExperimentLifecycleCode(experiment.latest_lifecycle_audit?.source);
+  return sourceKey
+    ? t(`lifecycle.${sourceKey}`)
+    : formatExperimentLifecycleCode(experiment.latest_lifecycle_audit?.source);
+}
+
+function formatLifecycleHistoryReason(t: ReturnType<typeof useTranslations>, reason: string | null | undefined) {
+  const reasonKey = getExperimentLifecycleReasonKey(reason);
+  return reasonKey ? t(`lifecycle.${reasonKey}`) : formatExperimentLifecycleCode(reason);
+}
+
+function formatLifecycleHistorySource(t: ReturnType<typeof useTranslations>, source: string | null | undefined) {
+  const sourceKey = getExperimentLifecycleSourceKey(source);
+  return sourceKey ? t(`lifecycle.${sourceKey}`) : formatExperimentLifecycleCode(source);
 }
 
 function weightShare(arms: ExperimentSummary["arms"], trafficWeight: number) {
@@ -656,14 +668,48 @@ export function StudioPageClient({
                             <Badge variant="outline">{formatLifecycleReason(t, selectedExperiment)}</Badge>
                           </div>
                           <p className="text-muted-foreground text-xs">
-                            {t("lifecycle.lastActionTransition")}: {t(`status.${selectedExperiment.latest_lifecycle_audit.from_status}`)} → {t(`status.${selectedExperiment.latest_lifecycle_audit.to_status}`)}
+                            {t("lifecycle.lastActionTransition")}:{" "}
+                            {t(`status.${selectedExperiment.latest_lifecycle_audit.from_status}`)} →{" "}
+                            {t(`status.${selectedExperiment.latest_lifecycle_audit.to_status}`)}
                           </p>
                           <p className="text-muted-foreground text-xs">
-                            {t("lifecycle.lastActionAt")}: {hasHydrated ? formatDate(selectedExperiment.latest_lifecycle_audit.created_at) : "—"}
+                            {t("lifecycle.lastActionAt")}:{" "}
+                            {hasHydrated ? formatDate(selectedExperiment.latest_lifecycle_audit.created_at) : "—"}
                           </p>
                         </div>
                       ) : (
                         <p className="mt-2 text-muted-foreground text-xs">{t("lifecycle.lastActionEmpty")}</p>
+                      )}
+                    </div>
+
+                    <div className="rounded-md border p-4">
+                      <p className="font-medium text-sm">{t("lifecycle.historyTitle")}</p>
+                      <p className="mt-1 text-muted-foreground text-xs">{t("lifecycle.historyDescription")}</p>
+                      {snapshot?.lifecycleHistory.length ? (
+                        <div className="mt-3 space-y-2">
+                          {snapshot.lifecycleHistory.map((entry, index) => {
+                            const reason = typeof entry.details?.reason === "string" ? entry.details.reason : null;
+                            return (
+                              <div
+                                key={`${entry.created_at}-${entry.action}-${index}`}
+                                className="rounded-md border border-dashed p-3"
+                              >
+                                <div className="flex flex-wrap gap-2">
+                                  <Badge variant="outline">{formatLifecycleHistorySource(t, entry.source)}</Badge>
+                                  <Badge variant="outline">{formatLifecycleHistoryReason(t, reason)}</Badge>
+                                </div>
+                                <p className="mt-2 text-muted-foreground text-xs">
+                                  {t(`status.${entry.from_status}`)} → {t(`status.${entry.to_status}`)}
+                                </p>
+                                <p className="mt-1 text-muted-foreground text-xs">
+                                  {hasHydrated ? formatDate(entry.created_at) : "—"}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-muted-foreground text-xs">{t("lifecycle.historyEmpty")}</p>
                       )}
                     </div>
                   </CardContent>

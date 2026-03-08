@@ -67,6 +67,7 @@
 | Studio / pricing truthfulness | pricing tiers редактируются из Studio тем же live CRUD, что и на standalone pricing page |
 | Cold-start local data | есть `scripts/seed_all_test_data.sh`, интеграция в `run_dev.sh`, и детерминированные experiment/bandit fixtures для непустых admin pages |
 | UI polish | в A/B Tests исправлено перекрытие long description text в таблице; Studio hydration mismatch по датам уже был добит ранее |
+| Experiment automation foundation | backend теперь имеет единый lifecycle service layer, persisted `automation_policy`, scheduled reconciler, transactional lifecycle audit/idempotency и `latest_lifecycle_audit` в admin payloads/UI |
 
 ## Что реально осталось недоделанным
 
@@ -209,16 +210,16 @@
 
 | Stage | Ticket | Приоритет | Статус | Что должно получиться |
 |---|---|---|---|---|
-| Stage 1 | Вынести experiment lifecycle в service/use-case слой | P1 | ⚪ Not started | ручные actions и будущая автоматика используют один и тот же transition engine, без дублирования логики в HTTP handlers |
-| Stage 1 | Persisted automation policy для `ab_tests` | P1 | ⚪ Not started | у эксперимента появляются сохраняемые правила auto-start / auto-stop / auto-complete / override |
-| Stage 1 | Idempotent contract для automation jobs | P1 | ⚪ Not started | повторный запуск job безопасен и не приводит к двойным status/reward mutations |
-| Stage 1 | Audit trail для system-triggered lifecycle changes | P1 | ⚪ Not started | видно, что изменение статуса сделал именно system job, по какой rule и когда |
+| Stage 1 | Вынести experiment lifecycle в service/use-case слой | P1 | ✅ Done | ручные actions и будущая автоматика используют один и тот же transition engine, без дублирования логики в HTTP handlers |
+| Stage 1 | Persisted automation policy для `ab_tests` | P1 | ✅ Done | у эксперимента появляются сохраняемые правила auto-start / auto-stop / auto-complete / override |
+| Stage 1 | Idempotent contract для automation jobs | P1 | 🟡 Partial | experiment lifecycle auto-actions уже идемпотентны через audit/idempotency contract, но это ещё не доведено до всех maintenance jobs |
+| Stage 1 | Audit trail для system-triggered lifecycle changes | P1 | ✅ Done | видно, что изменение статуса сделал именно system job, по какой rule и когда |
 | Stage 1 | Observability для automation worker path | P2 | 🟡 Partial | worker/logging уже есть, но появляются отдельные метрики/alerts по failed jobs, stale experiments и skipped automation runs |
-| Stage 2 | Scheduled experiment reconciler job | P1 | ⚪ Not started | периодический worker проходится по `ab_tests` и применяет automation policy |
-| Stage 2 | Auto-start / auto-complete rules | P1 | ⚪ Not started | experiments автоматически стартуют/завершаются по времени и/или threshold rules |
-| Stage 2 | Manual override / lock semantics | P1 | ⚪ Not started | ручной pause/lock не перетирается scheduler-ом |
+| Stage 2 | Scheduled experiment reconciler job | P1 | ✅ Done | периодический worker проходится по `ab_tests` и применяет automation policy |
+| Stage 2 | Auto-start / auto-complete rules | P1 | ✅ Done | experiments автоматически стартуют/завершаются по времени и/или threshold rules |
+| Stage 2 | Manual override / lock semantics | P1 | 🟡 Partial | `manual_override` уже уважает scheduler, но richer lock semantics (`locked_until`, operator lock ownership) всё ещё нет |
 | Stage 2 | Reconciliation / repair job для derived experiment state | P2 | ⚪ Not started | можно безопасно пересчитать assignments/stats/pending state после сбоев или пропусков |
-| Stage 2 | Admin-visible reason codes для auto-transitions | P2 | ⚪ Not started | в admin payload/UI видно, почему и каким правилом система перевела эксперимент в новый статус |
+| Stage 2 | Admin-visible reason codes для auto-transitions | P2 | ✅ Done | в admin payload/UI видно, почему и каким правилом система перевела эксперимент в новый статус |
 | Stage 3 | Repository-backed bandit maintenance jobs | P1 | 🟡 Partial | scheduled bandit maintenance уже зарегистрирован, но placeholder-логика заменена на реальную обработку rewards/windows/objective stats |
 | Stage 3 | Immutable conversions / decisions log | P1 | ⚪ Not started | backend хранит полную историю assign/impression/conversion/reward-resolution событий для trustworthy automation |
 | Stage 3 | Winner recommendation policy | P2 | ⚪ Not started | система сначала умеет безопасно рекомендовать winner, не делая мгновенный auto-rollout |

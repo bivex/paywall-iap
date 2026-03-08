@@ -15,6 +15,9 @@ import (
 // ErrAssignmentNotFound is returned when no active assignment is found for a user
 var ErrAssignmentNotFound = errors.New("assignment not found")
 
+// ErrExperimentArmsNotFound is returned when an experiment has no available arms.
+var ErrExperimentArmsNotFound = errors.New("experiment arms not found")
+
 // BanditRepository defines the interface for bandit data persistence
 type BanditRepository interface {
 	GetArms(ctx context.Context, experimentID uuid.UUID) ([]Arm, error)
@@ -197,7 +200,7 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 	}
 
 	if len(arms) == 0 {
-		return uuid.Nil, fmt.Errorf("no arms found for experiment %s", experimentID)
+		return uuid.Nil, fmt.Errorf("%w: %s", ErrExperimentArmsNotFound, experimentID)
 	}
 
 	var bestArm *Arm

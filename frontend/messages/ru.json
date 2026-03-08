@@ -242,7 +242,17 @@
       "banditDisabled": "Фиксированное распределение",
       "controlArm": "Контроль:",
       "variantArm": "Вариант:",
-      "noWinner": "Победитель ещё не определён"
+      "noWinner": "Победитель ещё не определён",
+      "latestLifecycleLabel": "Последний lifecycle",
+      "sourceAutomation": "Системная автоматика",
+      "sourceAdminApi": "Действие администратора",
+      "reasonAutoStart": "Автозапуск",
+      "reasonAutoCompleteEndTime": "Автозавершение по end time",
+      "reasonAutoCompleteSampleSize": "Автозавершение по sample size",
+      "reasonAutoCompleteConfidence": "Автозавершение по confidence",
+      "reasonManualPaused": "Ручная пауза",
+      "reasonManualRunning": "Ручной старт/возобновление",
+      "reasonManualCompleted": "Ручное завершение"
     },
     "form": {
       "title": "Создать A/B эксперимент",
@@ -313,7 +323,23 @@
       "end": "Окончание",
       "controlsTitle": "Управление lifecycle",
       "controlsDescription": "Эти кнопки вызывают реальные lifecycle mutations эксперимента и затем перезагружают свежий studio snapshot.",
-      "noActions": "Для текущего статуса lifecycle-действия недоступны."
+      "noActions": "Для текущего статуса lifecycle-действия недоступны.",
+      "lastActionTitle": "Последнее lifecycle-событие",
+      "lastActionEmpty": "Для этого эксперимента ещё не записано ни одной lifecycle audit entry.",
+      "lastActionTransition": "Переход",
+      "lastActionAt": "Зафиксировано",
+      "historyTitle": "История lifecycle",
+      "historyDescription": "Полный lifecycle audit trail эксперимента, новые события сверху.",
+      "historyEmpty": "Для этого эксперимента ещё нет истории lifecycle.",
+      "sourceAutomation": "Системная автоматика",
+      "sourceAdminApi": "Действие администратора",
+      "reasonAutoStart": "Автозапуск",
+      "reasonAutoCompleteEndTime": "Автозавершение по end time",
+      "reasonAutoCompleteSampleSize": "Автозавершение по sample size",
+      "reasonAutoCompleteConfidence": "Автозавершение по confidence",
+      "reasonManualPaused": "Ручная пауза",
+      "reasonManualRunning": "Ручной старт/возобновление",
+      "reasonManualCompleted": "Ручное завершение"
     },
     "capabilities": {
       "title": "Матрица runtime-возможностей",

@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/dto"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
@@ -38,6 +40,7 @@ func NewAuthHandler(
 // @Param request body dto.RegisterRequest true "Registration request"
 // @Success 201 {object} response.SuccessResponse{data=dto.RegisterResponse}
 // @Failure 400 {object} response.ErrorResponse
+// @Failure 409 {object} response.ErrorResponse
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
@@ -48,7 +51,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	resp, err := h.registerCmd.Execute(c.Request.Context(), &req)
 	if err != nil {
-		// Handle specific error cases
+		if errors.Is(err, domainErrors.ErrUserAlreadyExists) {
+			response.Conflict(c, err.Error())
+			return
+		}
+
 		response.BadRequest(c, err.Error())
 		return
 	}

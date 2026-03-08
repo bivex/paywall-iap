@@ -319,10 +319,13 @@ export function ExperimentsPageClient({
                           {experiment.latest_lifecycle_audit ? (
                             <div className="mt-2 rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
                               <p>
-                                {t("table.latestLifecycleLabel")}: {formatLifecycleSource(t, experiment)} · {formatLifecycleReason(t, experiment)}
+                                {t("table.latestLifecycleLabel")}: {formatLifecycleSource(t, experiment)} ·{" "}
+                                {formatLifecycleReason(t, experiment)}
                               </p>
                               <p className="mt-1">
-                                {t(`status.${experiment.latest_lifecycle_audit.from_status}`)} → {t(`status.${experiment.latest_lifecycle_audit.to_status}`)} · {formatDate(experiment.latest_lifecycle_audit.created_at)}
+                                {t(`status.${experiment.latest_lifecycle_audit.from_status}`)} →{" "}
+                                {t(`status.${experiment.latest_lifecycle_audit.to_status}`)} ·{" "}
+                                {formatDate(experiment.latest_lifecycle_audit.created_at)}
                               </p>
                             </div>
                           ) : null}

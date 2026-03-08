@@ -63,6 +63,36 @@ type AdminExperimentLifecycleAudit struct {
 	CreatedAt      time.Time              `json:"created_at"`
 }
 
+func scanAdminExperimentLifecycleAudit(scanner interface{ Scan(dest ...any) error }) (AdminExperimentLifecycleAudit, error) {
+	var audit AdminExperimentLifecycleAudit
+	var idempotencyKey sql.NullString
+	var detailsJSON []byte
+
+	err := scanner.Scan(
+		&audit.ActorType,
+		&audit.Source,
+		&audit.Action,
+		&audit.FromStatus,
+		&audit.ToStatus,
+		&idempotencyKey,
+		&detailsJSON,
+		&audit.CreatedAt,
+	)
+	if err != nil {
+		return AdminExperimentLifecycleAudit{}, err
+	}
+	if idempotencyKey.Valid {
+		value := idempotencyKey.String
+		audit.IdempotencyKey = &value
+	}
+	if len(detailsJSON) > 0 {
+		if err := json.Unmarshal(detailsJSON, &audit.Details); err != nil {
+			return AdminExperimentLifecycleAudit{}, err
+		}
+	}
+	return audit, nil
+}
+
 type createAdminExperimentArmRequest struct {
 	Name          string  `json:"name"`
 	Description   string  `json:"description"`
@@ -436,6 +466,60 @@ func (h *AdminHandler) getAdminExperimentByID(c *gin.Context, experimentID uuid.
 	}
 	experiment.Arms = arms
 	return experiment, nil
+}
+
+func (h *AdminHandler) listExperimentLifecycleAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentLifecycleAudit, error) {
+	rows, err := h.dbPool.Query(ctx.Request.Context(), `
+		SELECT actor_type,
+		       source,
+		       action,
+		       from_status,
+		       to_status,
+		       idempotency_key,
+		       details,
+		       created_at
+		FROM experiment_lifecycle_audit_log
+		WHERE experiment_id = $1
+		ORDER BY created_at DESC, id DESC`, experimentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	history := make([]AdminExperimentLifecycleAudit, 0)
+	for rows.Next() {
+		audit, err := scanAdminExperimentLifecycleAudit(rows)
+		if err != nil {
+			return nil, err
+		}
+		history = append(history, audit)
+	}
+	return history, rows.Err()
+}
+
+func (h *AdminHandler) GetAdminExperimentLifecycleAuditHistory(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+
+	if err := h.dbPool.QueryRow(c.Request.Context(), `SELECT 1 FROM ab_tests WHERE id = $1`, experimentID).Scan(new(int)); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.NotFound(c, "Experiment not found")
+			return
+		}
+		response.InternalError(c, "Failed to load experiment")
+		return
+	}
+
+	history, err := h.listExperimentLifecycleAuditHistory(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load experiment lifecycle audit history")
+		return
+	}
+
+	response.OK(c, history)
 }
 
 func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
