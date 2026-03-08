@@ -11,6 +11,16 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
 
+type banditMaintenanceEngine interface {
+	RunMaintenanceDetailed(ctx context.Context) (*service.BanditMaintenanceSummary, error)
+	TrimConfiguredWindows(ctx context.Context, limit int) (int, error)
+	ProcessExpiredPendingRewards(ctx context.Context, batchSize int) (int, error)
+}
+
+type scheduledJobExecutor interface {
+	ExecuteScheduled(ctx context.Context, spec service.ScheduledAutomationJobSpec, payload []byte, run func(context.Context) (map[string]any, error)) (bool, error)
+}
+
 // =====================================================
 // Asynq-compatible Currency Tasks
 // =====================================================
@@ -61,7 +71,7 @@ func RegisterCurrencyScheduledTasks(scheduler *asynq.Scheduler) error {
 // =====================================================
 
 // RegisterBanditMaintenanceTasks registers bandit maintenance task handlers
-func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service.AdvancedBanditEngine, executor *service.AutomationJobExecutionService, logger *zap.Logger) {
+func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine banditMaintenanceEngine, executor scheduledJobExecutor, logger *zap.Logger) {
 	mux.HandleFunc("bandit:maintenance:full", func(ctx context.Context, t *asynq.Task) error {
 		executed, err := executor.ExecuteScheduled(ctx, service.ScheduledAutomationJobSpec{
 			JobName: "bandit:maintenance:full",
@@ -69,11 +79,12 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service
 			Window:  6 * time.Hour,
 		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
 			logger.Info("Processing full bandit maintenance")
-			if err := advancedEngine.RunMaintenance(ctx); err != nil {
+			summary, err := advancedEngine.RunMaintenanceDetailed(ctx)
+			if err != nil {
 				return nil, err
 			}
 			logger.Info("Bandit maintenance completed")
-			return map[string]any{"maintenance": "full"}, nil
+			return banditMaintenanceSummaryDetails(summary), nil
 		})
 		if err != nil {
 			logger.Error("Failed to run maintenance", zap.Error(err))
@@ -105,11 +116,12 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service
 			Window:  time.Hour,
 		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
 			logger.Info("Processing window trimming", zap.Int("batch_size", payload.BatchSize))
-			if err := advancedEngine.RunMaintenance(ctx); err != nil {
+			trimmed, err := advancedEngine.TrimConfiguredWindows(ctx, payload.BatchSize)
+			if err != nil {
 				return nil, err
 			}
 			logger.Info("Window trimming completed")
-			return map[string]any{"maintenance": "trim_windows", "batch_size": payload.BatchSize}, nil
+			return map[string]any{"maintenance": "trim_windows", "batch_size": payload.BatchSize, "windows_trimmed": trimmed}, nil
 		})
 		if err != nil {
 			logger.Error("Failed to trim windows", zap.Error(err))
@@ -141,11 +153,12 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service
 			Window:  15 * time.Minute,
 		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
 			logger.Info("Processing expired pending rewards", zap.Int("batch_size", payload.BatchSize))
-			if err := advancedEngine.RunMaintenance(ctx); err != nil {
+			processed, err := advancedEngine.ProcessExpiredPendingRewards(ctx, payload.BatchSize)
+			if err != nil {
 				return nil, err
 			}
 			logger.Info("Expired rewards processed")
-			return map[string]any{"maintenance": "process_expired", "batch_size": payload.BatchSize}, nil
+			return map[string]any{"maintenance": "process_expired", "batch_size": payload.BatchSize, "processed": processed}, nil
 		})
 		if err != nil {
 			logger.Error("Failed to process expired rewards", zap.Error(err))
@@ -156,6 +169,23 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service
 		}
 		return nil
 	})
+}
+
+func banditMaintenanceSummaryDetails(summary *service.BanditMaintenanceSummary) map[string]any {
+	if summary == nil {
+		return map[string]any{"maintenance": "full"}
+	}
+	return map[string]any{
+		"maintenance":                   "full",
+		"expired_pending_rewards":       summary.ExpiredPendingRewards,
+		"currency_rates_updated":        summary.CurrencyRatesUpdated,
+		"window_experiments_scanned":    summary.WindowExperimentsScanned,
+		"windows_trimmed":               summary.WindowsTrimmed,
+		"objective_experiments_scanned": summary.ObjectiveExperimentsScanned,
+		"objective_stats_synced":        summary.ObjectiveStatsSynced,
+		"stale_contexts_deleted":        summary.StaleContextsDeleted,
+		"expired_assignments_deleted":   summary.ExpiredAssignmentsDeleted,
+	}
 }
 
 // RegisterBanditMaintenanceScheduledTasks registers scheduled bandit maintenance tasks

@@ -339,6 +339,87 @@ func (r *PostgresBanditRepository) CleanupExpiredAssignments(ctx context.Context
 	return count, nil
 }
 
+func (r *PostgresBanditRepository) ListWindowMaintenanceExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT id
+		FROM ab_tests
+		WHERE is_bandit = TRUE
+		  AND status IN ('running', 'paused')
+		  AND window_type IS NOT NULL
+		  AND window_type <> 'none'
+		ORDER BY updated_at DESC, id
+		LIMIT $1`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query window maintenance experiments: %w", err)
+	}
+	defer rows.Close()
+
+	ids := make([]uuid.UUID, 0)
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("failed to scan window maintenance experiment id: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate window maintenance experiments: %w", err)
+	}
+	return ids, nil
+}
+
+func (r *PostgresBanditRepository) ListObjectiveSyncExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT id
+		FROM ab_tests
+		WHERE is_bandit = TRUE
+		  AND status IN ('running', 'paused', 'completed')
+		  AND objective_type IS NOT NULL
+		ORDER BY updated_at DESC, id
+		LIMIT $1`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query objective sync experiments: %w", err)
+	}
+	defer rows.Close()
+
+	ids := make([]uuid.UUID, 0)
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("failed to scan objective sync experiment id: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate objective sync experiments: %w", err)
+	}
+	return ids, nil
+}
+
+func (r *PostgresBanditRepository) CleanupStaleUserContext(ctx context.Context, olderThan time.Duration) (int64, error) {
+	query := `
+		DELETE FROM bandit_user_context
+		WHERE updated_at < NOW() - $1::interval
+	`
+
+	result, err := r.pool.Exec(ctx, query, olderThan.String())
+	if err != nil {
+		return 0, fmt.Errorf("failed to cleanup stale user context: %w", err)
+	}
+
+	count := result.RowsAffected()
+	r.logger.Debug("Cleaned up stale user context", zap.Int64("count", count))
+	return count, nil
+}
+
 // GetAllArmStatsForExperiment retrieves statistics for all arms in an experiment
 func (r *PostgresBanditRepository) GetAllArmStatsForExperiment(ctx context.Context, experimentID uuid.UUID) (map[uuid.UUID]*service.ArmStats, error) {
 	query := `

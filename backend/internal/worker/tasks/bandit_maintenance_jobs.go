@@ -2,6 +2,9 @@ package tasks
 
 import (
 	"context"
+	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/riverqueue/river"
@@ -31,6 +34,7 @@ type ProcessExpiredPendingRewardsArgs struct {
 }
 
 func (ProcessExpiredPendingRewardsArgs) Kind() string { return "process_expired_pending_rewards" }
+
 // ProcessExpiredPendingRewardsResult represents the result of processing expired rewards
 type ProcessExpiredPendingRewardsResult struct {
 	Processed int `json:"processed"`
@@ -48,18 +52,15 @@ func (j *BanditMaintenanceJobs) ProcessExpiredPendingRewards(
 
 	j.logger.Info("Processing expired pending rewards", zap.Int("batch_size", batchSize))
 
-	// Get the base bandit from the engine
-	// Note: This would require exposing the base bandit or a method on the engine
-	// For now, we'll call the engine's maintenance method
-
-	if err := j.engine.RunMaintenance(ctx); err != nil {
+	processed, err := j.engine.ProcessExpiredPendingRewards(ctx, batchSize)
+	if err != nil {
 		j.logger.Error("Failed to process expired rewards", zap.Error(err))
 		return ProcessExpiredPendingRewardsResult{}, err
 	}
 
 	j.logger.Info("Expired pending rewards processed")
 	return ProcessExpiredPendingRewardsResult{
-		Processed: batchSize, // Placeholder
+		Processed: processed,
 	}, nil
 }
 
@@ -69,6 +70,7 @@ type TrimSlidingWindowsArgs struct {
 }
 
 func (TrimSlidingWindowsArgs) Kind() string { return "trim_sliding_windows" }
+
 // TrimSlidingWindowsResult represents the result of trimming windows
 type TrimSlidingWindowsResult struct {
 	WindowsTrimmed int `json:"windows_trimmed"`
@@ -81,17 +83,27 @@ func (j *BanditMaintenanceJobs) TrimSlidingWindows(
 ) (TrimSlidingWindowsResult, error) {
 	j.logger.Info("Trimming sliding windows")
 
-	// This would require access to the window strategy
-	// For now, we'll call the engine's maintenance method
+	if args.Args.ExperimentID != "" {
+		experimentID, err := uuid.Parse(args.Args.ExperimentID)
+		if err != nil {
+			return TrimSlidingWindowsResult{}, err
+		}
+		if err := j.engine.TrimWindow(ctx, experimentID); err != nil {
+			j.logger.Error("Failed to trim experiment window", zap.Error(err))
+			return TrimSlidingWindowsResult{}, err
+		}
+		return TrimSlidingWindowsResult{WindowsTrimmed: 1}, nil
+	}
 
-	if err := j.engine.RunMaintenance(ctx); err != nil {
+	trimmed, err := j.engine.TrimConfiguredWindows(ctx, 100)
+	if err != nil {
 		j.logger.Error("Failed to trim windows", zap.Error(err))
 		return TrimSlidingWindowsResult{}, err
 	}
 
 	j.logger.Info("Sliding windows trimmed")
 	return TrimSlidingWindowsResult{
-		WindowsTrimmed: 0, // Placeholder
+		WindowsTrimmed: trimmed,
 	}, nil
 }
 
@@ -101,6 +113,7 @@ type CleanupOldContextDataArgs struct {
 }
 
 func (CleanupOldContextDataArgs) Kind() string { return "cleanup_old_context_data" }
+
 // CleanupOldContextDataResult represents the result of cleanup
 type CleanupOldContextDataResult struct {
 	RecordsDeleted int `json:"records_deleted"`
@@ -118,12 +131,15 @@ func (j *BanditMaintenanceJobs) CleanupOldContextData(
 
 	j.logger.Info("Cleaning up old context data", zap.Int("days_to_keep", daysToKeep))
 
-	// This would require repository access
-	// For now, just log
+	deleted, err := j.engine.CleanupOldContextData(ctx, time.Duration(daysToKeep)*24*time.Hour)
+	if err != nil {
+		j.logger.Error("Failed to cleanup old context data", zap.Error(err))
+		return CleanupOldContextDataResult{}, err
+	}
 
 	j.logger.Info("Old context data cleaned up")
 	return CleanupOldContextDataResult{
-		RecordsDeleted: 0, // Placeholder
+		RecordsDeleted: int(deleted),
 	}, nil
 }
 
@@ -181,16 +197,27 @@ func (j *BanditMaintenanceJobs) RunFullMaintenance(
 ) (RunFullMaintenanceResult, error) {
 	j.logger.Info("Running full bandit maintenance")
 
-	if err := j.engine.RunMaintenance(ctx); err != nil {
+	summary, err := j.engine.RunMaintenanceDetailed(ctx)
+	if err != nil {
 		j.logger.Error("Failed to run full maintenance", zap.Error(err))
 		return RunFullMaintenanceResult{}, err
 	}
 
-	tasks := []string{
-		"processed_expired_pending_rewards",
-		"trimmed_sliding_windows",
-		"updated_currency_rates",
-		"cleaned_old_context_data",
+	tasks := make([]string, 0, 6)
+	if summary.ExpiredPendingRewards >= 0 {
+		tasks = append(tasks, "processed_expired_pending_rewards")
+	}
+	if summary.WindowsTrimmed > 0 || summary.WindowExperimentsScanned > 0 {
+		tasks = append(tasks, "trimmed_sliding_windows")
+	}
+	if summary.CurrencyRatesUpdated {
+		tasks = append(tasks, "updated_currency_rates")
+	}
+	if summary.StaleContextsDeleted > 0 || summary.ExpiredAssignmentsDeleted > 0 {
+		tasks = append(tasks, "cleaned_old_context_data", "cleaned_expired_assignments")
+	}
+	if summary.ObjectiveStatsSynced > 0 || summary.ObjectiveExperimentsScanned > 0 {
+		tasks = append(tasks, "synced_objective_stats")
 	}
 
 	j.logger.Info("Full bandit maintenance completed")
@@ -218,11 +245,14 @@ func (j *BanditMaintenanceJobs) SyncObjectiveStats(
 ) (SyncObjectiveStatsResult, error) {
 	j.logger.Info("Syncing objective statistics")
 
-	// This would require repository access
-	// For now, just log
+	synced, err := j.engine.SyncObjectiveStats(ctx, 100)
+	if err != nil {
+		j.logger.Error("Failed to sync objective statistics", zap.Error(err))
+		return SyncObjectiveStatsResult{}, err
+	}
 
 	j.logger.Info("Objective statistics synced")
 	return SyncObjectiveStatsResult{
-		StatsSynced: 0, // Placeholder
+		StatsSynced: synced,
 	}, nil
 }

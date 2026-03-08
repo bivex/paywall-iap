@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -23,6 +24,8 @@ type BanditAdvancedHandler struct {
 	currencyService *service.CurrencyRateService
 	logger          *zap.Logger
 }
+
+const maxConvertibleCurrencyAmount = 1000000000
 
 // NewBanditAdvancedHandler creates a new advanced bandit handler
 func NewBanditAdvancedHandler(
@@ -115,18 +118,20 @@ func (h *BanditAdvancedHandler) UpdateCurrencyRates(w http.ResponseWriter, r *ht
 // ConvertCurrency converts an amount between currencies
 func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Amount   *float64 `json:"amount"`
-		Currency string   `json:"currency"`
+		Amount   json.Number `json:"amount"`
+		Currency string      `json:"currency"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
+	decoder.UseNumber()
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+	amount, ok := parseConvertibleCurrencyAmount(req.Amount)
 
-	if req.Amount == nil || !isISO4217CurrencyCode(req.Currency) {
+	if !ok || !isISO4217CurrencyCode(req.Currency) {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -136,7 +141,7 @@ func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	converted, err := h.currencyService.ConvertToUSD(r.Context(), *req.Amount, req.Currency)
+	converted, err := h.currencyService.ConvertToUSD(r.Context(), amount, req.Currency)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
@@ -147,7 +152,7 @@ func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.R
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"original_amount":   *req.Amount,
+		"original_amount":   amount,
 		"original_currency": req.Currency,
 		"converted_amount":  converted,
 		"target_currency":   "USD",
@@ -410,13 +415,15 @@ func (h *BanditAdvancedHandler) GetMetrics(w http.ResponseWriter, r *http.Reques
 
 // RunMaintenance triggers maintenance tasks
 func (h *BanditAdvancedHandler) RunMaintenance(w http.ResponseWriter, r *http.Request) {
-	if err := h.engine.RunMaintenance(r.Context()); err != nil {
+	summary, err := h.engine.RunMaintenanceDetailed(r.Context())
+	if err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"message":   "Maintenance completed successfully",
+		"summary":   summary,
 		"timestamp": time.Now(),
 	})
 }
@@ -482,4 +489,30 @@ func isISO4217CurrencyCode(value string) bool {
 
 func isFiniteJSONNumber(value float64) bool {
 	return !math.IsNaN(value) && !math.IsInf(value, 0)
+}
+
+func isConvertibleCurrencyAmount(value float64) bool {
+	return isFiniteJSONNumber(value) && math.Abs(value) <= maxConvertibleCurrencyAmount
+}
+
+func parseConvertibleCurrencyAmount(value json.Number) (float64, bool) {
+	if value == "" {
+		return 0, false
+	}
+	parsed, ok := new(big.Float).SetString(value.String())
+	if !ok {
+		return 0, false
+	}
+	limit, ok := new(big.Float).SetString("1000000000")
+	if !ok {
+		return 0, false
+	}
+	if new(big.Float).Abs(parsed).Cmp(limit) > 0 {
+		return 0, false
+	}
+	amount, _ := parsed.Float64()
+	if !isConvertibleCurrencyAmount(amount) {
+		return 0, false
+	}
+	return amount, true
 }

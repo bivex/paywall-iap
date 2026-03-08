@@ -141,7 +141,7 @@
 | Experiment arm editing backend | create experiment с arms уже есть, edit существующего draft пока ограничен metadata-only update | для настоящего Studio builder понадобится persisted arm CRUD + server-side validation суммарных weight/control arm invariants |
 | Pricing tier linkage model | live pricing tiers уже есть, но truthful linkage tier ↔ arm пока отсутствует | если Studio должен автоматизировать pricing-experiment workflows, нужна отдельная persisted linkage model/table, а не просто соседние UI-блоки |
 | Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
-| Manual override + lock semantics | ручные pause/resume/complete actions уже есть | automation должна уважать operator override: нужны флаги/поля вроде `automation_disabled`, `locked_by_operator`, `locked_until`, чтобы scheduler не отменял ручное решение |
+| Manual override + lock semantics | persisted `automation_policy` уже поддерживает `manual_override`, `locked_until`, `locked_by`, `lock_reason`, а admin API/UI уже умеют `lock/unlock` experiment automation | дальше держать это как единый contract: все scheduler-driven automation paths должны уважать как explicit manual override, так и time-bound lock window |
 | Observability для автоматики | worker/logging уже присутствуют | нужны метрики и алерты: сколько auto transitions прошло, сколько jobs упало, сколько stale experiments, сколько pending rewards не обработано, сколько window trims skipped |
 
 ### Минимальный truthful backend slice для следующего этапа автоматики

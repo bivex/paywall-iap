@@ -83,6 +83,9 @@ func main() {
 		logging.Logger,
 		&service.EngineConfig{
 			EnableCurrency: true,
+			EnableDelayed:  true,
+			EnableWindow:   true,
+			EnableHybrid:   true,
 		},
 	)
 

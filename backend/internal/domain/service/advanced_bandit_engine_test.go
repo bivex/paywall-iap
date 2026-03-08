@@ -2,21 +2,28 @@ package service
 
 import (
 	"context"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 type advancedEngineTestRepo struct {
-	experimentConfig *ExperimentConfig
-	updatedConfig    *ExperimentConfig
-	arms             []Arm
-	armStats         map[uuid.UUID]*ArmStats
-	pendingReward    *PendingReward
-	userRewards      []*PendingReward
+	experimentConfig      *ExperimentConfig
+	updatedConfig         *ExperimentConfig
+	arms                  []Arm
+	armStats              map[uuid.UUID]*ArmStats
+	pendingReward         *PendingReward
+	userRewards           []*PendingReward
+	windowExperiments     []uuid.UUID
+	objectiveExperiments  []uuid.UUID
+	updatedObjectiveStats []*ArmObjectiveStats
+	deletedContexts       int64
+	deletedAssignments    int64
 }
 
 func (r *advancedEngineTestRepo) GetArms(ctx context.Context, experimentID uuid.UUID) ([]Arm, error) {
@@ -57,6 +64,7 @@ func (r *advancedEngineTestRepo) GetObjectiveStats(ctx context.Context, armID uu
 	return &ArmObjectiveStats{ArmID: armID, ObjectiveType: objectiveType, AvgLTV: stats.AvgReward}, nil
 }
 func (r *advancedEngineTestRepo) UpdateObjectiveStats(ctx context.Context, stats *ArmObjectiveStats) error {
+	r.updatedObjectiveStats = append(r.updatedObjectiveStats, stats)
 	return nil
 }
 func (r *advancedEngineTestRepo) GetAllObjectiveStats(ctx context.Context, armID uuid.UUID) (map[ObjectiveType]*ArmObjectiveStats, error) {
@@ -88,6 +96,18 @@ func (r *advancedEngineTestRepo) LinkConversion(ctx context.Context, link *Conve
 }
 func (r *advancedEngineTestRepo) GetByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]*ConversionLink, error) {
 	return nil, nil
+}
+func (r *advancedEngineTestRepo) ListWindowMaintenanceExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
+	return r.windowExperiments, nil
+}
+func (r *advancedEngineTestRepo) ListObjectiveSyncExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
+	return r.objectiveExperiments, nil
+}
+func (r *advancedEngineTestRepo) CleanupStaleUserContext(ctx context.Context, olderThan time.Duration) (int64, error) {
+	return r.deletedContexts, nil
+}
+func (r *advancedEngineTestRepo) CleanupExpiredAssignments(ctx context.Context, olderThan time.Duration) (int64, error) {
+	return r.deletedAssignments, nil
 }
 
 type advancedEngineTestCache struct{}
@@ -193,4 +213,76 @@ func TestAdvancedBanditEngine_SetObjectiveConfig_NormalizesHybridWeights(t *test
 	require.InDelta(t, 0.5, config.ObjectiveWeights["conversion"], 0.0001)
 	require.InDelta(t, 0.3, config.ObjectiveWeights["ltv"], 0.0001)
 	require.InDelta(t, 0.2, config.ObjectiveWeights["revenue"], 0.0001)
+}
+
+func TestAdvancedBanditEngine_SyncObjectiveStats_UsesConfiguredHybridObjectives(t *testing.T) {
+	experimentID := uuid.New()
+	firstArmID := uuid.New()
+	secondArmID := uuid.New()
+	repo := &advancedEngineTestRepo{
+		experimentConfig: &ExperimentConfig{
+			ID:            experimentID,
+			ObjectiveType: ObjectiveHybrid,
+			ObjectiveWeights: map[string]float64{
+				"conversion": 0.7,
+				"ltv":        0.3,
+			},
+		},
+		objectiveExperiments: []uuid.UUID{experimentID},
+		arms:                 []Arm{{ID: firstArmID, ExperimentID: experimentID}, {ID: secondArmID, ExperimentID: experimentID}},
+		armStats: map[uuid.UUID]*ArmStats{
+			firstArmID:  {ArmID: firstArmID, Alpha: 11, Beta: 3, Samples: 12, Conversions: 10, Revenue: 100, AvgReward: 8.33},
+			secondArmID: {ArmID: secondArmID, Alpha: 5, Beta: 7, Samples: 10, Conversions: 4, Revenue: 40, AvgReward: 4},
+		},
+	}
+	cache := &advancedEngineTestCache{}
+	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
+	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{EnableHybrid: true})
+
+	synced, err := engine.SyncObjectiveStats(context.Background(), 10)
+
+	require.NoError(t, err)
+	assert.Equal(t, 4, synced)
+	if assert.Len(t, repo.updatedObjectiveStats, 4) {
+		seen := make([]string, 0, len(repo.updatedObjectiveStats))
+		for _, stat := range repo.updatedObjectiveStats {
+			seen = append(seen, stat.ArmID.String()+":"+string(stat.ObjectiveType))
+		}
+		sort.Strings(seen)
+		assert.Equal(t, []string{
+			firstArmID.String() + ":conversion",
+			firstArmID.String() + ":ltv",
+			secondArmID.String() + ":conversion",
+			secondArmID.String() + ":ltv",
+		}, seen)
+	}
+}
+
+func TestAdvancedBanditEngine_RunMaintenanceDetailed_ReturnsRepositoryBackedSummary(t *testing.T) {
+	experimentID := uuid.New()
+	armID := uuid.New()
+	repo := &advancedEngineTestRepo{
+		experimentConfig:     &ExperimentConfig{ID: experimentID, ObjectiveType: ObjectiveRevenue},
+		windowExperiments:    []uuid.UUID{experimentID},
+		objectiveExperiments: []uuid.UUID{experimentID},
+		deletedContexts:      3,
+		deletedAssignments:   2,
+		arms:                 []Arm{{ID: armID, ExperimentID: experimentID}},
+		armStats: map[uuid.UUID]*ArmStats{
+			armID: {ArmID: armID, Alpha: 4, Beta: 2, Samples: 5, Conversions: 3, Revenue: 42, AvgReward: 8.4},
+		},
+	}
+	cache := &advancedEngineTestCache{}
+	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
+	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{})
+
+	summary, err := engine.RunMaintenanceDetailed(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, summary)
+	assert.Equal(t, 1, summary.WindowExperimentsScanned)
+	assert.Equal(t, 1, summary.ObjectiveExperimentsScanned)
+	assert.Equal(t, 1, summary.ObjectiveStatsSynced)
+	assert.EqualValues(t, 3, summary.StaleContextsDeleted)
+	assert.EqualValues(t, 2, summary.ExpiredAssignmentsDeleted)
 }

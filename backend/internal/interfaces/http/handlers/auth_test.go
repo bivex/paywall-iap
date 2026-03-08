@@ -100,3 +100,17 @@ func TestAdminLogout_RejectsEmptyRefreshToken(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, recorder.Code, "body=%s", recorder.Body.String())
 	require.Contains(t, recorder.Body.String(), `"Invalid request body"`)
 }
+
+func TestRegister_RejectsUnknownFields(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler := NewAuthHandler(nil, nil, nil)
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/auth/register", strings.NewReader(`{"platform_user_id":"u1","device_id":"d1","platform":"ios","app_version":"1.0.0","x-schemathesis-unknown-property":42}`))
+	ctx.Request.Header.Set("Content-Type", "application/json")
+
+	handler.Register(ctx)
+
+	require.Equal(t, http.StatusBadRequest, recorder.Code, "body=%s", recorder.Body.String())
+	require.Contains(t, recorder.Body.String(), `unknown field`)
+}

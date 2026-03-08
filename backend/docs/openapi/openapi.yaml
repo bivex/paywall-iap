@@ -1249,26 +1249,31 @@ components:
     RegisterRequest:
       type: object
       required: [platform_user_id, device_id, platform, app_version]
+      additionalProperties: false
       properties:
         platform_user_id:
           type: string
           minLength: 1
+          pattern: '^[^\x00]+$'
         device_id:
           type: string
           minLength: 1
+          pattern: '^[^\x00]+$'
         platform:
           type: string
           enum: [ios, android]
         app_version:
           type: string
           minLength: 1
+          pattern: '^[^\x00]+$'
         email:
           nullable: true
           oneOf:
             - type: string
               maxLength: 0
             - type: string
-              format: email
+              minLength: 3
+              pattern: '^[A-Za-z0-9.!#$%&''*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$'
     RegisterResponse:
       type: object
       required: [user_id, access_token, refresh_token, expires_in]
@@ -1426,7 +1431,8 @@ components:
       properties:
         amount:
           type: number
-          maximum: 1e300
+          minimum: -1000000000
+          maximum: 1000000000
         currency:
           type: string
           minLength: 1
@@ -1484,6 +1490,7 @@ components:
     ObjectiveConfigUpdateRequest:
       type: object
       required: [objective_type, objective_weights]
+      additionalProperties: false
       properties:
         objective_type:
           type: string

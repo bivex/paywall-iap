@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,6 +30,32 @@ type AdvancedBanditEngine struct {
 	enableDelayed     bool
 	enableWindow      bool
 	enableHybrid      bool
+}
+
+const (
+	defaultBanditMaintenanceBatchSize       = 100
+	defaultBanditMaintenanceScanLimit       = 100
+	defaultBanditContextRetentionWindow     = 90 * 24 * time.Hour
+	defaultBanditExpiredAssignmentRetention = 24 * time.Hour
+)
+
+type banditMaintenanceRepository interface {
+	ListWindowMaintenanceExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error)
+	ListObjectiveSyncExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error)
+	CleanupStaleUserContext(ctx context.Context, olderThan time.Duration) (int64, error)
+	CleanupExpiredAssignments(ctx context.Context, olderThan time.Duration) (int64, error)
+}
+
+// BanditMaintenanceSummary reports what periodic maintenance actually did.
+type BanditMaintenanceSummary struct {
+	ExpiredPendingRewards       int   `json:"expired_pending_rewards"`
+	CurrencyRatesUpdated        bool  `json:"currency_rates_updated"`
+	WindowExperimentsScanned    int   `json:"window_experiments_scanned"`
+	WindowsTrimmed              int   `json:"windows_trimmed"`
+	ObjectiveExperimentsScanned int   `json:"objective_experiments_scanned"`
+	ObjectiveStatsSynced        int   `json:"objective_stats_synced"`
+	StaleContextsDeleted        int64 `json:"stale_contexts_deleted"`
+	ExpiredAssignmentsDeleted   int64 `json:"expired_assignments_deleted"`
 }
 
 // EngineConfig configures the advanced bandit engine
@@ -506,6 +533,151 @@ func (e *AdvancedBanditEngine) TrimWindow(ctx context.Context, experimentID uuid
 	return nil
 }
 
+func (e *AdvancedBanditEngine) ProcessExpiredPendingRewards(ctx context.Context, batchSize int) (int, error) {
+	if batchSize <= 0 {
+		batchSize = defaultBanditMaintenanceBatchSize
+	}
+
+	delayedStrategy, err := e.getDelayedStrategy()
+	if err != nil {
+		return 0, nil
+	}
+
+	processed, err := delayedStrategy.ProcessExpiredRewards(ctx, e.base, batchSize)
+	if err != nil {
+		return 0, err
+	}
+	if processed > 0 {
+		e.logger.Info("Processed expired pending rewards", zap.Int("count", processed))
+	}
+	return processed, nil
+}
+
+func (e *AdvancedBanditEngine) TrimConfiguredWindows(ctx context.Context, limit int) (int, error) {
+	if !e.enableWindow {
+		return 0, nil
+	}
+	if limit <= 0 {
+		limit = defaultBanditMaintenanceScanLimit
+	}
+
+	maintenanceRepo, ok := e.repo.(banditMaintenanceRepository)
+	if !ok {
+		return 0, nil
+	}
+
+	experimentIDs, err := maintenanceRepo.ListWindowMaintenanceExperimentIDs(ctx, limit)
+	if err != nil {
+		return 0, fmt.Errorf("failed to list window maintenance experiments: %w", err)
+	}
+
+	trimmed := 0
+	for _, experimentID := range experimentIDs {
+		arms, err := e.repo.GetArms(ctx, experimentID)
+		if err != nil {
+			return trimmed, fmt.Errorf("failed to load arms for window maintenance: %w", err)
+		}
+		if len(arms) == 0 {
+			continue
+		}
+
+		if err := e.TrimWindow(ctx, experimentID); err != nil {
+			return trimmed, err
+		}
+		trimmed += len(arms)
+	}
+
+	return trimmed, nil
+}
+
+func (e *AdvancedBanditEngine) SyncObjectiveStats(ctx context.Context, limit int) (int, error) {
+	if limit <= 0 {
+		limit = defaultBanditMaintenanceScanLimit
+	}
+
+	maintenanceRepo, ok := e.repo.(banditMaintenanceRepository)
+	if !ok {
+		return 0, nil
+	}
+	objectiveRepo, ok := e.repo.(ObjectiveRepository)
+	if !ok {
+		return 0, nil
+	}
+
+	experimentIDs, err := maintenanceRepo.ListObjectiveSyncExperimentIDs(ctx, limit)
+	if err != nil {
+		return 0, fmt.Errorf("failed to list objective sync experiments: %w", err)
+	}
+
+	synced := 0
+	for _, experimentID := range experimentIDs {
+		config, err := e.getExperimentConfig(ctx, experimentID)
+		if err != nil {
+			return synced, err
+		}
+		objectiveTypes := maintenanceObjectiveTypes(config)
+		if len(objectiveTypes) == 0 {
+			continue
+		}
+
+		arms, err := e.repo.GetArms(ctx, experimentID)
+		if err != nil {
+			return synced, fmt.Errorf("failed to load arms for objective sync: %w", err)
+		}
+
+		for _, arm := range arms {
+			stats, err := e.repo.GetArmStats(ctx, arm.ID)
+			if err != nil {
+				return synced, fmt.Errorf("failed to load arm stats for objective sync: %w", err)
+			}
+
+			for _, objectiveType := range objectiveTypes {
+				if err := objectiveRepo.UpdateObjectiveStats(ctx, &ArmObjectiveStats{
+					ArmID:         arm.ID,
+					ObjectiveType: objectiveType,
+					Alpha:         stats.Alpha,
+					Beta:          stats.Beta,
+					Samples:       stats.Samples,
+					Conversions:   stats.Conversions,
+					TotalRevenue:  stats.Revenue,
+					AvgLTV:        stats.AvgReward,
+				}); err != nil {
+					return synced, fmt.Errorf("failed to sync objective stats: %w", err)
+				}
+				synced++
+			}
+		}
+	}
+
+	return synced, nil
+}
+
+func (e *AdvancedBanditEngine) CleanupOldContextData(ctx context.Context, olderThan time.Duration) (int64, error) {
+	if olderThan <= 0 {
+		olderThan = defaultBanditContextRetentionWindow
+	}
+
+	maintenanceRepo, ok := e.repo.(banditMaintenanceRepository)
+	if !ok {
+		return 0, nil
+	}
+
+	return maintenanceRepo.CleanupStaleUserContext(ctx, olderThan)
+}
+
+func (e *AdvancedBanditEngine) CleanupExpiredAssignments(ctx context.Context, olderThan time.Duration) (int64, error) {
+	if olderThan <= 0 {
+		olderThan = defaultBanditExpiredAssignmentRetention
+	}
+
+	maintenanceRepo, ok := e.repo.(banditMaintenanceRepository)
+	if !ok {
+		return 0, nil
+	}
+
+	return maintenanceRepo.CleanupExpiredAssignments(ctx, olderThan)
+}
+
 func (e *AdvancedBanditEngine) ExportWindowEvents(
 	ctx context.Context,
 	experimentID uuid.UUID,
@@ -603,29 +775,101 @@ type BanditMetrics struct {
 	PendingRewards    int64
 }
 
-// RunMaintenance performs periodic maintenance tasks
-func (e *AdvancedBanditEngine) RunMaintenance(ctx context.Context) error {
-	// Process expired pending rewards
-	if delayedStrategy, err := e.getDelayedStrategy(); err == nil {
-		processed, err := delayedStrategy.ProcessExpiredRewards(ctx, e.base, 100)
-		if err != nil {
-			e.logger.Error("Failed to process expired rewards", zap.Error(err))
-		} else if processed > 0 {
-			e.logger.Info("Processed expired pending rewards", zap.Int("count", processed))
-		}
-	}
+// RunMaintenanceDetailed performs periodic maintenance tasks and returns a structured summary.
+func (e *AdvancedBanditEngine) RunMaintenanceDetailed(ctx context.Context) (*BanditMaintenanceSummary, error) {
+	summary := &BanditMaintenanceSummary{}
 
-	// Update currency rates
+	processed, err := e.ProcessExpiredPendingRewards(ctx, defaultBanditMaintenanceBatchSize)
+	if err != nil {
+		return summary, err
+	}
+	summary.ExpiredPendingRewards = processed
+
 	if e.currencyService != nil {
 		if err := e.currencyService.UpdateRates(ctx); err != nil {
-			e.logger.Warn("Failed to update currency rates", zap.Error(err))
+			return summary, err
+		}
+		summary.CurrencyRatesUpdated = true
+	}
+
+	if maintenanceRepo, ok := e.repo.(banditMaintenanceRepository); ok {
+		windowExperimentIDs, err := maintenanceRepo.ListWindowMaintenanceExperimentIDs(ctx, defaultBanditMaintenanceScanLimit)
+		if err != nil {
+			return summary, fmt.Errorf("failed to inspect window maintenance candidates: %w", err)
+		}
+		summary.WindowExperimentsScanned = len(windowExperimentIDs)
+
+		trimmed, err := e.TrimConfiguredWindows(ctx, defaultBanditMaintenanceScanLimit)
+		if err != nil {
+			return summary, err
+		}
+		summary.WindowsTrimmed = trimmed
+
+		objectiveExperimentIDs, err := maintenanceRepo.ListObjectiveSyncExperimentIDs(ctx, defaultBanditMaintenanceScanLimit)
+		if err != nil {
+			return summary, fmt.Errorf("failed to inspect objective sync candidates: %w", err)
+		}
+		summary.ObjectiveExperimentsScanned = len(objectiveExperimentIDs)
+	}
+
+	synced, err := e.SyncObjectiveStats(ctx, defaultBanditMaintenanceScanLimit)
+	if err != nil {
+		return summary, err
+	}
+	summary.ObjectiveStatsSynced = synced
+
+	contextsDeleted, err := e.CleanupOldContextData(ctx, defaultBanditContextRetentionWindow)
+	if err != nil {
+		return summary, err
+	}
+	summary.StaleContextsDeleted = contextsDeleted
+
+	assignmentsDeleted, err := e.CleanupExpiredAssignments(ctx, defaultBanditExpiredAssignmentRetention)
+	if err != nil {
+		return summary, err
+	}
+	summary.ExpiredAssignmentsDeleted = assignmentsDeleted
+
+	return summary, nil
+}
+
+// RunMaintenance performs periodic maintenance tasks.
+func (e *AdvancedBanditEngine) RunMaintenance(ctx context.Context) error {
+	_, err := e.RunMaintenanceDetailed(ctx)
+	return err
+}
+
+func maintenanceObjectiveTypes(config *ExperimentConfig) []ObjectiveType {
+	if config == nil {
+		return nil
+	}
+
+	if config.ObjectiveType != ObjectiveHybrid {
+		switch config.ObjectiveType {
+		case ObjectiveConversion, ObjectiveLTV, ObjectiveRevenue:
+			return []ObjectiveType{config.ObjectiveType}
+		default:
+			return nil
 		}
 	}
 
-	// Trim windows if needed
-	// This would iterate through all arms and trim their windows
-
-	return nil
+	valid := map[ObjectiveType]struct{}{
+		ObjectiveConversion: {},
+		ObjectiveLTV:        {},
+		ObjectiveRevenue:    {},
+	}
+	objectiveTypes := make([]ObjectiveType, 0, len(valid))
+	for objective := range config.ObjectiveWeights {
+		objType := ObjectiveType(objective)
+		if _, ok := valid[objType]; ok {
+			objectiveTypes = append(objectiveTypes, objType)
+		}
+	}
+	if len(objectiveTypes) == 0 {
+		objectiveTypes = []ObjectiveType{ObjectiveConversion, ObjectiveLTV, ObjectiveRevenue}
+	}
+	sort.Slice(objectiveTypes, func(i, j int) bool { return objectiveTypes[i] < objectiveTypes[j] })
+	return objectiveTypes
 }
 
 // Helper function for math

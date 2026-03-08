@@ -143,6 +143,21 @@ func TestIsFiniteJSONNumber(t *testing.T) {
 	require.False(t, isFiniteJSONNumber(math.NaN()))
 }
 
+func TestIsConvertibleCurrencyAmount(t *testing.T) {
+	require.True(t, isConvertibleCurrencyAmount(1000000000))
+	require.False(t, isConvertibleCurrencyAmount(1e306))
+	require.False(t, isConvertibleCurrencyAmount(math.Inf(1)))
+}
+
+func TestParseConvertibleCurrencyAmount(t *testing.T) {
+	amount, ok := parseConvertibleCurrencyAmount(json.Number("1000000000"))
+	require.True(t, ok)
+	require.Equal(t, 1000000000.0, amount)
+
+	_, ok = parseConvertibleCurrencyAmount(json.Number("1000000000.0000001"))
+	require.False(t, ok)
+}
+
 func TestGetObjectiveScores_GinWrappedRouteAcceptsValidExperimentID(t *testing.T) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

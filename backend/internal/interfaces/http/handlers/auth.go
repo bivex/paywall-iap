@@ -13,6 +13,7 @@ import (
 	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 // AuthHandler handles authentication endpoints
@@ -47,7 +48,7 @@ func NewAuthHandler(
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := bindStrictJSON(c, &req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
@@ -64,6 +65,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	response.Created(c, resp)
+}
+
+func bindStrictJSON(c *gin.Context, dst interface{}) error {
+	decoder := json.NewDecoder(c.Request.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(dst); err != nil {
+		return err
+	}
+	return binding.Validator.ValidateStruct(dst)
 }
 
 // RefreshToken handles token refresh

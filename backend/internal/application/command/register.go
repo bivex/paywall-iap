@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/bivex/paywall-iap/internal/application/dto"
 	appMiddleware "github.com/bivex/paywall-iap/internal/application/middleware"
@@ -30,6 +31,9 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 	// Validate platform
 	if req.Platform != "ios" && req.Platform != "android" {
 		return nil, fmt.Errorf("%w: invalid platform", domainErrors.ErrInvalidPlatform)
+	}
+	if containsNullByte(req.PlatformUserID) || containsNullByte(req.DeviceID) || containsNullByte(req.AppVersion) || containsNullByte(req.Email) {
+		return nil, fmt.Errorf("invalid request: text fields must not contain null bytes")
 	}
 
 	// Check if user already exists
@@ -72,4 +76,8 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 		RefreshToken: refreshToken,
 		ExpiresIn:    900, // 15 minutes
 	}, nil
+}
+
+func containsNullByte(value string) bool {
+	return strings.ContainsRune(value, '\x00')
 }
