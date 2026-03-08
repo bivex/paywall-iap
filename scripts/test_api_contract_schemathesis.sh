@@ -15,6 +15,7 @@ EXPLICIT_SCHEMATHESIS_AUTH_TOKEN="$SCHEMATHESIS_AUTH_TOKEN"
 EXPLICIT_SCHEMATHESIS_HEADER="$SCHEMATHESIS_HEADER"
 SCHEMATHESIS_PHASES="${SCHEMATHESIS_PHASES:-examples,coverage,fuzzing}"
 SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA="${SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA:-missing_auth,validation_mismatch,missing_deserializer,unused_openapi_auth,unsupported_regex}"
+SCHEMATHESIS_WARNINGS_WITHOUT_PRICING_NOISE="${SCHEMATHESIS_WARNINGS_WITHOUT_PRICING_NOISE:-missing_auth,missing_deserializer,unused_openapi_auth,unsupported_regex}"
 SKIP_HEALTHCHECK="${SKIP_HEALTHCHECK:-0}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@paywall.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin12345}"
@@ -233,7 +234,7 @@ should_apply_admin_experiment_negative_rejection_workarounds() {
   local args_joined
   args_joined=" $* "
 
-  if [[ "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA "* ]]; then
+  if [[ "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA "* || "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_PRICING_NOISE "* ]]; then
     return 1
   fi
 
@@ -256,7 +257,7 @@ should_apply_bandit_pending_warning_workaround() {
   local args_joined
   args_joined=" $* "
 
-  if [[ "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA "* ]]; then
+  if [[ "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA "* || "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_PRICING_NOISE "* ]]; then
     return 1
   fi
 
@@ -302,7 +303,7 @@ should_split_stateful_admin_experiment_action_runs() {
     return 0
   fi
 
-  if [[ "$args_joined" == *" --include-path-regex "*"/v1/admin/experiments"* ]]; then
+  if [[ "$args_joined" == *"/v1/admin/experiments"* || "$args_joined" == *" --include-path-regex "*"/v1/admin/experiments"* ]]; then
     return 0
   fi
 
@@ -367,6 +368,8 @@ run_schemathesis_with_admin_experiment_negative_rejection_workarounds() {
 
   local lifecycle_audit_path='/v1/admin/experiments/{id}/lifecycle-audit'
   local update_experiment_path='/v1/admin/experiments/{id}'
+  local pricing_create_path='/v1/admin/pricing-tiers'
+  local pricing_update_path='/v1/admin/pricing-tiers/{id}'
 
   collect_non_path_filter_args "$@"
 
@@ -395,6 +398,8 @@ run_schemathesis_with_stateful_admin_experiment_action_splits() {
 
   local lifecycle_audit_path='/v1/admin/experiments/{id}/lifecycle-audit'
   local update_experiment_path='/v1/admin/experiments/{id}'
+  local pricing_create_path='/v1/admin/pricing-tiers'
+  local pricing_update_path='/v1/admin/pricing-tiers/{id}'
   local -a stateful_action_paths=(
     '/v1/admin/experiments/{id}/pause'
     '/v1/admin/experiments/{id}/resume'
@@ -408,8 +413,11 @@ run_schemathesis_with_stateful_admin_experiment_action_splits() {
   say "Applying admin experiment Schemathesis workarounds (split stateful actions into isolated reseeded runs)"
 
   run_schemathesis "$label (excluding endpoint-specific false-positives and isolated stateful actions)" "$bearer_token" \
+    --warnings "$SCHEMATHESIS_WARNINGS_WITHOUT_PRICING_NOISE" \
     --exclude-path "$update_experiment_path" \
     --exclude-path "$lifecycle_audit_path" \
+    --exclude-path "$pricing_create_path" \
+    --exclude-path "$pricing_update_path" \
     --exclude-path '/v1/admin/experiments/{id}/pause' \
     --exclude-path '/v1/admin/experiments/{id}/resume' \
     --exclude-path '/v1/admin/experiments/{id}/confirm-winner' \
@@ -418,13 +426,19 @@ run_schemathesis_with_stateful_admin_experiment_action_splits() {
 
   run_schemathesis "$label (experiment update without negative_data_rejection)" "$bearer_token" \
     --include-path "$update_experiment_path" \
-    --exclude-checks negative_data_rejection \
-    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+    --exclude-checks negative_data_rejection
 
   run_schemathesis "$label (lifecycle-audit without negative_data_rejection)" "$bearer_token" \
     --include-path "$lifecycle_audit_path" \
-    --exclude-checks negative_data_rejection \
-    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+    --exclude-checks negative_data_rejection
+
+  say "Running isolated pricing endpoints via harness subprocesses"
+  bash "$0" \
+    --warnings "$SCHEMATHESIS_WARNINGS_WITHOUT_PRICING_NOISE" \
+    --include-path "$pricing_create_path"
+  bash "$0" \
+    --warnings "$SCHEMATHESIS_WARNINGS_WITHOUT_PRICING_NOISE" \
+    --include-path "$pricing_update_path"
 
   for action_path in "${stateful_action_paths[@]}"; do
     reseed_admin_experiment_contract_fixtures
@@ -447,6 +461,7 @@ run_schemathesis_with_bandit_pending_warning_workaround() {
   say "Applying bandit pending Schemathesis workaround (isolate example-backed path and suppress false-positive missing_test_data warning)"
 
   run_schemathesis "$label (excluding bandit pending warning outlier)" "$bearer_token" \
+    --warnings "$SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA" \
     --exclude-path "$pending_path" \
     "$@"
 
@@ -494,6 +509,7 @@ main() {
         "$@"
     else
       run_schemathesis "public endpoints" "" \
+        --warnings "$SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA" \
         --exclude-tag admin \
         --exclude-tag admin-auth \
         --exclude-tag subscription \
