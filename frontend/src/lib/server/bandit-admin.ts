@@ -3,7 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 
 import type { BanditMetrics, BanditSnapshot, BanditStatisticsResponse } from "@/lib/bandit";
-import type { ExperimentSummary } from "@/lib/experiments";
+import type { ExperimentSummary, ExperimentWinnerRecommendationAudit } from "@/lib/experiments";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -69,11 +69,18 @@ export async function getBanditSnapshotFromCookies(experimentId: string): Promis
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
-  const [statisticsResult, metricsResult] = await Promise.allSettled([
+  const token = await getAdminToken();
+  if (!token) return null;
+
+  const [statisticsResult, metricsResult, recommendationHistoryResult] = await Promise.allSettled([
     fetch(`${BACKEND_URL}/v1/bandit/statistics?experiment_id=${experimentId}&win_probs=true`, {
       cache: "no-store",
     }),
     fetch(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/metrics`, {
+      cache: "no-store",
+    }),
+    fetch(`${BACKEND_URL}/v1/admin/experiments/${experimentId}/winner-recommendation-audit`, {
+      headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     }),
   ]);
@@ -90,7 +97,13 @@ export async function getBanditSnapshotFromCookies(experimentId: string): Promis
     if (parsed.ok) metrics = normalizeMetrics(parsed.data);
   }
 
-  return { experiment, statistics, metrics };
+  let recommendationHistory: ExperimentWinnerRecommendationAudit[] = [];
+  if (recommendationHistoryResult.status === "fulfilled") {
+    const parsed = await parseResponse<ExperimentWinnerRecommendationAudit[]>(recommendationHistoryResult.value);
+    if (parsed.ok) recommendationHistory = parsed.data;
+  }
+
+  return { experiment, statistics, metrics, recommendationHistory };
 }
 
 export async function getBanditDashboardFromCookies() {

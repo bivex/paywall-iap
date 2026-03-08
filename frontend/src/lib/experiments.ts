@@ -42,6 +42,30 @@ export interface ExperimentLifecycleAudit {
   readonly created_at: string;
 }
 
+export interface ExperimentWinnerRecommendation {
+  readonly recommended: boolean;
+  readonly reason: string;
+  readonly winning_arm_id?: string | null;
+  readonly winning_arm_name?: string | null;
+  readonly confidence_percent?: number | null;
+  readonly confidence_threshold_percent: number;
+  readonly observed_samples: number;
+  readonly min_sample_size: number;
+}
+
+export interface ExperimentWinnerRecommendationAudit {
+  readonly source: string;
+  readonly recommended: boolean;
+  readonly reason: string;
+  readonly winning_arm_id?: string | null;
+  readonly confidence_percent?: number | null;
+  readonly confidence_threshold_percent: number;
+  readonly observed_samples: number;
+  readonly min_sample_size: number;
+  readonly details?: Record<string, unknown> | null;
+  readonly occurred_at: string;
+}
+
 export interface ExperimentArm {
   id: string;
   name: string;
@@ -65,6 +89,7 @@ export interface ExperimentSummary {
   min_sample_size: number;
   confidence_threshold_percent: number;
   winner_confidence_percent: number | null;
+  winner_recommendation?: ExperimentWinnerRecommendation | null;
   start_at: string | null;
   end_at: string | null;
   automation_policy?: ExperimentAutomationPolicy;
@@ -112,6 +137,42 @@ export function getExperimentLifecycleSourceKey(source?: string | null): string 
       return "sourceAutomation";
     case "admin_experiments_api":
       return "sourceAdminApi";
+    default:
+      return null;
+  }
+}
+
+export function getExperimentWinnerRecommendationReasonKey(reason?: string | null): string | null {
+  switch (reason) {
+    case "draft_experiment":
+      return "reasonDraftExperiment";
+    case "status_not_eligible":
+      return "reasonStatusNotEligible";
+    case "insufficient_arms":
+      return "reasonInsufficientArms";
+    case "insufficient_data":
+      return "reasonInsufficientData";
+    case "insufficient_sample_size":
+      return "reasonInsufficientSampleSize";
+    case "confidence_below_threshold":
+      return "reasonConfidenceBelowThreshold";
+    case "recommend_winner":
+      return "reasonRecommendWinner";
+    default:
+      return null;
+  }
+}
+
+export function getExperimentWinnerRecommendationSourceKey(source?: string | null): string | null {
+  switch (source) {
+    case "admin_experiments_api":
+      return "sourceAdminApi";
+    case "admin_experiments_list":
+      return "sourceAdminOverview";
+    case "admin_experiments_detail":
+      return "sourceAdminDetail";
+    case "winner_recommendation_service":
+      return "sourceRecommendationService";
     default:
       return null;
   }

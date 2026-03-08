@@ -816,4 +816,35 @@ func TestAdminExperimentsHandler(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
+
+	t.Run("GET tolerates missing optional experiment audit tables", func(t *testing.T) {
+		_, err := db.Exec(ctx, `
+			DROP TABLE experiment_winner_recommendation_log;
+			DROP TABLE experiment_lifecycle_audit_log;
+		`)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data []handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		require.Len(t, resp.Data, 2)
+
+		var foundRunning bool
+		for _, experiment := range resp.Data {
+			assert.Nil(t, experiment.LatestLifecycleAudit)
+			if experiment.ID != runningExperiment.ID {
+				continue
+			}
+			foundRunning = true
+			require.NotNil(t, experiment.WinnerRecommendation)
+			assert.Equal(t, "recommend_winner", experiment.WinnerRecommendation.Reason)
+		}
+		assert.True(t, foundRunning)
+	})
 }

@@ -225,8 +225,15 @@ const adminExperimentSelectBase = `
 		       e.confidence_threshold::double precision,
 		       e.winner_confidence::double precision,
 		       e.start_at,
-		       e.end_at,
-		       e.automation_policy,
+		       e.end_at,`
+
+const adminExperimentSelectAutomationPolicy = `
+		       e.automation_policy,`
+
+const adminExperimentSelectAutomationPolicyMissing = `
+		       '{"enabled":false,"auto_start":false,"auto_complete":false,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false}'::jsonb AS automation_policy,`
+
+const adminExperimentSelectLatestLifecycle = `
 		       latest_lifecycle.actor_type,
 		       latest_lifecycle.source,
 		       latest_lifecycle.action,
@@ -234,7 +241,19 @@ const adminExperimentSelectBase = `
 		       latest_lifecycle.to_status,
 		       latest_lifecycle.idempotency_key,
 		       latest_lifecycle.details,
-		       latest_lifecycle.created_at,
+		       latest_lifecycle.created_at,`
+
+const adminExperimentSelectLatestLifecycleMissing = `
+		       NULL::text AS actor_type,
+		       NULL::text AS source,
+		       NULL::text AS action,
+		       NULL::text AS from_status,
+		       NULL::text AS to_status,
+		       NULL::text AS idempotency_key,
+		       NULL::jsonb AS details,
+		       NULL::timestamptz AS created_at,`
+
+const adminExperimentSelectMeta = `
 		       e.created_at,
 		       e.updated_at,
 		       (SELECT COUNT(*)::int FROM ab_test_arms a WHERE a.experiment_id = e.id) AS arm_count,`
@@ -244,23 +263,19 @@ const adminExperimentSelectStatsOnly = `
 		       0::int AS active_assignments,
 		       COALESCE((SELECT SUM(s.samples)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_samples,
 		       COALESCE((SELECT SUM(s.conversions)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_conversions,
-		       COALESCE((SELECT SUM(s.revenue)::double precision FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_revenue
-		FROM ab_tests e
-		LEFT JOIN LATERAL (
-			SELECT actor_type, source, action, from_status, to_status, idempotency_key, details, created_at
-			FROM experiment_lifecycle_audit_log l
-			WHERE l.experiment_id = e.id
-			ORDER BY l.created_at DESC
-			LIMIT 1
-		) latest_lifecycle ON true`
+		       COALESCE((SELECT SUM(s.revenue)::double precision FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_revenue`
 
 const adminExperimentSelectWithAssignments = `
 		       (SELECT COUNT(*)::int FROM ab_test_assignments ass WHERE ass.experiment_id = e.id) AS total_assignments,
 		       (SELECT COUNT(*)::int FROM ab_test_assignments ass WHERE ass.experiment_id = e.id AND ass.expires_at > NOW()) AS active_assignments,
 		       COALESCE((SELECT SUM(s.samples)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_samples,
 		       COALESCE((SELECT SUM(s.conversions)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_conversions,
-		       COALESCE((SELECT SUM(s.revenue)::double precision FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_revenue
-		FROM ab_tests e
+		       COALESCE((SELECT SUM(s.revenue)::double precision FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_revenue`
+
+const adminExperimentSelectFrom = `
+		FROM ab_tests e`
+
+const adminExperimentLatestLifecycleJoin = `
 		LEFT JOIN LATERAL (
 			SELECT actor_type, source, action, from_status, to_status, idempotency_key, details, created_at
 			FROM experiment_lifecycle_audit_log l
@@ -628,39 +643,94 @@ func applyExperimentArmPricingTierUpdates(ctx context.Context, tx pgx.Tx, experi
 	return nil
 }
 
-func (h *AdminHandler) hasAssignmentTable(c *gin.Context) bool {
+func (h *AdminHandler) hasTable(ctx context.Context, relation string) bool {
 	var exists bool
-	err := h.dbPool.QueryRow(c.Request.Context(), `
-		SELECT to_regclass('public.ab_test_assignments') IS NOT NULL`).Scan(&exists)
+	err := h.dbPool.QueryRow(ctx, `
+		SELECT to_regclass($1) IS NOT NULL`, relation).Scan(&exists)
 	return err == nil && exists
 }
 
-func adminExperimentListQuery(withAssignments bool) string {
+func (h *AdminHandler) hasColumn(ctx context.Context, tableName string, columnName string) bool {
+	var exists bool
+	err := h.dbPool.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
+		)`, tableName, columnName).Scan(&exists)
+	return err == nil && exists
+}
+
+func (h *AdminHandler) hasAssignmentTable(c *gin.Context) bool {
+	return h.hasTable(c.Request.Context(), "public.ab_test_assignments")
+}
+
+func (h *AdminHandler) hasLifecycleAuditTable(c *gin.Context) bool {
+	return h.hasTable(c.Request.Context(), "public.experiment_lifecycle_audit_log")
+}
+
+func (h *AdminHandler) hasWinnerRecommendationLogTable(c *gin.Context) bool {
+	return h.hasTable(c.Request.Context(), "public.experiment_winner_recommendation_log")
+}
+
+func (h *AdminHandler) hasExperimentAutomationPolicyColumn(c *gin.Context) bool {
+	return h.hasColumn(c.Request.Context(), "ab_tests", "automation_policy")
+}
+
+func (h *AdminHandler) hasExperimentArmPricingTierColumn(c *gin.Context) bool {
+	return h.hasColumn(c.Request.Context(), "ab_test_arms", "pricing_tier_id")
+}
+
+func adminExperimentListQuery(withAssignments bool, withLifecycleAudit bool, withAutomationPolicy bool) string {
+	lifecycleColumns := adminExperimentSelectLatestLifecycleMissing
+	lifecycleJoin := ""
+	automationPolicyColumns := adminExperimentSelectAutomationPolicyMissing
+	if withAutomationPolicy {
+		automationPolicyColumns = adminExperimentSelectAutomationPolicy
+	}
+	if withLifecycleAudit {
+		lifecycleColumns = adminExperimentSelectLatestLifecycle
+		lifecycleJoin = adminExperimentLatestLifecycleJoin
+	}
 	if withAssignments {
-		return adminExperimentSelectBase + adminExperimentSelectWithAssignments + `
+		return adminExperimentSelectBase + automationPolicyColumns + lifecycleColumns + adminExperimentSelectMeta + adminExperimentSelectWithAssignments + adminExperimentSelectFrom + lifecycleJoin + `
 		ORDER BY e.created_at DESC`
 	}
-	return adminExperimentSelectBase + adminExperimentSelectStatsOnly + `
+	return adminExperimentSelectBase + automationPolicyColumns + lifecycleColumns + adminExperimentSelectMeta + adminExperimentSelectStatsOnly + adminExperimentSelectFrom + lifecycleJoin + `
 		ORDER BY e.created_at DESC`
 }
 
-func adminExperimentByIDQuery(withAssignments bool) string {
+func adminExperimentByIDQuery(withAssignments bool, withLifecycleAudit bool, withAutomationPolicy bool) string {
+	lifecycleColumns := adminExperimentSelectLatestLifecycleMissing
+	lifecycleJoin := ""
+	automationPolicyColumns := adminExperimentSelectAutomationPolicyMissing
+	if withAutomationPolicy {
+		automationPolicyColumns = adminExperimentSelectAutomationPolicy
+	}
+	if withLifecycleAudit {
+		lifecycleColumns = adminExperimentSelectLatestLifecycle
+		lifecycleJoin = adminExperimentLatestLifecycleJoin
+	}
 	if withAssignments {
-		return adminExperimentSelectBase + adminExperimentSelectWithAssignments + `
+		return adminExperimentSelectBase + automationPolicyColumns + lifecycleColumns + adminExperimentSelectMeta + adminExperimentSelectWithAssignments + adminExperimentSelectFrom + lifecycleJoin + `
 		WHERE e.id = $1`
 	}
-	return adminExperimentSelectBase + adminExperimentSelectStatsOnly + `
+	return adminExperimentSelectBase + automationPolicyColumns + lifecycleColumns + adminExperimentSelectMeta + adminExperimentSelectStatsOnly + adminExperimentSelectFrom + lifecycleJoin + `
 		WHERE e.id = $1`
 }
 
 func (h *AdminHandler) listExperimentArms(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentArm, error) {
+	pricingTierSelect := `NULL::uuid`
+	if h.hasExperimentArmPricingTierColumn(ctx) {
+		pricingTierSelect = `a.pricing_tier_id`
+	}
 	rows, err := h.dbPool.Query(ctx.Request.Context(), `
 		SELECT a.id,
 		       a.name,
 		       a.description,
 		       a.is_control,
 		       a.traffic_weight::double precision,
-		       a.pricing_tier_id,
+		       `+pricingTierSelect+`,
 		       COALESCE(s.samples, 0)::int,
 		       COALESCE(s.conversions, 0)::int,
 		       COALESCE(s.revenue, 0)::double precision,
@@ -686,7 +756,10 @@ func (h *AdminHandler) listExperimentArms(ctx *gin.Context, experimentID uuid.UU
 }
 
 func (h *AdminHandler) getAdminExperimentByID(c *gin.Context, experimentID uuid.UUID) (AdminExperiment, error) {
-	experiment, err := scanAdminExperiment(h.dbPool.QueryRow(c.Request.Context(), adminExperimentByIDQuery(h.hasAssignmentTable(c)), experimentID))
+	withAssignments := h.hasAssignmentTable(c)
+	withLifecycleAudit := h.hasLifecycleAuditTable(c)
+	withAutomationPolicy := h.hasExperimentAutomationPolicyColumn(c)
+	experiment, err := scanAdminExperiment(h.dbPool.QueryRow(c.Request.Context(), adminExperimentByIDQuery(withAssignments, withLifecycleAudit, withAutomationPolicy), experimentID))
 	if err != nil {
 		return AdminExperiment{}, err
 	}
@@ -744,6 +817,9 @@ func (h *AdminHandler) enrichWinnerRecommendation(ctx context.Context, experimen
 }
 
 func (h *AdminHandler) listExperimentWinnerRecommendationAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentWinnerRecommendationAudit, error) {
+	if !h.hasWinnerRecommendationLogTable(ctx) {
+		return []AdminExperimentWinnerRecommendationAudit{}, nil
+	}
 	rows, err := h.dbPool.Query(ctx.Request.Context(), `
 		SELECT source,
 		       recommended,
@@ -775,6 +851,9 @@ func (h *AdminHandler) listExperimentWinnerRecommendationAuditHistory(ctx *gin.C
 }
 
 func (h *AdminHandler) listExperimentLifecycleAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentLifecycleAudit, error) {
+	if !h.hasLifecycleAuditTable(ctx) {
+		return []AdminExperimentLifecycleAudit{}, nil
+	}
 	rows, err := h.dbPool.Query(ctx.Request.Context(), `
 		SELECT actor_type,
 		       source,
@@ -854,7 +933,10 @@ func (h *AdminHandler) GetAdminExperimentWinnerRecommendationAuditHistory(c *gin
 }
 
 func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
-	rows, err := h.dbPool.Query(c.Request.Context(), adminExperimentListQuery(h.hasAssignmentTable(c)))
+	withAssignments := h.hasAssignmentTable(c)
+	withLifecycleAudit := h.hasLifecycleAuditTable(c)
+	withAutomationPolicy := h.hasExperimentAutomationPolicyColumn(c)
+	rows, err := h.dbPool.Query(c.Request.Context(), adminExperimentListQuery(withAssignments, withLifecycleAudit, withAutomationPolicy))
 	if err != nil {
 		response.InternalError(c, "Failed to load experiments")
 		return

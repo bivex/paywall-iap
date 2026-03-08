@@ -22,7 +22,15 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { BanditArmStatistics, BanditSnapshot } from "@/lib/bandit";
-import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
+import {
+  type ExperimentAlgorithm,
+  type ExperimentStatus,
+  type ExperimentSummary,
+  formatExperimentLifecycleCode,
+  getExperimentWinnerRecommendationReasonKey,
+  getExperimentWinnerRecommendationSourceKey,
+} from "@/lib/experiments";
+import { formatAdminDateTime } from "@/lib/time";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
@@ -32,6 +40,11 @@ function formatPercent(value: number | null | undefined, digits = 1) {
 function formatRatePercent(value: number | null | undefined, digits = 2) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
   return `${(value * 100).toFixed(digits)}%`;
+}
+
+function formatPercentNumber(value: number | null | undefined, digits = 1) {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  return `${value.toFixed(digits)}%`;
 }
 
 function formatRevenue(value: number) {
@@ -58,6 +71,50 @@ function statusClass(status: ExperimentStatus) {
       return "bg-orange-100 text-orange-800";
     case "completed":
       return "bg-gray-100 text-gray-700";
+  }
+}
+
+function hasActiveTimedLock(value: string | null | undefined) {
+  if (!value) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.getTime() > Date.now();
+}
+
+function formatRecommendationReason(t: ReturnType<typeof useTranslations>, reason: string | null | undefined) {
+  const reasonKey = getExperimentWinnerRecommendationReasonKey(reason);
+  return reasonKey ? t(`recommendation.${reasonKey}`) : formatExperimentLifecycleCode(reason);
+}
+
+function formatRecommendationSource(t: ReturnType<typeof useTranslations>, source: string | null | undefined) {
+  const sourceKey = getExperimentWinnerRecommendationSourceKey(source);
+  return sourceKey ? t(`recommendation.${sourceKey}`) : formatExperimentLifecycleCode(source);
+}
+
+function recommendationNextActionKey(experiment: ExperimentSummary | null, schedulerLocked: boolean) {
+  if (!experiment?.is_bandit) return "nextAction.classic";
+
+  const recommendation = experiment.winner_recommendation;
+  if (!recommendation) return "nextAction.review";
+  if (experiment.status === "completed") return "nextAction.completed";
+  if (schedulerLocked) return "nextAction.locked";
+
+  switch (recommendation.reason) {
+    case "draft_experiment":
+      return "nextAction.draft";
+    case "insufficient_arms":
+      return "nextAction.insufficientArms";
+    case "insufficient_data":
+      return "nextAction.insufficientData";
+    case "insufficient_sample_size":
+      return "nextAction.insufficientSampleSize";
+    case "confidence_below_threshold":
+      return "nextAction.confidenceBelowThreshold";
+    case "recommend_winner":
+      return experiment.status === "paused" ? "nextAction.pausedWinner" : "nextAction.recommendWinner";
+    case "status_not_eligible":
+      return "nextAction.statusNotEligible";
+    default:
+      return "nextAction.review";
   }
 }
 
@@ -141,8 +198,13 @@ export function BanditPageClient({
   const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [pendingLifecycleAction, setPendingLifecycleAction] = useState<"pause" | "resume" | "complete" | null>(null);
   const [pendingSave, setPendingSave] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!isBootstrapping) return;
@@ -194,6 +256,11 @@ export function BanditPageClient({
   const totalSamples = armRows.reduce((sum, arm) => sum + arm.samples, 0);
   const totalConversions = armRows.reduce((sum, arm) => sum + arm.conversions, 0);
   const totalRevenue = armRows.reduce((sum, arm) => sum + arm.revenue, 0);
+  const currentRecommendation = selectedExperiment?.winner_recommendation ?? null;
+  const recommendationHistory = snapshot?.recommendationHistory ?? [];
+  const hasManualOverride = Boolean(selectedExperiment?.automation_policy?.manual_override);
+  const hasTimedLock = hasActiveTimedLock(selectedExperiment?.automation_policy?.locked_until);
+  const schedulerLocked = hasManualOverride || hasTimedLock;
   const draftConfigBaseline = useMemo(
     () => (selectedExperiment ? buildDraftBanditConfig(selectedExperiment) : null),
     [selectedExperiment],
@@ -425,6 +492,136 @@ export function BanditPageClient({
             </Card>
 
             <div className="flex flex-col gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("recommendation.title")}</CardTitle>
+                  <CardDescription>{t("recommendation.description")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  {currentRecommendation ? (
+                    <>
+                      <div className="rounded-md border p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-sm">{t("recommendation.currentTitle")}</p>
+                            <p className="mt-1 text-muted-foreground text-xs">
+                              {formatRecommendationReason(t, currentRecommendation.reason)}
+                            </p>
+                          </div>
+                          <Badge variant={currentRecommendation.recommended ? "default" : "outline"}>
+                            {currentRecommendation.recommended
+                              ? t("recommendation.stateRecommended")
+                              : t("recommendation.stateGuarded")}
+                          </Badge>
+                        </div>
+
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                          <div className="rounded-md border border-dashed p-3">
+                            <p className="font-medium text-xs">{t("recommendation.winningArm")}</p>
+                            <p className="mt-1 text-sm">
+                              {currentRecommendation.winning_arm_name ?? t("recommendation.noWinningArm")}
+                            </p>
+                          </div>
+                          <div className="rounded-md border border-dashed p-3">
+                            <p className="font-medium text-xs">{t("recommendation.confidence")}</p>
+                            <p className="mt-1 text-sm">{formatPercentNumber(currentRecommendation.confidence_percent)}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-md border p-3">
+                        <p className="font-medium text-sm">{t("recommendation.guardsTitle")}</p>
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                          {[
+                            {
+                              key: "status",
+                              label: t("recommendation.guardStatus"),
+                              passed: selectedExperiment?.status === "running" || selectedExperiment?.status === "paused",
+                              value: selectedExperiment ? t(`status.${selectedExperiment.status}`) : "—",
+                            },
+                            {
+                              key: "sample",
+                              label: t("recommendation.guardSamples"),
+                              passed: currentRecommendation.observed_samples >= currentRecommendation.min_sample_size,
+                              value: `${currentRecommendation.observed_samples}/${currentRecommendation.min_sample_size}`,
+                            },
+                            {
+                              key: "confidence",
+                              label: t("recommendation.guardConfidence"),
+                              passed:
+                                currentRecommendation.confidence_percent !== null &&
+                                currentRecommendation.confidence_percent !== undefined &&
+                                currentRecommendation.confidence_percent >= currentRecommendation.confidence_threshold_percent,
+                              value: `${formatPercentNumber(currentRecommendation.confidence_percent)} / ${formatPercentNumber(
+                                currentRecommendation.confidence_threshold_percent,
+                              )}`,
+                            },
+                            {
+                              key: "lock",
+                              label: t("recommendation.guardAutomation"),
+                              passed: !schedulerLocked,
+                              value: schedulerLocked
+                                ? t("recommendation.guardLocked")
+                                : t("recommendation.guardUnlocked"),
+                            },
+                          ].map((guard) => (
+                            <div key={guard.key} className="rounded-md border border-dashed p-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="font-medium text-xs">{guard.label}</p>
+                                <Badge variant={guard.passed ? "default" : "outline"}>
+                                  {guard.passed ? t("recommendation.guardPass") : t("recommendation.guardBlocked")}
+                                </Badge>
+                              </div>
+                              <p className="mt-1 text-muted-foreground text-xs">{guard.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                        <p className="font-medium text-foreground text-sm">{t("recommendation.nextActionTitle")}</p>
+                        <p className="mt-1">{t(`recommendation.${recommendationNextActionKey(selectedExperiment, schedulerLocked)}`)}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                      {t("recommendation.currentEmpty")}
+                    </div>
+                  )}
+
+                  <div className="rounded-md border p-3">
+                    <p className="font-medium text-sm">{t("recommendation.historyTitle")}</p>
+                    <p className="mt-1 text-muted-foreground text-xs">{t("recommendation.historyDescription")}</p>
+                    {recommendationHistory.length ? (
+                      <div className="mt-3 space-y-2">
+                        {recommendationHistory.slice(0, 5).map((entry, index) => (
+                          <div key={`${entry.occurred_at}-${entry.reason}-${index}`} className="rounded-md border border-dashed p-3">
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant={entry.recommended ? "default" : "outline"}>
+                                {entry.recommended
+                                  ? t("recommendation.stateRecommended")
+                                  : t("recommendation.stateGuarded")}
+                              </Badge>
+                              <Badge variant="outline">{formatRecommendationReason(t, entry.reason)}</Badge>
+                              <Badge variant="outline">{formatRecommendationSource(t, entry.source)}</Badge>
+                            </div>
+                            <p className="mt-2 text-muted-foreground text-xs">
+                              {t("recommendation.confidence")}: {formatPercentNumber(entry.confidence_percent)} ·{" "}
+                              {t("recommendation.guardSamples")}: {entry.observed_samples}/{entry.min_sample_size}
+                            </p>
+                            <p className="mt-1 text-muted-foreground text-xs">
+                              {t("recommendation.occurredAt")}: {hasHydrated ? formatAdminDateTime(entry.occurred_at) : "—"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-muted-foreground text-xs">{t("recommendation.empty")}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm">{t("metrics.title")}</CardTitle>

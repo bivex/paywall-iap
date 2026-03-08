@@ -1,5 +1,11 @@
 import type { BanditSnapshot } from "@/lib/bandit";
-import type { ExperimentArm, ExperimentArmInput, ExperimentLifecycleAudit, ExperimentSummary } from "@/lib/experiments";
+import type {
+  ExperimentArm,
+  ExperimentArmInput,
+  ExperimentLifecycleAudit,
+  ExperimentSummary,
+  ExperimentWinnerRecommendationAudit,
+} from "@/lib/experiments";
 import type { PricingTier } from "@/lib/pricing-tiers";
 
 export type DraftExperimentArmValidationCode = "minimumArms" | "singleControl" | "armName" | "trafficWeight";
@@ -99,6 +105,7 @@ export interface StudioBanditHealth {
 export interface ExperimentStudioSnapshot {
   experiment: ExperimentSummary;
   lifecycleHistory: ExperimentLifecycleAudit[];
+  recommendationHistory: ExperimentWinnerRecommendationAudit[];
   banditHealth: StudioBanditHealth | null;
   banditSnapshot: BanditSnapshot | null;
   endpoints: {

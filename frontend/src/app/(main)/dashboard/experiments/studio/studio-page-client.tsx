@@ -49,6 +49,8 @@ import {
   getExperimentLifecycleReason,
   getExperimentLifecycleReasonKey,
   getExperimentLifecycleSourceKey,
+  getExperimentWinnerRecommendationReasonKey,
+  getExperimentWinnerRecommendationSourceKey,
 } from "@/lib/experiments";
 import type { PricingTier } from "@/lib/pricing-tiers";
 import { formatAdminDateTime as formatDate, toDateTimeLocalInputValue } from "@/lib/time";
@@ -135,6 +137,44 @@ function formatLifecycleHistoryReason(t: ReturnType<typeof useTranslations>, rea
 function formatLifecycleHistorySource(t: ReturnType<typeof useTranslations>, source: string | null | undefined) {
   const sourceKey = getExperimentLifecycleSourceKey(source);
   return sourceKey ? t(`lifecycle.${sourceKey}`) : formatExperimentLifecycleCode(source);
+}
+
+function formatRecommendationReason(t: ReturnType<typeof useTranslations>, reason: string | null | undefined) {
+  const reasonKey = getExperimentWinnerRecommendationReasonKey(reason);
+  return reasonKey ? t(`recommendation.${reasonKey}`) : formatExperimentLifecycleCode(reason);
+}
+
+function formatRecommendationSource(t: ReturnType<typeof useTranslations>, source: string | null | undefined) {
+  const sourceKey = getExperimentWinnerRecommendationSourceKey(source);
+  return sourceKey ? t(`recommendation.${sourceKey}`) : formatExperimentLifecycleCode(source);
+}
+
+function recommendationNextActionKey(experiment: ExperimentSummary | null, schedulerLocked: boolean) {
+  if (!experiment?.is_bandit) return "nextAction.classic";
+
+  const recommendation = experiment.winner_recommendation;
+  if (!recommendation) return "nextAction.review";
+  if (experiment.status === "completed") return "nextAction.completed";
+  if (schedulerLocked) return "nextAction.locked";
+
+  switch (recommendation.reason) {
+    case "draft_experiment":
+      return "nextAction.draft";
+    case "insufficient_arms":
+      return "nextAction.insufficientArms";
+    case "insufficient_data":
+      return "nextAction.insufficientData";
+    case "insufficient_sample_size":
+      return "nextAction.insufficientSampleSize";
+    case "confidence_below_threshold":
+      return "nextAction.confidenceBelowThreshold";
+    case "recommend_winner":
+      return experiment.status === "paused" ? "nextAction.pausedWinner" : "nextAction.recommendWinner";
+    case "status_not_eligible":
+      return "nextAction.statusNotEligible";
+    default:
+      return "nextAction.review";
+  }
 }
 
 function weightShare(arms: ExperimentSummary["arms"], trafficWeight: number) {
@@ -322,6 +362,8 @@ export function StudioPageClient({
   const hasManualOverride = Boolean(selectedExperiment?.automation_policy?.manual_override);
   const hasTimedLock = hasActiveTimedLock(selectedExperiment?.automation_policy?.locked_until);
   const schedulerLocked = hasManualOverride || hasTimedLock;
+  const currentRecommendation = selectedExperiment?.winner_recommendation ?? null;
+  const recommendationHistory = snapshot?.recommendationHistory ?? [];
 
   const refreshSnapshot = (experimentId: string) => {
     setSelectedId(experimentId);
@@ -1263,34 +1305,175 @@ export function StudioPageClient({
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">{t("notes.title")}</CardTitle>
-                    <CardDescription>{t("notes.description")}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <div className="rounded-md border p-3">
-                      <p className="font-medium">{t("notes.builderTitle")}</p>
-                      <p className="mt-1 text-muted-foreground text-xs">{t("notes.builderBody")}</p>
-                    </div>
-                    <div className="rounded-md border p-3">
-                      <p className="font-medium">{t("notes.banditTitle")}</p>
-                      <p className="mt-1 text-muted-foreground text-xs">{t("notes.banditBody")}</p>
-                    </div>
-                    <div className="rounded-md border p-3">
-                      <p className="font-medium">{t("notes.pricingTitle")}</p>
-                      <p className="mt-1 text-muted-foreground text-xs">{t("notes.pricingBody")}</p>
-                    </div>
-                    <div className="rounded-md border p-3">
-                      <p className="font-medium">{t("notes.advancedTitle")}</p>
-                      <p className="mt-1 text-muted-foreground text-xs">{t("notes.advancedBody")}</p>
-                    </div>
-                    <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
-                      <CalendarClock className="mb-2 size-4" />
-                      {t("notes.readOnly")}
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">{t("recommendation.title")}</CardTitle>
+                      <CardDescription>{t("recommendation.description")}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      {!selectedExperiment.is_bandit ? (
+                        <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                          {t("recommendation.classicNotice")}
+                        </div>
+                      ) : currentRecommendation ? (
+                        <>
+                          <div className="rounded-md border p-3">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="font-medium text-sm">{t("recommendation.currentTitle")}</p>
+                                <p className="mt-1 text-muted-foreground text-xs">
+                                  {formatRecommendationReason(t, currentRecommendation.reason)}
+                                </p>
+                              </div>
+                              <Badge variant={currentRecommendation.recommended ? "default" : "outline"}>
+                                {currentRecommendation.recommended
+                                  ? t("recommendation.stateRecommended")
+                                  : t("recommendation.stateGuarded")}
+                              </Badge>
+                            </div>
+
+                            <div className="mt-3 grid gap-3 md:grid-cols-2">
+                              <div className="rounded-md border border-dashed p-3">
+                                <p className="font-medium text-xs">{t("recommendation.winningArm")}</p>
+                                <p className="mt-1 text-sm">
+                                  {currentRecommendation.winning_arm_name ?? t("recommendation.noWinningArm")}
+                                </p>
+                              </div>
+                              <div className="rounded-md border border-dashed p-3">
+                                <p className="font-medium text-xs">{t("recommendation.confidence")}</p>
+                                <p className="mt-1 text-sm">{formatPercentNumber(currentRecommendation.confidence_percent)}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="rounded-md border p-3">
+                            <p className="font-medium text-sm">{t("recommendation.guardsTitle")}</p>
+                            <div className="mt-3 grid gap-3 md:grid-cols-2">
+                              {[
+                                {
+                                  key: "status",
+                                  label: t("recommendation.guardStatus"),
+                                  passed: selectedExperiment.status === "running" || selectedExperiment.status === "paused",
+                                  value: t(`status.${selectedExperiment.status}`),
+                                },
+                                {
+                                  key: "sample",
+                                  label: t("recommendation.guardSamples"),
+                                  passed: currentRecommendation.observed_samples >= currentRecommendation.min_sample_size,
+                                  value: `${currentRecommendation.observed_samples}/${currentRecommendation.min_sample_size}`,
+                                },
+                                {
+                                  key: "confidence",
+                                  label: t("recommendation.guardConfidence"),
+                                  passed:
+                                    currentRecommendation.confidence_percent !== null &&
+                                    currentRecommendation.confidence_percent !== undefined &&
+                                    currentRecommendation.confidence_percent >= currentRecommendation.confidence_threshold_percent,
+                                  value: `${formatPercentNumber(currentRecommendation.confidence_percent)} / ${formatPercentNumber(
+                                    currentRecommendation.confidence_threshold_percent,
+                                  )}`,
+                                },
+                                {
+                                  key: "lock",
+                                  label: t("recommendation.guardAutomation"),
+                                  passed: !schedulerLocked,
+                                  value: schedulerLocked
+                                    ? t("recommendation.guardLocked")
+                                    : t("recommendation.guardUnlocked"),
+                                },
+                              ].map((guard) => (
+                                <div key={guard.key} className="rounded-md border border-dashed p-3">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <p className="font-medium text-xs">{guard.label}</p>
+                                    <Badge variant={guard.passed ? "default" : "outline"}>
+                                      {guard.passed ? t("recommendation.guardPass") : t("recommendation.guardBlocked")}
+                                    </Badge>
+                                  </div>
+                                  <p className="mt-1 text-muted-foreground text-xs">{guard.value}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                            <p className="font-medium text-foreground text-sm">{t("recommendation.nextActionTitle")}</p>
+                            <p className="mt-1">
+                              {t(`recommendation.${recommendationNextActionKey(selectedExperiment, schedulerLocked)}`)}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                          {t("recommendation.currentEmpty")}
+                        </div>
+                      )}
+
+                      <div className="rounded-md border p-3">
+                        <p className="font-medium text-sm">{t("recommendation.historyTitle")}</p>
+                        <p className="mt-1 text-muted-foreground text-xs">{t("recommendation.historyDescription")}</p>
+                        {recommendationHistory.length ? (
+                          <div className="mt-3 space-y-2">
+                            {recommendationHistory.slice(0, 5).map((entry, index) => (
+                              <div
+                                key={`${entry.occurred_at}-${entry.reason}-${index}`}
+                                className="rounded-md border border-dashed p-3"
+                              >
+                                <div className="flex flex-wrap gap-2">
+                                  <Badge variant={entry.recommended ? "default" : "outline"}>
+                                    {entry.recommended
+                                      ? t("recommendation.stateRecommended")
+                                      : t("recommendation.stateGuarded")}
+                                  </Badge>
+                                  <Badge variant="outline">{formatRecommendationReason(t, entry.reason)}</Badge>
+                                  <Badge variant="outline">{formatRecommendationSource(t, entry.source)}</Badge>
+                                </div>
+                                <p className="mt-2 text-muted-foreground text-xs">
+                                  {t("recommendation.confidence")}: {formatPercentNumber(entry.confidence_percent)} ·{" "}
+                                  {t("recommendation.guardSamples")}: {entry.observed_samples}/{entry.min_sample_size}
+                                </p>
+                                <p className="mt-1 text-muted-foreground text-xs">
+                                  {t("recommendation.occurredAt")}: {hasHydrated ? formatDate(entry.occurred_at) : "—"}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-muted-foreground text-xs">{t("recommendation.empty")}</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">{t("notes.title")}</CardTitle>
+                      <CardDescription>{t("notes.description")}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      <div className="rounded-md border p-3">
+                        <p className="font-medium">{t("notes.builderTitle")}</p>
+                        <p className="mt-1 text-muted-foreground text-xs">{t("notes.builderBody")}</p>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <p className="font-medium">{t("notes.banditTitle")}</p>
+                        <p className="mt-1 text-muted-foreground text-xs">{t("notes.banditBody")}</p>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <p className="font-medium">{t("notes.pricingTitle")}</p>
+                        <p className="mt-1 text-muted-foreground text-xs">{t("notes.pricingBody")}</p>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <p className="font-medium">{t("notes.advancedTitle")}</p>
+                        <p className="mt-1 text-muted-foreground text-xs">{t("notes.advancedBody")}</p>
+                      </div>
+                      <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                        <CalendarClock className="mb-2 size-4" />
+                        {t("notes.readOnly")}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </>
           ) : null}

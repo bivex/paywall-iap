@@ -4,11 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
@@ -437,6 +440,13 @@ func (r *PostgresBanditRepository) AppendWinnerRecommendationEvent(ctx context.C
 		normalizeOccurredAt(event.OccurredAt),
 	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "42P01" && strings.Contains(err.Error(), "experiment_winner_recommendation_log") {
+			if r.logger != nil {
+				r.logger.Warn("winner recommendation log table missing; skipping append", zap.Error(err))
+			}
+			return nil
+		}
 		return fmt.Errorf("failed to append winner recommendation event: %w", err)
 	}
 

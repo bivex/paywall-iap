@@ -9,7 +9,11 @@ import type {
   StudioBanditHealth,
   StudioEndpointProbe,
 } from "@/lib/experiment-studio";
-import type { ExperimentLifecycleAudit, ExperimentSummary } from "@/lib/experiments";
+import type {
+  ExperimentLifecycleAudit,
+  ExperimentSummary,
+  ExperimentWinnerRecommendationAudit,
+} from "@/lib/experiments";
 import type { PricingTier } from "@/lib/pricing-tiers";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
@@ -119,12 +123,21 @@ export async function getStudioSnapshotFromCookies(experimentId: string): Promis
   );
   const lifecycleHistory = lifecycleHistoryRes.ok ? lifecycleHistoryRes.data : [];
 
+  const recommendationHistoryRes = await fetchProbe<ExperimentWinnerRecommendationAudit[]>(
+    `${BACKEND_URL}/v1/admin/experiments/${experimentId}/winner-recommendation-audit`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  const recommendationHistory = recommendationHistoryRes.ok ? recommendationHistoryRes.data : [];
+
   const banditHealthResult = await getBanditHealth();
 
   if (!experiment.is_bandit) {
     return {
       experiment,
       lifecycleHistory,
+      recommendationHistory,
       banditHealth: banditHealthResult.health,
       banditSnapshot: null,
       endpoints: {
@@ -148,11 +161,13 @@ export async function getStudioSnapshotFromCookies(experimentId: string): Promis
   return {
     experiment,
     lifecycleHistory,
+    recommendationHistory,
     banditHealth: banditHealthResult.health,
     banditSnapshot: {
       experiment,
       statistics: statisticsRes.ok ? statisticsRes.data : null,
       metrics: metricsRes.ok ? normalizeMetrics(metricsRes.data) : null,
+      recommendationHistory,
     },
     endpoints: {
       statistics: {

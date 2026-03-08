@@ -1,4 +1,4 @@
-import type { ExperimentSummary } from "@/lib/experiments";
+import type { ExperimentSummary, ExperimentWinnerRecommendationAudit } from "@/lib/experiments";
 
 export interface BanditArmStatistics {
   arm_id: string;
@@ -30,4 +30,5 @@ export interface BanditSnapshot {
   experiment: ExperimentSummary;
   statistics: BanditStatisticsResponse | null;
   metrics: BanditMetrics | null;
+  recommendationHistory: ExperimentWinnerRecommendationAudit[];
 }
