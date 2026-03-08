@@ -8,6 +8,7 @@
 - Наличие реальных страниц для пунктов меню
 - Подключение к данным через `frontend/src/actions/*`
 - Признаки незавершённости: статические массивы, placeholder UI, кнопки без обработки
+- Отдельно проверен backend runtime для advanced bandit endpoints на локальном Docker stack
 
 ## Рабочие / частично рабочие разделы
 
@@ -111,7 +112,12 @@
 - статические метрики и веса
 - `Pause`, `Stop Bandit`, `Save Config` без логики
 
-Статус: витринный экран.
+Статус: фронтенд всё ещё витринный экран, но backend advanced bandit API уже живой и проверен.
+
+Подтверждено на backend:
+- `GET /v1/bandit/experiments/:id/objectives`
+- `PUT /v1/bandit/experiments/:id/objectives/config`
+- `GET /v1/bandit/experiments/:id/metrics`
 
 ### 9. Delayed Feedback
 
@@ -122,7 +128,12 @@
 - нет сохранения формы
 - reorder/delete кнопки визуальные, но нерабочие
 
-Статус: mock UI.
+Статус: frontend остаётся mock UI, но backend delayed-feedback read paths уже рабочие.
+
+Подтверждено на backend:
+- `GET /v1/bandit/pending/:id`
+- `GET /v1/bandit/users/:id/pending`
+- `POST /v1/bandit/conversions`
 
 ### 10. Sliding Window
 
@@ -132,7 +143,12 @@
 - все показатели захардкожены
 - `Save Config` / `Reset Window` не подключены
 
-Статус: статический конфиг-экран.
+Статус: frontend пока статический конфиг-экран, но backend sliding-window endpoints уже живые.
+
+Подтверждено на backend:
+- `GET /v1/bandit/experiments/:id/window/info`
+- `GET /v1/bandit/experiments/:id/window/events`
+- `POST /v1/bandit/experiments/:id/window/trim`
 
 ### 11. Multi-Objective
 
@@ -143,7 +159,7 @@
 - статическая таблица Pareto
 - нет расчётов/загрузки/сохранения
 
-Статус: макет без функционала.
+Статус: frontend остаётся макетом, но backend multi-objective foundation уже доведён через objective config + objective scores API.
 
 ## Архитектурный сигнал незавершённости
 
@@ -157,6 +173,25 @@
 - `experiments/*`
 
 Это подтверждает, что перечисленные страницы пока не подключены к данным и операциям.
+
+## Что изменилось после backend-проверки
+
+На момент этого аудита важно уже различать два уровня готовности:
+
+- `frontend experiments/*` — по-прежнему mostly mock/static UI
+- `backend advanced bandit API` — уже рабочий на локальном runtime и больше не упирается в broken path params / placeholder handlers
+
+Что было проверено на живом Docker stack:
+
+- path params для advanced bandit routes исправлены
+- objective config реально сохраняется в БД (`ab_tests.objective_type`, `objective_weights`)
+- hybrid objective scores читаются обратно через API
+- delayed rewards корректно читаются даже при `NULL` полях в БД
+- sliding-window и metrics endpoints отвечают `200`
+
+Для повторяемой проверки добавлен smoke script:
+
+- `scripts/test_advanced_bandit_endpoints.sh`
 
 ## UX-проблема
 
@@ -189,10 +224,12 @@
 1. `Platform Settings`
 2. `Pricing Tiers`
 3. `Winback`
-4. `Experiments` и дочерние разделы
+4. `Experiments` и дочерние разделы (теперь прежде всего frontend wiring к уже существующему backend bandit API)
 5. `Matomo Analytics`
 6. `Dunning` как отдельную страницу либо убрать, либо синхронизировать с `Revenue Ops`
 
 ## Быстрый вывод
 
 На фронте недоделаны прежде всего административные конфигурационные и экспериментальные экраны. Основные операционные разделы (`users`, `transactions`, `subscriptions`, `audit log`, `webhooks`, `revenue ops`) уже подключены и выглядят рабочими, хотя местами ещё есть технический долг.
+
+Ключевое уточнение: для advanced experiment/bandit блока backend уже существенно опережает frontend. Следующий шаг там — не изобретать новый backend, а подключить существующие pages/actions к уже проверенным API.
