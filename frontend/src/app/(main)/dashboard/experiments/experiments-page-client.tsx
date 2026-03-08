@@ -10,7 +10,12 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { createExperimentAction } from "@/actions/experiments";
+import {
+  completeExperimentAction,
+  createExperimentAction,
+  pauseExperimentAction,
+  resumeExperimentAction,
+} from "@/actions/experiments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -169,6 +174,7 @@ export function ExperimentsPageClient({
   const router = useRouter();
   const [experiments, setExperiments] = useState(initialExperiments);
   const [pendingCreate, setPendingCreate] = useState(false);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const form = useForm<ExperimentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: EMPTY_FORM_VALUES,
@@ -193,6 +199,26 @@ export function ExperimentsPageClient({
     toast.success(t("feedback.experimentCreated"));
     router.refresh();
   });
+
+  async function runLifecycleAction(experiment: ExperimentSummary, action: "pause" | "resume" | "complete") {
+    setPendingAction(`${action}:${experiment.id}`);
+    const result =
+      action === "pause"
+        ? await pauseExperimentAction(experiment.id)
+        : action === "complete"
+          ? await completeExperimentAction(experiment.id)
+          : await resumeExperimentAction(experiment.id);
+    setPendingAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.statusFailed"));
+      return;
+    }
+
+    setExperiments((current) => current.map((item) => (item.id === result.data.id ? result.data : item)));
+    toast.success(t("feedback.statusUpdated"));
+    router.refresh();
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -245,54 +271,98 @@ export function ExperimentsPageClient({
                   <TableHead>{t("table.revenue")}</TableHead>
                   <TableHead>{t("table.confidence")}</TableHead>
                   <TableHead>{t("table.updated")}</TableHead>
+                  <TableHead>{t("table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {experiments.map((experiment) => (
-                  <TableRow key={experiment.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{experiment.name}</p>
-                        <p className="max-w-sm text-muted-foreground text-xs">{experiment.description || "—"}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusClass(experiment.status)}>{t(`status.${experiment.status}`)}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <p>{formatAlgorithm(experiment.algorithm_type)}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {experiment.is_bandit ? t("table.banditEnabled") : t("table.banditDisabled")}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 text-xs">
-                        {experiment.arms.map((arm) => (
-                          <span key={arm.id}>
-                            {arm.is_control ? t("table.controlArm") : t("table.variantArm")} {arm.name}
+                {experiments.map((experiment) => {
+                  const actionKey = pendingAction ?? "";
+                  const isRowPending = actionKey.endsWith(`:${experiment.id}`);
+                  const actions: Array<{ key: "pause" | "resume" | "complete"; label: string }> =
+                    experiment.status === "draft"
+                      ? [{ key: "resume", label: t("actions.start") }]
+                      : experiment.status === "running"
+                        ? [
+                            { key: "pause", label: t("actions.pause") },
+                            { key: "complete", label: t("actions.complete") },
+                          ]
+                        : experiment.status === "paused"
+                          ? [
+                              { key: "resume", label: t("actions.resume") },
+                              { key: "complete", label: t("actions.complete") },
+                            ]
+                          : [];
+
+                  return (
+                    <TableRow key={experiment.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{experiment.name}</p>
+                          <p className="max-w-sm text-muted-foreground text-xs">{experiment.description || "—"}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusClass(experiment.status)}>{t(`status.${experiment.status}`)}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <p>{formatAlgorithm(experiment.algorithm_type)}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {experiment.is_bandit ? t("table.banditEnabled") : t("table.banditDisabled")}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1 text-xs">
+                          {experiment.arms.map((arm) => (
+                            <span key={arm.id}>
+                              {arm.is_control ? t("table.controlArm") : t("table.variantArm")} {arm.name}
+                            </span>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{experiment.total_samples}</TableCell>
+                      <TableCell className="font-mono text-sm">{experiment.total_conversions}</TableCell>
+                      <TableCell className="font-mono text-sm">{experiment.active_assignments}</TableCell>
+                      <TableCell className="font-mono text-sm">{formatRevenue(experiment.total_revenue)}</TableCell>
+                      <TableCell className="text-xs">
+                        <div className="flex flex-col gap-1">
+                          <span>{experiment.confidence_threshold_percent.toFixed(0)}%</span>
+                          <span className="text-muted-foreground">
+                            {experiment.winner_confidence_percent === null
+                              ? t("table.noWinner")
+                              : `${experiment.winner_confidence_percent.toFixed(1)}%`}
                           </span>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{experiment.total_samples}</TableCell>
-                    <TableCell className="font-mono text-sm">{experiment.total_conversions}</TableCell>
-                    <TableCell className="font-mono text-sm">{experiment.active_assignments}</TableCell>
-                    <TableCell className="font-mono text-sm">{formatRevenue(experiment.total_revenue)}</TableCell>
-                    <TableCell className="text-xs">
-                      <div className="flex flex-col gap-1">
-                        <span>{experiment.confidence_threshold_percent.toFixed(0)}%</span>
-                        <span className="text-muted-foreground">
-                          {experiment.winner_confidence_percent === null
-                            ? t("table.noWinner")
-                            : `${experiment.winner_confidence_percent.toFixed(1)}%`}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{formatDate(experiment.updated_at)}</TableCell>
-                  </TableRow>
-                ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {formatDate(experiment.updated_at)}
+                      </TableCell>
+                      <TableCell>
+                        {actions.length === 0 ? (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {actions.map((action) => {
+                              const currentActionKey = `${action.key}:${experiment.id}`;
+                              return (
+                                <Button
+                                  key={currentActionKey}
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isRowPending}
+                                  onClick={() => void runLifecycleAction(experiment, action.key)}
+                                >
+                                  {pendingAction === currentActionKey ? t("feedback.updating") : action.label}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

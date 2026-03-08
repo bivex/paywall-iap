@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 	"time"
 
@@ -155,6 +156,25 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 		}
 	}
 	return ""
+}
+
+func validateAdminExperimentStatusTransition(currentStatus string, nextStatus string) string {
+	switch currentStatus {
+	case "draft":
+		if nextStatus == "running" {
+			return ""
+		}
+	case "running":
+		if nextStatus == "paused" || nextStatus == "completed" {
+			return ""
+		}
+	case "paused":
+		if nextStatus == "running" || nextStatus == "completed" {
+			return ""
+		}
+	}
+
+	return "Cannot transition experiment from " + currentStatus + " to " + nextStatus
 }
 
 func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExperiment, error) {
@@ -414,4 +434,81 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 	}
 
 	response.Created(c, experiment)
+}
+
+func (h *AdminHandler) PauseAdminExperiment(c *gin.Context) {
+	h.updateAdminExperimentStatus(c, "paused")
+}
+
+func (h *AdminHandler) ResumeAdminExperiment(c *gin.Context) {
+	h.updateAdminExperimentStatus(c, "running")
+}
+
+func (h *AdminHandler) CompleteAdminExperiment(c *gin.Context) {
+	h.updateAdminExperimentStatus(c, "completed")
+}
+
+func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus string) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+
+	experiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.NotFound(c, "Experiment not found")
+			return
+		}
+		response.InternalError(c, "Failed to load experiment")
+		return
+	}
+
+	if message := validateAdminExperimentStatusTransition(experiment.Status, nextStatus); message != "" {
+		response.UnprocessableEntity(c, message)
+		return
+	}
+
+	now := time.Now().UTC()
+	var startAt any
+	if experiment.StartAt != nil {
+		startAt = *experiment.StartAt
+	}
+	if nextStatus == "running" && (experiment.StartAt == nil || experiment.StartAt.After(now)) {
+		startAt = now
+	}
+
+	var endAt any
+	if experiment.EndAt != nil {
+		endAt = *experiment.EndAt
+	}
+	if nextStatus == "completed" {
+		endAt = now
+	}
+
+	_, err = h.dbPool.Exec(c.Request.Context(), `
+		UPDATE ab_tests
+		SET status = $2,
+		    start_at = $3,
+		    end_at = $4,
+		    updated_at = now()
+		WHERE id = $1`,
+		experimentID,
+		nextStatus,
+		startAt,
+		endAt,
+	)
+	if err != nil {
+		response.InternalError(c, "Failed to update experiment status")
+		return
+	}
+
+	updatedExperiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated experiment")
+		return
+	}
+
+	response.OK(c, updatedExperiment)
 }

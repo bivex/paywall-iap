@@ -130,6 +130,12 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	admin := router.Group("/v1/admin")
 	admin.GET("/experiments", handler.ListAdminExperiments)
 	admin.POST("/experiments", handler.CreateAdminExperiment)
+	admin.POST("/experiments/:id/pause", handler.PauseAdminExperiment)
+	admin.POST("/experiments/:id/resume", handler.ResumeAdminExperiment)
+	admin.POST("/experiments/:id/complete", handler.CompleteAdminExperiment)
+
+	var runningExperiment handlers.AdminExperiment
+	var draftExperiment handlers.AdminExperiment
 
 	t.Run("GET returns empty list before creation", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
@@ -175,6 +181,35 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Len(t, resp.Data.Arms, 2)
 		assert.Equal(t, 2, resp.Data.ArmCount)
 		assert.Equal(t, 0, resp.Data.TotalSamples)
+		runningExperiment = resp.Data
+	})
+
+	t.Run("POST creates a draft experiment", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Draft onboarding test",
+			"description":"Prepare a staged rollout",
+			"status":"draft",
+			"algorithm_type":"thompson_sampling",
+			"is_bandit":true,
+			"min_sample_size":150,
+			"confidence_threshold_percent":90,
+			"arms":[
+				{"name":"Control","description":"Current onboarding","is_control":true,"traffic_weight":1},
+				{"name":"Variant B","description":"Shorter onboarding","is_control":false,"traffic_weight":1}
+			]
+		}`)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "draft", resp.Data.Status)
+		draftExperiment = resp.Data
 	})
 
 	t.Run("GET returns created experiment", func(t *testing.T) {
@@ -187,8 +222,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			Data []handlers.AdminExperiment `json:"data"`
 		}
 		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
-		require.Len(t, resp.Data, 1)
-		assert.Equal(t, "Pricing homepage CTA", resp.Data[0].Name)
+		require.Len(t, resp.Data, 2)
+		assert.Equal(t, "Draft onboarding test", resp.Data[0].Name)
 		assert.Len(t, resp.Data[0].Arms, 2)
 	})
 
@@ -203,6 +238,72 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		}`)
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("POST pauses a running experiment", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/pause", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "paused", resp.Data.Status)
+		runningExperiment = resp.Data
+	})
+
+	t.Run("POST resumes a paused experiment", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/resume", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "running", resp.Data.Status)
+		runningExperiment = resp.Data
+	})
+
+	t.Run("POST starts a draft experiment via resume", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+draftExperiment.ID.String()+"/resume", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "running", resp.Data.Status)
+		assert.NotNil(t, resp.Data.StartAt)
+		draftExperiment = resp.Data
+	})
+
+	t.Run("POST completes a running experiment", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/complete", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "completed", resp.Data.Status)
+		assert.NotNil(t, resp.Data.EndAt)
+		runningExperiment = resp.Data
+	})
+
+	t.Run("POST rejects invalid lifecycle transition", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/pause", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 

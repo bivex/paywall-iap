@@ -61,3 +61,32 @@ export async function createExperimentAction(payload: ExperimentInput) {
     return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
   }
 }
+
+async function postExperimentLifecycleAction(id: string, action: "pause" | "resume" | "complete") {
+  const token = await getAdminToken();
+  if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/${action}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const parsed = await parseResponse<ExperimentSummary>(res);
+    if (parsed.ok) revalidatePath("/dashboard/experiments");
+    return parsed;
+  } catch (error) {
+    return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
+  }
+}
+
+export async function pauseExperimentAction(id: string) {
+  return postExperimentLifecycleAction(id, "pause");
+}
+
+export async function resumeExperimentAction(id: string) {
+  return postExperimentLifecycleAction(id, "resume");
+}
+
+export async function completeExperimentAction(id: string) {
+  return postExperimentLifecycleAction(id, "complete");
+}

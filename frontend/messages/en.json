@@ -181,7 +181,11 @@
     "subtitle": "Manage real database-backed experiments stored in ab_tests and ab_test_arms, and monitor the live aggregate stats recorded for each experiment.",
     "actions": {
       "create": "Create Experiment",
-      "reset": "Reset"
+      "reset": "Reset",
+      "start": "Start",
+      "pause": "Pause",
+      "resume": "Resume",
+      "complete": "Complete"
     },
     "summary": {
       "total": "Experiments",
@@ -201,8 +205,11 @@
     },
     "feedback": {
       "creating": "Creating...",
+      "updating": "Updating...",
       "experimentCreated": "Experiment created.",
-      "createFailed": "Failed to create experiment."
+      "createFailed": "Failed to create experiment.",
+      "statusUpdated": "Experiment status updated.",
+      "statusFailed": "Failed to update experiment status."
     },
     "table": {
       "title": "Live Experiments",
@@ -217,6 +224,7 @@
       "revenue": "Revenue",
       "confidence": "Confidence",
       "updated": "Updated",
+      "actions": "Actions",
       "banditEnabled": "Bandit enabled",
       "banditDisabled": "Fixed allocation",
       "controlArm": "Control:",
