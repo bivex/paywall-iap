@@ -12,6 +12,7 @@ import { z } from "zod";
 
 import {
   completeExperimentAction,
+  confirmExperimentWinnerAction,
   createExperimentAction,
   pauseExperimentAction,
   resumeExperimentAction,
@@ -140,6 +141,12 @@ function formatLifecycleReason(t: ReturnType<typeof useTranslations>, experiment
 function formatLifecycleSource(t: ReturnType<typeof useTranslations>, experiment: ExperimentSummary) {
   const sourceKey = getExperimentLifecycleSourceKey(experiment.latest_lifecycle_audit?.source);
   return sourceKey ? t(`table.${sourceKey}`) : formatExperimentLifecycleCode(experiment.latest_lifecycle_audit?.source);
+}
+
+function hasActiveTimedLock(lockedUntil?: string | null) {
+  if (!lockedUntil) return false;
+  const lockedDate = new Date(lockedUntil);
+  return Number.isFinite(lockedDate.getTime()) && lockedDate.getTime() > Date.now();
 }
 
 function buildEditorValues(experiment: ExperimentSummary): ExperimentEditorFormValues {
@@ -278,14 +285,19 @@ export function ExperimentsPageClient({
     router.refresh();
   });
 
-  async function runLifecycleAction(experiment: ExperimentSummary, action: "pause" | "resume" | "complete") {
+  async function runLifecycleAction(
+    experiment: ExperimentSummary,
+    action: "pause" | "resume" | "complete" | "confirmWinner",
+  ) {
     setPendingAction(`${action}:${experiment.id}`);
     const result =
       action === "pause"
         ? await pauseExperimentAction(experiment.id)
-        : action === "complete"
-          ? await completeExperimentAction(experiment.id)
-          : await resumeExperimentAction(experiment.id);
+        : action === "confirmWinner"
+          ? await confirmExperimentWinnerAction(experiment.id)
+          : action === "complete"
+            ? await completeExperimentAction(experiment.id)
+            : await resumeExperimentAction(experiment.id);
     setPendingAction(null);
 
     if (!result.ok) {
@@ -298,7 +310,7 @@ export function ExperimentsPageClient({
     }
 
     syncExperiment(result.data);
-    toast.success(t("feedback.statusUpdated"));
+    toast.success(action === "confirmWinner" ? t("feedback.winnerConfirmed") : t("feedback.statusUpdated"));
     router.refresh();
   }
 
@@ -398,6 +410,17 @@ export function ExperimentsPageClient({
                     ? JSON.stringify(editorValues) !== JSON.stringify(buildEditorValues(experiment))
                     : false;
                   const isRowBusy = isRowPending || pendingEditId === experiment.id;
+                  const currentRecommendation = experiment.winner_recommendation ?? null;
+                  const schedulerLocked =
+                    Boolean(experiment.automation_policy?.manual_override) ||
+                    hasActiveTimedLock(experiment.automation_policy?.locked_until);
+                  const showConfirmWinnerAction =
+                    currentRecommendation?.recommended === true && Boolean(currentRecommendation.winning_arm_id);
+                  const canConfirmRecommendedWinner =
+                    experiment.is_bandit &&
+                    (experiment.status === "running" || experiment.status === "paused") &&
+                    showConfirmWinnerAction &&
+                    !schedulerLocked;
                   const actions: Array<{ key: "pause" | "resume" | "complete"; label: string }> =
                     experiment.status === "draft"
                       ? [{ key: "resume", label: t("actions.start") }]
@@ -477,7 +500,7 @@ export function ExperimentsPageClient({
                           {hasHydrated ? formatAdminDateTime(experiment.updated_at) : "—"}
                         </TableCell>
                         <TableCell>
-                          {actions.length === 0 && experiment.status !== "draft" ? (
+                          {actions.length === 0 && !showConfirmWinnerAction && experiment.status !== "draft" ? (
                             <span className="text-muted-foreground text-xs">—</span>
                           ) : (
                             <div className="flex flex-wrap gap-2">
@@ -495,6 +518,18 @@ export function ExperimentsPageClient({
                                   </Button>
                                 );
                               })}
+                              {showConfirmWinnerAction ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={isRowBusy || !canConfirmRecommendedWinner}
+                                  onClick={() => void runLifecycleAction(experiment, "confirmWinner")}
+                                >
+                                  {pendingAction === `confirmWinner:${experiment.id}`
+                                    ? t("feedback.confirmingWinner")
+                                    : t("actions.confirmWinner")}
+                                </Button>
+                              ) : null}
                               {experiment.status === "draft" && !isEditingCurrentRow ? (
                                 <Button
                                   variant="outline"

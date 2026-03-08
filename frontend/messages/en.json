@@ -198,6 +198,7 @@
       "save": "Save changes",
       "cancel": "Cancel",
       "reset": "Reset",
+      "confirmWinner": "Confirm winner",
       "start": "Start",
       "pause": "Pause",
       "resume": "Resume",
@@ -222,11 +223,13 @@
     "feedback": {
       "creating": "Creating...",
       "updating": "Updating...",
+      "confirmingWinner": "Confirming winner...",
       "experimentCreated": "Experiment created.",
       "experimentUpdated": "Experiment updated.",
       "createFailed": "Failed to create experiment.",
       "updateFailed": "Failed to update experiment.",
       "statusUpdated": "Experiment status updated.",
+      "winnerConfirmed": "Winner confirmed and experiment completed.",
       "statusFailed": "Failed to update experiment status."
     },
     "table": {
