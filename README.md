@@ -27,6 +27,37 @@ cd frontend && docker compose up -d --build
 
 > ⚠️ Change the password before deploying to production.
 
+## 🧭 What is live in the system right now
+
+The current local stack already includes working, database-backed admin flows for:
+
+- dashboard overview with KPI cards, trend charts, audit log, and webhook health
+- user list and User 360-style admin navigation
+- revenue ops center with dunning and webhook operations views
+- pricing tier management and paywall creation workflows
+- A/B tests / experiment studio backed by `ab_tests`, `ab_test_arms`, and live aggregate stats
+- lightweight frontend JS error capture via the local `js-error-collector`
+
+## 🖼️ Live Screenshots
+
+Captured from the running local environment with MCP Playwright.
+
+| Login | Dashboard Overview |
+|---|---|
+| ![Login screen](docs/screenshots/login.png) | ![Dashboard overview](docs/screenshots/dashboard-overview.png) |
+
+| Users | Revenue Ops |
+|---|---|
+| ![Users page](docs/screenshots/users.png) | ![Revenue ops page](docs/screenshots/revenue-ops.png) |
+
+| Pricing Tiers | A/B Tests |
+|---|---|
+| ![Pricing tiers page](docs/screenshots/pricing-tiers.png) | ![A/B tests page](docs/screenshots/ab-tests.png) |
+
+| Paywall Creator |
+|---|
+| ![Paywall creator page](docs/screenshots/paywall-creator.png) |
+
 ### Seed first admin (new DB)
 
 ```bash
@@ -74,10 +105,12 @@ Browser → POST /auth/v1/login (Next.js server action)
 | Service | Port | Description |
 |---------|------|-------------|
 | Frontend | `3000` | Next.js 16 admin dashboard |
-| API | `8080` | Go/Gin REST API |
-| Worker | `8081` | Background jobs (River queue) |
+| API | `8081` | Go/Gin REST API exposed from local Docker compose |
 | PostgreSQL | `5432` | Main database |
 | Redis | `6379` | Cache + JWT blocklist |
+| Google Billing Mock | `8090` | Local Google Play billing verifier mock |
+| Apple IAP Mock | `9090` | Local Apple receipt/webhook mock |
+| JS Error Collector | `8088` | Minimal frontend error intake that stores NDJSON logs |
 
 ## 🗄️ Database
 
