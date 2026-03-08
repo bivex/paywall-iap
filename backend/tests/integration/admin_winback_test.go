@@ -140,6 +140,7 @@ func TestAdminWinbackHandler(t *testing.T) {
 	admin := router.Group("/v1/admin")
 	admin.GET("/winback-campaigns", handler.ListWinbackCampaigns)
 	admin.POST("/winback-campaigns", handler.LaunchWinbackCampaign)
+	admin.POST("/winback-campaigns/:campaignId/deactivate", handler.DeactivateWinbackCampaign)
 
 	t.Run("GET returns empty list before launch", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/winback-campaigns", nil)
@@ -197,5 +198,28 @@ func TestAdminWinbackHandler(t *testing.T) {
 		require.Len(t, resp.Data, 1)
 		assert.Equal(t, "reactivate_q1", resp.Data[0].CampaignID)
 		assert.Equal(t, 2, resp.Data[0].TotalOffers)
+	})
+
+	t.Run("POST deactivates active campaign offers", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/winback-campaigns/reactivate_q1/deactivate", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.WinbackCampaignSummary `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "reactivate_q1", resp.Data.CampaignID)
+		assert.Equal(t, 0, resp.Data.ActiveOffers)
+		assert.Equal(t, 2, resp.Data.ExpiredOffers)
+	})
+
+	t.Run("POST deactivate rejects campaigns with no active offers", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/winback-campaigns/reactivate_q1/deactivate", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 }

@@ -140,6 +140,45 @@ func (r *WinbackOfferRepositoryImpl) GetActiveByUserAndCampaign(ctx context.Cont
 	return offer, nil
 }
 
+// GetActiveByCampaignID retrieves all active offers for a campaign
+func (r *WinbackOfferRepositoryImpl) GetActiveByCampaignID(ctx context.Context, campaignID string) ([]*entity.WinbackOffer, error) {
+	query := `
+		SELECT id, user_id, campaign_id, discount_type, discount_value, status, offered_at, expires_at, accepted_at, created_at
+		FROM winback_offers
+		WHERE campaign_id = $1 AND status = 'offered' AND expires_at > NOW()
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.pool.Query(ctx, query, campaignID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var offers []*entity.WinbackOffer
+	for rows.Next() {
+		offer := &entity.WinbackOffer{}
+		err := rows.Scan(
+			&offer.ID,
+			&offer.UserID,
+			&offer.CampaignID,
+			&offer.DiscountType,
+			&offer.DiscountValue,
+			&offer.Status,
+			&offer.OfferedAt,
+			&offer.ExpiresAt,
+			&offer.AcceptedAt,
+			&offer.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		offers = append(offers, offer)
+	}
+
+	return offers, rows.Err()
+}
+
 // Update updates an existing winback offer
 func (r *WinbackOfferRepositoryImpl) Update(ctx context.Context, offer *entity.WinbackOffer) error {
 	query := `

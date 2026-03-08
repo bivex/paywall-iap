@@ -1141,12 +1141,16 @@
     "subtitle": "Запускайте реальные winback-offers для недавно отменивших подписку пользователей и отслеживайте результаты по campaign_id.",
     "actions": {
       "launch": "Запустить кампанию",
-      "reset": "Сбросить"
+      "reset": "Сбросить",
+      "deactivate": "Деактивировать"
     },
     "feedback": {
       "launching": "Запуск...",
+      "deactivating": "Деактивация...",
       "campaignLaunched": "Winback-кампания запущена.",
-      "launchFailed": "Не удалось запустить winback-кампанию."
+      "campaignDeactivated": "Winback-кампания деактивирована.",
+      "launchFailed": "Не удалось запустить winback-кампанию.",
+      "deactivateFailed": "Не удалось деактивировать winback-кампанию."
     },
     "states": {
       "loadFailed": "Не удалось загрузить winback-кампании.",
@@ -1169,7 +1173,8 @@
       "expired": "Истекли",
       "declined": "Отклонены",
       "launched": "Запущена",
-      "expires": "Последнее истечение"
+      "expires": "Последнее истечение",
+      "actions": "Действия"
     },
     "discount": {
       "percentage": "Процент",

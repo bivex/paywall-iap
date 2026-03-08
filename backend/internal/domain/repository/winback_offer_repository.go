@@ -22,6 +22,9 @@ type WinbackOfferRepository interface {
 	// GetActiveByUserAndCampaign retrieves active offer for a user and campaign
 	GetActiveByUserAndCampaign(ctx context.Context, userID uuid.UUID, campaignID string) (*entity.WinbackOffer, error)
 
+	// GetActiveByCampaignID retrieves all active offers for a campaign
+	GetActiveByCampaignID(ctx context.Context, campaignID string) ([]*entity.WinbackOffer, error)
+
 	// Update updates an existing winback offer
 	Update(ctx context.Context, offer *entity.WinbackOffer) error
 

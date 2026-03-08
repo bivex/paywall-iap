@@ -220,3 +220,48 @@ func (h *AdminHandler) LaunchWinbackCampaign(c *gin.Context) {
 	})
 	response.OK(c, summary)
 }
+
+func (h *AdminHandler) DeactivateWinbackCampaign(c *gin.Context) {
+	if h.winbackService == nil {
+		response.ServiceUnavailable(c, "Winback service is not configured")
+		return
+	}
+
+	campaignID := strings.TrimSpace(c.Param("campaignId"))
+	if campaignID == "" {
+		response.BadRequest(c, "Campaign ID is required")
+		return
+	}
+
+	currentSummary, err := h.getWinbackCampaignSummary(c, campaignID)
+	if err == pgx.ErrNoRows {
+		response.NotFound(c, "Winback campaign not found")
+		return
+	}
+	if err != nil {
+		response.InternalError(c, "Failed to load winback campaign")
+		return
+	}
+	if currentSummary.ActiveOffers == 0 {
+		response.UnprocessableEntity(c, "Winback campaign has no active offers to deactivate")
+		return
+	}
+
+	deactivatedOffers, err := h.winbackService.DeactivateCampaign(c.Request.Context(), campaignID)
+	if err != nil {
+		response.InternalError(c, "Failed to deactivate winback campaign")
+		return
+	}
+
+	updatedSummary, err := h.getWinbackCampaignSummary(c, campaignID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated winback campaign")
+		return
+	}
+
+	h.logWinbackCampaignAction(c, "deactivate_winback_campaign", updatedSummary, map[string]interface{}{
+		"deactivated_offers":     deactivatedOffers,
+		"previous_active_offers": currentSummary.ActiveOffers,
+	})
+	response.OK(c, updatedSummary)
+}

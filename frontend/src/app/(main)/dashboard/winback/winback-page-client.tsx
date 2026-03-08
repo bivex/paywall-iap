@@ -10,7 +10,7 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { launchWinbackCampaignAction } from "@/actions/winback";
+import { deactivateWinbackCampaignAction, launchWinbackCampaignAction } from "@/actions/winback";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +106,7 @@ export function WinbackPageClient({
   const router = useRouter();
   const [campaigns, setCampaigns] = useState(initialCampaigns);
   const [pendingLaunch, setPendingLaunch] = useState(false);
+  const [pendingCampaignAction, setPendingCampaignAction] = useState<string | null>(null);
   const form = useForm<WinbackFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: EMPTY_FORM_VALUES,
@@ -134,6 +135,24 @@ export function WinbackPageClient({
     toast.success(t("feedback.campaignLaunched"));
     router.refresh();
   });
+
+  async function deactivateCampaign(campaignId: string) {
+    setPendingCampaignAction(campaignId);
+    const result = await deactivateWinbackCampaignAction(campaignId);
+    setPendingCampaignAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.deactivateFailed"));
+      return;
+    }
+
+    const updatedCampaign = result.data;
+    setCampaigns((current) =>
+      current.map((campaign) => (campaign.campaign_id === updatedCampaign.campaign_id ? updatedCampaign : campaign)),
+    );
+    toast.success(t("feedback.campaignDeactivated"));
+    router.refresh();
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -185,6 +204,7 @@ export function WinbackPageClient({
                   <TableHead>{t("table.declined")}</TableHead>
                   <TableHead>{t("table.launched")}</TableHead>
                   <TableHead>{t("table.expires")}</TableHead>
+                  <TableHead>{t("table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,6 +229,23 @@ export function WinbackPageClient({
                     <TableCell className="text-muted-foreground text-xs">{formatDate(campaign.launched_at)}</TableCell>
                     <TableCell className="text-muted-foreground text-xs">
                       {formatDate(campaign.latest_expiry_at)}
+                    </TableCell>
+                    <TableCell>
+                      {campaign.active_offers > 0 ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={pendingCampaignAction !== null}
+                          onClick={() => void deactivateCampaign(campaign.campaign_id)}
+                        >
+                          {pendingCampaignAction === campaign.campaign_id
+                            ? t("feedback.deactivating")
+                            : t("actions.deactivate")}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

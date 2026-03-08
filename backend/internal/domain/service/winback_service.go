@@ -156,3 +156,24 @@ func (s *WinbackService) CreateWinbackCampaignForChurnedUsers(
 
 	return created, nil
 }
+
+// DeactivateCampaign expires all active offers in a campaign.
+func (s *WinbackService) DeactivateCampaign(ctx context.Context, campaignID string) (int, error) {
+	offers, err := s.winbackRepo.GetActiveByCampaignID(ctx, campaignID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get active campaign offers: %w", err)
+	}
+
+	deactivated := 0
+	for _, offer := range offers {
+		if err := offer.Expire(); err != nil {
+			continue
+		}
+		if err := s.winbackRepo.Update(ctx, offer); err != nil {
+			return deactivated, fmt.Errorf("failed to update winback offer: %w", err)
+		}
+		deactivated++
+	}
+
+	return deactivated, nil
+}

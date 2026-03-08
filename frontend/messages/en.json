@@ -1141,12 +1141,16 @@
     "subtitle": "Launch real winback offers for recently cancelled users and monitor grouped offer outcomes by campaign ID.",
     "actions": {
       "launch": "Launch Campaign",
-      "reset": "Reset"
+      "reset": "Reset",
+      "deactivate": "Deactivate"
     },
     "feedback": {
       "launching": "Launching...",
+      "deactivating": "Deactivating...",
       "campaignLaunched": "Winback campaign launched.",
-      "launchFailed": "Failed to launch winback campaign."
+      "campaignDeactivated": "Winback campaign deactivated.",
+      "launchFailed": "Failed to launch winback campaign.",
+      "deactivateFailed": "Failed to deactivate winback campaign."
     },
     "states": {
       "loadFailed": "Failed to load winback campaigns.",
@@ -1169,7 +1173,8 @@
       "expired": "Expired",
       "declined": "Declined",
       "launched": "Launched",
-      "expires": "Latest Expiry"
+      "expires": "Latest Expiry",
+      "actions": "Actions"
     },
     "discount": {
       "percentage": "Percentage",

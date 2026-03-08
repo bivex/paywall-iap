@@ -61,3 +61,20 @@ export async function launchWinbackCampaignAction(payload: LaunchWinbackCampaign
     return { ok: false, error: String(error) } satisfies ActionResult<WinbackCampaign>;
   }
 }
+
+export async function deactivateWinbackCampaignAction(campaignId: string) {
+  const token = await getAdminToken();
+  if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<WinbackCampaign>;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/winback-campaigns/${encodeURIComponent(campaignId)}/deactivate`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const parsed = await parseResponse<WinbackCampaign>(res);
+    if (parsed.ok) revalidatePath("/dashboard/winback");
+    return parsed;
+  } catch (error) {
+    return { ok: false, error: String(error) } satisfies ActionResult<WinbackCampaign>;
+  }
+}
