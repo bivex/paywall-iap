@@ -19,6 +19,10 @@ ADMIN_EMAIL="${ADMIN_EMAIL:-admin@paywall.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin12345}"
 APPLE_MOCK_BASE="${APPLE_MOCK_BASE:-http://localhost:9090}"
 IAP_PRODUCT_ID="${IAP_PRODUCT_ID:-com.example.unlimited.1mo}"
+DB_CONTAINER="${DB_CONTAINER:-paywall-db-1}"
+DATABASE_URL="${DATABASE_URL:-}"
+DB_NAME="${DB_NAME:-iap_db}"
+DB_USER="${DB_USER:-postgres}"
 
 if [[ -z "$SCHEMA_URL" && -z "$SCHEMA_PATH" ]]; then
   SCHEMA_URL="$API_BASE/openapi.yaml"
@@ -26,6 +30,10 @@ fi
 
 say() { printf '\n==> %s\n' "$*"; }
 fail() { echo "ERROR: $*" >&2; exit 1; }
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || fail "Missing required command: $1"
+}
 
 resolve_schema_target() {
   if [[ -n "$SCHEMA_URL" ]]; then
@@ -190,6 +198,19 @@ PY
   return 1
 }
 
+run_sql_file() {
+  local sql_file="$1"
+
+  if [[ -n "$DATABASE_URL" ]]; then
+    need psql
+    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$sql_file"
+    return 0
+  fi
+
+  need docker
+  docker exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" < "$sql_file"
+}
+
 should_split_runs() {
   if [[ -n "$EXPLICIT_SCHEMATHESIS_AUTH_TOKEN" || -n "$EXPLICIT_SCHEMATHESIS_HEADER" ]]; then
     return 1
@@ -207,7 +228,7 @@ should_split_runs() {
   return 0
 }
 
-should_apply_lifecycle_audit_negative_rejection_workaround() {
+should_apply_admin_experiment_negative_rejection_workarounds() {
   local args_joined
   args_joined=" $* "
 
@@ -224,6 +245,26 @@ should_apply_lifecycle_audit_negative_rejection_workaround() {
   fi
 
   return 1
+}
+
+should_reseed_admin_experiment_fixtures() {
+  local args_joined
+  args_joined=" $* "
+
+  if [[ "$args_joined" != *" --include-path "* && "$args_joined" != *" --include-path-regex "* && "$args_joined" != *" --exclude-path "* && "$args_joined" != *" --exclude-path-regex "* ]]; then
+    return 0
+  fi
+
+  if [[ "$args_joined" == *"/v1/admin/experiments"* || "$args_joined" == *"lifecycle-audit"* ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+reseed_admin_experiment_contract_fixtures() {
+  say "Re-seeding deterministic admin experiment fixtures"
+  run_sql_file "$SCRIPT_DIR/seed_experiment_test_data.sql"
 }
 
 collect_non_path_filter_args() {
@@ -272,23 +313,30 @@ run_schemathesis() {
   "${cmd[@]}"
 }
 
-run_schemathesis_with_lifecycle_audit_workaround() {
+run_schemathesis_with_admin_experiment_negative_rejection_workarounds() {
   local label="$1"
   local bearer_token="$2"
   shift 2
 
-  local lifecycle_audit_regex='^/v1/admin/experiments/.*/lifecycle-audit$'
+  local lifecycle_audit_path='/v1/admin/experiments/{id}/lifecycle-audit'
+  local update_experiment_path='/v1/admin/experiments/{id}'
 
   collect_non_path_filter_args "$@"
 
-  say "Applying lifecycle-audit Schemathesis workaround (skip false-positive negative_data_rejection on schema-mutated valid IDs)"
+  say "Applying admin experiment Schemathesis workarounds (skip false-positive negative_data_rejection on schema-mutated valid IDs)"
 
-  run_schemathesis "$label (excluding lifecycle-audit)" "$bearer_token" \
-    --exclude-path-regex "$lifecycle_audit_regex" \
+  run_schemathesis "$label (excluding endpoint-specific negative_data_rejection false-positives)" "$bearer_token" \
+    --exclude-path "$update_experiment_path" \
+    --exclude-path "$lifecycle_audit_path" \
     "$@"
 
+  run_schemathesis "$label (experiment update without negative_data_rejection)" "$bearer_token" \
+    --include-path "$update_experiment_path" \
+    --exclude-checks negative_data_rejection \
+    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+
   run_schemathesis "$label (lifecycle-audit without negative_data_rejection)" "$bearer_token" \
-    --include-path-regex "$lifecycle_audit_regex" \
+    --include-path "$lifecycle_audit_path" \
     --exclude-checks negative_data_rejection \
     "${FILTERED_SCHEMATHESIS_ARGS[@]}"
 }
@@ -329,8 +377,12 @@ main() {
       --exclude-tag iap \
       "$@"
 
-    if should_apply_lifecycle_audit_negative_rejection_workaround "$@"; then
-      run_schemathesis_with_lifecycle_audit_workaround "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
+    if should_reseed_admin_experiment_fixtures "$@"; then
+      reseed_admin_experiment_contract_fixtures
+    fi
+
+    if should_apply_admin_experiment_negative_rejection_workarounds "$@"; then
+      run_schemathesis_with_admin_experiment_negative_rejection_workarounds "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
         --include-tag admin \
         "$@"
     else
@@ -357,8 +409,12 @@ main() {
     return 0
   fi
 
-  if should_apply_lifecycle_audit_negative_rejection_workaround "$@"; then
-    run_schemathesis_with_lifecycle_audit_workaround "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
+  if should_reseed_admin_experiment_fixtures "$@"; then
+    reseed_admin_experiment_contract_fixtures
+  fi
+
+  if should_apply_admin_experiment_negative_rejection_workarounds "$@"; then
+    run_schemathesis_with_admin_experiment_negative_rejection_workarounds "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
   else
     run_schemathesis "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
   fi

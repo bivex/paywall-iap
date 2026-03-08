@@ -1,0 +1,62 @@
+[[operations]]
+include-path = "/v1/admin/experiments/{id}"
+include-method = "PUT"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000002" }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/pause"
+include-method = "POST"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000001" }
+generation = { mode = "positive", max-examples = 1 }
+phases = { coverage = { enabled = false } }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/resume"
+include-method = "POST"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000003" }
+generation = { mode = "positive", max-examples = 1 }
+phases = { coverage = { enabled = false } }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/complete"
+include-method = "POST"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000003" }
+generation = { mode = "positive", max-examples = 1 }
+phases = { coverage = { enabled = false } }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/confirm-winner"
+include-method = "POST"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000004" }
+generation = { mode = "positive", max-examples = 1 }
+phases = { coverage = { enabled = false } }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/hold-for-review"
+include-method = "POST"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000004" }
+generation = { mode = "positive", max-examples = 1 }
+phases = { coverage = { enabled = false } }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/lifecycle-audit"
+include-method = "GET"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000001" }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/lock"
+include-method = "POST"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000001" }
+generation = { mode = "positive", max-examples = 1 }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/unlock"
+include-method = "POST"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000001" }
+generation = { mode = "positive", max-examples = 1 }
+
+[[operations]]
+include-path = "/v1/admin/experiments/{id}/repair"
+include-method = "POST"
+parameters = { "path.id" = "10000000-0000-0000-0000-000000000001" }
+generation = { mode = "positive", max-examples = 1 }

@@ -19,6 +19,7 @@ SET rate = EXCLUDED.rate,
 INSERT INTO ab_tests (
   id, name, description, status, start_at, end_at,
   algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence,
+  automation_policy,
   created_at, updated_at,
   window_type, window_size, window_min_samples,
   objective_type, objective_weights,
@@ -33,6 +34,7 @@ VALUES
     now() - interval '3 days',
     now() + interval '14 days',
     'thompson_sampling', true, 50, 0.95, 0.87,
+    '{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false,"locked_until":null,"locked_by":null,"lock_reason":null}'::jsonb,
     now() - interval '3 days', now(),
     'events', 500, 50,
     'hybrid', '{"conversion":0.5,"ltv":0.3,"revenue":0.2}'::jsonb,
@@ -46,6 +48,7 @@ VALUES
     now() + interval '1 day',
     now() + interval '21 days',
     NULL, false, 100, 0.95, NULL,
+    '{"enabled":false,"auto_start":false,"auto_complete":false,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false,"locked_until":null,"locked_by":null,"lock_reason":null}'::jsonb,
     now() - interval '1 day', now(),
     'none', 1000, 100,
     'conversion', NULL,
@@ -59,10 +62,25 @@ VALUES
     now() - interval '10 days',
     now() + interval '10 days',
     'ucb', true, 75, 0.90, 0.64,
+    '{"enabled":true,"auto_start":true,"auto_complete":false,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false,"locked_until":null,"locked_by":null,"lock_reason":null}'::jsonb,
     now() - interval '10 days', now(),
     'time', 72, 25,
     'revenue', NULL,
     true, false, false, true, 0.20
+  ),
+  (
+    '10000000-0000-0000-0000-000000000004',
+    'Seed Confirmable Winner Test',
+    'Running bandit fixture with a confirmable winner recommendation for admin contract actions.',
+    'running',
+    now() - interval '6 days',
+    now() + interval '8 days',
+    'thompson_sampling', true, 20, 0.95, 0.98,
+    '{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false,"locked_until":null,"locked_by":null,"lock_reason":null}'::jsonb,
+    now() - interval '6 days', now(),
+    'events', 250, 20,
+    'conversion', NULL,
+    false, false, false, false, 0.20
   )
 ON CONFLICT (id) DO UPDATE
 SET name = EXCLUDED.name,
@@ -75,6 +93,7 @@ SET name = EXCLUDED.name,
     min_sample_size = EXCLUDED.min_sample_size,
     confidence_threshold = EXCLUDED.confidence_threshold,
     winner_confidence = EXCLUDED.winner_confidence,
+    automation_policy = EXCLUDED.automation_policy,
     updated_at = now(),
     window_type = EXCLUDED.window_type,
     window_size = EXCLUDED.window_size,
@@ -96,7 +115,9 @@ VALUES
   ('20000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000002', 'benefit_led_copy', 'Benefit-led onboarding CTA copy.', false, 0.50, now() - interval '1 day', now()),
   ('20000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000003', 'control_winback', 'Baseline winback offer.', true, 0.40, now() - interval '10 days', now()),
   ('20000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000003', 'discount_20', '20 percent winback discount.', false, 0.30, now() - interval '10 days', now()),
-  ('20000000-0000-0000-0000-000000000008', '10000000-0000-0000-0000-000000000003', 'discount_40', '40 percent winback discount.', false, 0.30, now() - interval '10 days', now())
+  ('20000000-0000-0000-0000-000000000008', '10000000-0000-0000-0000-000000000003', 'discount_40', '40 percent winback discount.', false, 0.30, now() - interval '10 days', now()),
+  ('20000000-0000-0000-0000-000000000009', '10000000-0000-0000-0000-000000000004', 'control_checkout', 'Baseline checkout flow.', true, 0.50, now() - interval '6 days', now()),
+  ('20000000-0000-0000-0000-000000000010', '10000000-0000-0000-0000-000000000004', 'winner_checkout', 'High-converting checkout variant.', false, 0.50, now() - interval '6 days', now())
 ON CONFLICT (id) DO UPDATE
 SET experiment_id = EXCLUDED.experiment_id,
     name = EXCLUDED.name,
@@ -114,7 +135,9 @@ VALUES
   ('20000000-0000-0000-0000-000000000003', 36.00, 64.00, 140, 35, 940.00, 6.7143, now(), 940.00, 'USD', 940.00),
   ('20000000-0000-0000-0000-000000000006', 14.00, 36.00, 48, 13, 180.00, 3.7500, now(), 180.00, 'USD', 180.00),
   ('20000000-0000-0000-0000-000000000007', 18.00, 32.00, 50, 17, 265.00, 5.3000, now(), 265.00, 'USD', 265.00),
-  ('20000000-0000-0000-0000-000000000008', 12.00, 28.00, 38, 11, 220.00, 5.7895, now(), 220.00, 'USD', 220.00)
+  ('20000000-0000-0000-0000-000000000008', 12.00, 28.00, 38, 11, 220.00, 5.7895, now(), 220.00, 'USD', 220.00),
+  ('20000000-0000-0000-0000-000000000009', 20.00, 40.00, 58, 19, 420.00, 7.2414, now(), 420.00, 'USD', 420.00),
+  ('20000000-0000-0000-0000-000000000010', 44.00, 16.00, 62, 43, 980.00, 15.8065, now(), 980.00, 'USD', 980.00)
 ON CONFLICT (arm_id) DO UPDATE
 SET alpha = EXCLUDED.alpha,
     beta = EXCLUDED.beta,
