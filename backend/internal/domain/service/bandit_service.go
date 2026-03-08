@@ -74,6 +74,7 @@ type Assignment struct {
 	ArmID        uuid.UUID
 	AssignedAt   time.Time
 	ExpiresAt    time.Time
+	Metadata     map[string]interface{}
 }
 
 type AssignmentEventType string
@@ -260,14 +261,17 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 
 	var bestArm *Arm
 	maxSample := -1.0
+	armScores := make([]map[string]interface{}, 0, len(arms))
 
 	// Sample from Beta distribution for each arm and select the max
 	for _, arm := range arms {
 		// Get current statistics from cache or DB
 		cacheKey := fmt.Sprintf("ab:arm:%s", arm.ID.String())
+		statsSource := "cache"
 		stats, err := b.cache.GetArmStats(ctx, cacheKey)
 		if err != nil {
 			// Fallback to database
+			statsSource = "database"
 			stats, err = b.repo.GetArmStats(ctx, arm.ID)
 			if err != nil {
 				b.logger.Warn("Failed to get arm stats, using defaults",
@@ -275,6 +279,7 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 					zap.Error(err),
 				)
 				// Use default Beta(1,1) = uniform prior
+				statsSource = "default_prior"
 				stats = &ArmStats{
 					ArmID: arm.ID,
 					Alpha: 1.0,
@@ -293,6 +298,19 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 			zap.Float64("beta", stats.Beta),
 			zap.Float64("sample", sample),
 		)
+
+		armScores = append(armScores, map[string]interface{}{
+			"arm_id":       arm.ID,
+			"arm_name":     arm.Name,
+			"is_control":   arm.IsControl,
+			"stats_source": statsSource,
+			"alpha":        stats.Alpha,
+			"beta":         stats.Beta,
+			"samples":      stats.Samples,
+			"conversions":  stats.Conversions,
+			"revenue":      stats.Revenue,
+			"sample":       sample,
+		})
 
 		if sample > maxSample {
 			maxSample = sample
@@ -313,6 +331,13 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 		ArmID:        bestArm.ID,
 		AssignedAt:   assignedAt,
 		ExpiresAt:    assignedAt.Add(24 * time.Hour),
+		Metadata: map[string]interface{}{
+			"selection_strategy": "thompson_sampling",
+			"arms_considered":    len(arms),
+			"selected_arm_name":  bestArm.Name,
+			"selected_sample":    maxSample,
+			"arm_scores":         armScores,
+		},
 	}
 	if err := b.repo.CreateAssignment(ctx, assignment); err != nil {
 		return uuid.Nil, fmt.Errorf("failed to persist assignment: %w", err)

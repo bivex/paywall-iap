@@ -215,6 +215,13 @@ func (r *PostgresBanditRepository) CreateAssignment(ctx context.Context, assignm
 	defer tx.Rollback(ctx)
 
 	assignedAt := normalizeOccurredAt(assignment.AssignedAt)
+	var metadataJSON []byte
+	if assignment.Metadata != nil {
+		metadataJSON, err = json.Marshal(assignment.Metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal assignment event metadata: %w", err)
+		}
+	}
 	var assignmentID uuid.UUID
 	err = tx.QueryRow(ctx, `
 		INSERT INTO ab_test_assignments (id, experiment_id, user_id, arm_id, assigned_at, expires_at)
@@ -244,15 +251,17 @@ func (r *PostgresBanditRepository) CreateAssignment(ctx context.Context, assignm
 			user_id,
 			arm_id,
 			event_type,
+				metadata,
 			occurred_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`,
 		assignmentID,
 		assignment.ExperimentID,
 		assignment.UserID,
 		assignment.ArmID,
 		service.AssignmentEventTypeAssigned,
+		metadataJSON,
 		assignedAt,
 	)
 	if err != nil {

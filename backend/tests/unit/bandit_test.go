@@ -218,10 +218,16 @@ func TestSelectArm(t *testing.T) {
 		repo.On("GetArms", ctx, experimentID).Return(arms, nil)
 		repo.On("GetArmStats", ctx, arm1ID).Return(&service.ArmStats{ArmID: arm1ID, Alpha: 1, Beta: 1}, nil)
 		repo.On("CreateAssignment", ctx, mock.MatchedBy(func(assignment *service.Assignment) bool {
+			armScores, ok := assignment.Metadata["arm_scores"].([]map[string]interface{})
 			return assignment.ExperimentID == experimentID &&
 				assignment.UserID == userID &&
 				assignment.ArmID == arm1ID &&
-				assignment.ExpiresAt.After(assignment.AssignedAt)
+				assignment.ExpiresAt.After(assignment.AssignedAt) &&
+				assignment.Metadata["selection_strategy"] == "thompson_sampling" &&
+				assignment.Metadata["arms_considered"] == len(arms) &&
+				assignment.Metadata["selected_arm_name"] == "Arm 1" &&
+				assignment.Metadata["selected_sample"] != nil &&
+				ok && len(armScores) == 1
 		})).Return(nil)
 
 		selectedArmID, err := bandit.SelectArm(ctx, experimentID, userID)
