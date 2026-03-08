@@ -619,7 +619,8 @@ export function BanditPageClient({
                               {t("recommendation.guardSamples")}: {entry.observed_samples}/{entry.min_sample_size}
                             </p>
                             <p className="mt-1 text-muted-foreground text-xs">
-                              {t("recommendation.occurredAt")}: {hasHydrated ? formatAdminDateTime(entry.occurred_at) : "—"}
+                              {t("recommendation.occurredAt")}:{" "}
+                              {hasHydrated ? formatAdminDateTime(entry.occurred_at) : "—"}
                             </p>
                           </div>
                         ))}
