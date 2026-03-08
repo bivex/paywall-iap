@@ -383,6 +383,33 @@ func (r *ExperimentAdminRepository) UpdateExperimentWinnerConfidence(ctx context
 	return nil
 }
 
+func (r *ExperimentAdminRepository) GetExperimentObjectiveConfig(ctx context.Context, experimentID uuid.UUID) (*service.ExperimentConfig, error) {
+	var objectiveType sql.NullString
+	var objectiveWeightsJSON []byte
+
+	err := r.pool.QueryRow(ctx, `
+		SELECT objective_type, objective_weights
+		FROM ab_tests
+		WHERE id = $1`, experimentID).Scan(&objectiveType, &objectiveWeightsJSON)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, service.ErrExperimentNotFound
+		}
+		return nil, fmt.Errorf("failed to load experiment objective config: %w", err)
+	}
+	if !objectiveType.Valid || objectiveType.String == "" {
+		return nil, nil
+	}
+
+	config := &service.ExperimentConfig{ID: experimentID, ObjectiveType: service.ObjectiveType(objectiveType.String)}
+	if len(objectiveWeightsJSON) > 0 {
+		if err := json.Unmarshal(objectiveWeightsJSON, &config.ObjectiveWeights); err != nil {
+			return nil, fmt.Errorf("failed to decode experiment objective weights: %w", err)
+		}
+	}
+	return config, nil
+}
+
 func (r *ExperimentAdminRepository) ListExperimentRepairCandidateIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT candidate.id

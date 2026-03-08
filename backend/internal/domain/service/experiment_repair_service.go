@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ type ExperimentRepairAssignmentSnapshot struct {
 type ExperimentRepairSummary struct {
 	AssignmentSnapshot      ExperimentRepairAssignmentSnapshot `json:"assignment_snapshot"`
 	MissingArmStatsInserted int                                `json:"missing_arm_stats_inserted"`
+	ObjectiveStatsSynced    int                                `json:"objective_stats_synced"`
 	PendingRewardsTotal     int                                `json:"pending_rewards_total"`
 	ExpiredPendingRewards   int                                `json:"expired_pending_rewards"`
 	PendingRewardsProcessed int                                `json:"pending_rewards_processed"`
@@ -27,9 +29,15 @@ type ExperimentRepairRepository interface {
 	GetExperimentMutationState(ctx context.Context, experimentID uuid.UUID) (*ExperimentMutationState, error)
 	CountExperimentAssignments(ctx context.Context, experimentID uuid.UUID) (total int, active int, err error)
 	EnsureExperimentArmStats(ctx context.Context, experimentID uuid.UUID) (int, error)
+	GetExperimentObjectiveConfig(ctx context.Context, experimentID uuid.UUID) (*ExperimentConfig, error)
 	CountExperimentPendingRewards(ctx context.Context, experimentID uuid.UUID) (total int, expired int, err error)
 	ProcessExpiredPendingRewards(ctx context.Context, experimentID uuid.UUID) (int, error)
 	UpdateExperimentWinnerConfidence(ctx context.Context, experimentID uuid.UUID, confidence *float64) error
+}
+
+type experimentRepairBanditRepository interface {
+	BanditRepository
+	UpdateObjectiveStats(ctx context.Context, stats *ArmObjectiveStats) error
 }
 
 type noopBanditCache struct{}
@@ -49,11 +57,11 @@ func (noopBanditCache) SetAssignment(context.Context, string, uuid.UUID, time.Du
 
 type ExperimentRepairService struct {
 	repo        ExperimentRepairRepository
-	banditRepo  BanditRepository
+	banditRepo  experimentRepairBanditRepository
 	simulations int
 }
 
-func NewExperimentRepairService(repo ExperimentRepairRepository, banditRepo BanditRepository) *ExperimentRepairService {
+func NewExperimentRepairService(repo ExperimentRepairRepository, banditRepo experimentRepairBanditRepository) *ExperimentRepairService {
 	return &ExperimentRepairService{repo: repo, banditRepo: banditRepo, simulations: 2000}
 }
 
@@ -71,6 +79,10 @@ func (s *ExperimentRepairService) RepairExperiment(ctx context.Context, experime
 		return nil, err
 	}
 	inserted, err := s.repo.EnsureExperimentArmStats(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+	objectiveStatsSynced, err := s.syncObjectiveStats(ctx, experimentID)
 	if err != nil {
 		return nil, err
 	}
@@ -96,11 +108,54 @@ func (s *ExperimentRepairService) RepairExperiment(ctx context.Context, experime
 	return &ExperimentRepairSummary{
 		AssignmentSnapshot:      ExperimentRepairAssignmentSnapshot{Total: totalAssignments, Active: activeAssignments},
 		MissingArmStatsInserted: inserted,
+		ObjectiveStatsSynced:    objectiveStatsSynced,
 		PendingRewardsTotal:     pendingTotal,
 		ExpiredPendingRewards:   expiredPending,
 		PendingRewardsProcessed: processed,
 		WinnerConfidencePercent: winnerConfidencePercent,
 	}, nil
+}
+
+func (s *ExperimentRepairService) syncObjectiveStats(ctx context.Context, experimentID uuid.UUID) (int, error) {
+	config, err := s.repo.GetExperimentObjectiveConfig(ctx, experimentID)
+	if err != nil {
+		return 0, err
+	}
+	objectiveTypes := maintenanceObjectiveTypes(config)
+	if len(objectiveTypes) == 0 {
+		return 0, nil
+	}
+
+	arms, err := s.banditRepo.GetArms(ctx, experimentID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load arms for objective repair: %w", err)
+	}
+
+	synced := 0
+	for _, arm := range arms {
+		stats, err := s.banditRepo.GetArmStats(ctx, arm.ID)
+		if err != nil {
+			return synced, fmt.Errorf("failed to load arm stats for objective repair: %w", err)
+		}
+
+		for _, objectiveType := range objectiveTypes {
+			if err := s.banditRepo.UpdateObjectiveStats(ctx, &ArmObjectiveStats{
+				ArmID:         arm.ID,
+				ObjectiveType: objectiveType,
+				Alpha:         stats.Alpha,
+				Beta:          stats.Beta,
+				Samples:       stats.Samples,
+				Conversions:   stats.Conversions,
+				TotalRevenue:  stats.Revenue,
+				AvgLTV:        stats.AvgReward,
+			}); err != nil {
+				return synced, fmt.Errorf("failed to sync objective stats during repair: %w", err)
+			}
+			synced++
+		}
+	}
+
+	return synced, nil
 }
 
 func (s *ExperimentRepairService) recalculateWinnerConfidence(ctx context.Context, experimentID uuid.UUID) (*float64, error) {

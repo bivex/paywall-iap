@@ -43,8 +43,8 @@ func TestExperimentRepairReconcilerReconcileAggregatesRepairSummaries(t *testing
 	secondID := uuid.New()
 	candidates := &stubExperimentRepairCandidateRepository{ids: []uuid.UUID{firstID, secondID}}
 	repairer := &stubExperimentRepairExecutor{summaries: map[uuid.UUID]*ExperimentRepairSummary{
-		firstID:  {MissingArmStatsInserted: 1, ExpiredPendingRewards: 2, PendingRewardsProcessed: 2},
-		secondID: {MissingArmStatsInserted: 3, ExpiredPendingRewards: 4, PendingRewardsProcessed: 1},
+		firstID:  {MissingArmStatsInserted: 1, ObjectiveStatsSynced: 2, ExpiredPendingRewards: 2, PendingRewardsProcessed: 2},
+		secondID: {MissingArmStatsInserted: 3, ObjectiveStatsSynced: 4, ExpiredPendingRewards: 4, PendingRewardsProcessed: 1},
 	}}
 	reconciler := NewExperimentRepairReconciler(candidates, repairer)
 
@@ -56,6 +56,7 @@ func TestExperimentRepairReconcilerReconcileAggregatesRepairSummaries(t *testing
 	assert.Equal(t, []uuid.UUID{firstID, secondID}, result.Repaired)
 	assert.Empty(t, result.Failures)
 	assert.Equal(t, 4, result.MissingArmStatsInserted)
+	assert.Equal(t, 6, result.ObjectiveStatsSynced)
 	assert.Equal(t, 6, result.ExpiredPendingRewards)
 	assert.Equal(t, 3, result.PendingRewardsProcessed)
 	assert.Equal(t, []uuid.UUID{firstID, secondID}, repairer.repaired)

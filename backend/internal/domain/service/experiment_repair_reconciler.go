@@ -20,6 +20,7 @@ type ExperimentRepairRunResult struct {
 	Repaired                []uuid.UUID       `json:"repaired"`
 	Failures                map[string]string `json:"failures,omitempty"`
 	MissingArmStatsInserted int               `json:"missing_arm_stats_inserted"`
+	ObjectiveStatsSynced    int               `json:"objective_stats_synced"`
 	ExpiredPendingRewards   int               `json:"expired_pending_rewards"`
 	PendingRewardsProcessed int               `json:"pending_rewards_processed"`
 }
@@ -60,6 +61,7 @@ func (r *ExperimentRepairReconciler) Reconcile(ctx context.Context, limit int) (
 			continue
 		}
 		result.MissingArmStatsInserted += summary.MissingArmStatsInserted
+		result.ObjectiveStatsSynced += summary.ObjectiveStatsSynced
 		result.ExpiredPendingRewards += summary.ExpiredPendingRewards
 		result.PendingRewardsProcessed += summary.PendingRewardsProcessed
 	}

@@ -48,7 +48,7 @@ func (f *fakeExperimentRepairExecutor) ExecuteScheduled(ctx context.Context, spe
 
 func TestExperimentRepairTaskHandlerUsesDefaultLimitWhenPayloadIsInvalid(t *testing.T) {
 	experimentID := uuid.New()
-	runner := &fakeExperimentRepairRunner{result: service.ExperimentRepairRunResult{Scanned: 1, Repaired: []uuid.UUID{experimentID}}}
+	runner := &fakeExperimentRepairRunner{result: service.ExperimentRepairRunResult{Scanned: 1, Repaired: []uuid.UUID{experimentID}, ObjectiveStatsSynced: 2}}
 	executor := &fakeExperimentRepairExecutor{}
 	handler := newExperimentRepairTaskHandler(runner, executor, zap.NewNop())
 
@@ -60,6 +60,7 @@ func TestExperimentRepairTaskHandlerUsesDefaultLimitWhenPayloadIsInvalid(t *test
 	assert.Equal(t, 30*time.Minute, executor.lastSpec.Window)
 	assert.Equal(t, defaultExperimentRepairLimit, executor.lastDetails["limit"])
 	assert.Equal(t, 1, executor.lastDetails["repaired"])
+	assert.Equal(t, 2, executor.lastDetails["objective_stats_synced"])
 	assert.Equal(t, []string{experimentID.String()}, executor.lastDetails["repaired_experiment_ids"])
 }
 

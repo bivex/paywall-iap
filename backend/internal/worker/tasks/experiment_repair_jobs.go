@@ -63,6 +63,7 @@ func newExperimentRepairTaskHandler(reconciler experimentRepairRunner, executor 
 				"repaired":                   len(result.Repaired),
 				"failed":                     len(result.Failures),
 				"missing_arm_stats_inserted": result.MissingArmStatsInserted,
+				"objective_stats_synced":     result.ObjectiveStatsSynced,
 				"expired_pending_rewards":    result.ExpiredPendingRewards,
 				"pending_rewards_processed":  result.PendingRewardsProcessed,
 			}

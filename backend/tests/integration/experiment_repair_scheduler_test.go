@@ -48,6 +48,8 @@ func TestExperimentRepairScheduledTaskRepairsCandidatesAndIsIdempotent(t *testin
 			min_sample_size INT DEFAULT 100,
 			confidence_threshold NUMERIC(3,2) DEFAULT 0.95,
 			winner_confidence NUMERIC(5,4),
+			objective_type TEXT,
+			objective_weights JSONB,
 			automation_policy JSONB NOT NULL DEFAULT '{"enabled": false, "auto_start": false, "auto_complete": false, "complete_on_end_time": true, "complete_on_sample_size": false, "complete_on_confidence": false, "manual_override": false, "locked_until": null, "locked_by": null, "lock_reason": null}'::jsonb,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -94,6 +96,18 @@ func TestExperimentRepairScheduledTaskRepairsCandidatesAndIsIdempotent(t *testin
 			converted_at TIMESTAMPTZ,
 			processed_at TIMESTAMPTZ
 		)`,
+		`CREATE TABLE bandit_arm_objective_stats (
+			arm_id UUID NOT NULL REFERENCES ab_test_arms(id) ON DELETE CASCADE,
+			objective_type TEXT NOT NULL,
+			alpha NUMERIC(10,2) NOT NULL DEFAULT 1.0,
+			beta NUMERIC(10,2) NOT NULL DEFAULT 1.0,
+			samples INT NOT NULL DEFAULT 0,
+			conversions INT NOT NULL DEFAULT 0,
+			total_revenue NUMERIC(15,2) NOT NULL DEFAULT 0.0,
+			avg_ltv NUMERIC(10,4) NOT NULL DEFAULT 0.0,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			PRIMARY KEY (arm_id, objective_type)
+		)`,
 		`CREATE TABLE automation_job_run_log (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			job_name TEXT NOT NULL,
@@ -120,7 +134,7 @@ func TestExperimentRepairScheduledTaskRepairsCandidatesAndIsIdempotent(t *testin
 
 	_, err = db.Exec(ctx, `INSERT INTO users (id, platform_user_id, device_id, platform, app_version, email, role) VALUES ($1, 'user-a', 'device-a', 'ios', '1.0.0', 'a@example.com', 'user')`, userID)
 	require.NoError(t, err)
-	_, err = db.Exec(ctx, `INSERT INTO ab_tests (id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, automation_policy) VALUES ($1, 'Repairable experiment', 'Needs repair', 'running', 'thompson_sampling', TRUE, 100, 0.95, '{"enabled": true, "auto_start": true, "auto_complete": true, "complete_on_end_time": true, "complete_on_sample_size": true, "complete_on_confidence": true, "manual_override": false, "locked_until": null, "locked_by": null, "lock_reason": null}'::jsonb)`, experimentID)
+	_, err = db.Exec(ctx, `INSERT INTO ab_tests (id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, objective_type, objective_weights, automation_policy) VALUES ($1, 'Repairable experiment', 'Needs repair', 'running', 'thompson_sampling', TRUE, 100, 0.95, 'hybrid', '{"conversion":0.7,"ltv":0.3}'::jsonb, '{"enabled": true, "auto_start": true, "auto_complete": true, "complete_on_end_time": true, "complete_on_sample_size": true, "complete_on_confidence": true, "manual_override": false, "locked_until": null, "locked_by": null, "lock_reason": null}'::jsonb)`, experimentID)
 	require.NoError(t, err)
 	_, err = db.Exec(ctx, `INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight) VALUES ($1, $3, 'Control', 'Baseline', TRUE, 1.0), ($2, $3, 'Variant', 'Variant', FALSE, 1.0)`, controlArmID, variantArmID, experimentID)
 	require.NoError(t, err)
@@ -144,11 +158,13 @@ func TestExperimentRepairScheduledTaskRepairsCandidatesAndIsIdempotent(t *testin
 	require.NoError(t, mux.ProcessTask(ctx, task))
 	require.NoError(t, mux.ProcessTask(ctx, task))
 
-	var statsRows, processedPending, runCount int
+	var statsRows, objectiveRows, processedPending, runCount int
 	require.NoError(t, db.QueryRow(ctx, `SELECT COUNT(*)::int FROM ab_test_arm_stats WHERE arm_id = $1`, controlArmID).Scan(&statsRows))
+	require.NoError(t, db.QueryRow(ctx, `SELECT COUNT(*)::int FROM bandit_arm_objective_stats WHERE arm_id IN ($1, $2)`, controlArmID, variantArmID).Scan(&objectiveRows))
 	require.NoError(t, db.QueryRow(ctx, `SELECT COUNT(*)::int FROM bandit_pending_rewards WHERE experiment_id = $1 AND processed_at IS NOT NULL`, experimentID).Scan(&processedPending))
 	require.NoError(t, db.QueryRow(ctx, `SELECT COUNT(*)::int FROM automation_job_run_log WHERE job_name = $1`, worker_tasks.TypeReconcileExperimentRepair).Scan(&runCount))
 	assert.Equal(t, 1, statsRows)
+	assert.Equal(t, 4, objectiveRows)
 	assert.Equal(t, 1, processedPending)
 	assert.Equal(t, 1, runCount)
 
@@ -162,6 +178,7 @@ func TestExperimentRepairScheduledTaskRepairsCandidatesAndIsIdempotent(t *testin
 	assert.Equal(t, float64(1), details["scanned"])
 	assert.Equal(t, float64(1), details["repaired"])
 	assert.Equal(t, float64(1), details["missing_arm_stats_inserted"])
+	assert.Equal(t, float64(4), details["objective_stats_synced"])
 	assert.Equal(t, float64(1), details["pending_rewards_processed"])
 	assert.Equal(t, float64(1), details["expired_pending_rewards"])
 }
