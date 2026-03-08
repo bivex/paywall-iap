@@ -334,7 +334,9 @@ CREATE TABLE ab_tests (
     winner_confidence   NUMERIC(3,2),
 
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    automation_policy   JSONB NOT NULL DEFAULT '{"enabled": false, "auto_start": false, "auto_complete": false, "complete_on_end_time": true, "complete_on_sample_size": false, "complete_on_confidence": false, "manual_override": false}'::jsonb,
+    CONSTRAINT ab_tests_automation_policy_is_object CHECK (jsonb_typeof(automation_policy) = 'object')
 );
 
 -- Index for active experiments
@@ -347,6 +349,7 @@ COMMENT ON COLUMN ab_tests.is_bandit IS 'True if this experiment uses bandit opt
 COMMENT ON COLUMN ab_tests.min_sample_size IS 'Minimum samples before bandit can declare winner';
 COMMENT ON COLUMN ab_tests.confidence_threshold IS 'Statistical confidence threshold (0.95 = 95%)';
 COMMENT ON COLUMN ab_tests.winner_confidence IS 'Current confidence level of the winning arm';
+COMMENT ON COLUMN ab_tests.automation_policy IS 'Persisted automation rules for scheduler-driven experiment lifecycle management';
 
 
 -- ------------------------------------------------------------

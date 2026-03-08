@@ -51,6 +51,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			min_sample_size INT DEFAULT 100,
 			confidence_threshold NUMERIC(3,2) DEFAULT 0.95,
 			winner_confidence NUMERIC(3,2),
+				automation_policy JSONB NOT NULL DEFAULT '{"enabled": false, "auto_start": false, "auto_complete": false, "complete_on_end_time": true, "complete_on_sample_size": false, "complete_on_confidence": false, "manual_override": false}'::jsonb,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 		);
@@ -160,6 +161,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			"is_bandit":true,
 			"min_sample_size":200,
 			"confidence_threshold_percent":95,
+				"automation_policy":{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_sample_size":true},
 			"arms":[
 				{"name":"Control","description":"Baseline paywall","is_control":true,"traffic_weight":1},
 				{"name":"Variant A","description":"Annual plan emphasis","is_control":false,"traffic_weight":1}
@@ -179,6 +181,11 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Equal(t, "running", resp.Data.Status)
 		assert.True(t, resp.Data.IsBandit)
 		assert.InDelta(t, 95, resp.Data.ConfidenceThresholdPercent, 0.001)
+		assert.True(t, resp.Data.AutomationPolicy.Enabled)
+		assert.True(t, resp.Data.AutomationPolicy.AutoStart)
+		assert.True(t, resp.Data.AutomationPolicy.AutoComplete)
+		assert.True(t, resp.Data.AutomationPolicy.CompleteOnSampleSize)
+		assert.False(t, resp.Data.AutomationPolicy.ManualOverride)
 		assert.Len(t, resp.Data.Arms, 2)
 		assert.Equal(t, 2, resp.Data.ArmCount)
 		assert.Equal(t, 0, resp.Data.TotalSamples)
@@ -210,6 +217,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		}
 		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 		assert.Equal(t, "draft", resp.Data.Status)
+		assert.False(t, resp.Data.AutomationPolicy.Enabled)
+		assert.True(t, resp.Data.AutomationPolicy.CompleteOnEndTime)
 		draftExperiment = resp.Data
 	})
 
@@ -254,7 +263,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			"min_sample_size":220,
 			"confidence_threshold_percent":92,
 			"start_at":"2026-01-05T10:00:00Z",
-			"end_at":"2026-01-12T10:00:00Z"
+				"end_at":"2026-01-12T10:00:00Z",
+				"automation_policy":{"enabled":true,"auto_complete":true,"complete_on_confidence":true,"manual_override":true}
 		}`)
 		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -272,6 +282,10 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Nil(t, resp.Data.AlgorithmType)
 		assert.Equal(t, 220, resp.Data.MinSampleSize)
 		assert.InDelta(t, 92, resp.Data.ConfidenceThresholdPercent, 0.001)
+		assert.True(t, resp.Data.AutomationPolicy.Enabled)
+		assert.True(t, resp.Data.AutomationPolicy.AutoComplete)
+		assert.True(t, resp.Data.AutomationPolicy.CompleteOnConfidence)
+		assert.True(t, resp.Data.AutomationPolicy.ManualOverride)
 		require.NotNil(t, resp.Data.StartAt)
 		require.NotNil(t, resp.Data.EndAt)
 		assert.Equal(t, "draft", resp.Data.Status)

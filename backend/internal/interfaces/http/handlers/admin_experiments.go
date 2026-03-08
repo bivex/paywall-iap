@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
@@ -26,26 +28,27 @@ type AdminExperimentArm struct {
 }
 
 type AdminExperiment struct {
-	ID                         uuid.UUID            `json:"id"`
-	Name                       string               `json:"name"`
-	Description                string               `json:"description"`
-	Status                     string               `json:"status"`
-	AlgorithmType              *string              `json:"algorithm_type"`
-	IsBandit                   bool                 `json:"is_bandit"`
-	MinSampleSize              int                  `json:"min_sample_size"`
-	ConfidenceThresholdPercent float64              `json:"confidence_threshold_percent"`
-	WinnerConfidencePercent    *float64             `json:"winner_confidence_percent"`
-	StartAt                    *time.Time           `json:"start_at"`
-	EndAt                      *time.Time           `json:"end_at"`
-	CreatedAt                  time.Time            `json:"created_at"`
-	UpdatedAt                  time.Time            `json:"updated_at"`
-	ArmCount                   int                  `json:"arm_count"`
-	TotalAssignments           int                  `json:"total_assignments"`
-	ActiveAssignments          int                  `json:"active_assignments"`
-	TotalSamples               int                  `json:"total_samples"`
-	TotalConversions           int                  `json:"total_conversions"`
-	TotalRevenue               float64              `json:"total_revenue"`
-	Arms                       []AdminExperimentArm `json:"arms"`
+	ID                         uuid.UUID                          `json:"id"`
+	Name                       string                             `json:"name"`
+	Description                string                             `json:"description"`
+	Status                     string                             `json:"status"`
+	AlgorithmType              *string                            `json:"algorithm_type"`
+	IsBandit                   bool                               `json:"is_bandit"`
+	MinSampleSize              int                                `json:"min_sample_size"`
+	ConfidenceThresholdPercent float64                            `json:"confidence_threshold_percent"`
+	WinnerConfidencePercent    *float64                           `json:"winner_confidence_percent"`
+	StartAt                    *time.Time                         `json:"start_at"`
+	EndAt                      *time.Time                         `json:"end_at"`
+	AutomationPolicy           service.ExperimentAutomationPolicy `json:"automation_policy"`
+	CreatedAt                  time.Time                          `json:"created_at"`
+	UpdatedAt                  time.Time                          `json:"updated_at"`
+	ArmCount                   int                                `json:"arm_count"`
+	TotalAssignments           int                                `json:"total_assignments"`
+	ActiveAssignments          int                                `json:"active_assignments"`
+	TotalSamples               int                                `json:"total_samples"`
+	TotalConversions           int                                `json:"total_conversions"`
+	TotalRevenue               float64                            `json:"total_revenue"`
+	Arms                       []AdminExperimentArm               `json:"arms"`
 }
 
 type createAdminExperimentArmRequest struct {
@@ -56,27 +59,29 @@ type createAdminExperimentArmRequest struct {
 }
 
 type createAdminExperimentRequest struct {
-	Name                       string                            `json:"name"`
-	Description                string                            `json:"description"`
-	Status                     string                            `json:"status"`
-	AlgorithmType              string                            `json:"algorithm_type"`
-	IsBandit                   bool                              `json:"is_bandit"`
-	MinSampleSize              int                               `json:"min_sample_size"`
-	ConfidenceThresholdPercent float64                           `json:"confidence_threshold_percent"`
-	StartAt                    *time.Time                        `json:"start_at"`
-	EndAt                      *time.Time                        `json:"end_at"`
-	Arms                       []createAdminExperimentArmRequest `json:"arms"`
+	Name                       string                              `json:"name"`
+	Description                string                              `json:"description"`
+	Status                     string                              `json:"status"`
+	AlgorithmType              string                              `json:"algorithm_type"`
+	IsBandit                   bool                                `json:"is_bandit"`
+	MinSampleSize              int                                 `json:"min_sample_size"`
+	ConfidenceThresholdPercent float64                             `json:"confidence_threshold_percent"`
+	StartAt                    *time.Time                          `json:"start_at"`
+	EndAt                      *time.Time                          `json:"end_at"`
+	AutomationPolicy           *service.ExperimentAutomationPolicy `json:"automation_policy,omitempty"`
+	Arms                       []createAdminExperimentArmRequest   `json:"arms"`
 }
 
 type updateAdminExperimentRequest struct {
-	Name                       string     `json:"name"`
-	Description                string     `json:"description"`
-	AlgorithmType              string     `json:"algorithm_type"`
-	IsBandit                   bool       `json:"is_bandit"`
-	MinSampleSize              int        `json:"min_sample_size"`
-	ConfidenceThresholdPercent float64    `json:"confidence_threshold_percent"`
-	StartAt                    *time.Time `json:"start_at"`
-	EndAt                      *time.Time `json:"end_at"`
+	Name                       string                              `json:"name"`
+	Description                string                              `json:"description"`
+	AlgorithmType              string                              `json:"algorithm_type"`
+	IsBandit                   bool                                `json:"is_bandit"`
+	MinSampleSize              int                                 `json:"min_sample_size"`
+	ConfidenceThresholdPercent float64                             `json:"confidence_threshold_percent"`
+	StartAt                    *time.Time                          `json:"start_at"`
+	EndAt                      *time.Time                          `json:"end_at"`
+	AutomationPolicy           *service.ExperimentAutomationPolicy `json:"automation_policy,omitempty"`
 }
 
 const adminExperimentSelectBase = `
@@ -91,6 +96,7 @@ const adminExperimentSelectBase = `
 		       e.winner_confidence::double precision,
 		       e.start_at,
 		       e.end_at,
+		       e.automation_policy,
 		       e.created_at,
 		       e.updated_at,
 		       (SELECT COUNT(*)::int FROM ab_test_arms a WHERE a.experiment_id = e.id) AS arm_count,`
@@ -120,6 +126,8 @@ func normalizeCreateAdminExperimentRequest(req createAdminExperimentRequest) cre
 		req.Arms[index].Name = strings.TrimSpace(req.Arms[index].Name)
 		req.Arms[index].Description = strings.TrimSpace(req.Arms[index].Description)
 	}
+	normalizedPolicy := service.NormalizeExperimentAutomationPolicy(req.AutomationPolicy)
+	req.AutomationPolicy = &normalizedPolicy
 	return req
 }
 
@@ -127,6 +135,8 @@ func normalizeUpdateAdminExperimentRequest(req updateAdminExperimentRequest) upd
 	req.Name = strings.TrimSpace(req.Name)
 	req.Description = strings.TrimSpace(req.Description)
 	req.AlgorithmType = strings.ToLower(strings.TrimSpace(req.AlgorithmType))
+	normalizedPolicy := service.NormalizeExperimentAutomationPolicy(req.AutomationPolicy)
+	req.AutomationPolicy = &normalizedPolicy
 	return req
 }
 
@@ -199,25 +209,6 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 	return ""
 }
 
-func validateAdminExperimentStatusTransition(currentStatus string, nextStatus string) string {
-	switch currentStatus {
-	case "draft":
-		if nextStatus == "running" {
-			return ""
-		}
-	case "running":
-		if nextStatus == "paused" || nextStatus == "completed" {
-			return ""
-		}
-	case "paused":
-		if nextStatus == "running" || nextStatus == "completed" {
-			return ""
-		}
-	}
-
-	return "Cannot transition experiment from " + currentStatus + " to " + nextStatus
-}
-
 func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExperiment, error) {
 	var experiment AdminExperiment
 	var description sql.NullString
@@ -225,6 +216,7 @@ func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExp
 	var winnerConfidence sql.NullFloat64
 	var startAt sql.NullTime
 	var endAt sql.NullTime
+	var automationPolicyJSON []byte
 	var confidenceThreshold float64
 
 	err := scanner.Scan(
@@ -239,6 +231,7 @@ func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExp
 		&winnerConfidence,
 		&startAt,
 		&endAt,
+		&automationPolicyJSON,
 		&experiment.CreatedAt,
 		&experiment.UpdatedAt,
 		&experiment.ArmCount,
@@ -270,6 +263,14 @@ func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExp
 	if endAt.Valid {
 		value := endAt.Time
 		experiment.EndAt = &value
+	}
+	experiment.AutomationPolicy = service.DefaultExperimentAutomationPolicy()
+	if len(automationPolicyJSON) > 0 {
+		var policy service.ExperimentAutomationPolicy
+		if err := json.Unmarshal(automationPolicyJSON, &policy); err != nil {
+			return AdminExperiment{}, err
+		}
+		experiment.AutomationPolicy = service.NormalizeExperimentAutomationPolicy(&policy)
 	}
 
 	return experiment, nil
@@ -423,13 +424,18 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 	if req.IsBandit {
 		algorithmType = req.AlgorithmType
 	}
+	automationPolicyJSON, err := json.Marshal(req.AutomationPolicy)
+	if err != nil {
+		response.InternalError(c, "Failed to encode experiment automation policy")
+		return
+	}
 
 	_, err = tx.Exec(ctx, `
 		INSERT INTO ab_tests (
 			id, name, description, status, start_at, end_at,
-			algorithm_type, is_bandit, min_sample_size, confidence_threshold
+			algorithm_type, is_bandit, min_sample_size, confidence_threshold, automation_policy
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
 		experimentID,
 		req.Name,
 		req.Description,
@@ -440,6 +446,7 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 		req.IsBandit,
 		req.MinSampleSize,
 		req.ConfidenceThresholdPercent/100,
+		automationPolicyJSON,
 	)
 	if err != nil {
 		response.InternalError(c, "Failed to create experiment")
@@ -509,35 +516,36 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 		return
 	}
 
-	var algorithmType any
+	var algorithmType *string
 	if req.IsBandit {
-		algorithmType = req.AlgorithmType
+		algorithmType = &req.AlgorithmType
 	}
 
-	_, err = h.dbPool.Exec(c.Request.Context(), `
-		UPDATE ab_tests
-		SET name = $2,
-		    description = $3,
-		    algorithm_type = $4,
-		    is_bandit = $5,
-		    min_sample_size = $6,
-		    confidence_threshold = $7,
-		    start_at = $8,
-		    end_at = $9,
-		    updated_at = now()
-		WHERE id = $1`,
-		experimentID,
-		req.Name,
-		req.Description,
-		algorithmType,
-		req.IsBandit,
-		req.MinSampleSize,
-		req.ConfidenceThresholdPercent/100,
-		req.StartAt,
-		req.EndAt,
-	)
+	if h.experimentAdminService == nil {
+		response.InternalError(c, "Experiment service is unavailable")
+		return
+	}
+
+	err = h.experimentAdminService.UpdateDraftExperiment(c.Request.Context(), experimentID, service.UpdateExperimentInput{
+		Name:                req.Name,
+		Description:         req.Description,
+		AlgorithmType:       algorithmType,
+		IsBandit:            req.IsBandit,
+		MinSampleSize:       req.MinSampleSize,
+		ConfidenceThreshold: req.ConfidenceThresholdPercent / 100,
+		StartAt:             req.StartAt,
+		EndAt:               req.EndAt,
+		AutomationPolicy:    service.NormalizeExperimentAutomationPolicy(req.AutomationPolicy),
+	})
 	if err != nil {
-		response.InternalError(c, "Failed to update experiment")
+		switch {
+		case errors.Is(err, service.ErrExperimentNotFound):
+			response.NotFound(c, "Experiment not found")
+		case errors.Is(err, service.ErrExperimentNotEditable):
+			response.UnprocessableEntity(c, "Only draft experiments can be edited")
+		default:
+			response.InternalError(c, "Failed to update experiment")
+		}
 		return
 	}
 
@@ -569,52 +577,21 @@ func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus st
 		return
 	}
 
-	experiment, err := h.getAdminExperimentByID(c, experimentID)
+	if h.experimentAdminService == nil {
+		response.InternalError(c, "Experiment service is unavailable")
+		return
+	}
+
+	err = h.experimentAdminService.TransitionExperimentStatus(c.Request.Context(), experimentID, nextStatus)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		switch {
+		case errors.Is(err, service.ErrExperimentNotFound):
 			response.NotFound(c, "Experiment not found")
-			return
+		case errors.Is(err, service.ErrInvalidStatusTransition):
+			response.UnprocessableEntity(c, err.Error())
+		default:
+			response.InternalError(c, "Failed to update experiment status")
 		}
-		response.InternalError(c, "Failed to load experiment")
-		return
-	}
-
-	if message := validateAdminExperimentStatusTransition(experiment.Status, nextStatus); message != "" {
-		response.UnprocessableEntity(c, message)
-		return
-	}
-
-	now := time.Now().UTC()
-	var startAt any
-	if experiment.StartAt != nil {
-		startAt = *experiment.StartAt
-	}
-	if nextStatus == "running" && (experiment.StartAt == nil || experiment.StartAt.After(now)) {
-		startAt = now
-	}
-
-	var endAt any
-	if experiment.EndAt != nil {
-		endAt = *experiment.EndAt
-	}
-	if nextStatus == "completed" {
-		endAt = now
-	}
-
-	_, err = h.dbPool.Exec(c.Request.Context(), `
-		UPDATE ab_tests
-		SET status = $2,
-		    start_at = $3,
-		    end_at = $4,
-		    updated_at = now()
-		WHERE id = $1`,
-		experimentID,
-		nextStatus,
-		startAt,
-		endAt,
-	)
-	if err != nil {
-		response.InternalError(c, "Failed to update experiment status")
 		return
 	}
 

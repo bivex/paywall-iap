@@ -17,6 +17,7 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
 	"github.com/bivex/paywall-iap/internal/domain/service"
+	persistenceRepo "github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/bivex/paywall-iap/internal/worker/tasks"
@@ -35,6 +36,7 @@ type AdminHandler struct {
 	analyticsReportService *service.AnalyticsReportService
 	userProfileService     *service.UserProfileService
 	winbackService         *service.WinbackService
+	experimentAdminService *service.ExperimentAdminService
 	asynqClient            *asynq.Client
 }
 
@@ -53,6 +55,11 @@ func NewAdminHandler(
 	winbackService *service.WinbackService,
 	asynqClient *asynq.Client,
 ) *AdminHandler {
+	var experimentAdminService *service.ExperimentAdminService
+	if dbPool != nil {
+		experimentAdminService = service.NewExperimentAdminService(persistenceRepo.NewExperimentAdminRepository(dbPool))
+	}
+
 	return &AdminHandler{
 		subscriptionRepo:       subscriptionRepo,
 		userRepo:               userRepo,
@@ -65,6 +72,7 @@ func NewAdminHandler(
 		analyticsReportService: analyticsReportService,
 		userProfileService:     userProfileService,
 		winbackService:         winbackService,
+		experimentAdminService: experimentAdminService,
 		asynqClient:            asynqClient,
 	}
 }

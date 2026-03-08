@@ -1,4 +1,4 @@
-.PHONY: build test test-unit test-integration test-coverage test-load lint fmt migrate sqlc docker-up docker-down
+.PHONY: build test test-unit test-integration test-e2e test-contract test-coverage test-load lint fmt migrate sqlc docker-up docker-down
 
 build:
 	go build -o bin/api ./cmd/api
@@ -19,6 +19,9 @@ test-integration:
 
 test-e2e:
 	go test ./tests/e2e/... -tags=e2e -race -v
+
+test-contract:
+	bash ../scripts/test_api_contract_schemathesis.sh $(SCHEMATHESIS_ARGS)
 
 test-clean:
 	go clean -testcache

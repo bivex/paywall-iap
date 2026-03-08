@@ -1,0 +1,2076 @@
+openapi: 3.0.3
+info:
+  title: Paywall IAP API
+  version: 1.0.0
+  description: OpenAPI schema assembled from the current Gin router, handler DTOs, and advanced bandit endpoints.
+servers:
+  - url: /
+tags:
+  - name: system
+  - name: auth
+  - name: admin-auth
+  - name: bandit
+  - name: iap
+  - name: subscription
+  - name: admin
+paths:
+  /openapi.yaml:
+    get:
+      tags: [system]
+      summary: Download the OpenAPI schema
+      responses:
+        '200':
+          description: OpenAPI YAML document
+          content:
+            application/yaml:
+              schema:
+                type: string
+  /health:
+    get:
+      tags: [system]
+      summary: Service health check
+      responses:
+        '200':
+          description: Service is running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RootHealth'
+  /v1/auth/register:
+    post:
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid or revoked refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/auth/login:
+    post:
+      tags: [admin-auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+      responses:
+        '200':
+          description: Admin authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLoginEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/auth/logout:
+    post:
+      tags: [admin-auth]
+      summary: Admin logout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLogoutRequest'
+      responses:
+        '200':
+          description: Admin logged out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/bandit/assign:
+    post:
+      tags: [bandit]
+      summary: Assign user to experiment arm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRequest'
+      responses:
+        '200':
+          description: Assignment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/bandit/reward:
+    post:
+      tags: [bandit]
+      summary: Record reward for an arm
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewardRequest'
+      responses:
+        '200':
+          description: Reward recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/bandit/statistics:
+    get:
+      tags: [bandit]
+      summary: Get experiment statistics
+      parameters:
+        - name: experiment_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: win_probs
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Statistics fetched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticsEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/bandit/health:
+    get:
+      tags: [bandit]
+      summary: Bandit service health check
+      responses:
+        '200':
+          description: Bandit service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BanditHealthEnvelope'
+  /v1/bandit/currency/rates:
+    get:
+      tags: [bandit]
+      summary: Get current currency rates
+      responses:
+        '200':
+          description: Current rates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyRatesResponse'
+        '503':
+          description: Currency service unavailable
+          content:
+            text/plain:
+              schema:
+                type: string
+  /v1/bandit/currency/update:
+    post:
+      tags: [bandit]
+      summary: Trigger currency rate update
+      responses:
+        '200':
+          description: Rates updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimestampedMessageResponse'
+        '500':
+          description: Failed to update rates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '503':
+          description: Currency service unavailable
+          content:
+            text/plain:
+              schema:
+                type: string
+  /v1/bandit/currency/convert:
+    post:
+      tags: [bandit]
+      summary: Convert amount to USD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConvertCurrencyRequest'
+      responses:
+        '200':
+          description: Amount converted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConvertCurrencyResponse'
+        '400':
+          description: Invalid input or conversion failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '503':
+          description: Currency service unavailable
+          content:
+            text/plain:
+              schema:
+                type: string
+  /v1/bandit/experiments/{id}/objectives:
+    get:
+      tags: [bandit]
+      summary: Get objective scores for all arms
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Objective scores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectiveScoresResponse'
+        '400':
+          description: Invalid experiment ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/experiments/{id}/objectives/config:
+    get:
+      tags: [bandit]
+      summary: Get objective configuration
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Objective configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectiveConfigResponse'
+        '400':
+          description: Invalid experiment ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+    put:
+      tags: [bandit]
+      summary: Update objective configuration
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObjectiveConfigUpdateRequest'
+      responses:
+        '200':
+          description: Objective configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectiveConfigUpdateResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/experiments/{id}/window/info:
+    get:
+      tags: [bandit]
+      summary: Get sliding window information
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Window information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WindowInfoResponse'
+        '400':
+          description: Invalid experiment ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/experiments/{id}/window/trim:
+    post:
+      tags: [bandit]
+      summary: Trim sliding window events
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Window trimmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentMessageResponse'
+        '400':
+          description: Invalid experiment ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/experiments/{id}/window/events:
+    get:
+      tags: [bandit]
+      summary: Export recent window events
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Window events exported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WindowEventsResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/conversions:
+    post:
+      tags: [bandit]
+      summary: Process delayed conversion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessConversionRequest'
+      responses:
+        '200':
+          description: Conversion processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessConversionResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/pending/{id}:
+    get:
+      tags: [bandit]
+      summary: Get pending reward by ID
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Pending reward
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingReward'
+        '400':
+          description: Invalid pending reward ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '404':
+          description: Pending reward not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/users/{id}/pending:
+    get:
+      tags: [bandit]
+      summary: Get pending rewards for a user
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Pending rewards for user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPendingRewardsResponse'
+        '400':
+          description: Invalid user ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/experiments/{id}/metrics:
+    get:
+      tags: [bandit]
+      summary: Get production metrics for an experiment
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Metrics response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BanditMetrics'
+        '400':
+          description: Invalid experiment ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/bandit/maintenance:
+    post:
+      tags: [bandit]
+      summary: Trigger maintenance tasks
+      responses:
+        '200':
+          description: Maintenance completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleError'
+  /v1/verify/iap:
+    post:
+      tags: [iap]
+      summary: Verify in-app purchase receipt
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyIAPRequest'
+      responses:
+        '200':
+          description: Receipt verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyIAPEnvelope'
+        '400':
+          description: Invalid request or receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Receipt could not be processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/subscription:
+    get:
+      tags: [subscription]
+      summary: Get current subscription
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Subscription found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [subscription]
+      summary: Cancel current subscription
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelSubscriptionRequest'
+      responses:
+        '204':
+          description: Subscription canceled
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No active subscription found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/subscription/access:
+    get:
+      tags: [subscription]
+      summary: Check premium access
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Access check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessCheckEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/experiments:
+    get:
+      tags: [admin]
+      summary: List experiments
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Experiment list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentListEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [admin]
+      summary: Create experiment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAdminExperimentRequest'
+      responses:
+        '201':
+          description: Experiment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/experiments/{id}:
+    put:
+      tags: [admin]
+      summary: Update draft experiment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdminExperimentRequest'
+      responses:
+        '200':
+          description: Experiment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Experiment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/admin/experiments/{id}/pause:
+    post:
+      tags: [admin]
+      summary: Pause experiment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Experiment paused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/experiments/{id}/resume:
+    post:
+      tags: [admin]
+      summary: Resume experiment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Experiment resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/experiments/{id}/complete:
+    post:
+      tags: [admin]
+      summary: Complete experiment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Experiment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/pricing-tiers:
+    get:
+      tags: [admin]
+      summary: List pricing tiers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Pricing tiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingTierListEnvelope'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+    post:
+      tags: [admin]
+      summary: Create pricing tier
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingTierUpsertRequest'
+      responses:
+        '201':
+          description: Pricing tier created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingTierEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/pricing-tiers/{id}:
+    put:
+      tags: [admin]
+      summary: Update pricing tier
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PricingTierUpsertRequest'
+      responses:
+        '200':
+          description: Pricing tier updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingTierEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/pricing-tiers/{id}/activate:
+    post:
+      tags: [admin]
+      summary: Activate pricing tier
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Pricing tier activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingTierEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/pricing-tiers/{id}/deactivate:
+    post:
+      tags: [admin]
+      summary: Deactivate pricing tier
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Pricing tier deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PricingTierEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/settings:
+    get:
+      tags: [admin]
+      summary: Get platform settings
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Platform settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformSettingsEnvelope'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '500': { $ref: '#/components/responses/Error500' }
+    put:
+      tags: [admin]
+      summary: Update platform settings
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformSettings'
+      responses:
+        '200':
+          description: Platform settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformSettingsEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/settings/password:
+    post:
+      tags: [admin]
+      summary: Change admin password
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeAdminPasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/health:
+    get:
+      tags: [admin]
+      summary: Admin health status
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Admin health response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHealthResponse'
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '503':
+          description: Dependency is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminHealthResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ExperimentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Error400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error422:
+      description: Unprocessable entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Error500:
+      description: Internal error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    Meta:
+      type: object
+      required: [request_id, timestamp]
+      properties:
+        request_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [error, meta]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RootHealth:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          example: ok
+    MessagePayload:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    OkPayload:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+    RegisterRequest:
+      type: object
+      required: [platform_user_id, device_id, platform, app_version]
+      properties:
+        platform_user_id: { type: string }
+        device_id: { type: string }
+        platform:
+          type: string
+          enum: [ios, android]
+        app_version: { type: string }
+        email:
+          type: string
+          format: email
+    RegisterResponse:
+      type: object
+      required: [user_id, access_token, refresh_token, expires_in]
+      properties:
+        user_id: { type: string }
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in:
+          type: integer
+          format: int64
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+    RefreshTokenResponse:
+      type: object
+      required: [access_token, refresh_token, expires_in]
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in:
+          type: integer
+          format: int64
+    AdminLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+    AdminLoginResponse:
+      type: object
+      required: [user_id, email, role, access_token, refresh_token, expires_in]
+      properties:
+        user_id: { type: string }
+        email:
+          type: string
+          format: email
+        role: { type: string }
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in:
+          type: integer
+          format: int64
+    AdminLogoutRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+    AssignRequest:
+      type: object
+      required: [experiment_id, user_id]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+    AssignResponse:
+      type: object
+      required: [experiment_id, user_id, arm_id, is_new]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        arm_id:
+          type: string
+          format: uuid
+        is_new:
+          type: boolean
+    RewardRequest:
+      type: object
+      required: [experiment_id, arm_id, user_id, reward]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        arm_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        reward:
+          type: number
+        currency:
+          type: string
+    RewardResponse:
+      type: object
+      required: [experiment_id, arm_id, reward, updated]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        arm_id:
+          type: string
+          format: uuid
+        reward:
+          type: number
+        updated:
+          type: boolean
+    ArmStatistics:
+      type: object
+      required: [arm_id, alpha, beta, samples, conversions, revenue, avg_reward, conversion_rate]
+      properties:
+        arm_id:
+          type: string
+          format: uuid
+        alpha: { type: number }
+        beta: { type: number }
+        samples: { type: integer }
+        conversions: { type: integer }
+        revenue: { type: number }
+        avg_reward: { type: number }
+        conversion_rate: { type: number }
+    StatisticsResponse:
+      type: object
+      required: [experiment_id, arms]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        arms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArmStatistics'
+        win_probabilities:
+          type: object
+          additionalProperties:
+            type: number
+    BanditHealthPayload:
+      type: object
+      required: [status, service]
+      properties:
+        status: { type: string }
+        service: { type: string }
+    ConvertCurrencyRequest:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount: { type: number }
+        currency: { type: string }
+    ConvertCurrencyResponse:
+      type: object
+      required: [original_amount, original_currency, converted_amount, target_currency]
+      properties:
+        original_amount: { type: number }
+        original_currency: { type: string }
+        converted_amount: { type: number }
+        target_currency: { type: string }
+    CurrencyRatesResponse:
+      type: object
+      required: [base, rates, updated]
+      properties:
+        base: { type: string }
+        rates:
+          type: object
+          additionalProperties:
+            type: number
+        updated:
+          type: string
+          format: date-time
+    TimestampedMessageResponse:
+      type: object
+      required: [message, updated]
+      properties:
+        message: { type: string }
+        updated:
+          type: string
+          format: date-time
+    MaintenanceResponse:
+      type: object
+      required: [message, timestamp]
+      properties:
+        message: { type: string }
+        timestamp:
+          type: string
+          format: date-time
+    ObjectiveConfigResponse:
+      type: object
+      required: [experiment_id, objective_type, weights]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        objective_type:
+          type: string
+          enum: [conversion, ltv, revenue, hybrid]
+        weights:
+          type: object
+          additionalProperties:
+            type: number
+    ObjectiveConfigUpdateRequest:
+      type: object
+      required: [objective_type, objective_weights]
+      properties:
+        objective_type:
+          type: string
+          enum: [conversion, ltv, revenue, hybrid]
+        objective_weights:
+          type: object
+          additionalProperties:
+            type: number
+    ObjectiveConfigUpdateResponse:
+      type: object
+      required: [message, experiment_id, objective_type, weights]
+      properties:
+        message: { type: string }
+        experiment_id:
+          type: string
+          format: uuid
+        objective_type:
+          type: string
+          enum: [conversion, ltv, revenue, hybrid]
+        weights:
+          type: object
+          additionalProperties:
+            type: number
+    ObjectiveScore:
+      type: object
+      required: [ObjectiveType, Score, Alpha, Beta, Samples, Conversions, Revenue, AvgLTV]
+      properties:
+        ObjectiveType: { type: string }
+        Score: { type: number }
+        Alpha: { type: number }
+        Beta: { type: number }
+        Samples: { type: integer }
+        Conversions: { type: integer }
+        Revenue: { type: number }
+        AvgLTV: { type: number }
+    ObjectiveScoreMap:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/ObjectiveScore'
+    ObjectiveScoresResponse:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/ObjectiveScoreMap'
+    WindowStats:
+      type: object
+      required: [ArmID, Samples, Conversions, Revenue, Alpha, Beta, AvgReward, WindowStart, WindowEnd]
+      properties:
+        ArmID:
+          type: string
+          format: uuid
+        Samples: { type: integer }
+        Conversions: { type: integer }
+        Revenue: { type: number }
+        Alpha: { type: number }
+        Beta: { type: number }
+        AvgReward: { type: number }
+        WindowStart:
+          type: string
+          format: date-time
+        WindowEnd:
+          type: string
+          format: date-time
+    WindowInfoResponse:
+      type: object
+      required: [experiment_id, windows]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        windows:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/WindowStats'
+    ExperimentMessageResponse:
+      type: object
+      required: [experiment_id, message]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        message: { type: string }
+    RewardEvent:
+      type: object
+      properties:
+        UserID:
+          type: string
+          format: uuid
+        ArmID:
+          type: string
+          format: uuid
+        RewardValue: { type: number }
+        Currency: { type: string }
+        Timestamp:
+          type: string
+          format: date-time
+        ConversionDelay:
+          type: integer
+          format: int64
+          nullable: true
+        Metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+    WindowEventsResponse:
+      type: object
+      required: [experiment_id, events, limit]
+      properties:
+        experiment_id:
+          type: string
+          format: uuid
+        events:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/RewardEvent'
+        limit:
+          type: integer
+          format: int64
+    ProcessConversionRequest:
+      type: object
+      required: [transaction_id, user_id, conversion_value, currency]
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        conversion_value: { type: number }
+        currency: { type: string }
+    ProcessConversionResponse:
+      type: object
+      required: [message, transaction_id]
+      properties:
+        message: { type: string }
+        transaction_id:
+          type: string
+          format: uuid
+    PendingReward:
+      type: object
+      required: [ID, ExperimentID, ArmID, UserID, AssignedAt, ExpiresAt, Converted, ConversionValue, ConversionCurrency]
+      properties:
+        ID:
+          type: string
+          format: uuid
+        ExperimentID:
+          type: string
+          format: uuid
+        ArmID:
+          type: string
+          format: uuid
+        UserID:
+          type: string
+          format: uuid
+        AssignedAt:
+          type: string
+          format: date-time
+        ExpiresAt:
+          type: string
+          format: date-time
+        Converted: { type: boolean }
+        ConversionValue: { type: number }
+        ConversionCurrency: { type: string }
+        ConvertedAt:
+          type: string
+          format: date-time
+          nullable: true
+        ProcessedAt:
+          type: string
+          format: date-time
+          nullable: true
+    UserPendingRewardsResponse:
+      type: object
+      required: [user_id, rewards]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingReward'
+    BanditMetrics:
+      type: object
+      properties:
+        Regret: { type: number }
+        ExplorationRate: { type: number }
+        ConvergenceGap: { type: number }
+        BalanceIndex: { type: number }
+        WindowUtilization: { type: number }
+        PendingRewards:
+          type: integer
+          format: int64
+    VerifyIAPRequest:
+      type: object
+      required: [platform, receipt_data, product_id]
+      properties:
+        platform:
+          type: string
+          enum: [ios, android]
+        receipt_data: { type: string }
+        product_id: { type: string }
+        transaction_id: { type: string }
+    VerifyIAPResponse:
+      type: object
+      required: [subscription_id, status, expires_at, auto_renew, plan_type, is_new]
+      properties:
+        subscription_id: { type: string }
+        status: { type: string }
+        expires_at: { type: string }
+        auto_renew: { type: boolean }
+        plan_type: { type: string }
+        is_new: { type: boolean }
+    SubscriptionResponse:
+      type: object
+      required: [id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at]
+      properties:
+        id: { type: string }
+        status: { type: string }
+        source: { type: string }
+        platform: { type: string }
+        product_id: { type: string }
+        plan_type: { type: string }
+        expires_at: { type: string }
+        auto_renew: { type: boolean }
+        created_at: { type: string }
+        updated_at: { type: string }
+    AccessCheckResponse:
+      type: object
+      required: [has_access]
+      properties:
+        has_access: { type: boolean }
+        expires_at: { type: string }
+        reason: { type: string }
+    CancelSubscriptionRequest:
+      type: object
+      properties:
+        reason: { type: string }
+    AutomationPolicy:
+      type: object
+      required: [enabled, auto_start, auto_complete, complete_on_end_time, complete_on_sample_size, complete_on_confidence, manual_override]
+      properties:
+        enabled: { type: boolean }
+        auto_start: { type: boolean }
+        auto_complete: { type: boolean }
+        complete_on_end_time: { type: boolean }
+        complete_on_sample_size: { type: boolean }
+        complete_on_confidence: { type: boolean }
+        manual_override: { type: boolean }
+    AdminExperimentArm:
+      type: object
+      required: [id, name, description, is_control, traffic_weight, samples, conversions, revenue, avg_reward]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name: { type: string }
+        description: { type: string }
+        is_control: { type: boolean }
+        traffic_weight: { type: number }
+        samples: { type: integer }
+        conversions: { type: integer }
+        revenue: { type: number }
+        avg_reward: { type: number }
+    AdminExperiment:
+      type: object
+      required: [id, name, description, status, is_bandit, min_sample_size, confidence_threshold_percent, automation_policy, created_at, updated_at, arm_count, total_assignments, active_assignments, total_samples, total_conversions, total_revenue, arms]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name: { type: string }
+        description: { type: string }
+        status: { type: string }
+        algorithm_type:
+          type: string
+          nullable: true
+        is_bandit: { type: boolean }
+        min_sample_size: { type: integer }
+        confidence_threshold_percent: { type: number }
+        winner_confidence_percent:
+          type: number
+          nullable: true
+        start_at:
+          type: string
+          format: date-time
+          nullable: true
+        end_at:
+          type: string
+          format: date-time
+          nullable: true
+        automation_policy:
+          $ref: '#/components/schemas/AutomationPolicy'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        arm_count: { type: integer }
+        total_assignments: { type: integer }
+        active_assignments: { type: integer }
+        total_samples: { type: integer }
+        total_conversions: { type: integer }
+        total_revenue: { type: number }
+        arms:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminExperimentArm'
+    CreateAdminExperimentArmRequest:
+      type: object
+      required: [name, description, is_control, traffic_weight]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        is_control: { type: boolean }
+        traffic_weight: { type: number }
+    CreateAdminExperimentRequest:
+      type: object
+      required: [name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent, arms]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        status: { type: string }
+        algorithm_type: { type: string }
+        is_bandit: { type: boolean }
+        min_sample_size: { type: integer }
+        confidence_threshold_percent: { type: number }
+        start_at:
+          type: string
+          format: date-time
+          nullable: true
+        end_at:
+          type: string
+          format: date-time
+          nullable: true
+        automation_policy:
+          $ref: '#/components/schemas/AutomationPolicy'
+        arms:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateAdminExperimentArmRequest'
+    UpdateAdminExperimentRequest:
+      type: object
+      required: [name, description, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        algorithm_type: { type: string }
+        is_bandit: { type: boolean }
+        min_sample_size: { type: integer }
+        confidence_threshold_percent: { type: number }
+        start_at:
+          type: string
+          format: date-time
+          nullable: true
+        end_at:
+          type: string
+          format: date-time
+          nullable: true
+        automation_policy:
+          $ref: '#/components/schemas/AutomationPolicy'
+    PricingTier:
+      type: object
+      required: [id, name, description, currency, features, is_active, created_at, updated_at]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        monthly_price:
+          type: number
+          nullable: true
+        annual_price:
+          type: number
+          nullable: true
+        currency: { type: string }
+        features:
+          type: array
+          items:
+            type: string
+        is_active: { type: boolean }
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PricingTierUpsertRequest:
+      type: object
+      required: [name, description, currency, features, is_active]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        monthly_price:
+          type: number
+          nullable: true
+        annual_price:
+          type: number
+          nullable: true
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        features:
+          type: array
+          items:
+            type: string
+        is_active: { type: boolean }
+    PlatformSettings:
+      type: object
+      required: [general, integrations, notifications, security]
+      properties:
+        general:
+          $ref: '#/components/schemas/GeneralSettings'
+        integrations:
+          $ref: '#/components/schemas/IntegrationSettings'
+        notifications:
+          $ref: '#/components/schemas/NotificationSettings'
+        security:
+          $ref: '#/components/schemas/PlatformSecurityState'
+    GeneralSettings:
+      type: object
+      required: [platform_name, support_email, default_currency, dark_mode_default]
+      properties:
+        platform_name: { type: string }
+        support_email:
+          type: string
+          format: email
+        default_currency: { type: string }
+        dark_mode_default: { type: boolean }
+    IntegrationSettings:
+      type: object
+      required: [stripe_api_key, stripe_webhook_secret, stripe_test_mode, apple_issuer_id, apple_bundle_id, google_service_account, google_package_name, matomo_url, matomo_site_id, matomo_auth_token]
+      properties:
+        stripe_api_key: { type: string }
+        stripe_webhook_secret: { type: string }
+        stripe_test_mode: { type: boolean }
+        apple_issuer_id: { type: string }
+        apple_bundle_id: { type: string }
+        google_service_account: { type: string }
+        google_package_name: { type: string }
+        matomo_url: { type: string }
+        matomo_site_id: { type: string }
+        matomo_auth_token: { type: string }
+    NotificationSettings:
+      type: object
+      required: [new_subscription, payment_failed, subscription_cancelled, refund_issued, webhook_failed, dunning_started]
+      properties:
+        new_subscription: { type: boolean }
+        payment_failed: { type: boolean }
+        subscription_cancelled: { type: boolean }
+        refund_issued: { type: boolean }
+        webhook_failed: { type: boolean }
+        dunning_started: { type: boolean }
+    PlatformSecurityState:
+      type: object
+      required: [jwt_expiry_hours, require_mfa, enable_ip_allowlist]
+      properties:
+        jwt_expiry_hours: { type: integer }
+        require_mfa: { type: boolean }
+        enable_ip_allowlist: { type: boolean }
+    ChangeAdminPasswordRequest:
+      type: object
+      required: [current_password, new_password, confirm_password]
+      properties:
+        current_password: { type: string }
+        new_password:
+          type: string
+          minLength: 8
+        confirm_password: { type: string }
+    AdminHealthResponse:
+      type: object
+      required: [status, database, redis]
+      properties:
+        status: { type: string }
+        database: { type: string }
+        redis: { type: string }
+    SimpleError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    RegisterEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/RegisterResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RefreshTokenEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/RefreshTokenResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    AdminLoginEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminLoginResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    MessageEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/MessagePayload'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    OkEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/OkPayload'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    AssignEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/AssignResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    RewardEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/RewardResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    StatisticsEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/StatisticsResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    BanditHealthEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/BanditHealthPayload'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    VerifyIAPEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/VerifyIAPResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    SubscriptionEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/SubscriptionResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    AccessCheckEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/AccessCheckResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    AdminExperimentEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminExperiment'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    AdminExperimentListEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminExperiment'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PricingTierEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/PricingTier'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PricingTierListEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricingTier'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    PlatformSettingsEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/PlatformSettings'
+        meta:
+          $ref: '#/components/schemas/Meta'

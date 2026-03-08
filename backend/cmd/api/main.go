@@ -15,6 +15,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	openapi "github.com/bivex/paywall-iap/docs/openapi"
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/application/query"
@@ -274,6 +275,7 @@ func setupRouter(cfg *config.Config, d *dependencies, redisClient *redis.Client)
 
 	router := gin.New()
 	router.Use(gin.Recovery(), logging.RequestMiddleware(logging.Logger))
+	router.GET("/openapi.yaml", openapi.ServeYAML)
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {

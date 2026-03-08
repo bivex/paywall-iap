@@ -16,6 +16,11 @@ Combines database logic (via PostgreSQL testcontainers setup) with query request
 Models the complete user journey: "Registration" -> "Login" -> "Subscribe" -> "Cancel". The HTTP server is launched during tests, making real API calls over localhost:port against testcontainers.
 - Execution: `make test-e2e`
 - Focus: Prevent critical application-wide regressions.
+
+## API Contract Tests
+Generative HTTP contract checks via Schemathesis against the OpenAPI schema.
+- Execution: `SCHEMA_URL=http://localhost:8081/openapi.yaml make test-contract` or `SCHEMA_PATH=backend/docs/openapi/openapi.yaml make test-contract`
+- Focus: Catch drift between documented API contracts and live endpoint behavior.
     
 ## Load Tests
 Checks the application against thresholds defined in SLA via `k6`. Monitors limits, bottlenecks and failures.

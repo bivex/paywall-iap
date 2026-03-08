@@ -64,6 +64,9 @@ func main() {
 
 	// Initialize advanced bandit services for worker
 	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
+	experimentAdminRepo := repository.NewExperimentAdminRepository(dbPool)
+	experimentAdminService := service.NewExperimentAdminService(experimentAdminRepo)
+	experimentReconciler := service.NewExperimentAutomationReconciler(experimentAdminRepo, experimentAdminService)
 	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
 	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
 	currencyService := service.NewCurrencyRateService(redisClient, logging.Logger)
@@ -100,6 +103,7 @@ func main() {
 	// Register advanced bandit worker handlers
 	worker_tasks.RegisterCurrencyTasks(mux, currencyService, logging.Logger)
 	worker_tasks.RegisterBanditMaintenanceTasks(mux, advancedBanditEngine, logging.Logger)
+	worker_tasks.RegisterExperimentAutomationTasks(mux, experimentReconciler, logging.Logger)
 
 	// Start server in background
 	if err := server.Start(mux); err != nil {
@@ -113,6 +117,7 @@ func main() {
 	// Register advanced bandit scheduled tasks
 	worker_tasks.RegisterCurrencyScheduledTasks(scheduler)
 	worker_tasks.RegisterBanditMaintenanceScheduledTasks(scheduler)
+	worker_tasks.RegisterExperimentAutomationScheduledTasks(scheduler)
 
 	// Start scheduler
 	if err := scheduler.Start(); err != nil {

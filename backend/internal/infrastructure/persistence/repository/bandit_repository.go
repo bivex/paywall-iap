@@ -395,12 +395,13 @@ func (r *PostgresBanditRepository) CreateExperiment(ctx context.Context, experim
 // GetExperiment retrieves an experiment by ID
 func (r *PostgresBanditRepository) GetExperiment(ctx context.Context, experimentID uuid.UUID) (*Experiment, error) {
 	query := `
-		SELECT id, name, description, status, start_at, end_at, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, created_at, updated_at
+		SELECT id, name, description, status, start_at, end_at, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, created_at, updated_at, automation_policy
 		FROM ab_tests
 		WHERE id = $1
 	`
 
 	var experiment Experiment
+	var automationPolicyJSON []byte
 	err := r.pool.QueryRow(ctx, query, experimentID).Scan(
 		&experiment.ID,
 		&experiment.Name,
@@ -415,6 +416,7 @@ func (r *PostgresBanditRepository) GetExperiment(ctx context.Context, experiment
 		&experiment.WinnerConfidence,
 		&experiment.CreatedAt,
 		&experiment.UpdatedAt,
+		&automationPolicyJSON,
 	)
 
 	if err == pgx.ErrNoRows {
@@ -423,6 +425,15 @@ func (r *PostgresBanditRepository) GetExperiment(ctx context.Context, experiment
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get experiment: %w", err)
+	}
+
+	experiment.AutomationPolicy = service.DefaultExperimentAutomationPolicy()
+	if len(automationPolicyJSON) > 0 {
+		var policy service.ExperimentAutomationPolicy
+		if err := json.Unmarshal(automationPolicyJSON, &policy); err != nil {
+			return nil, fmt.Errorf("failed to decode experiment automation policy: %w", err)
+		}
+		experiment.AutomationPolicy = service.NormalizeExperimentAutomationPolicy(&policy)
 	}
 
 	return &experiment, nil
@@ -466,6 +477,7 @@ type Experiment struct {
 	WinnerConfidence    *float64
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
+	AutomationPolicy    service.ExperimentAutomationPolicy
 	// Advanced bandit fields
 	WindowType       *string
 	WindowSize       *int

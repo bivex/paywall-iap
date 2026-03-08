@@ -10,6 +10,9 @@ ADMIN_EMAIL="${ADMIN_EMAIL:-admin@paywall.local}"
 ADMIN_PASS="${ADMIN_PASS:-admin12345}"
 DB_NAME="${DB_NAME:-iap_db}"
 TEST_USER_ID="${TEST_USER_ID:-22222222-2222-2222-2222-222222222222}"
+RUN_SCHEMATHESIS="${RUN_SCHEMATHESIS:-0}"
+SCHEMA_URL="${SCHEMA_URL:-}"
+SCHEMA_PATH="${SCHEMA_PATH:-}"
 
 BODY_FILE="$(mktemp)"
 cleanup() { rm -f "$BODY_FILE"; }
@@ -131,6 +134,12 @@ assert_status 200
 say "Reading pending rewards by user"
 request GET "$API_BASE/v1/bandit/users/$TEST_USER_ID/pending"
 assert_status 200
+
+if [[ "$RUN_SCHEMATHESIS" == "1" ]]; then
+  say "Running Schemathesis contract checks"
+  API_BASE="$API_BASE" SCHEMA_URL="$SCHEMA_URL" SCHEMA_PATH="$SCHEMA_PATH" \
+    bash "$SCRIPT_DIR/test_api_contract_schemathesis.sh"
+fi
 
 echo
 echo "PASS"
