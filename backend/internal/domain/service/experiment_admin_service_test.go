@@ -69,16 +69,33 @@ func TestExperimentAdminService(t *testing.T) {
 
 	t.Run("UpdateDraftExperiment forwards validated draft update to repository", func(t *testing.T) {
 		algo := "ucb"
+		armID := uuid.New()
+		pricingTierID := uuid.New()
 		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "draft"}}
 		svc := NewExperimentAdminService(repo)
 
-		input := UpdateExperimentInput{Name: "Draft", AlgorithmType: &algo, IsBandit: true, MinSampleSize: 200, ConfidenceThreshold: 0.95}
+		input := UpdateExperimentInput{
+			Name:                "Draft",
+			AlgorithmType:       &algo,
+			IsBandit:            true,
+			MinSampleSize:       200,
+			ConfidenceThreshold: 0.95,
+			Arms: []ExperimentArmInput{
+				{ID: &armID, Name: "Control", IsControl: true, TrafficWeight: 1, PricingTierID: &pricingTierID},
+				{Name: "Variant", IsControl: false, TrafficWeight: 1.5},
+			},
+		}
 		err := svc.UpdateDraftExperiment(ctx, experimentID, input)
 
 		require.NoError(t, err)
 		require.NotNil(t, repo.updatedDraftInput)
 		assert.Equal(t, input.Name, repo.updatedDraftInput.Name)
 		assert.Equal(t, *input.AlgorithmType, *repo.updatedDraftInput.AlgorithmType)
+		require.Len(t, repo.updatedDraftInput.Arms, 2)
+		require.NotNil(t, repo.updatedDraftInput.Arms[0].ID)
+		assert.Equal(t, armID, *repo.updatedDraftInput.Arms[0].ID)
+		require.NotNil(t, repo.updatedDraftInput.Arms[0].PricingTierID)
+		assert.Equal(t, pricingTierID, *repo.updatedDraftInput.Arms[0].PricingTierID)
 	})
 
 	t.Run("TransitionExperimentStatus starts draft experiments at current time", func(t *testing.T) {

@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
@@ -142,6 +144,8 @@ static struct request read_request(int fd, size_t max_body_bytes) {
     char *p = strstr(header_buf, "\r\n\r\n");
     if (p) { header_end = (size_t)(p - header_buf); found = 1; }
   }
+
+  header_buf[header_end] = '\0';
 
   char *line = strtok(header_buf, "\r\n");
   if (!line || sscanf(line, "%15s %255s", req.method, req.path) != 2) { req.error_status = 400; return req; }

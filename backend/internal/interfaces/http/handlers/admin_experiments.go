@@ -178,6 +178,16 @@ type updateAdminExperimentRequest struct {
 	StartAt                    *time.Time                          `json:"start_at"`
 	EndAt                      *time.Time                          `json:"end_at"`
 	AutomationPolicy           *service.ExperimentAutomationPolicy `json:"automation_policy,omitempty"`
+	Arms                       []updateAdminExperimentArmRequest   `json:"arms,omitempty"`
+}
+
+type updateAdminExperimentArmRequest struct {
+	ID            *uuid.UUID `json:"id,omitempty"`
+	Name          string     `json:"name"`
+	Description   string     `json:"description"`
+	IsControl     bool       `json:"is_control"`
+	TrafficWeight float64    `json:"traffic_weight"`
+	PricingTierID *uuid.UUID `json:"pricing_tier_id,omitempty"`
 }
 
 type updateAdminExperimentArmPricingTierRequest struct {
@@ -277,6 +287,10 @@ func normalizeUpdateAdminExperimentRequest(req updateAdminExperimentRequest) upd
 	req.Name = strings.TrimSpace(req.Name)
 	req.Description = strings.TrimSpace(req.Description)
 	req.AlgorithmType = strings.ToLower(strings.TrimSpace(req.AlgorithmType))
+	for index := range req.Arms {
+		req.Arms[index].Name = strings.TrimSpace(req.Arms[index].Name)
+		req.Arms[index].Description = strings.TrimSpace(req.Arms[index].Description)
+	}
 	normalizedPolicy := service.NormalizeExperimentAutomationPolicy(req.AutomationPolicy)
 	req.AutomationPolicy = &normalizedPolicy
 	return req
@@ -353,7 +367,52 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 			return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
 		}
 	}
+	if req.Arms != nil {
+		if len(req.Arms) < 2 {
+			return "At least two experiment arms are required"
+		}
+		controlCount := 0
+		seenIDs := make(map[uuid.UUID]struct{}, len(req.Arms))
+		for _, arm := range req.Arms {
+			if arm.Name == "" {
+				return "Every experiment arm must have a name"
+			}
+			if arm.TrafficWeight <= 0 {
+				return "Traffic weight must be greater than zero"
+			}
+			if arm.ID != nil {
+				if _, exists := seenIDs[*arm.ID]; exists {
+					return "Each persisted experiment arm may only appear once"
+				}
+				seenIDs[*arm.ID] = struct{}{}
+			}
+			if arm.IsControl {
+				controlCount++
+			}
+		}
+		if controlCount != 1 {
+			return "Exactly one control arm is required"
+		}
+	}
 	return ""
+}
+
+func experimentArmInputsFromUpdateRequest(arms []updateAdminExperimentArmRequest) []service.ExperimentArmInput {
+	if arms == nil {
+		return nil
+	}
+	result := make([]service.ExperimentArmInput, 0, len(arms))
+	for _, arm := range arms {
+		result = append(result, service.ExperimentArmInput{
+			ID:            arm.ID,
+			Name:          arm.Name,
+			Description:   arm.Description,
+			IsControl:     arm.IsControl,
+			TrafficWeight: arm.TrafficWeight,
+			PricingTierID: arm.PricingTierID,
+		})
+	}
+	return result
 }
 
 func validateUpdateAdminExperimentArmPricingTiersRequest(req updateAdminExperimentArmPricingTiersRequest) string {
@@ -976,6 +1035,7 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 		StartAt:             req.StartAt,
 		EndAt:               req.EndAt,
 		AutomationPolicy:    service.NormalizeExperimentAutomationPolicy(req.AutomationPolicy),
+		Arms:                experimentArmInputsFromUpdateRequest(req.Arms),
 	})
 	if err != nil {
 		switch {
@@ -983,6 +1043,10 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 			response.NotFound(c, "Experiment not found")
 		case errors.Is(err, service.ErrExperimentNotEditable):
 			response.UnprocessableEntity(c, "Only draft experiments can be edited")
+		case errors.Is(err, service.ErrExperimentArmNotFound):
+			response.UnprocessableEntity(c, "All persisted arm IDs must belong to the experiment")
+		case errors.Is(err, service.ErrPricingTierNotFound):
+			response.UnprocessableEntity(c, "Linked pricing tier not found")
 		default:
 			response.InternalError(c, "Failed to update experiment")
 		}

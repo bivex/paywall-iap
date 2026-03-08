@@ -4,7 +4,7 @@ RUN apk add --no-cache build-base
 
 WORKDIR /src
 COPY tools/js-error-collector/main.c ./main.c
-RUN gcc -std=c11 -Os -static -s -o /out/js-error-collector main.c
+RUN mkdir -p /out && gcc -std=c11 -Os -static -s -o /out/js-error-collector main.c
 
 FROM scratch
 

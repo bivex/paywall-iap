@@ -1,5 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
+
+import { reportJsError } from "@/lib/js-error-reporter.client";
+
 export default function GlobalError({
   error,
   reset,
@@ -8,7 +12,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <html>
+    <html lang="en">
       <body>
         <ErrorDisplay error={error} reset={reset} />
       </body>
@@ -23,6 +27,17 @@ function ErrorDisplay({
   error: Error & { digest?: string; componentStack?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    reportJsError({
+      type: "global-error",
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      componentStack: error.componentStack,
+      digest: error.digest,
+    });
+  }, [error]);
+
   const isDev = process.env.NODE_ENV === "development";
   const lines = parseStack(error.stack);
 
@@ -38,7 +53,9 @@ function ErrorDisplay({
         )}
       </div>
 
-      <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8, padding: 16, marginBottom: 16 }}>
+      <div
+        style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 8, padding: 16, marginBottom: 16 }}
+      >
         <div style={{ color: "#991b1b", fontWeight: 600, marginBottom: 4 }}>{error.name}</div>
         <div style={{ color: "#dc2626", fontSize: 14 }}>{error.message}</div>
       </div>
@@ -48,7 +65,18 @@ function ErrorDisplay({
           <summary style={{ cursor: "pointer", color: "#059669", fontWeight: 600, fontSize: 12, marginBottom: 8 }}>
             📍 Component stack (most precise)
           </summary>
-          <pre style={{ background: "#0f172a", color: "#34d399", borderRadius: 8, padding: 16, fontSize: 11, overflow: "auto", maxHeight: 240, whiteSpace: "pre-wrap" }}>
+          <pre
+            style={{
+              background: "#0f172a",
+              color: "#34d399",
+              borderRadius: 8,
+              padding: 16,
+              fontSize: 11,
+              overflow: "auto",
+              maxHeight: 240,
+              whiteSpace: "pre-wrap",
+            }}
+          >
             {error.componentStack.trim()}
           </pre>
         </details>
@@ -60,8 +88,8 @@ function ErrorDisplay({
             JS stack trace
           </summary>
           <div style={{ background: "#0f172a", borderRadius: 8, padding: 16, overflowX: "auto" }}>
-            {lines.map((line, i) => (
-              <div key={i} style={{ marginBottom: 2 }}>
+            {lines.map((line) => (
+              <div key={line.raw} style={{ marginBottom: 2 }}>
                 {line.isApp ? (
                   <span style={{ color: "#f97316", fontWeight: 600, fontSize: 12 }}>{line.raw}</span>
                 ) : (
@@ -74,6 +102,7 @@ function ErrorDisplay({
       )}
 
       <button
+        type="button"
         onClick={reset}
         style={{
           background: "#2563eb",

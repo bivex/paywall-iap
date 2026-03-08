@@ -59,7 +59,13 @@ func (r *ExperimentAdminRepository) UpdateExperimentDraft(ctx context.Context, e
 		return fmt.Errorf("failed to marshal experiment automation policy: %w", err)
 	}
 
-	_, err = r.pool.Exec(ctx, `
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to begin experiment draft transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	commandTag, err := tx.Exec(ctx, `
 		UPDATE ab_tests
 		SET name = $2,
 		    description = $3,
@@ -85,6 +91,123 @@ func (r *ExperimentAdminRepository) UpdateExperimentDraft(ctx context.Context, e
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update experiment draft: %w", err)
+	}
+	if commandTag.RowsAffected() == 0 {
+		return service.ErrExperimentNotFound
+	}
+
+	if input.Arms != nil {
+		if err := r.syncDraftExperimentArms(ctx, tx, experimentID, input.Arms); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit experiment draft transaction: %w", err)
+	}
+	return nil
+}
+
+func (r *ExperimentAdminRepository) syncDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, arms []service.ExperimentArmInput) error {
+	if err := ensureDraftExperimentPricingTiersExist(ctx, tx, arms); err != nil {
+		return err
+	}
+
+	existingArmIDs := make(map[uuid.UUID]struct{})
+	rows, err := tx.Query(ctx, `SELECT id FROM ab_test_arms WHERE experiment_id = $1`, experimentID)
+	if err != nil {
+		return fmt.Errorf("failed to load experiment arms: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var armID uuid.UUID
+		if err := rows.Scan(&armID); err != nil {
+			return fmt.Errorf("failed to scan experiment arm: %w", err)
+		}
+		existingArmIDs[armID] = struct{}{}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("failed to iterate experiment arms: %w", err)
+	}
+
+	retainedArmIDs := make([]uuid.UUID, 0, len(arms))
+	for _, arm := range arms {
+		if arm.ID == nil {
+			continue
+		}
+		if _, exists := existingArmIDs[*arm.ID]; !exists {
+			return service.ErrExperimentArmNotFound
+		}
+		retainedArmIDs = append(retainedArmIDs, *arm.ID)
+	}
+
+	if len(retainedArmIDs) == 0 {
+		if _, err := tx.Exec(ctx, `DELETE FROM ab_test_arms WHERE experiment_id = $1`, experimentID); err != nil {
+			return fmt.Errorf("failed to delete replaced experiment arms: %w", err)
+		}
+	} else {
+		if _, err := tx.Exec(ctx, `
+			DELETE FROM ab_test_arms
+			WHERE experiment_id = $1
+			  AND NOT (id = ANY($2))`, experimentID, retainedArmIDs); err != nil {
+			return fmt.Errorf("failed to delete removed experiment arms: %w", err)
+		}
+	}
+
+	for _, arm := range arms {
+		if arm.ID == nil {
+			continue
+		}
+		commandTag, err := tx.Exec(ctx, `
+			UPDATE ab_test_arms
+			SET name = $3,
+			    description = $4,
+			    is_control = $5,
+			    traffic_weight = $6,
+			    pricing_tier_id = $7,
+			    updated_at = now()
+			WHERE id = $1 AND experiment_id = $2`, *arm.ID, experimentID, arm.Name, arm.Description, arm.IsControl, arm.TrafficWeight, arm.PricingTierID)
+		if err != nil {
+			return fmt.Errorf("failed to update experiment arm: %w", err)
+		}
+		if commandTag.RowsAffected() == 0 {
+			return service.ErrExperimentArmNotFound
+		}
+	}
+
+	for _, arm := range arms {
+		if arm.ID != nil {
+			continue
+		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight, pricing_tier_id)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`, uuid.New(), experimentID, arm.Name, arm.Description, arm.IsControl, arm.TrafficWeight, arm.PricingTierID); err != nil {
+			return fmt.Errorf("failed to insert experiment arm: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func ensureDraftExperimentPricingTiersExist(ctx context.Context, tx pgx.Tx, arms []service.ExperimentArmInput) error {
+	seen := make(map[uuid.UUID]struct{})
+	for _, arm := range arms {
+		if arm.PricingTierID == nil {
+			continue
+		}
+		if _, exists := seen[*arm.PricingTierID]; exists {
+			continue
+		}
+		seen[*arm.PricingTierID] = struct{}{}
+		if err := tx.QueryRow(ctx, `
+			SELECT 1
+			FROM pricing_tiers
+			WHERE id = $1 AND deleted_at IS NULL`, *arm.PricingTierID).Scan(new(int)); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return service.ErrPricingTierNotFound
+			}
+			return fmt.Errorf("failed to validate pricing tier linkage: %w", err)
+		}
 	}
 	return nil
 }

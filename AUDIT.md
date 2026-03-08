@@ -74,8 +74,8 @@
 
 | Приоритет | Что добивать | Почему |
 |---|---|---|
-| P1 | True builder workflow для `Experiment Studio` | metadata edit и lifecycle уже есть, но Studio всё ещё не умеет полноценно собирать/редактировать arms и управлять draft как конструктором |
-| P1 | Truthful linkage pricing tiers ↔ experiment arms | tiers уже live и доступны в Studio, но реальной persisted связи между tier catalogue и arms/domain экспериментом пока нет |
+| P0 | True builder workflow для `Experiment Studio` | backend уже почти готов: draft metadata, lifecycle, persisted arm↔tier linkage и full draft arm-set update есть; главный блокер теперь — добить Studio UI/editor поверх этого truthful contract |
+| P1 | Truthful linkage pricing tiers ↔ experiment arms | backend linkage уже есть (`ab_test_arms.pricing_tier_id`, create/update/read path), но Studio ещё не использует его как полноценный arm→tier workflow |
 | P1 | `A/B Tests` polish: inline edit + hydration-safe timestamps | lifecycle уже добит, но редактирование существующих экспериментов и SSR/client timestamp mismatch ещё торчат |
 | P2 | Runtime-specific config UX для `Bandit Model` | draft-only persisted config edit есть, но не хватает более глубокого runtime workbench поверх bandit metrics |
 | P2 | Winback management beyond launch/deactivate | launch и deactivate работают, но нет полноценного update/edit flow кампаний |
@@ -88,9 +88,9 @@
 
 | Порядок | Ticket | Почему сейчас |
 |---|---|---|
-| 1 | True builder workflow для `Experiment Studio` | это самый заметный truthful UX gap: metadata и lifecycle уже есть, но Studio всё ещё не собирает experiment как полноценный draft/builder workflow |
-| 2 | Persisted pricing tier ↔ arm linkage model | без этого tiers и arms остаются рядом, но не становятся одной доменной моделью; это блокирует честный experiment builder и rollout story |
-| 3 | Persisted pricing tier ↔ arm linkage model | immutable trail теперь уже покрывает decisions, conversions, assignments, impressions и winner recommendations; следующий backend шаг — добить persisted tier ↔ arm linkage для truthful pricing/builder orchestration |
+| 1 | True builder workflow для `Experiment Studio` | backend contract уже достаточно truthful; теперь самый заметный gap — UI/editor для draft arms и arm→tier orchestration |
+| 2 | `A/B Tests` polish: inline edit + hydration-safe timestamps | после builder workflow это остаётся самым заметным UX debt на experiment surfaces |
+| 3 | Guarded rollout/recommendation UX | recommendation audit/history уже есть, но richer operator surfacing и safe rollout controls ещё не начаты |
 
 ## Concrete implementation checklist by file/path (top 3)
 
@@ -101,7 +101,7 @@
 | `frontend/src/app/(main)/dashboard/experiments/studio/studio-page-client.tsx` | добавить truthful arm editor для draft experiments: create/remove/relabel arms, editable weights/descriptions, clear save/apply UX |
 | `frontend/src/lib/experiment-studio.ts` | расширить types/validation под editable arm payload, а не только metadata form state |
 | `frontend/src/actions/experiments.ts` | если backend позволит, добавить server actions для arm create/update/delete без изобретения отдельной модели |
-| `backend/internal/interfaces/http/handlers/admin_experiments.go` | поддержать persisted arm editing поверх существующих experiment endpoints или рядом с ними |
+| `backend/internal/interfaces/http/handlers/admin_experiments.go` | расширить существующий draft update contract до полного arm-set edit (add/remove/relabel/reweight/link) и держать его основой для Studio builder |
 | `backend/tests/integration/admin_experiments_test.go` | покрыть draft arm-edit сценарии и защиту от некорректных weight/status комбинаций |
 
 ### 2) Pricing tier linkage to experiments
@@ -138,8 +138,8 @@
 | Idempotent job execution | scheduler-backed automation и maintenance jobs теперь используют persisted execution log с window-based idempotency key, claim/skip semantics и retry-after-failure | дальше развивать это как единый contract для новых scheduled paths, а не возвращаться к best-effort execution |
 | Audit trail для auto-actions | для experiment lifecycle automation уже есть отдельный audit layer: source/reason/transition/time, latest audit в summary payloads и full history endpoint/UI | при расширении автоматики сохранять тот же уровень прозрачности для новых decision paths, а не откатываться к «silent background changes» |
 | Reconciliation / repair jobs | есть explicit admin repair path и scheduled background repair reconciler на `asynq` с window-idempotent execution log; explicit repair теперь делает assignment snapshot, создаёт missing `ab_test_arm_stats`, синхронизирует per-experiment `objective stats`, пересчитывает `winner_confidence` и обрабатывает expired pending rewards, а maintenance layer отдельно чистит stale context/expired assignments и даёт targeted operator scopes для этих cleanup paths | coverage автоматики всё ещё не полная: следующий gap уже больше про richer recommendation/decision/event surfaces, чем про базовый cleanup plumbing |
-| Experiment arm editing backend | create experiment с arms уже есть, edit существующего draft пока ограничен metadata-only update | для настоящего Studio builder понадобится persisted arm CRUD + server-side validation суммарных weight/control arm invariants |
-| Pricing tier linkage model | live pricing tiers уже есть, но truthful linkage tier ↔ arm пока отсутствует | если Studio должен автоматизировать pricing-experiment workflows, нужна отдельная persisted linkage model/table, а не просто соседние UI-блоки |
+| Experiment arm editing backend | draft experiment update теперь умеет persist full arm-set changes через существующий `PUT /v1/admin/experiments/:id`: add/remove/relabel/reweight arms и обновлять `pricing_tier_id` вместе с metadata | дальше добить Studio UI/editor и save/apply UX поверх этого contract |
+| Pricing tier linkage model | live pricing tiers уже truthfully связаны с arms через `ab_test_arms.pricing_tier_id`, create/update/read paths уже есть | дальше linkage нужно довести до полноценного Studio workflow, а не backend-only surface |
 | Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment, а admin read-path теперь отдаёт safe winner recommendation по win probability / sample-size / confidence guards | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
 | Manual override + lock semantics | persisted `automation_policy` уже поддерживает `manual_override`, `locked_until`, `locked_by`, `lock_reason`, а admin API/UI уже умеют `lock/unlock` experiment automation | дальше держать это как единый contract: все scheduler-driven automation paths должны уважать как explicit manual override, так и time-bound lock window |
 | Observability для автоматики | worker/logging уже присутствуют | нужны метрики и алерты: сколько auto transitions прошло, сколько jobs упало, сколько stale experiments, сколько pending rewards не обработано, сколько window trims skipped |
@@ -148,11 +148,11 @@
 
 Если делать не «всё сразу», а минимальный полезный следующий backend-срез, то приоритет теперь выглядит так:
 
-1. **Расширить immutable event trail** до richer recommendation events.
-2. **Добить persisted arm CRUD + validation** для truthful experiment builder workflow.
-3. **Ввести persisted pricing tier ↔ arm linkage model** для реального pricing-experiment orchestration.
-4. **Расширить immutable event trail** до impressions / richer decision events.
-5. **Ввести safe auto-rollout controls** только поверх уже существующего recommendation layer.
+1. **Добить Studio builder UI** поверх уже существующего truthful backend contract для draft experiments.
+2. **Использовать persisted arm CRUD + linkage** в Studio как единый arm→tier workflow, а не как разрозненные блоки.
+3. **Добавить richer recommendation/operator surfacing** поверх уже существующего append-only audit trail.
+4. **Ввести safe auto-rollout controls** только поверх уже существующего recommendation layer.
+5. **Полировать overview/edit UX** на `A/B Tests`, не откатываясь к mock-поведению.
 
 Без этих пяти вещей автоматика останется либо UI-имитацией, либо набором хрупких cron-скриптов поверх уже существующих ручных endpoints.
 

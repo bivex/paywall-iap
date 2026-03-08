@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 
+import { JsErrorCatcher } from "@/components/js-error-catcher";
 import { Toaster } from "@/components/ui/sonner";
 import { APP_CONFIG } from "@/config/app-config";
 import { fontVars } from "@/lib/fonts/registry";
@@ -47,6 +48,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             navbarStyle={navbar_style}
             font={font}
           >
+            <JsErrorCatcher />
             {children}
             <Toaster />
           </PreferencesStoreProvider>

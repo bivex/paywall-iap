@@ -606,6 +606,111 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 
+	t.Run("PUT updates draft experiment arms through the existing update endpoint", func(t *testing.T) {
+		var controlArmID uuid.UUID
+		var removedVariantArmID uuid.UUID
+		for _, arm := range draftExperiment.Arms {
+			if arm.IsControl {
+				controlArmID = arm.ID
+				continue
+			}
+			removedVariantArmID = arm.ID
+		}
+		require.NotEqual(t, uuid.Nil, controlArmID)
+		require.NotEqual(t, uuid.Nil, removedVariantArmID)
+
+		body := []byte(fmt.Sprintf(`{
+			"name":"Draft onboarding test v3",
+			"description":"Builder-style arm rewrite",
+			"algorithm_type":"epsilon_greedy",
+			"is_bandit":false,
+			"min_sample_size":240,
+			"confidence_threshold_percent":93,
+			"start_at":"2026-01-06T10:00:00Z",
+			"end_at":"2026-01-13T10:00:00Z",
+			"automation_policy":{"enabled":true,"auto_complete":true,"complete_on_confidence":true},
+			"arms":[
+				{"id":%q,"name":"Control Prime","description":"Updated control copy","is_control":true,"traffic_weight":1.25,"pricing_tier_id":%q},
+				{"name":"Variant C","description":"New premium annual bundle","is_control":false,"traffic_weight":1.75,"pricing_tier_id":%q}
+			]
+		}`, controlArmID.String(), primaryTierID.String(), upsellTierID.String()))
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "Draft onboarding test v3", resp.Data.Name)
+		require.Len(t, resp.Data.Arms, 2)
+
+		armIDs := make(map[uuid.UUID]struct{}, len(resp.Data.Arms))
+		armByName := make(map[string]handlers.AdminExperimentArm, len(resp.Data.Arms))
+		for _, arm := range resp.Data.Arms {
+			armIDs[arm.ID] = struct{}{}
+			armByName[arm.Name] = arm
+		}
+		_, removedStillPresent := armIDs[removedVariantArmID]
+		assert.False(t, removedStillPresent)
+		controlArm, ok := armByName["Control Prime"]
+		require.True(t, ok)
+		assert.Equal(t, controlArmID, controlArm.ID)
+		assert.InDelta(t, 1.25, controlArm.TrafficWeight, 0.001)
+		require.NotNil(t, controlArm.PricingTierID)
+		assert.Equal(t, primaryTierID, *controlArm.PricingTierID)
+		newVariant, ok := armByName["Variant C"]
+		require.True(t, ok)
+		assert.NotEqual(t, uuid.Nil, newVariant.ID)
+		require.NotNil(t, newVariant.PricingTierID)
+		assert.Equal(t, upsellTierID, *newVariant.PricingTierID)
+		draftExperiment = resp.Data
+	})
+
+	t.Run("PUT rejects draft experiment arm updates with fewer than two arms", func(t *testing.T) {
+		body := []byte(fmt.Sprintf(`{
+			"name":"Draft onboarding test v3",
+			"description":"Builder-style arm rewrite",
+			"algorithm_type":"epsilon_greedy",
+			"is_bandit":false,
+			"min_sample_size":240,
+			"confidence_threshold_percent":93,
+			"arms":[
+				{"id":%q,"name":"Control Prime","description":"Updated control copy","is_control":true,"traffic_weight":1.25}
+			]
+		}`, draftExperiment.Arms[0].ID.String()))
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("PUT rejects draft experiment arm updates with unknown arm id", func(t *testing.T) {
+		unknownArmID := uuid.New()
+		body := []byte(fmt.Sprintf(`{
+			"name":"Draft onboarding test v3",
+			"description":"Builder-style arm rewrite",
+			"algorithm_type":"epsilon_greedy",
+			"is_bandit":false,
+			"min_sample_size":240,
+			"confidence_threshold_percent":93,
+			"arms":[
+				{"id":%q,"name":"Control Prime","description":"Updated control copy","is_control":true,"traffic_weight":1.25},
+				{"id":%q,"name":"Ghost Arm","description":"Should fail","is_control":false,"traffic_weight":1}
+			]
+		}`, draftExperiment.Arms[0].ID.String(), unknownArmID.String()))
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
 	t.Run("PUT rejects updating a non-draft experiment", func(t *testing.T) {
 		body := []byte(`{
 			"name":"Running experiment edit",

@@ -12,6 +12,8 @@ import (
 var (
 	ErrExperimentNotFound      = errors.New("experiment not found")
 	ErrExperimentNotEditable   = errors.New("only draft experiments can be edited")
+	ErrExperimentArmNotFound   = errors.New("experiment arm not found")
+	ErrPricingTierNotFound     = errors.New("pricing tier not found")
 	ErrInvalidStatusTransition = errors.New("invalid experiment status transition")
 )
 
@@ -97,6 +99,16 @@ type UpdateExperimentInput struct {
 	StartAt             *time.Time
 	EndAt               *time.Time
 	AutomationPolicy    ExperimentAutomationPolicy
+	Arms                []ExperimentArmInput
+}
+
+type ExperimentArmInput struct {
+	ID            *uuid.UUID
+	Name          string
+	Description   string
+	IsControl     bool
+	TrafficWeight float64
+	PricingTierID *uuid.UUID
 }
 
 type ExperimentStatusTransitionAudit struct {
