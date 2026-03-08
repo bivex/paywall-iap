@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -37,6 +38,7 @@ type AdminExperiment struct {
 	MinSampleSize              int                                `json:"min_sample_size"`
 	ConfidenceThresholdPercent float64                            `json:"confidence_threshold_percent"`
 	WinnerConfidencePercent    *float64                           `json:"winner_confidence_percent"`
+	WinnerRecommendation       *service.WinnerRecommendation      `json:"winner_recommendation,omitempty"`
 	StartAt                    *time.Time                         `json:"start_at"`
 	EndAt                      *time.Time                         `json:"end_at"`
 	AutomationPolicy           service.ExperimentAutomationPolicy `json:"automation_policy"`
@@ -480,7 +482,47 @@ func (h *AdminHandler) getAdminExperimentByID(c *gin.Context, experimentID uuid.
 		return AdminExperiment{}, err
 	}
 	experiment.Arms = arms
+	if err := h.enrichWinnerRecommendation(c.Request.Context(), &experiment); err != nil {
+		return AdminExperiment{}, err
+	}
 	return experiment, nil
+}
+
+func (h *AdminHandler) enrichWinnerRecommendation(ctx context.Context, experiment *AdminExperiment) error {
+	if experiment == nil || h.winnerRecommendationService == nil {
+		return nil
+	}
+
+	var winnerConfidence *float64
+	if experiment.WinnerConfidencePercent != nil {
+		value := *experiment.WinnerConfidencePercent / 100
+		winnerConfidence = &value
+	}
+
+	input := service.ExperimentWinnerRecommendationInput{
+		ExperimentID:        experiment.ID,
+		Status:              experiment.Status,
+		IsBandit:            experiment.IsBandit,
+		MinSampleSize:       experiment.MinSampleSize,
+		TotalSamples:        experiment.TotalSamples,
+		ConfidenceThreshold: experiment.ConfidenceThresholdPercent / 100,
+		WinnerConfidence:    winnerConfidence,
+		Arms:                make([]service.ExperimentWinnerRecommendationArm, 0, len(experiment.Arms)),
+	}
+	for _, arm := range experiment.Arms {
+		input.Arms = append(input.Arms, service.ExperimentWinnerRecommendationArm{
+			ID:        arm.ID,
+			Name:      arm.Name,
+			IsControl: arm.IsControl,
+		})
+	}
+
+	recommendation, err := h.winnerRecommendationService.Recommend(ctx, input)
+	if err != nil {
+		return err
+	}
+	experiment.WinnerRecommendation = recommendation
+	return nil
 }
 
 func (h *AdminHandler) listExperimentLifecycleAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentLifecycleAudit, error) {
@@ -558,6 +600,10 @@ func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
 			return
 		}
 		experiment.Arms = arms
+		if err := h.enrichWinnerRecommendation(c.Request.Context(), &experiment); err != nil {
+			response.InternalError(c, "Failed to load experiments")
+			return
+		}
 		experiments = append(experiments, experiment)
 	}
 	if rows.Err() != nil {

@@ -272,6 +272,9 @@ main() {
 
     run_schemathesis "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
       --include-tag admin \
+      "$@"
+
+    run_schemathesis "admin auth endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
       --include-tag admin-auth \
       "$@"
 

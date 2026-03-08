@@ -90,7 +90,7 @@
 |---|---|---|
 | 1 | True builder workflow для `Experiment Studio` | это самый заметный truthful UX gap: metadata и lifecycle уже есть, но Studio всё ещё не собирает experiment как полноценный draft/builder workflow |
 | 2 | Persisted pricing tier ↔ arm linkage model | без этого tiers и arms остаются рядом, но не становятся одной доменной моделью; это блокирует честный experiment builder и rollout story |
-| 3 | Winner recommendation policy | immutable automation/conversion log уже появился как backend foundation; теперь следующий сильный шаг — безопасный recommendation layer до любого auto-rollout |
+| 3 | Remaining repair/self-heal coverage | immutable log и recommendation layer уже появились как backend foundation; следующий backend шаг — добить оставшиеся derived surfaces и reconciliation gaps |
 
 ## Concrete implementation checklist by file/path (top 3)
 
@@ -140,7 +140,7 @@
 | Reconciliation / repair jobs | есть explicit admin repair path и scheduled background repair reconciler на `asynq` с window-idempotent execution log; вместе с maintenance layer они уже делают assignment snapshot, создают missing `ab_test_arm_stats`, пересчитывают `winner_confidence`, синхронизируют `objective stats`, обрабатывают expired pending rewards и чистят stale context/expired assignments | coverage derived state всё ещё не полная: за пределами текущего repair/maintenance scope остаются другие derived surfaces и richer recommendation/decision paths |
 | Experiment arm editing backend | create experiment с arms уже есть, edit существующего draft пока ограничен metadata-only update | для настоящего Studio builder понадобится persisted arm CRUD + server-side validation суммарных weight/control arm invariants |
 | Pricing tier linkage model | live pricing tiers уже есть, но truthful linkage tier ↔ arm пока отсутствует | если Studio должен автоматизировать pricing-experiment workflows, нужна отдельная persisted linkage model/table, а не просто соседние UI-блоки |
-| Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
+| Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment, а admin read-path теперь отдаёт safe winner recommendation по win probability / sample-size / confidence guards | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
 | Manual override + lock semantics | persisted `automation_policy` уже поддерживает `manual_override`, `locked_until`, `locked_by`, `lock_reason`, а admin API/UI уже умеют `lock/unlock` experiment automation | дальше держать это как единый contract: все scheduler-driven automation paths должны уважать как explicit manual override, так и time-bound lock window |
 | Observability для автоматики | worker/logging уже присутствуют | нужны метрики и алерты: сколько auto transitions прошло, сколько jobs упало, сколько stale experiments, сколько pending rewards не обработано, сколько window trims skipped |
 
@@ -148,11 +148,11 @@
 
 Если делать не «всё сразу», а минимальный полезный следующий backend-срез, то приоритет теперь выглядит так:
 
-1. **Ввести winner recommendation policy** до любого auto-rollout / auto-promote слоя.
-2. **Расширить repair/self-heal coverage** на оставшиеся derived surfaces вне текущего repair/maintenance scope.
-3. **Добить persisted arm CRUD + validation** для truthful experiment builder workflow.
-4. **Ввести persisted pricing tier ↔ arm linkage model** для реального pricing-experiment orchestration.
-5. **Расширить immutable event trail** до assignments / impressions / richer decision events.
+1. **Расширить repair/self-heal coverage** на оставшиеся derived surfaces вне текущего repair/maintenance scope.
+2. **Добить persisted arm CRUD + validation** для truthful experiment builder workflow.
+3. **Ввести persisted pricing tier ↔ arm linkage model** для реального pricing-experiment orchestration.
+4. **Расширить immutable event trail** до assignments / impressions / richer decision events.
+5. **Ввести safe auto-rollout controls** только поверх уже существующего recommendation layer.
 
 Без этих пяти вещей автоматика останется либо UI-имитацией, либо набором хрупких cron-скриптов поверх уже существующих ручных endpoints.
 
@@ -194,7 +194,7 @@
 |---|---|
 | Real maintenance jobs | ✅ уже repository-backed: `process_expired_rewards`, `trim_windows`, `cleanup_old_context_data`, `sync_objective_stats`, expired assignment cleanup, structured maintenance summary + idempotent scheduler execution |
 | Immutable decisions/conversions log | 🟡 уже есть append-only история automation decisions и reward-resolution событий; дальше расширять до assignment/impression trail |
-| Winner recommendation policy | сначала ввести auto-recommend winner, а не мгновенный auto-rollout |
+| Winner recommendation policy | 🟡 уже есть admin-facing recommendation layer: backend считает winning arm по win probabilities и применяет sample-size / confidence guards; дальше расширять surfacing/logging, не смешивая это с auto-rollout |
 | Safe rollout controls | только после накопления audit log и policy guards — вводить auto-promote / auto-reweight / auto-stop loser flows |
 | Pricing/arm linkage | если bandit/Studio должны автоматически работать с pricing tiers, сначала ввести persisted arm↔tier linkage model |
 
@@ -204,7 +204,7 @@
 
 1. **Stage 1 полностью**
 2. Из Stage 2: `reconciler + auto-start/auto-complete + manual override`
-3. Из Stage 3: `real maintenance jobs + immutable event log`
+3. Из Stage 3: `real maintenance jobs + immutable event log + recommendation layer`
 4. Только потом — `auto-winner / auto-rollout / deeper optimization`
 
 Иначе есть высокий риск построить внешне красивую автоматику, которая будет опираться на неполный event trail, placeholder jobs и расходящиеся manual/system code paths.
@@ -232,7 +232,7 @@
 | Stage 2 | Full lifecycle audit history UI/API surface | P2 | ✅ Done | admin API и Studio UI отдают полный newest-first lifecycle audit trail по experiment без mock-данных |
 | Stage 3 | Repository-backed bandit maintenance jobs | P1 | ✅ Done | scheduler wiring и idempotent execution уже есть, а maintenance layer теперь реально закрывает expired rewards, currency refresh, `trim_windows`, context cleanup, objective stats sync и expired assignment cleanup через repository-backed paths |
 | Stage 3 | Immutable conversions / decisions log | P1 | 🟡 Partial | появились append-only `experiment_automation_decision_log` и `bandit_conversion_events`, direct reward / delayed conversion / expired pending reward теперь пишутся в immutable history, а delayed conversion path стал truthful; но полного assignment/impression trail и richer recommendation events пока нет |
-| Stage 3 | Winner recommendation policy | P2 | ⚪ Not started | система должна сначала уметь безопасно рекомендовать winner/operator action без мгновенного auto-rollout |
+| Stage 3 | Winner recommendation policy | P2 | 🟡 Partial | появился read-only recommendation layer в admin payload: backend считает candidate winner по win probabilities и отдаёт recommendation с sample-size / confidence guards; но отдельного recommendation audit trail, richer UI surfacing и auto-rollout controls пока нет |
 | Stage 3 | Safe auto-rollout controls | P2 | ⚪ Not started | после recommendation layer нужны guarded auto-promote / auto-reweight flows с явными safety controls |
 | Stage 3 | Persisted pricing tier ↔ arm linkage model | P1 | ⚪ Not started | pricing tiers должны стать реальной частью experiment/bandit domain модели, а не только соседним CRUD UI |
 
@@ -242,7 +242,7 @@
 |---|---|---|
 | `asynq` worker + scheduler | ✅ Done | базовый execution layer уже есть в проекте |
 | Ручные experiment lifecycle endpoints | ✅ Done | `pause/resume/complete` уже работают и пригодятся как референс для service extraction |
-| Bandit maintenance scheduling hooks | 🟡 Partial | scheduler wiring и persisted idempotency уже есть, но не все maintenance handlers ещё production-grade и repository-backed |
+| Bandit maintenance scheduling hooks | ✅ Done | scheduler wiring, persisted idempotency и repository-backed maintenance handlers уже есть; дальше развитие идёт в recommendation/rollout layer, а не в базовые hooks |
 | Admin experiment metadata update | ✅ Done | draft metadata уже можно сохранять, это полезная база для будущего automation policy UI |
 
 ## Cross-cutting замечания

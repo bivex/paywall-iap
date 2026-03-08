@@ -287,6 +287,72 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.True(t, found)
 	})
 
+	t.Run("GET returns winner recommendation for eligible bandit experiments", func(t *testing.T) {
+		var controlArmID uuid.UUID
+		var variantArmID uuid.UUID
+		for _, arm := range runningExperiment.Arms {
+			switch arm.Name {
+			case "Control":
+				controlArmID = arm.ID
+			case "Variant A":
+				variantArmID = arm.ID
+			}
+		}
+		require.NotEqual(t, uuid.Nil, controlArmID)
+		require.NotEqual(t, uuid.Nil, variantArmID)
+
+		_, err = db.Exec(ctx, `
+				UPDATE ab_tests
+				SET min_sample_size = 20,
+				    confidence_threshold = 0.95,
+				    winner_confidence = 0.97
+				WHERE id = $1`, runningExperiment.ID)
+		require.NoError(t, err)
+
+		_, err = db.Exec(ctx, `
+				INSERT INTO ab_test_arm_stats (arm_id, alpha, beta, samples, conversions, revenue, avg_reward)
+				VALUES
+					($1, 5, 9, 12, 4, 40, 3.3333),
+					($2, 28, 4, 29, 27, 290, 10.0)
+				ON CONFLICT (arm_id) DO UPDATE
+				SET alpha = EXCLUDED.alpha,
+				    beta = EXCLUDED.beta,
+				    samples = EXCLUDED.samples,
+				    conversions = EXCLUDED.conversions,
+				    revenue = EXCLUDED.revenue,
+				    avg_reward = EXCLUDED.avg_reward,
+				    updated_at = now()`, controlArmID, variantArmID)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data []handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+
+		var found bool
+		for _, experiment := range resp.Data {
+			if experiment.ID != runningExperiment.ID {
+				continue
+			}
+			found = true
+			require.NotNil(t, experiment.WinnerRecommendation)
+			assert.True(t, experiment.WinnerRecommendation.Recommended)
+			assert.Equal(t, "recommend_winner", experiment.WinnerRecommendation.Reason)
+			require.NotNil(t, experiment.WinnerRecommendation.WinningArmID)
+			assert.Equal(t, variantArmID, *experiment.WinnerRecommendation.WinningArmID)
+			require.NotNil(t, experiment.WinnerRecommendation.WinningArmName)
+			assert.Equal(t, "Variant A", *experiment.WinnerRecommendation.WinningArmName)
+			require.NotNil(t, experiment.WinnerRecommendation.ConfidencePercent)
+			assert.InDelta(t, 97.0, *experiment.WinnerRecommendation.ConfidencePercent, 0.001)
+		}
+		assert.True(t, found)
+	})
+
 	t.Run("GET lifecycle audit history returns newest-first entries", func(t *testing.T) {
 		_, err := db.Exec(ctx, `DELETE FROM experiment_lifecycle_audit_log WHERE experiment_id = $1`, draftExperiment.ID)
 		require.NoError(t, err)
