@@ -103,7 +103,22 @@ func TestAdminExperimentsHandler(t *testing.T) {
 				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 			);
 			CREATE UNIQUE INDEX idx_experiment_lifecycle_audit_log_idempotency
-				ON experiment_lifecycle_audit_log(idempotency_key);`)
+				ON experiment_lifecycle_audit_log(idempotency_key);
+			CREATE TABLE experiment_winner_recommendation_log (
+				id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+				experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+				source TEXT NOT NULL,
+				recommended BOOLEAN NOT NULL DEFAULT FALSE,
+				reason TEXT NOT NULL,
+				winning_arm_id UUID REFERENCES ab_test_arms(id) ON DELETE SET NULL,
+				confidence_percent DOUBLE PRECISION,
+				confidence_threshold_percent DOUBLE PRECISION NOT NULL,
+				observed_samples INT NOT NULL,
+				min_sample_size INT NOT NULL,
+				details JSONB,
+				occurred_at TIMESTAMPTZ NOT NULL,
+				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+			);`)
 	require.NoError(t, err)
 
 	adminID := uuid.New()
@@ -148,6 +163,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	admin.POST("/experiments", handler.CreateAdminExperiment)
 	admin.PUT("/experiments/:id", handler.UpdateAdminExperiment)
 	admin.GET("/experiments/:id/lifecycle-audit", handler.GetAdminExperimentLifecycleAuditHistory)
+	admin.GET("/experiments/:id/winner-recommendation-audit", handler.GetAdminExperimentWinnerRecommendationAuditHistory)
 	admin.POST("/experiments/:id/pause", handler.PauseAdminExperiment)
 	admin.POST("/experiments/:id/resume", handler.ResumeAdminExperiment)
 	admin.POST("/experiments/:id/complete", handler.CompleteAdminExperiment)
@@ -324,6 +340,9 @@ func TestAdminExperimentsHandler(t *testing.T) {
 				    updated_at = now()`, controlArmID, variantArmID)
 		require.NoError(t, err)
 
+		_, err = db.Exec(ctx, `DELETE FROM experiment_winner_recommendation_log WHERE experiment_id = $1`, runningExperiment.ID)
+		require.NoError(t, err)
+
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -351,6 +370,29 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			assert.InDelta(t, 97.0, *experiment.WinnerRecommendation.ConfidencePercent, 0.001)
 		}
 		assert.True(t, found)
+
+		var recommendationRows int
+		err = db.QueryRow(ctx, `SELECT COUNT(*)::int FROM experiment_winner_recommendation_log WHERE experiment_id = $1`, runningExperiment.ID).Scan(&recommendationRows)
+		require.NoError(t, err)
+		assert.Equal(t, 1, recommendationRows)
+	})
+
+	t.Run("GET winner recommendation audit history returns newest-first entries", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/winner-recommendation-audit", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data []handlers.AdminExperimentWinnerRecommendationAudit `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		require.NotEmpty(t, resp.Data)
+		assert.Equal(t, "admin_experiments_list", resp.Data[0].Source)
+		assert.Equal(t, "recommend_winner", resp.Data[0].Reason)
+		assert.True(t, resp.Data[0].Recommended)
+		require.NotNil(t, resp.Data[0].WinningArmID)
+		assert.Equal(t, runningExperiment.Arms[1].ID, *resp.Data[0].WinningArmID)
 	})
 
 	t.Run("GET lifecycle audit history returns newest-first entries", func(t *testing.T) {

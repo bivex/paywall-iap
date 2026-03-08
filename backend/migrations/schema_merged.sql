@@ -874,6 +874,25 @@ CREATE INDEX idx_bandit_impression_events_experiment ON bandit_impression_events
 CREATE INDEX idx_bandit_impression_events_user ON bandit_impression_events(user_id, occurred_at DESC);
 CREATE INDEX idx_bandit_impression_events_arm ON bandit_impression_events(arm_id, occurred_at DESC);
 
+CREATE TABLE experiment_winner_recommendation_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+    source TEXT NOT NULL,
+    recommended BOOLEAN NOT NULL DEFAULT FALSE,
+    reason TEXT NOT NULL,
+    winning_arm_id UUID REFERENCES ab_test_arms(id) ON DELETE SET NULL,
+    confidence_percent DOUBLE PRECISION,
+    confidence_threshold_percent DOUBLE PRECISION NOT NULL,
+    observed_samples INTEGER NOT NULL,
+    min_sample_size INTEGER NOT NULL,
+    details JSONB,
+    occurred_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_experiment_winner_recommendation_log_experiment ON experiment_winner_recommendation_log(experiment_id, occurred_at DESC);
+CREATE INDEX idx_experiment_winner_recommendation_log_source ON experiment_winner_recommendation_log(source, occurred_at DESC);
+
 -- =====================================================
 -- Section 6: Multi-Objective Hybrid System
 -- =====================================================
@@ -940,6 +959,7 @@ COMMENT ON TABLE experiment_automation_decision_log IS 'Append-only log of autom
 COMMENT ON TABLE bandit_conversion_events IS 'Append-only reward and conversion event log for direct, delayed, and expired bandit outcomes';
 COMMENT ON TABLE bandit_assignment_events IS 'Append-only assignment history for bandit arm selections';
 COMMENT ON TABLE bandit_impression_events IS 'Append-only impression history for bandit arm exposures';
+COMMENT ON TABLE experiment_winner_recommendation_log IS 'Append-only history of evaluated winner recommendations for bandit experiments';
 COMMENT ON TABLE bandit_arm_objective_stats IS 'Per-objective statistics for multi-objective optimization';
 
 COMMENT ON COLUMN ab_tests.window_type IS 'Type of windowing: events, time, or none';

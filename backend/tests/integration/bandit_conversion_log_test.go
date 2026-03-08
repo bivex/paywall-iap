@@ -141,6 +141,77 @@ func TestPostgresBanditRepository_AppendImpressionEventPersistsImmutableEvent(t 
 	assert.JSONEq(t, `{"placement":"paywall"}`, string(metadata))
 }
 
+func TestPostgresBanditRepository_AppendWinnerRecommendationEventPersistsImmutableEvent(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup, err := testutil.SetupTestDB(ctx)
+	require.NoError(t, err)
+	defer cleanup()
+
+	_, err = db.Exec(ctx, `
+		CREATE EXTENSION IF NOT EXISTS pgcrypto;
+		CREATE TABLE ab_tests (id UUID PRIMARY KEY, name TEXT NOT NULL);
+		CREATE TABLE ab_test_arms (id UUID PRIMARY KEY, experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE, name TEXT NOT NULL);
+		CREATE TABLE experiment_winner_recommendation_log (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+			source TEXT NOT NULL,
+			recommended BOOLEAN NOT NULL DEFAULT FALSE,
+			reason TEXT NOT NULL,
+			winning_arm_id UUID REFERENCES ab_test_arms(id) ON DELETE SET NULL,
+			confidence_percent DOUBLE PRECISION,
+			confidence_threshold_percent DOUBLE PRECISION NOT NULL,
+			observed_samples INT NOT NULL,
+			min_sample_size INT NOT NULL,
+			details JSONB,
+			occurred_at TIMESTAMPTZ NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
+	`)
+	require.NoError(t, err)
+
+	experimentID := uuid.New()
+	armID := uuid.New()
+	occurredAt := time.Date(2026, 3, 8, 20, 0, 0, 0, time.UTC)
+
+	_, err = db.Exec(ctx, `INSERT INTO ab_tests (id, name) VALUES ($1, 'Winner recommendation test')`, experimentID)
+	require.NoError(t, err)
+	_, err = db.Exec(ctx, `INSERT INTO ab_test_arms (id, experiment_id, name) VALUES ($1, $2, 'Variant A')`, armID, experimentID)
+	require.NoError(t, err)
+
+	repo := repository.NewPostgresBanditRepository(db, zap.NewNop())
+	confidence := 97.0
+	err = repo.AppendWinnerRecommendationEvent(ctx, &service.WinnerRecommendationEvent{
+		ExperimentID:               experimentID,
+		Source:                     "admin_experiments_list",
+		Recommended:                true,
+		Reason:                     service.WinnerRecommendationReasonRecommendWinner,
+		WinningArmID:               &armID,
+		ConfidencePercent:          &confidence,
+		ConfidenceThresholdPercent: 95,
+		ObservedSamples:            120,
+		MinSampleSize:              100,
+		Details:                    map[string]interface{}{"winning_arm_name": "Variant A"},
+		OccurredAt:                 occurredAt,
+	})
+	require.NoError(t, err)
+
+	var source string
+	var recommended bool
+	var reason string
+	var winningArmID uuid.UUID
+	var storedConfidence float64
+	var details []byte
+	var storedOccurredAt time.Time
+	require.NoError(t, db.QueryRow(ctx, `SELECT source, recommended, reason, winning_arm_id, confidence_percent, details, occurred_at FROM experiment_winner_recommendation_log WHERE experiment_id = $1`, experimentID).Scan(&source, &recommended, &reason, &winningArmID, &storedConfidence, &details, &storedOccurredAt))
+	assert.Equal(t, "admin_experiments_list", source)
+	assert.True(t, recommended)
+	assert.Equal(t, service.WinnerRecommendationReasonRecommendWinner, reason)
+	assert.Equal(t, armID, winningArmID)
+	assert.Equal(t, 97.0, storedConfidence)
+	assert.Equal(t, occurredAt, storedOccurredAt.UTC())
+	assert.JSONEq(t, `{"winning_arm_name":"Variant A"}`, string(details))
+}
+
 func TestPostgresBanditRepository_ProcessPendingConversionPersistsImmutableEvent(t *testing.T) {
 	ctx := context.Background()
 	db, cleanup, err := testutil.SetupTestDB(ctx)

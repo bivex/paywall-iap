@@ -103,6 +103,22 @@ services:
     networks:
       - internal
 
+  js-error-collector:
+    build:
+      context: ../../
+      dockerfile: infra/docker/js-error-collector/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${JS_ERROR_COLLECTOR_PORT_HOST:-8088}:8080"
+    environment:
+      - PORT=8080
+      - LOG_PATH=/data/frontend-errors.ndjson
+      - MAX_BODY_BYTES=65536
+    volumes:
+      - js-error-collector-data:/data
+    networks:
+      - internal
+
   worker:
     build:
       context: ../../
@@ -141,3 +157,4 @@ networks:
 
 volumes:
   apple-mock-cache:
+  js-error-collector-data:

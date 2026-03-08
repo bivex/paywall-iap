@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS experiment_winner_recommendation_log;

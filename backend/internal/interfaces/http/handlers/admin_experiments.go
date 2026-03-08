@@ -711,7 +711,7 @@ func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
 			return
 		}
 		experiment.Arms = arms
-			if err := h.enrichWinnerRecommendation(c.Request.Context(), &experiment, "admin_experiments_list"); err != nil {
+		if err := h.enrichWinnerRecommendation(c.Request.Context(), &experiment, "admin_experiments_list"); err != nil {
 			response.InternalError(c, "Failed to load experiments")
 			return
 		}
