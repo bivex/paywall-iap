@@ -457,6 +457,74 @@ func (h *AdminHandler) logExperimentAutomationPolicyAction(c *gin.Context, exper
 	})
 }
 
+func adminExperimentHasActiveAutomationLock(policy service.ExperimentAutomationPolicy, now time.Time) bool {
+	if policy.ManualOverride {
+		return true
+	}
+	return policy.LockedUntil != nil && policy.LockedUntil.After(now.UTC())
+}
+
+func adminIDFromContext(c *gin.Context) (*uuid.UUID, bool) {
+	adminIDValue, ok := c.Get("admin_id")
+	if !ok {
+		return nil, false
+	}
+	adminID, ok := adminIDValue.(uuid.UUID)
+	if !ok {
+		return nil, false
+	}
+	return &adminID, true
+}
+
+func buildAdminExperimentStatusAudit(c *gin.Context, reason string, details map[string]interface{}) *service.ExperimentStatusTransitionAudit {
+	adminID, ok := adminIDFromContext(c)
+	if !ok {
+		return nil
+	}
+	mergedDetails := map[string]interface{}{
+		"reason": reason,
+	}
+	for key, value := range details {
+		mergedDetails[key] = value
+	}
+	return &service.ExperimentStatusTransitionAudit{
+		ActorType: "admin",
+		ActorID:   adminID,
+		Source:    "admin_experiments_api",
+		Details:   mergedDetails,
+	}
+}
+
+func (h *AdminHandler) logConfirmExperimentWinnerAction(c *gin.Context, experiment AdminExperiment) {
+	if h.auditService == nil || experiment.WinnerRecommendation == nil {
+		return
+	}
+	adminID, ok := adminIDFromContext(c)
+	if !ok {
+		return
+	}
+	details := map[string]interface{}{
+		"experiment_id":          experiment.ID.String(),
+		"status":                 experiment.Status,
+		"recommendation_reason":  experiment.WinnerRecommendation.Reason,
+		"recommended":            experiment.WinnerRecommendation.Recommended,
+		"observed_samples":       experiment.WinnerRecommendation.ObservedSamples,
+		"min_sample_size":        experiment.WinnerRecommendation.MinSampleSize,
+		"confidence_threshold":   experiment.WinnerRecommendation.ConfidenceThresholdPercent,
+		"recommendation_source":  experiment.WinnerRecommendation.Source,
+	}
+	if experiment.WinnerRecommendation.WinningArmID != nil {
+		details["winning_arm_id"] = experiment.WinnerRecommendation.WinningArmID.String()
+	}
+	if experiment.WinnerRecommendation.WinningArmName != nil {
+		details["winning_arm_name"] = *experiment.WinnerRecommendation.WinningArmName
+	}
+	if experiment.WinnerRecommendation.ConfidencePercent != nil {
+		details["confidence_percent"] = *experiment.WinnerRecommendation.ConfidencePercent
+	}
+	_ = h.auditService.LogAction(c.Request.Context(), *adminID, "confirm_experiment_winner", "experiment", nil, details)
+}
+
 func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) string {
 	if req.Name == "" {
 		return "Experiment name is required"
@@ -1428,6 +1496,89 @@ func (h *AdminHandler) CompleteAdminExperiment(c *gin.Context) {
 	h.updateAdminExperimentStatus(c, "completed")
 }
 
+func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+	if h.experimentAdminService == nil {
+		response.InternalError(c, "Experiment service is unavailable")
+		return
+	}
+
+	experiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.NotFound(c, "Experiment not found")
+			return
+		}
+		response.InternalError(c, "Failed to load experiment")
+		return
+	}
+	if !experiment.IsBandit {
+		response.UnprocessableEntity(c, "Only bandit experiments can confirm winner recommendations")
+		return
+	}
+	if experiment.Status != "running" && experiment.Status != "paused" {
+		response.UnprocessableEntity(c, "Only running or paused experiments can confirm winner recommendations")
+		return
+	}
+	if adminExperimentHasActiveAutomationLock(experiment.AutomationPolicy, time.Now()) {
+		response.UnprocessableEntity(c, "Unlock experiment automation before confirming a winner")
+		return
+	}
+	if experiment.WinnerRecommendation == nil ||
+		!experiment.WinnerRecommendation.Recommended ||
+		experiment.WinnerRecommendation.Reason != "recommend_winner" ||
+		experiment.WinnerRecommendation.WinningArmID == nil {
+		response.UnprocessableEntity(c, "Experiment does not have a confirmable winner recommendation")
+		return
+	}
+
+	auditDetails := map[string]interface{}{
+		"recommended":          experiment.WinnerRecommendation.Recommended,
+		"recommendation_reason": experiment.WinnerRecommendation.Reason,
+		"winning_arm_id":       experiment.WinnerRecommendation.WinningArmID.String(),
+		"observed_samples":     experiment.WinnerRecommendation.ObservedSamples,
+		"min_sample_size":      experiment.WinnerRecommendation.MinSampleSize,
+		"confidence_threshold": experiment.WinnerRecommendation.ConfidenceThresholdPercent,
+		"recommendation_source": experiment.WinnerRecommendation.Source,
+	}
+	if experiment.WinnerRecommendation.WinningArmName != nil {
+		auditDetails["winning_arm_name"] = *experiment.WinnerRecommendation.WinningArmName
+	}
+	if experiment.WinnerRecommendation.ConfidencePercent != nil {
+		auditDetails["confidence_percent"] = *experiment.WinnerRecommendation.ConfidencePercent
+	}
+
+	err = h.experimentAdminService.TransitionExperimentStatusWithAudit(
+		c.Request.Context(),
+		experimentID,
+		"completed",
+		buildAdminExperimentStatusAudit(c, "confirm_recommended_winner", auditDetails),
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrExperimentNotFound):
+			response.NotFound(c, "Experiment not found")
+		case errors.Is(err, service.ErrInvalidStatusTransition):
+			response.UnprocessableEntity(c, err.Error())
+		default:
+			response.InternalError(c, "Failed to confirm experiment winner")
+		}
+		return
+	}
+
+	h.logConfirmExperimentWinnerAction(c, experiment)
+	updatedExperiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated experiment")
+		return
+	}
+	response.OK(c, updatedExperiment)
+}
+
 func (h *AdminHandler) LockAdminExperiment(c *gin.Context) {
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -1557,18 +1708,7 @@ func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus st
 		return
 	}
 
-	var audit *service.ExperimentStatusTransitionAudit
-	adminID, _ := c.Get("admin_id")
-	if aid, ok := adminID.(uuid.UUID); ok {
-		audit = &service.ExperimentStatusTransitionAudit{
-			ActorType: "admin",
-			ActorID:   &aid,
-			Source:    "admin_experiments_api",
-			Details: map[string]interface{}{
-				"reason": "manual_" + nextStatus,
-			},
-		}
-	}
+	audit := buildAdminExperimentStatusAudit(c, "manual_"+nextStatus, nil)
 
 	err = h.experimentAdminService.TransitionExperimentStatusWithAudit(c.Request.Context(), experimentID, nextStatus, audit)
 	if err != nil {

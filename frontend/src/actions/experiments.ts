@@ -92,7 +92,7 @@ export async function updateExperimentAction(id: string, payload: ExperimentUpda
   }
 }
 
-async function postExperimentLifecycleAction(id: string, action: "pause" | "resume" | "complete") {
+async function postExperimentLifecycleAction(id: string, action: "pause" | "resume" | "complete" | "confirm-winner") {
   const token = await getAdminToken();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
 
@@ -119,6 +119,10 @@ export async function resumeExperimentAction(id: string) {
 
 export async function completeExperimentAction(id: string) {
   return postExperimentLifecycleAction(id, "complete");
+}
+
+export async function confirmExperimentWinnerAction(id: string) {
+  return postExperimentLifecycleAction(id, "confirm-winner");
 }
 
 export async function lockExperimentAction(id: string, payload?: { locked_until?: string | null; reason?: string }) {

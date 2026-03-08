@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import {
   completeExperimentAction,
+  confirmExperimentWinnerAction,
   lockExperimentAction,
   pauseExperimentAction,
   repairExperimentAction,
@@ -272,7 +273,7 @@ export function StudioPageClient({
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
   const [pendingLifecycleAction, setPendingLifecycleAction] = useState<
-    "pause" | "resume" | "complete" | "lock" | "unlock" | "repair" | null
+    "pause" | "resume" | "complete" | "lock" | "unlock" | "repair" | "confirmWinner" | null
   >(null);
   const [pendingSave, setPendingSave] = useState(false);
   const [pendingAutomationSave, setPendingAutomationSave] = useState(false);
@@ -395,6 +396,12 @@ export function StudioPageClient({
   const schedulerLocked = hasManualOverride || hasTimedLock;
   const canEditAutomationPolicy = selectedExperiment?.status !== "completed";
   const currentRecommendation = selectedExperiment?.winner_recommendation ?? null;
+  const canConfirmRecommendedWinner =
+    selectedExperiment?.is_bandit === true &&
+    (selectedExperiment.status === "running" || selectedExperiment.status === "paused") &&
+    currentRecommendation?.recommended === true &&
+    Boolean(currentRecommendation.winning_arm_id) &&
+    !schedulerLocked;
   const recommendationHistory = snapshot?.recommendationHistory ?? [];
 
   const refreshSnapshot = (experimentId: string) => {
@@ -513,6 +520,23 @@ export function StudioPageClient({
 
     syncExperiment(result.data);
     toast.success(t("feedback.automationSaved"));
+    refreshSnapshot(result.data.id);
+  }
+
+  async function confirmWinnerRecommendation() {
+    if (!selectedExperiment) return;
+
+    setPendingLifecycleAction("confirmWinner");
+    const result = await confirmExperimentWinnerAction(selectedExperiment.id);
+    setPendingLifecycleAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.winnerConfirmFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    toast.success(t("feedback.winnerConfirmed"));
     refreshSnapshot(result.data.id);
   }
 
@@ -1548,6 +1572,21 @@ export function StudioPageClient({
                             <p className="mt-1">
                               {t(`recommendation.${recommendationNextActionKey(selectedExperiment, schedulerLocked)}`)}
                             </p>
+                        {currentRecommendation?.recommended && currentRecommendation.winning_arm_id ? (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isPending || pendingLifecycleAction !== null || pendingSave || !canConfirmRecommendedWinner}
+                              onClick={() => void confirmWinnerRecommendation()}
+                            >
+                              {pendingLifecycleAction === "confirmWinner"
+                                ? t("feedback.confirmingWinner")
+                                : t("actions.confirmWinner")}
+                            </Button>
+                            <p className="text-[11px] text-muted-foreground">{t("recommendation.confirmWinnerHelp")}</p>
+                          </div>
+                        ) : null}
                           </div>
                         </>
                       ) : (

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import {
   completeExperimentAction,
+  confirmExperimentWinnerAction,
   pauseExperimentAction,
   resumeExperimentAction,
   updateExperimentAction,
@@ -199,7 +200,9 @@ export function BanditPageClient({
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
   const [hasHydrated, setHasHydrated] = useState(false);
-  const [pendingLifecycleAction, setPendingLifecycleAction] = useState<"pause" | "resume" | "complete" | null>(null);
+  const [pendingLifecycleAction, setPendingLifecycleAction] = useState<
+    "pause" | "resume" | "complete" | "confirmWinner" | null
+  >(null);
   const [pendingSave, setPendingSave] = useState(false);
 
   useEffect(() => {
@@ -261,6 +264,12 @@ export function BanditPageClient({
   const hasManualOverride = Boolean(selectedExperiment?.automation_policy?.manual_override);
   const hasTimedLock = hasActiveTimedLock(selectedExperiment?.automation_policy?.locked_until);
   const schedulerLocked = hasManualOverride || hasTimedLock;
+  const canConfirmRecommendedWinner =
+    selectedExperiment?.is_bandit === true &&
+    (selectedExperiment.status === "running" || selectedExperiment.status === "paused") &&
+    currentRecommendation?.recommended === true &&
+    Boolean(currentRecommendation.winning_arm_id) &&
+    !schedulerLocked;
   const draftConfigBaseline = useMemo(
     () => (selectedExperiment ? buildDraftBanditConfig(selectedExperiment) : null),
     [selectedExperiment],
@@ -344,6 +353,23 @@ export function BanditPageClient({
 
     syncExperiment(result.data);
     toast.success(t("feedback.saved"));
+    loadSnapshot(result.data.id);
+  }
+
+  async function confirmWinnerRecommendation() {
+    if (!selectedExperiment) return;
+
+    setPendingLifecycleAction("confirmWinner");
+    const result = await confirmExperimentWinnerAction(selectedExperiment.id);
+    setPendingLifecycleAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.winnerConfirmFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    toast.success(t("feedback.winnerConfirmed"));
     loadSnapshot(result.data.id);
   }
 
@@ -587,6 +613,21 @@ export function BanditPageClient({
                         <p className="mt-1">
                           {t(`recommendation.${recommendationNextActionKey(selectedExperiment, schedulerLocked)}`)}
                         </p>
+                        {currentRecommendation.recommended && currentRecommendation.winning_arm_id ? (
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isPending || pendingSave || pendingLifecycleAction !== null || !canConfirmRecommendedWinner}
+                              onClick={() => void confirmWinnerRecommendation()}
+                            >
+                              {pendingLifecycleAction === "confirmWinner"
+                                ? t("feedback.confirmingWinner")
+                                : t("actions.confirmWinner")}
+                            </Button>
+                            <p className="text-[11px] text-muted-foreground">{t("recommendation.confirmWinnerHelp")}</p>
+                          </div>
+                        ) : null}
                       </div>
                     </>
                   ) : (

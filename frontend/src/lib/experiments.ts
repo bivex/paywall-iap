@@ -126,6 +126,8 @@ export function getExperimentLifecycleReasonKey(reason?: string | null): string 
       return "reasonManualRunning";
     case "manual_completed":
       return "reasonManualCompleted";
+    case "confirm_recommended_winner":
+      return "reasonConfirmRecommendedWinner";
     default:
       return null;
   }
