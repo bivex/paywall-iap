@@ -36,3 +36,19 @@ export interface TrimWindowResult {
   message: string;
   experimentId?: string;
 }
+
+export interface SlidingWindowRewardEvent {
+  UserID: string;
+  ArmID: string;
+  RewardValue: number;
+  Currency: string;
+  Timestamp: string;
+  ConversionDelay: number | null;
+  Metadata: Record<string, unknown> | null;
+}
+
+export interface SlidingWindowEventsExport {
+  experiment_id: string;
+  events: Record<string, SlidingWindowRewardEvent[]>;
+  limit: number;
+}

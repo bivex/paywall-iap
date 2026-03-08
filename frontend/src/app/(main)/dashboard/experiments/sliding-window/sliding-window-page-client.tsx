@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 
 import Link from "next/link";
 
-import { BarChart2, Brain, FlaskConical, RefreshCw } from "lucide-react";
+import { BarChart2, Brain, Download, FlaskConical, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -19,9 +19,13 @@ import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@
 import type {
   SlidingWindowDashboardData,
   SlidingWindowEndpointProbe,
+  SlidingWindowEventsExport,
+  SlidingWindowRewardEvent,
   SlidingWindowSnapshot,
   TrimWindowResult,
 } from "@/lib/sliding-window";
+
+const WINDOW_EVENT_LIMITS = [25, 50, 100, 250] as const;
 
 async function fetchSlidingWindowJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });
@@ -85,6 +89,70 @@ function formatRevenue(value: number) {
   }).format(value);
 }
 
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return "—";
+
+  try {
+    return new Date(value).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return value;
+  }
+}
+
+function formatEventReward(value: number, currency: string) {
+  if (currency) {
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value);
+    } catch {
+      return `${value.toFixed(2)} ${currency}`.trim();
+    }
+  }
+
+  return value.toFixed(2);
+}
+
+function formatDurationNs(value: number | null | undefined) {
+  if (value === null || value === undefined || !Number.isFinite(value) || value <= 0) return "—";
+
+  const milliseconds = value / 1_000_000;
+  if (milliseconds < 1000) return `${milliseconds.toFixed(0)} ms`;
+
+  const seconds = milliseconds / 1000;
+  if (seconds < 60) return `${seconds.toFixed(1)} s`;
+
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m ${(seconds % 60).toFixed(0)}s`;
+}
+
+function formatMetadata(metadata: Record<string, unknown> | null | undefined) {
+  if (!metadata || Object.keys(metadata).length === 0) return "—";
+
+  try {
+    return JSON.stringify(metadata);
+  } catch {
+    return "[unserializable metadata]";
+  }
+}
+
+interface SlidingWindowEventsResult {
+  ok: boolean;
+  status: number;
+  message: string;
+  data?: SlidingWindowEventsExport;
+}
+
 function mergeArmStats(experiment: ExperimentSummary | null, snapshot: SlidingWindowSnapshot | null) {
   if (!experiment) return [];
 
@@ -136,6 +204,9 @@ export function SlidingWindowPageClient({
   const [isPending, startTransition] = useTransition();
   const [isTrimming, setIsTrimming] = useState(false);
   const [trimResult, setTrimResult] = useState<TrimWindowResult | null>(null);
+  const [eventsLimit, setEventsLimit] = useState<string>(String(WINDOW_EVENT_LIMITS[2]));
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [eventsResult, setEventsResult] = useState<SlidingWindowEventsResult | null>(null);
 
   useEffect(() => {
     if (!isBootstrapping) return;
@@ -165,10 +236,25 @@ export function SlidingWindowPageClient({
   const availableReadRoutes = snapshot
     ? [snapshot.probes.windowInfo, snapshot.probes.windowEvents].filter((probe) => probe.state === "available").length
     : 0;
+  const selectedArmNames = useMemo(
+    () => new Map((selectedExperiment?.arms ?? []).map((arm) => [arm.id, arm.name])),
+    [selectedExperiment],
+  );
+  const groupedEvents = useMemo(
+    () =>
+      Object.entries(eventsResult?.data?.events ?? {}).map(([armId, events]) => ({
+        armId,
+        armName: selectedArmNames.get(armId) ?? armId,
+        events: events as SlidingWindowRewardEvent[],
+      })),
+    [eventsResult, selectedArmNames],
+  );
+  const totalExportedEvents = groupedEvents.reduce((sum, group) => sum + group.events.length, 0);
 
   const refreshSnapshot = (experimentId: string) => {
     setSelectedId(experimentId);
     setTrimResult(null);
+    setEventsResult(null);
     startTransition(async () => {
       try {
         const data = await fetchSlidingWindowJson<SlidingWindowSnapshot>(
@@ -222,6 +308,65 @@ export function SlidingWindowPageClient({
     } finally {
       setIsTrimming(false);
     }
+  };
+
+  const loadWindowEvents = async () => {
+    if (!selectedId) return;
+
+    setIsLoadingEvents(true);
+    try {
+      const params = new URLSearchParams({
+        experimentId: selectedId,
+        limit: eventsLimit,
+      });
+      const res = await fetch(`/api/admin/sliding-window/events?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const body = await res.json().catch(() => ({}));
+      const result = {
+        ok: res.ok,
+        status: res.status,
+        message:
+          (body as { message?: string; error?: string }).message ??
+          (body as { error?: string }).error ??
+          `HTTP ${res.status}`,
+        data: res.ok
+          ? (((body as { data?: SlidingWindowEventsExport }).data ?? body) as SlidingWindowEventsExport)
+          : undefined,
+      } satisfies SlidingWindowEventsResult;
+
+      setEventsResult(result);
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(t("feedback.eventsLoaded"));
+    } catch {
+      const result = {
+        ok: false,
+        status: 500,
+        message: t("feedback.eventsFailed"),
+      } satisfies SlidingWindowEventsResult;
+      setEventsResult(result);
+      toast.error(result.message);
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  };
+
+  const downloadWindowEvents = () => {
+    if (!eventsResult?.ok || !eventsResult.data || typeof window === "undefined") return;
+
+    const blob = new Blob([JSON.stringify(eventsResult.data, null, 2)], { type: "application/json" });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `sliding-window-events-${eventsResult.data.experiment_id}-${eventsResult.data.limit}.json`;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
   };
 
   const probeRows = snapshot
@@ -410,6 +555,135 @@ export function SlidingWindowPageClient({
               </Card>
             </div>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">{t("events.title")}</CardTitle>
+              <CardDescription>{t("events.description")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="space-y-1.5">
+                  <p className="font-medium text-sm">{t("events.limit")}</p>
+                  <Select value={eventsLimit} onValueChange={setEventsLimit}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {WINDOW_EVENT_LIMITS.map((limit) => (
+                        <SelectItem key={limit} value={String(limit)}>
+                          {t("events.limitOption", { limit })}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={loadWindowEvents} disabled={!selectedId || isLoadingEvents}>
+                    {isLoadingEvents ? t("events.loading") : t("events.load")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={downloadWindowEvents}
+                    disabled={!eventsResult?.ok || !eventsResult.data}
+                  >
+                    <Download className="size-4" />
+                    {t("events.download")}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                {t("events.body")}
+              </div>
+
+              {eventsResult ? (
+                <div className="rounded-md border p-3 text-sm">
+                  <p className="font-medium">{t("events.httpStatus", { status: eventsResult.status })}</p>
+                  <p className={`mt-1 text-xs ${eventsResult.ok ? "text-muted-foreground" : "text-destructive"}`}>
+                    {eventsResult.message}
+                  </p>
+
+                  {eventsResult.ok && eventsResult.data ? (
+                    <>
+                      <div className="mt-3 grid gap-3 md:grid-cols-3">
+                        <div className="rounded-md border p-3">
+                          <p className="text-muted-foreground text-xs">{t("events.summary.experimentId")}</p>
+                          <p className="mt-1 break-all font-medium">{eventsResult.data.experiment_id}</p>
+                        </div>
+                        <div className="rounded-md border p-3">
+                          <p className="text-muted-foreground text-xs">{t("events.summary.limit")}</p>
+                          <p className="mt-1 font-medium">{eventsResult.data.limit}</p>
+                        </div>
+                        <div className="rounded-md border p-3">
+                          <p className="text-muted-foreground text-xs">{t("events.summary.total")}</p>
+                          <p className="mt-1 font-medium">{totalExportedEvents}</p>
+                        </div>
+                      </div>
+
+                      {groupedEvents.length === 0 ? (
+                        <p className="mt-3 text-muted-foreground text-xs">{t("events.empty")}</p>
+                      ) : (
+                        <div className="mt-4 space-y-4">
+                          {groupedEvents.map((group) => (
+                            <div key={group.armId} className="rounded-md border p-3">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                  <p className="font-medium">{group.armName}</p>
+                                  <p className="mt-1 break-all text-muted-foreground text-xs">{group.armId}</p>
+                                </div>
+                                <Badge variant="outline">
+                                  {t("events.summary.groupCount", { count: group.events.length })}
+                                </Badge>
+                              </div>
+
+                              <div className="mt-3 overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>{t("events.table.user")}</TableHead>
+                                      <TableHead>{t("events.table.timestamp")}</TableHead>
+                                      <TableHead>{t("events.table.reward")}</TableHead>
+                                      <TableHead>{t("events.table.delay")}</TableHead>
+                                      <TableHead>{t("events.table.metadata")}</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {group.events.map((event, index) => {
+                                      const metadata = formatMetadata(event.Metadata);
+
+                                      return (
+                                        <TableRow key={`${group.armId}-${event.UserID}-${event.Timestamp}-${index}`}>
+                                          <TableCell className="max-w-44 break-all text-xs">
+                                            {event.UserID || "—"}
+                                          </TableCell>
+                                          <TableCell className="text-xs">{formatDateTime(event.Timestamp)}</TableCell>
+                                          <TableCell className="text-xs">
+                                            {formatEventReward(event.RewardValue, event.Currency)}
+                                          </TableCell>
+                                          <TableCell className="text-xs">
+                                            {formatDurationNs(event.ConversionDelay)}
+                                          </TableCell>
+                                          <TableCell className="max-w-72 truncate text-xs" title={metadata}>
+                                            {metadata}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>

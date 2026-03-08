@@ -662,13 +662,38 @@
       "description": "Явно вызовите live trim mutation для выбранного эксперимента.",
       "body": "Это отправляет реальный POST-запрос на sliding-window trim route для текущего эксперимента и затем перезагружает свежий snapshot."
     },
+    "events": {
+      "title": "Export window events",
+      "description": "Получайте живой export sliding-window events для выбранного эксперимента и просматривайте возвращённые события, сгруппированные по веткам.",
+      "limit": "Лимит export",
+      "limitOption": "Последние {limit}",
+      "load": "Загрузить events",
+      "loading": "Загрузка events...",
+      "download": "Скачать JSON",
+      "body": "Это вызывает реальный GET /v1/bandit/experiments/:id/window/events. Скачивание использует последний успешный ответ ровно в том виде, в котором его вернул backend.",
+      "httpStatus": "HTTP {status}",
+      "empty": "Для этого эксперимента и лимита window events не вернулись.",
+      "summary": {
+        "experimentId": "ID эксперимента",
+        "limit": "Применённый лимит",
+        "total": "Возвращено событий",
+        "groupCount": "{count} событий"
+      },
+      "table": {
+        "user": "Пользователь",
+        "timestamp": "Время",
+        "reward": "Reward",
+        "delay": "Задержка conversion",
+        "metadata": "Metadata"
+      }
+    },
     "notes": {
       "title": "Операционные заметки",
       "description": "Эта страница документирует текущий sliding-window runtime ровно таким, какой он есть сегодня.",
       "strategyTitle": "Backend strategy существует",
       "strategyBody": "В repository есть реальная sliding-window strategy и maintenance jobs, но admin-facing runtime routes полезны только если они корректно подключены в запущенном API.",
       "readRoutesTitle": "Честность read routes",
-      "readRoutesBody": "Window info и export events проверяются напрямую через live backend. Если они падают, страница показывает реальный ответ вместо вымышленных window metrics.",
+      "readRoutesBody": "Window info и export events проверяются напрямую через live backend. Теперь оператор также может получить реальный результат export events прямо с этой страницы, а не полагаться только на probes.",
       "trimTitle": "Trim mutation",
       "trimBody": "Trim намеренно не вызывается автоматически при загрузке страницы. Вместо этого экран даёт явное действие оператора, которое вызывает реальную mutation только по запросу."
     },
@@ -687,6 +712,8 @@
     },
     "feedback": {
       "loadFailed": "Не удалось обновить sliding window data.",
+      "eventsLoaded": "Sliding-window events загружены.",
+      "eventsFailed": "Не удалось загрузить sliding-window events.",
       "trimmed": "Sliding window обновлён через trim.",
       "trimFailed": "Не удалось выполнить trim sliding window."
     }

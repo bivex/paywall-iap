@@ -662,13 +662,38 @@
       "description": "Call the live trim mutation explicitly for the selected experiment.",
       "body": "This sends a real POST request to the sliding-window trim route for the current experiment and then reloads the latest snapshot."
     },
+    "events": {
+      "title": "Window Events Export",
+      "description": "Fetch the live sliding-window event export for the selected experiment and inspect the returned events grouped by arm.",
+      "limit": "Export limit",
+      "limitOption": "Latest {limit}",
+      "load": "Load events",
+      "loading": "Loading events...",
+      "download": "Download JSON",
+      "body": "This calls the real GET /v1/bandit/experiments/:id/window/events route. Download uses the last successful response exactly as returned by the backend.",
+      "httpStatus": "HTTP {status}",
+      "empty": "No window events were returned for this experiment and limit.",
+      "summary": {
+        "experimentId": "Experiment ID",
+        "limit": "Applied limit",
+        "total": "Returned events",
+        "groupCount": "{count} events"
+      },
+      "table": {
+        "user": "User",
+        "timestamp": "Timestamp",
+        "reward": "Reward",
+        "delay": "Conversion Delay",
+        "metadata": "Metadata"
+      }
+    },
     "notes": {
       "title": "Operational Notes",
       "description": "This page documents the current sliding-window runtime exactly as it exists today.",
       "strategyTitle": "Backend strategy exists",
       "strategyBody": "The repository contains a real sliding-window strategy and maintenance jobs, but admin-facing runtime routes are only useful if they are correctly wired in the running API.",
       "readRoutesTitle": "Read route truthfulness",
-      "readRoutesBody": "Window info and event export are probed directly from the live backend. If they fail, this page shows the real response instead of fake window metrics.",
+      "readRoutesBody": "Window info and event export are probed directly from the live backend. Operators can now also fetch the real event export result from this page instead of relying on probes alone.",
       "trimTitle": "Trim mutation",
       "trimBody": "Trim is intentionally not auto-called from page load. Instead, this screen exposes an explicit operator action that calls the real mutation only when requested."
     },
@@ -687,6 +712,8 @@
     },
     "feedback": {
       "loadFailed": "Failed to refresh sliding window data.",
+      "eventsLoaded": "Sliding-window events loaded.",
+      "eventsFailed": "Failed to load sliding-window events.",
       "trimmed": "Sliding window trimmed.",
       "trimFailed": "Failed to trim sliding window."
     }
