@@ -24,7 +24,8 @@ paths:
           content:
             application/yaml:
               schema:
-                type: string
+                type: object
+                additionalProperties: true
   /health:
     get:
       tags: [system]
@@ -1239,15 +1240,24 @@ components:
       type: object
       required: [platform_user_id, device_id, platform, app_version]
       properties:
-        platform_user_id: { type: string }
-        device_id: { type: string }
+        platform_user_id:
+          type: string
+          minLength: 1
+        device_id:
+          type: string
+          minLength: 1
         platform:
           type: string
           enum: [ios, android]
-        app_version: { type: string }
-        email:
+        app_version:
           type: string
-          format: email
+          minLength: 1
+        email:
+          oneOf:
+            - type: string
+              maxLength: 0
+            - type: string
+              format: email
     RegisterResponse:
       type: object
       required: [user_id, access_token, refresh_token, expires_in]
@@ -1262,7 +1272,9 @@ components:
       type: object
       required: [refresh_token]
       properties:
-        refresh_token: { type: string }
+        refresh_token:
+          type: string
+          minLength: 1
     RefreshTokenResponse:
       type: object
       required: [access_token, refresh_token, expires_in]
@@ -1278,6 +1290,7 @@ components:
       properties:
         email:
           type: string
+          minLength: 1
           format: email
         password:
           type: string
@@ -1300,7 +1313,9 @@ components:
       type: object
       required: [refresh_token]
       properties:
-        refresh_token: { type: string }
+        refresh_token:
+          type: string
+          minLength: 1
     AssignRequest:
       type: object
       required: [experiment_id, user_id]
@@ -1652,8 +1667,12 @@ components:
         platform:
           type: string
           enum: [ios, android]
-        receipt_data: { type: string }
-        product_id: { type: string }
+        receipt_data:
+          type: string
+          minLength: 1
+        product_id:
+          type: string
+          minLength: 1
         transaction_id: { type: string }
     VerifyIAPResponse:
       type: object
@@ -1765,21 +1784,43 @@ components:
       type: object
       required: [name, description, is_control, traffic_weight]
       properties:
-        name: { type: string }
+        name:
+          type: string
+          minLength: 1
         description: { type: string }
         is_control: { type: boolean }
-        traffic_weight: { type: number }
+        traffic_weight:
+          type: number
+          exclusiveMinimum: 0
     CreateAdminExperimentRequest:
       type: object
       required: [name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent, arms]
+      anyOf:
+        - properties:
+            is_bandit:
+              const: false
+        - properties:
+            is_bandit:
+              const: true
+            algorithm_type:
+              enum: [thompson_sampling, ucb, epsilon_greedy]
       properties:
-        name: { type: string }
+        name:
+          type: string
+          minLength: 1
         description: { type: string }
-        status: { type: string }
+        status:
+          type: string
+          enum: [draft, running, paused, completed]
         algorithm_type: { type: string }
         is_bandit: { type: boolean }
-        min_sample_size: { type: integer }
-        confidence_threshold_percent: { type: number }
+        min_sample_size:
+          type: integer
+          minimum: 1
+        confidence_threshold_percent:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 100
         start_at:
           type: string
           format: date-time
@@ -1792,18 +1833,35 @@ components:
           $ref: '#/components/schemas/AutomationPolicy'
         arms:
           type: array
+          minItems: 2
           items:
             $ref: '#/components/schemas/CreateAdminExperimentArmRequest'
     UpdateAdminExperimentRequest:
       type: object
       required: [name, description, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent]
+      anyOf:
+        - properties:
+            is_bandit:
+              const: false
+        - properties:
+            is_bandit:
+              const: true
+            algorithm_type:
+              enum: [thompson_sampling, ucb, epsilon_greedy]
       properties:
-        name: { type: string }
+        name:
+          type: string
+          minLength: 1
         description: { type: string }
         algorithm_type: { type: string }
         is_bandit: { type: boolean }
-        min_sample_size: { type: integer }
-        confidence_threshold_percent: { type: number }
+        min_sample_size:
+          type: integer
+          minimum: 1
+        confidence_threshold_percent:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 100
         start_at:
           type: string
           format: date-time
@@ -1842,19 +1900,25 @@ components:
     PricingTierUpsertRequest:
       type: object
       required: [name, description, currency, features, is_active]
+      anyOf:
+        - required: [monthly_price]
+        - required: [annual_price]
       properties:
-        name: { type: string }
+        name:
+          type: string
+          minLength: 1
         description: { type: string }
         monthly_price:
           type: number
+          exclusiveMinimum: 0
           nullable: true
         annual_price:
           type: number
+          exclusiveMinimum: 0
           nullable: true
         currency:
           type: string
-          minLength: 3
-          maxLength: 3
+          pattern: '^[A-Z]{3}$'
         features:
           type: array
           items:
@@ -1917,11 +1981,15 @@ components:
       type: object
       required: [current_password, new_password, confirm_password]
       properties:
-        current_password: { type: string }
+        current_password:
+          type: string
+          minLength: 1
         new_password:
           type: string
           minLength: 8
-        confirm_password: { type: string }
+        confirm_password:
+          type: string
+          minLength: 1
     AdminHealthResponse:
       type: object
       required: [status, database, redis]

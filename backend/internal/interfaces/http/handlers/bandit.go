@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -245,7 +246,18 @@ func (h *BanditHandler) Statistics(c *gin.Context) {
 	}
 
 	// Optionally include win probabilities
-	if c.Query("win_probs") == "true" {
+	if rawWinProbs := c.Query("win_probs"); rawWinProbs != "" {
+		includeWinProbs, parseErr := strconv.ParseBool(rawWinProbs)
+		if parseErr != nil {
+			response.BadRequest(c, "Invalid win_probs value")
+			return
+		}
+
+		if !includeWinProbs {
+			response.OK(c, resp)
+			return
+		}
+
 		winProbs, err := h.banditService.CalculateWinProbability(c.Request.Context(), experimentID, 1000)
 		if err == nil {
 			probs := make(map[string]float64)

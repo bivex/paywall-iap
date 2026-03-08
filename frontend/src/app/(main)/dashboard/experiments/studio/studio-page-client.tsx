@@ -29,7 +29,15 @@ import type {
   ExperimentStudioSnapshot,
   StudioEndpointProbe,
 } from "@/lib/experiment-studio";
-import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
+import {
+  formatExperimentLifecycleCode,
+  getExperimentLifecycleReason,
+  getExperimentLifecycleReasonKey,
+  getExperimentLifecycleSourceKey,
+  type ExperimentAlgorithm,
+  type ExperimentStatus,
+  type ExperimentSummary,
+} from "@/lib/experiments";
 import type { PricingTier } from "@/lib/pricing-tiers";
 
 async function fetchStudioJson<T>(url: string): Promise<T> {
@@ -90,6 +98,17 @@ function formatRevenue(value: number) {
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
   return `${(value * 100).toFixed(digits)}%`;
+}
+
+function formatLifecycleReason(t: ReturnType<typeof useTranslations>, experiment: ExperimentSummary) {
+  const reason = getExperimentLifecycleReason(experiment.latest_lifecycle_audit);
+  const reasonKey = getExperimentLifecycleReasonKey(reason);
+  return reasonKey ? t(`lifecycle.${reasonKey}`) : formatExperimentLifecycleCode(reason);
+}
+
+function formatLifecycleSource(t: ReturnType<typeof useTranslations>, experiment: ExperimentSummary) {
+  const sourceKey = getExperimentLifecycleSourceKey(experiment.latest_lifecycle_audit?.source);
+  return sourceKey ? t(`lifecycle.${sourceKey}`) : formatExperimentLifecycleCode(experiment.latest_lifecycle_audit?.source);
 }
 
 function weightShare(arms: ExperimentSummary["arms"], trafficWeight: number) {
@@ -626,6 +645,26 @@ export function StudioPageClient({
                           ))
                         )}
                       </div>
+                    </div>
+
+                    <div className="rounded-md border p-4">
+                      <p className="font-medium text-sm">{t("lifecycle.lastActionTitle")}</p>
+                      {selectedExperiment.latest_lifecycle_audit ? (
+                        <div className="mt-3 space-y-2 text-sm">
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline">{formatLifecycleSource(t, selectedExperiment)}</Badge>
+                            <Badge variant="outline">{formatLifecycleReason(t, selectedExperiment)}</Badge>
+                          </div>
+                          <p className="text-muted-foreground text-xs">
+                            {t("lifecycle.lastActionTransition")}: {t(`status.${selectedExperiment.latest_lifecycle_audit.from_status}`)} → {t(`status.${selectedExperiment.latest_lifecycle_audit.to_status}`)}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {t("lifecycle.lastActionAt")}: {hasHydrated ? formatDate(selectedExperiment.latest_lifecycle_audit.created_at) : "—"}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-muted-foreground text-xs">{t("lifecycle.lastActionEmpty")}</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

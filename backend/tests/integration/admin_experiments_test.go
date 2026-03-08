@@ -101,7 +101,9 @@ func TestAdminExperimentsHandler(t *testing.T) {
 				idempotency_key TEXT,
 				details JSONB,
 				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-			);`)
+			);
+			CREATE UNIQUE INDEX idx_experiment_lifecycle_audit_log_idempotency
+				ON experiment_lifecycle_audit_log(idempotency_key);`)
 	require.NoError(t, err)
 
 	adminID := uuid.New()
@@ -385,6 +387,12 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		}
 		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 		assert.Equal(t, "paused", resp.Data.Status)
+		require.NotNil(t, resp.Data.LatestLifecycleAudit)
+		assert.Equal(t, "admin", resp.Data.LatestLifecycleAudit.ActorType)
+		assert.Equal(t, "admin_experiments_api", resp.Data.LatestLifecycleAudit.Source)
+		assert.Equal(t, "running", resp.Data.LatestLifecycleAudit.FromStatus)
+		assert.Equal(t, "paused", resp.Data.LatestLifecycleAudit.ToStatus)
+		assert.Equal(t, "manual_paused", resp.Data.LatestLifecycleAudit.Details["reason"])
 		runningExperiment = resp.Data
 	})
 

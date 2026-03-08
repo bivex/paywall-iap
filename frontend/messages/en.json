@@ -242,7 +242,17 @@
       "banditDisabled": "Fixed allocation",
       "controlArm": "Control:",
       "variantArm": "Variant:",
-      "noWinner": "No winner yet"
+	      "noWinner": "No winner yet",
+	      "latestLifecycleLabel": "Latest lifecycle",
+	      "sourceAutomation": "System automation",
+	      "sourceAdminApi": "Admin action",
+	      "reasonAutoStart": "Auto-start",
+	      "reasonAutoCompleteEndTime": "Auto-complete by end time",
+	      "reasonAutoCompleteSampleSize": "Auto-complete by sample size",
+	      "reasonAutoCompleteConfidence": "Auto-complete by confidence",
+	      "reasonManualPaused": "Manual pause",
+	      "reasonManualRunning": "Manual resume/start",
+	      "reasonManualCompleted": "Manual complete"
     },
     "form": {
       "title": "Create A/B Experiment",
@@ -313,7 +323,20 @@
       "end": "End At",
       "controlsTitle": "Lifecycle controls",
       "controlsDescription": "These buttons call the real experiment lifecycle mutations and then reload the latest studio snapshot.",
-      "noActions": "No lifecycle actions available for the current status."
+	      "noActions": "No lifecycle actions available for the current status.",
+	      "lastActionTitle": "Latest lifecycle event",
+	      "lastActionEmpty": "No lifecycle audit entry has been recorded for this experiment yet.",
+	      "lastActionTransition": "Transition",
+	      "lastActionAt": "Recorded at",
+	      "sourceAutomation": "System automation",
+	      "sourceAdminApi": "Admin action",
+	      "reasonAutoStart": "Auto-start",
+	      "reasonAutoCompleteEndTime": "Auto-complete by end time",
+	      "reasonAutoCompleteSampleSize": "Auto-complete by sample size",
+	      "reasonAutoCompleteConfidence": "Auto-complete by confidence",
+	      "reasonManualPaused": "Manual pause",
+	      "reasonManualRunning": "Manual resume/start",
+	      "reasonManualCompleted": "Manual complete"
     },
     "capabilities": {
       "title": "Runtime Capability Matrix",

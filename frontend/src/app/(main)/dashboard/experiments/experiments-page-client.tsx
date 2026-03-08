@@ -30,6 +30,10 @@ import {
   type ExperimentInput,
   type ExperimentStatus,
   type ExperimentSummary,
+  formatExperimentLifecycleCode,
+  getExperimentLifecycleReason,
+  getExperimentLifecycleReasonKey,
+  getExperimentLifecycleSourceKey,
 } from "@/lib/experiments";
 
 const formSchema = z
@@ -120,6 +124,17 @@ function formatRevenue(value: number) {
 function formatAlgorithm(value: ExperimentAlgorithm | null) {
   if (!value) return "—";
   return value.replaceAll("_", " ");
+}
+
+function formatLifecycleReason(t: ReturnType<typeof useTranslations>, experiment: ExperimentSummary) {
+  const reason = getExperimentLifecycleReason(experiment.latest_lifecycle_audit);
+  const reasonKey = getExperimentLifecycleReasonKey(reason);
+  return reasonKey ? t(`table.${reasonKey}`) : formatExperimentLifecycleCode(reason);
+}
+
+function formatLifecycleSource(t: ReturnType<typeof useTranslations>, experiment: ExperimentSummary) {
+  const sourceKey = getExperimentLifecycleSourceKey(experiment.latest_lifecycle_audit?.source);
+  return sourceKey ? t(`table.${sourceKey}`) : formatExperimentLifecycleCode(experiment.latest_lifecycle_audit?.source);
 }
 
 function toPayload(values: ExperimentFormValues): ExperimentInput {
@@ -301,6 +316,16 @@ export function ExperimentsPageClient({
                           <p className="whitespace-normal break-words text-muted-foreground text-xs">
                             {experiment.description || "—"}
                           </p>
+                          {experiment.latest_lifecycle_audit ? (
+                            <div className="mt-2 rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
+                              <p>
+                                {t("table.latestLifecycleLabel")}: {formatLifecycleSource(t, experiment)} · {formatLifecycleReason(t, experiment)}
+                              </p>
+                              <p className="mt-1">
+                                {t(`status.${experiment.latest_lifecycle_audit.from_status}`)} → {t(`status.${experiment.latest_lifecycle_audit.to_status}`)} · {formatDate(experiment.latest_lifecycle_audit.created_at)}
+                              </p>
+                            </div>
+                          ) : null}
                         </div>
                       </TableCell>
                       <TableCell>

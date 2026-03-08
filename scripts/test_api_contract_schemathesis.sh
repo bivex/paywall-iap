@@ -10,6 +10,7 @@ SCHEMA_URL="${SCHEMA_URL:-}"
 SCHEMA_PATH="${SCHEMA_PATH:-}"
 SCHEMATHESIS_AUTH_TOKEN="${SCHEMATHESIS_AUTH_TOKEN:-}"
 SCHEMATHESIS_HEADER="${SCHEMATHESIS_HEADER:-}"
+SCHEMATHESIS_PHASES="${SCHEMATHESIS_PHASES:-examples,coverage,fuzzing}"
 SKIP_HEALTHCHECK="${SKIP_HEALTHCHECK:-0}"
 
 if [[ -z "$SCHEMA_URL" && -z "$SCHEMA_PATH" ]]; then
@@ -101,6 +102,7 @@ main() {
   echo "  api_base: $API_BASE"
 
   cmd=("${SCHEMATHESIS_CMD[@]}" run "$schema_target" "$SCHEMATHESIS_BASE_URL_FLAG" "$API_BASE")
+	cmd+=(--phases "$SCHEMATHESIS_PHASES")
 
   if [[ -n "$SCHEMATHESIS_AUTH_TOKEN" ]]; then
     cmd+=(--header "Authorization: Bearer $SCHEMATHESIS_AUTH_TOKEN")

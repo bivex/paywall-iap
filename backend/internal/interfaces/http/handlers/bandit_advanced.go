@@ -174,7 +174,7 @@ func (h *BanditAdvancedHandler) GetObjectiveConfig(w http.ResponseWriter, r *htt
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"experiment_id":  experimentID,
 		"objective_type": config.ObjectiveType,
-		"weights":        config.ObjectiveWeights,
+		"weights":        normalizeObjectiveWeights(config.ObjectiveWeights),
 	})
 }
 
@@ -206,8 +206,16 @@ func (h *BanditAdvancedHandler) SetObjectiveConfig(w http.ResponseWriter, r *htt
 		"message":        "Configuration updated",
 		"experiment_id":  experimentID,
 		"objective_type": config.ObjectiveType,
-		"weights":        config.ObjectiveWeights,
+		"weights":        normalizeObjectiveWeights(config.ObjectiveWeights),
 	})
+}
+
+func normalizeObjectiveWeights(weights map[string]float64) map[string]float64 {
+	if weights == nil {
+		return map[string]float64{}
+	}
+
+	return weights
 }
 
 // GetWindowInfo returns window information for an experiment

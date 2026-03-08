@@ -3,10 +3,10 @@ package middleware
 import (
 	"context"
 	"errors"
-	"net/http"
 	"strings"
 	"time"
 
+	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -48,7 +48,7 @@ func (j *JWTMiddleware) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "UNAUTHORIZED", "message": "Missing authorization header"})
+			response.Unauthorized(c, "Missing authorization header")
 			c.Abort()
 			return
 		}
@@ -56,7 +56,7 @@ func (j *JWTMiddleware) Authenticate() gin.HandlerFunc {
 		// Extract token from "Bearer <token>"
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "UNAUTHORIZED", "message": "Invalid authorization header format"})
+			response.Unauthorized(c, "Invalid authorization header format")
 			c.Abort()
 			return
 		}
@@ -73,7 +73,7 @@ func (j *JWTMiddleware) Authenticate() gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "UNAUTHORIZED", "message": "Invalid token"})
+			response.Unauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
@@ -84,13 +84,13 @@ func (j *JWTMiddleware) Authenticate() gin.HandlerFunc {
 		if err != nil && err != redis.Nil {
 			j.logger.Error("failed to check token blocklist", zap.Error(err))
 			// Fail closed for security
-			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "SERVICE_UNAVAILABLE", "message": "Token validation unavailable"})
+			response.ServiceUnavailable(c, "Token validation unavailable")
 			c.Abort()
 			return
 		}
 
 		if blocklisted != "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "TOKEN_REVOKED", "message": "Token has been revoked"})
+			response.Error(c, 401, "TOKEN_REVOKED", "Token has been revoked")
 			c.Abort()
 			return
 		}

@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 
+	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis_rate/v10"
@@ -65,10 +65,7 @@ func (r *RateLimiter) Middleware(keyFunc func(*gin.Context) string, config RateL
 				return
 			}
 			// Fail closed - return service unavailable
-			c.JSON(http.StatusServiceUnavailable, gin.H{
-				"error":   "SERVICE_UNAVAILABLE",
-				"message": "Rate limiting unavailable",
-			})
+			response.ServiceUnavailable(c, "Rate limiting unavailable")
 			c.Abort()
 			return
 		}
@@ -80,12 +77,7 @@ func (r *RateLimiter) Middleware(keyFunc func(*gin.Context) string, config RateL
 
 		if res.Allowed == 0 {
 			retryAfter := int(res.RetryAfter.Seconds()) + 1
-			c.Header("Retry-After", fmt.Sprintf("%d", retryAfter))
-			c.JSON(http.StatusTooManyRequests, gin.H{
-				"error":       "RATE_LIMIT_EXCEEDED",
-				"message":     "Rate limit exceeded",
-				"retry_after": retryAfter,
-			})
+			response.RateLimited(c, retryAfter)
 			c.Abort()
 			return
 		}

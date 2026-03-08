@@ -274,6 +274,7 @@ func setupRouter(cfg *config.Config, d *dependencies, redisClient *redis.Client)
 	}
 
 	router := gin.New()
+	router.HandleMethodNotAllowed = true
 	router.Use(gin.Recovery(), logging.RequestMiddleware(logging.Logger))
 	router.GET("/openapi.yaml", openapi.ServeYAML)
 
