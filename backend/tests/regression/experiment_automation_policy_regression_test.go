@@ -47,6 +47,12 @@ func (s *automationPolicyRepoStub) UpdateExperimentAutomationPolicy(_ context.Co
 	return nil
 }
 
+func (s *automationPolicyRepoStub) UpdateExperimentStatusAndAutomationPolicyWithAudit(_ context.Context, _ uuid.UUID, _ string, _ string, _ *time.Time, _ *time.Time, policy service.ExperimentAutomationPolicy, _ *service.ExperimentStatusTransitionAudit) error {
+	value := policy
+	s.updatedPolicy = &value
+	return nil
+}
+
 func TestExperimentAdminServiceUpdateExperimentAutomationPolicyPreservesLocks(t *testing.T) {
 	lockedUntil := time.Date(2026, 3, 10, 9, 0, 0, 0, time.UTC)
 	lockedBy := uuid.New()

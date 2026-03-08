@@ -199,6 +199,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	admin.PUT("/experiments/:id", handler.UpdateAdminExperiment)
 	admin.PUT("/experiments/:id/arms/pricing-tiers", handler.UpdateAdminExperimentArmPricingTiers)
 	admin.POST("/experiments/:id/confirm-winner", handler.ConfirmAdminExperimentWinner)
+	admin.POST("/experiments/:id/hold-for-review", handler.HoldAdminExperimentForReview)
 	admin.GET("/experiments/:id/lifecycle-audit", handler.GetAdminExperimentLifecycleAuditHistory)
 	admin.GET("/experiments/:id/winner-recommendation-audit", handler.GetAdminExperimentWinnerRecommendationAuditHistory)
 	admin.POST("/experiments/:id/pause", handler.PauseAdminExperiment)
@@ -539,6 +540,82 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "confirm_experiment_winner", adminAction)
 		assert.Equal(t, confirmVariantArmID.String(), adminWinningArm)
+	})
+
+	t.Run("POST hold-for-review pauses experiment and enables manual override with audits", func(t *testing.T) {
+		holdExperimentID := uuid.New()
+		holdControlArmID := uuid.New()
+		holdVariantArmID := uuid.New()
+
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_tests (
+				id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
+			) VALUES (
+				$1, 'Hold for review regression', 'pause and lock for review', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
+				'{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false}'::jsonb
+			)
+		`, holdExperimentID)
+		require.NoError(t, err)
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
+			VALUES
+				($1, $3, 'Control', 'Baseline', true, 1.0),
+				($2, $3, 'Variant Winner', 'Winner candidate', false, 1.0)
+		`, holdControlArmID, holdVariantArmID, holdExperimentID)
+		require.NoError(t, err)
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_test_arm_stats (arm_id, alpha, beta, samples, conversions, revenue, avg_reward)
+			VALUES
+				($1, 5, 9, 12, 4, 40, 3.3333),
+				($2, 28, 4, 29, 27, 290, 10.0)
+		`, holdControlArmID, holdVariantArmID)
+		require.NoError(t, err)
+		defer func() {
+			_, cleanupErr := db.Exec(ctx, `DELETE FROM ab_tests WHERE id = $1`, holdExperimentID)
+			require.NoError(t, cleanupErr)
+		}()
+
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+holdExperimentID.String()+"/hold-for-review", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "paused", resp.Data.Status)
+		assert.True(t, resp.Data.AutomationPolicy.ManualOverride)
+		require.NotNil(t, resp.Data.AutomationPolicy.LockReason)
+		assert.Equal(t, "Hold recommended winner for review", *resp.Data.AutomationPolicy.LockReason)
+		require.NotNil(t, resp.Data.LatestLifecycleAudit)
+		assert.Equal(t, "hold_recommended_winner_review", resp.Data.LatestLifecycleAudit.Details["reason"])
+
+		var lifecycleReason string
+		var lifecycleWinningArm string
+		err = db.QueryRow(ctx, `
+			SELECT details->>'reason', details->>'winning_arm_id'
+			FROM experiment_lifecycle_audit_log
+			WHERE experiment_id = $1
+			ORDER BY created_at DESC
+			LIMIT 1
+		`, holdExperimentID).Scan(&lifecycleReason, &lifecycleWinningArm)
+		require.NoError(t, err)
+		assert.Equal(t, "hold_recommended_winner_review", lifecycleReason)
+		assert.Equal(t, holdVariantArmID.String(), lifecycleWinningArm)
+
+		var adminAction string
+		var adminLockReason string
+		err = db.QueryRow(ctx, `
+			SELECT action, details->>'lock_reason'
+			FROM admin_audit_log
+			WHERE admin_id = $1 AND details->>'experiment_id' = $2
+			ORDER BY created_at DESC
+			LIMIT 1
+		`, adminID, holdExperimentID.String()).Scan(&adminAction, &adminLockReason)
+		require.NoError(t, err)
+		assert.Equal(t, "hold_experiment_for_review", adminAction)
+		assert.Equal(t, "Hold recommended winner for review", adminLockReason)
 	})
 
 	t.Run("GET lifecycle audit history returns newest-first entries", func(t *testing.T) {

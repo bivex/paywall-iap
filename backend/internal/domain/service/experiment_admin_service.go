@@ -135,6 +135,7 @@ type ExperimentMutationRepository interface {
 	UpdateExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string, startAt, endAt *time.Time) error
 	UpdateExperimentStatusWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, audit *ExperimentStatusTransitionAudit) error
 	UpdateExperimentAutomationPolicy(ctx context.Context, experimentID uuid.UUID, policy ExperimentAutomationPolicy) error
+	UpdateExperimentStatusAndAutomationPolicyWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, policy ExperimentAutomationPolicy, audit *ExperimentStatusTransitionAudit) error
 }
 
 type ExperimentLockInput struct {
@@ -247,6 +248,58 @@ func (s *ExperimentAdminService) UnlockExperimentAutomation(ctx context.Context,
 	policy.LockReason = nil
 
 	return s.repo.UpdateExperimentAutomationPolicy(ctx, experimentID, policy)
+}
+
+func (s *ExperimentAdminService) HoldExperimentForReview(ctx context.Context, experimentID uuid.UUID, input ExperimentLockInput, audit *ExperimentStatusTransitionAudit) error {
+	experiment, err := s.repo.GetExperimentMutationState(ctx, experimentID)
+	if err != nil {
+		return err
+	}
+	if experiment.Status != "running" && experiment.Status != "paused" {
+		return InvalidExperimentStatusTransitionError{
+			CurrentStatus: experiment.Status,
+			NextStatus:    "paused",
+		}
+	}
+
+	policy := NormalizeExperimentAutomationPolicy(&experiment.AutomationPolicy)
+	policy.ManualOverride = true
+	policy.LockedUntil = nil
+	policy.LockedBy = nil
+	if input.LockedBy != nil {
+		value := *input.LockedBy
+		policy.LockedBy = &value
+	}
+	policy.LockReason = nil
+	if trimmed := strings.TrimSpace(input.LockReason); trimmed != "" {
+		policy.LockReason = &trimmed
+	}
+
+	if experiment.Status == "paused" {
+		return s.repo.UpdateExperimentAutomationPolicy(ctx, experimentID, policy)
+	}
+
+	var startAt *time.Time
+	if experiment.StartAt != nil {
+		value := *experiment.StartAt
+		startAt = &value
+	}
+	var endAt *time.Time
+	if experiment.EndAt != nil {
+		value := *experiment.EndAt
+		endAt = &value
+	}
+
+	return s.repo.UpdateExperimentStatusAndAutomationPolicyWithAudit(
+		ctx,
+		experimentID,
+		experiment.Status,
+		"paused",
+		startAt,
+		endAt,
+		policy,
+		audit,
+	)
 }
 
 func (s *ExperimentAdminService) transitionExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string, audit *ExperimentStatusTransitionAudit) error {

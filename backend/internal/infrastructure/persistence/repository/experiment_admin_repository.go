@@ -216,6 +216,85 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatus(ctx context.Context, 
 	return r.UpdateExperimentStatusWithAudit(ctx, experimentID, "", nextStatus, startAt, endAt, nil)
 }
 
+func experimentStatusTransitionAuditDetailsJSON(audit *service.ExperimentStatusTransitionAudit) ([]byte, *string, error) {
+	if audit == nil {
+		return nil, nil, nil
+	}
+	var detailsJSON []byte
+	if audit.Details != nil {
+		var err error
+		detailsJSON, err = json.Marshal(audit.Details)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to marshal experiment status audit details: %w", err)
+		}
+	}
+	var reason *string
+	if audit.Details != nil {
+		if value, ok := audit.Details["reason"].(string); ok && value != "" {
+			reason = &value
+		}
+	}
+	return detailsJSON, reason, nil
+}
+
+func insertExperimentLifecycleAudit(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, currentStatus, nextStatus string, audit *service.ExperimentStatusTransitionAudit) error {
+	if audit == nil {
+		return nil
+	}
+	detailsJSON, reason, err := experimentStatusTransitionAuditDetailsJSON(audit)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO experiment_lifecycle_audit_log (
+			experiment_id, actor_type, actor_id, source, action, from_status, to_status, idempotency_key, details
+		)
+		VALUES ($1, $2, $3, $4, 'status_transition', $5, $6, $7, $8)
+		ON CONFLICT (idempotency_key) DO NOTHING`,
+		experimentID,
+		audit.ActorType,
+		audit.ActorID,
+		audit.Source,
+		currentStatus,
+		nextStatus,
+		audit.IdempotencyKey,
+		detailsJSON,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert experiment lifecycle audit log: %w", err)
+	}
+
+	if audit.ActorType == "system" && audit.Source == "experiment_automation_reconciler" {
+		_, err = tx.Exec(ctx, `
+				INSERT INTO experiment_automation_decision_log (
+					experiment_id,
+					source,
+					decision_type,
+					reason,
+					from_status,
+					to_status,
+					idempotency_key,
+					details
+				)
+				VALUES ($1, $2, 'status_transition', $3, $4, $5, $6, $7)
+				ON CONFLICT (idempotency_key) DO NOTHING`,
+			experimentID,
+			audit.Source,
+			reason,
+			currentStatus,
+			nextStatus,
+			audit.IdempotencyKey,
+			detailsJSON,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert experiment automation decision log: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (r *ExperimentAdminRepository) UpdateExperimentAutomationPolicy(ctx context.Context, experimentID uuid.UUID, policy service.ExperimentAutomationPolicy) error {
 	automationPolicyJSON, err := json.Marshal(policy)
 	if err != nil {
@@ -258,72 +337,55 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatusWithAudit(ctx context.
 	if err != nil {
 		return fmt.Errorf("failed to update experiment status: %w", err)
 	}
-
-	if audit != nil {
-		var detailsJSON []byte
-		if audit.Details != nil {
-			detailsJSON, err = json.Marshal(audit.Details)
-			if err != nil {
-				return fmt.Errorf("failed to marshal experiment status audit details: %w", err)
-			}
-		}
-
-		_, err = tx.Exec(ctx, `
-			INSERT INTO experiment_lifecycle_audit_log (
-				experiment_id, actor_type, actor_id, source, action, from_status, to_status, idempotency_key, details
-			)
-			VALUES ($1, $2, $3, $4, 'status_transition', $5, $6, $7, $8)
-			ON CONFLICT (idempotency_key) DO NOTHING`,
-			experimentID,
-			audit.ActorType,
-			audit.ActorID,
-			audit.Source,
-			currentStatus,
-			nextStatus,
-			audit.IdempotencyKey,
-			detailsJSON,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to insert experiment lifecycle audit log: %w", err)
-		}
-
-		if audit.ActorType == "system" && audit.Source == "experiment_automation_reconciler" {
-			var reason *string
-			if audit.Details != nil {
-				if value, ok := audit.Details["reason"].(string); ok && value != "" {
-					reason = &value
-				}
-			}
-
-			_, err = tx.Exec(ctx, `
-					INSERT INTO experiment_automation_decision_log (
-						experiment_id,
-						source,
-						decision_type,
-						reason,
-						from_status,
-						to_status,
-						idempotency_key,
-						details
-					)
-					VALUES ($1, $2, 'status_transition', $3, $4, $5, $6, $7)
-					ON CONFLICT (idempotency_key) DO NOTHING`,
-				experimentID,
-				audit.Source,
-				reason,
-				currentStatus,
-				nextStatus,
-				audit.IdempotencyKey,
-				detailsJSON,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to insert experiment automation decision log: %w", err)
-			}
-		}
+	if err := insertExperimentLifecycleAudit(ctx, tx, experimentID, currentStatus, nextStatus, audit); err != nil {
+		return err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit experiment status transaction: %w", err)
+	}
+	return nil
+}
+
+func (r *ExperimentAdminRepository) UpdateExperimentStatusAndAutomationPolicyWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, policy service.ExperimentAutomationPolicy, audit *service.ExperimentStatusTransitionAudit) error {
+	automationPolicyJSON, err := json.Marshal(policy)
+	if err != nil {
+		return fmt.Errorf("failed to marshal experiment automation policy: %w", err)
+	}
+
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to begin experiment hold transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	commandTag, err := tx.Exec(ctx, `
+		UPDATE ab_tests
+		SET status = $2,
+		    start_at = $3,
+		    end_at = $4,
+		    automation_policy = $5,
+		    updated_at = now()
+		WHERE id = $1`,
+		experimentID,
+		nextStatus,
+		startAt,
+		endAt,
+		automationPolicyJSON,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update experiment status and automation policy: %w", err)
+	}
+	if commandTag.RowsAffected() == 0 {
+		return service.ErrExperimentNotFound
+	}
+
+	if err := insertExperimentLifecycleAudit(ctx, tx, experimentID, currentStatus, nextStatus, audit); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit experiment hold transaction: %w", err)
 	}
 	return nil
 }

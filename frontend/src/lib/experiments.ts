@@ -128,6 +128,8 @@ export function getExperimentLifecycleReasonKey(reason?: string | null): string 
       return "reasonManualCompleted";
     case "confirm_recommended_winner":
       return "reasonConfirmRecommendedWinner";
+    case "hold_recommended_winner_review":
+      return "reasonHoldRecommendedWinnerReview";
     default:
       return null;
   }

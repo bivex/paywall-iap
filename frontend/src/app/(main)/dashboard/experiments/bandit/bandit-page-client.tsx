@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import {
   completeExperimentAction,
   confirmExperimentWinnerAction,
+  holdExperimentForReviewAction,
   pauseExperimentAction,
   resumeExperimentAction,
   updateExperimentAction,
@@ -201,7 +202,7 @@ export function BanditPageClient({
   const [isPending, startTransition] = useTransition();
   const [hasHydrated, setHasHydrated] = useState(false);
   const [pendingLifecycleAction, setPendingLifecycleAction] = useState<
-    "pause" | "resume" | "complete" | "confirmWinner" | null
+    "pause" | "resume" | "complete" | "confirmWinner" | "holdForReview" | null
   >(null);
   const [pendingSave, setPendingSave] = useState(false);
 
@@ -270,6 +271,12 @@ export function BanditPageClient({
     currentRecommendation?.recommended === true &&
     Boolean(currentRecommendation.winning_arm_id) &&
     !schedulerLocked;
+  const canHoldRecommendedWinnerForReview =
+    selectedExperiment?.is_bandit === true &&
+    (selectedExperiment.status === "running" || selectedExperiment.status === "paused") &&
+    currentRecommendation?.recommended === true &&
+    Boolean(currentRecommendation.winning_arm_id) &&
+    !(selectedExperiment.status === "paused" && schedulerLocked);
   const draftConfigBaseline = useMemo(
     () => (selectedExperiment ? buildDraftBanditConfig(selectedExperiment) : null),
     [selectedExperiment],
@@ -370,6 +377,23 @@ export function BanditPageClient({
 
     syncExperiment(result.data);
     toast.success(t("feedback.winnerConfirmed"));
+    loadSnapshot(result.data.id);
+  }
+
+  async function holdWinnerRecommendationForReview() {
+    if (!selectedExperiment) return;
+
+    setPendingLifecycleAction("holdForReview");
+    const result = await holdExperimentForReviewAction(selectedExperiment.id);
+    setPendingLifecycleAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.holdForReviewFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    toast.success(t("feedback.heldForReview"));
     loadSnapshot(result.data.id);
   }
 
@@ -614,23 +638,41 @@ export function BanditPageClient({
                           {t(`recommendation.${recommendationNextActionKey(selectedExperiment, schedulerLocked)}`)}
                         </p>
                         {currentRecommendation.recommended && currentRecommendation.winning_arm_id ? (
-                          <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={
-                                isPending ||
-                                pendingSave ||
-                                pendingLifecycleAction !== null ||
-                                !canConfirmRecommendedWinner
-                              }
-                              onClick={() => void confirmWinnerRecommendation()}
-                            >
-                              {pendingLifecycleAction === "confirmWinner"
-                                ? t("feedback.confirmingWinner")
-                                : t("actions.confirmWinner")}
-                            </Button>
+                          <div className="mt-3 space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={
+                                  isPending ||
+                                  pendingSave ||
+                                  pendingLifecycleAction !== null ||
+                                  !canConfirmRecommendedWinner
+                                }
+                                onClick={() => void confirmWinnerRecommendation()}
+                              >
+                                {pendingLifecycleAction === "confirmWinner"
+                                  ? t("feedback.confirmingWinner")
+                                  : t("actions.confirmWinner")}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={
+                                  isPending ||
+                                  pendingSave ||
+                                  pendingLifecycleAction !== null ||
+                                  !canHoldRecommendedWinnerForReview
+                                }
+                                onClick={() => void holdWinnerRecommendationForReview()}
+                              >
+                                {pendingLifecycleAction === "holdForReview"
+                                  ? t("feedback.holdingForReview")
+                                  : t("actions.holdForReview")}
+                              </Button>
+                            </div>
                             <p className="text-[11px] text-muted-foreground">{t("recommendation.confirmWinnerHelp")}</p>
+                            <p className="text-[11px] text-muted-foreground">{t("recommendation.holdForReviewHelp")}</p>
                           </div>
                         ) : null}
                       </div>

@@ -199,6 +199,7 @@
       "cancel": "Отменить",
       "reset": "Сбросить",
       "confirmWinner": "Подтвердить победителя",
+      "holdForReview": "Удержать для review",
       "start": "Запустить",
       "pause": "Пауза",
       "resume": "Продолжить",
@@ -229,6 +230,8 @@
       "createFailed": "Не удалось создать эксперимент.",
       "updateFailed": "Не удалось обновить эксперимент.",
       "statusUpdated": "Статус эксперимента обновлён.",
+      "holdingForReview": "Перевод в review hold...",
+      "heldForReview": "Эксперимент поставлен на паузу и удерживается для review.",
       "winnerConfirmed": "Победитель подтверждён, эксперимент завершён.",
       "statusFailed": "Не удалось обновить статус эксперимента."
     },
@@ -261,7 +264,8 @@
       "reasonManualPaused": "Ручная пауза",
       "reasonManualRunning": "Ручной старт/возобновление",
       "reasonManualCompleted": "Ручное завершение",
-      "reasonConfirmRecommendedWinner": "Завершено после подтверждения рекомендованного победителя"
+      "reasonConfirmRecommendedWinner": "Завершено после подтверждения рекомендованного победителя",
+      "reasonHoldRecommendedWinnerReview": "Пауза и удержание для review победителя"
     },
     "editor": {
       "title": "Редактирование draft-метаданных",
@@ -304,6 +308,7 @@
       "openBandit": "Открыть Bandit Model",
       "save": "Сохранить черновик",
       "confirmWinner": "Подтвердить победителя",
+      "holdForReview": "Удержать для review",
       "saveAutomation": "Сохранить automation policy",
       "reset": "Сбросить",
       "start": "Запустить",
@@ -404,7 +409,8 @@
       "reasonManualPaused": "Ручная пауза",
       "reasonManualRunning": "Ручной старт/возобновление",
       "reasonManualCompleted": "Ручное завершение",
-      "reasonConfirmRecommendedWinner": "Завершено после подтверждения рекомендованного победителя"
+      "reasonConfirmRecommendedWinner": "Завершено после подтверждения рекомендованного победителя",
+      "reasonHoldRecommendedWinnerReview": "Пауза и удержание для review победителя"
     },
     "capabilities": {
       "title": "Матрица runtime-возможностей",
@@ -529,7 +535,8 @@
         "completed": "Эксперимент уже завершён. Используйте рекомендацию только как исторический контекст, а не как новую rollout-команду.",
         "review": "Recommendation data доступна, но Studio по-прежнему предполагает ручной review оператора перед любым lifecycle change."
       },
-      "confirmWinnerHelp": "Это явно завершает эксперимент на основании текущего рекомендованного победителя и пишет решение в lifecycle/admin audit logs. Live traffic при этом не перераспределяется."
+      "confirmWinnerHelp": "Это явно завершает эксперимент на основании текущего рекомендованного победителя и пишет решение в lifecycle/admin audit logs. Live traffic при этом не перераспределяется.",
+      "holdForReviewHelp": "Это при необходимости ставит эксперимент на паузу и включает manual override, чтобы automation оставалась замороженной во время operator review. Никакого promote/reweight traffic это не делает."
     },
     "notes": {
       "title": "Операционные заметки",
@@ -579,6 +586,9 @@
       "unlocking": "Снятие блокировки...",
       "unlocked": "Блокировка automation снята.",
       "unlockFailed": "Не удалось снять блокировку automation эксперимента.",
+      "holdingForReview": "Перевод в review hold...",
+      "heldForReview": "Эксперимент поставлен на паузу и удерживается для review.",
+      "holdForReviewFailed": "Не удалось удержать рекомендованного победителя для review.",
       "confirmingWinner": "Подтверждение победителя...",
       "winnerConfirmed": "Победитель подтверждён, эксперимент завершён.",
       "winnerConfirmFailed": "Не удалось подтвердить рекомендованного победителя.",
@@ -601,6 +611,7 @@
       "save": "Сохранить конфиг",
       "reset": "Сбросить",
       "confirmWinner": "Подтвердить победителя",
+      "holdForReview": "Удержать для review",
       "start": "Запустить",
       "pause": "Пауза",
       "resume": "Продолжить",
@@ -697,7 +708,8 @@
         "completed": "Эксперимент уже завершён. Используйте рекомендацию только как исторический контекст, а не как новую rollout-команду.",
         "review": "Recommendation data доступна, но эта страница по-прежнему предполагает ручной review оператора перед любым lifecycle change."
       },
-      "confirmWinnerHelp": "Это явно завершает эксперимент на основании текущего рекомендованного победителя и пишет решение в lifecycle/admin audit logs. Live traffic при этом не перераспределяется."
+      "confirmWinnerHelp": "Это явно завершает эксперимент на основании текущего рекомендованного победителя и пишет решение в lifecycle/admin audit logs. Live traffic при этом не перераспределяется.",
+      "holdForReviewHelp": "Это при необходимости ставит эксперимент на паузу и включает manual override, чтобы automation оставалась замороженной во время operator review. Никакого promote/reweight traffic это не делает."
     },
     "config": {
       "title": "Сохранённая конфигурация эксперимента",
@@ -723,6 +735,9 @@
       "saved": "Конфиг bandit-черновика обновлён.",
       "statusUpdating": "Обновление...",
       "statusUpdated": "Статус эксперимента обновлён.",
+      "holdingForReview": "Перевод в review hold...",
+      "heldForReview": "Эксперимент поставлен на паузу и удерживается для review.",
+      "holdForReviewFailed": "Не удалось удержать рекомендованного победителя для review.",
       "confirmingWinner": "Подтверждение победителя...",
       "winnerConfirmed": "Победитель подтверждён, эксперимент завершён.",
       "winnerConfirmFailed": "Не удалось подтвердить рекомендованного победителя.",

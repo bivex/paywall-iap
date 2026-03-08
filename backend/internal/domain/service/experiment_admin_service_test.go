@@ -53,6 +53,15 @@ func (s *stubExperimentMutationRepository) UpdateExperimentAutomationPolicy(_ co
 	return nil
 }
 
+func (s *stubExperimentMutationRepository) UpdateExperimentStatusAndAutomationPolicyWithAudit(_ context.Context, _ uuid.UUID, _ string, nextStatus string, startAt, endAt *time.Time, policy ExperimentAutomationPolicy, audit *ExperimentStatusTransitionAudit) error {
+	s.updatedStatus = nextStatus
+	s.updatedStatusStart = startAt
+	s.updatedStatusEnd = endAt
+	s.updatedStatusAudit = audit
+	s.updatedPolicy = &policy
+	return nil
+}
+
 func TestExperimentAdminService(t *testing.T) {
 	ctx := context.Background()
 	experimentID := uuid.New()
@@ -189,6 +198,41 @@ func TestExperimentAdminService(t *testing.T) {
 		assert.Nil(t, repo.updatedPolicy.LockedUntil)
 		assert.Nil(t, repo.updatedPolicy.LockedBy)
 		assert.Nil(t, repo.updatedPolicy.LockReason)
+	})
+
+	t.Run("HoldExperimentForReview pauses running experiment and stores manual override metadata", func(t *testing.T) {
+		actorID := uuid.New()
+		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "running", AutomationPolicy: DefaultExperimentAutomationPolicy()}}
+		svc := NewExperimentAdminService(repo)
+		audit := &ExperimentStatusTransitionAudit{ActorType: "admin", Source: "admin_experiments_api", Details: map[string]interface{}{"reason": "hold_recommended_winner_review"}}
+
+		err := svc.HoldExperimentForReview(ctx, experimentID, ExperimentLockInput{LockedBy: &actorID, LockReason: "Hold recommended winner for review"}, audit)
+
+		require.NoError(t, err)
+		require.NotNil(t, repo.updatedPolicy)
+		assert.Equal(t, "paused", repo.updatedStatus)
+		assert.True(t, repo.updatedPolicy.ManualOverride)
+		require.NotNil(t, repo.updatedPolicy.LockedBy)
+		assert.Equal(t, actorID, *repo.updatedPolicy.LockedBy)
+		require.NotNil(t, repo.updatedPolicy.LockReason)
+		assert.Equal(t, "Hold recommended winner for review", *repo.updatedPolicy.LockReason)
+		require.NotNil(t, repo.updatedStatusAudit)
+		assert.Equal(t, "hold_recommended_winner_review", repo.updatedStatusAudit.Details["reason"])
+	})
+
+	t.Run("HoldExperimentForReview only updates lock metadata when experiment already paused", func(t *testing.T) {
+		actorID := uuid.New()
+		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "paused", AutomationPolicy: DefaultExperimentAutomationPolicy()}}
+		svc := NewExperimentAdminService(repo)
+
+		err := svc.HoldExperimentForReview(ctx, experimentID, ExperimentLockInput{LockedBy: &actorID, LockReason: "Hold recommended winner for review"}, nil)
+
+		require.NoError(t, err)
+		require.NotNil(t, repo.updatedPolicy)
+		assert.Empty(t, repo.updatedStatus)
+		assert.True(t, repo.updatedPolicy.ManualOverride)
+		require.NotNil(t, repo.updatedPolicy.LockedBy)
+		assert.Equal(t, actorID, *repo.updatedPolicy.LockedBy)
 	})
 
 	t.Run("TransitionExperimentStatusWithAudit forwards audit metadata", func(t *testing.T) {

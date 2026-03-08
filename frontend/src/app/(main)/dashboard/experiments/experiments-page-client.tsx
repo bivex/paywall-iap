@@ -14,6 +14,7 @@ import {
   completeExperimentAction,
   confirmExperimentWinnerAction,
   createExperimentAction,
+  holdExperimentForReviewAction,
   pauseExperimentAction,
   resumeExperimentAction,
   updateExperimentAction,
@@ -287,17 +288,19 @@ export function ExperimentsPageClient({
 
   async function runLifecycleAction(
     experiment: ExperimentSummary,
-    action: "pause" | "resume" | "complete" | "confirmWinner",
+    action: "pause" | "resume" | "complete" | "confirmWinner" | "holdForReview",
   ) {
     setPendingAction(`${action}:${experiment.id}`);
     const result =
       action === "pause"
         ? await pauseExperimentAction(experiment.id)
-        : action === "confirmWinner"
-          ? await confirmExperimentWinnerAction(experiment.id)
-          : action === "complete"
-            ? await completeExperimentAction(experiment.id)
-            : await resumeExperimentAction(experiment.id);
+        : action === "holdForReview"
+          ? await holdExperimentForReviewAction(experiment.id)
+          : action === "confirmWinner"
+            ? await confirmExperimentWinnerAction(experiment.id)
+            : action === "complete"
+              ? await completeExperimentAction(experiment.id)
+              : await resumeExperimentAction(experiment.id);
     setPendingAction(null);
 
     if (!result.ok) {
@@ -310,7 +313,13 @@ export function ExperimentsPageClient({
     }
 
     syncExperiment(result.data);
-    toast.success(action === "confirmWinner" ? t("feedback.winnerConfirmed") : t("feedback.statusUpdated"));
+    toast.success(
+      action === "confirmWinner"
+        ? t("feedback.winnerConfirmed")
+        : action === "holdForReview"
+          ? t("feedback.heldForReview")
+          : t("feedback.statusUpdated"),
+    );
     router.refresh();
   }
 
@@ -421,6 +430,11 @@ export function ExperimentsPageClient({
                     (experiment.status === "running" || experiment.status === "paused") &&
                     showConfirmWinnerAction &&
                     !schedulerLocked;
+                  const canHoldRecommendedWinnerForReview =
+                    experiment.is_bandit &&
+                    (experiment.status === "running" || experiment.status === "paused") &&
+                    showConfirmWinnerAction &&
+                    !(experiment.status === "paused" && schedulerLocked);
                   const actions: Array<{ key: "pause" | "resume" | "complete"; label: string }> =
                     experiment.status === "draft"
                       ? [{ key: "resume", label: t("actions.start") }]
@@ -519,16 +533,28 @@ export function ExperimentsPageClient({
                                 );
                               })}
                               {showConfirmWinnerAction ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={isRowBusy || !canConfirmRecommendedWinner}
-                                  onClick={() => void runLifecycleAction(experiment, "confirmWinner")}
-                                >
-                                  {pendingAction === `confirmWinner:${experiment.id}`
-                                    ? t("feedback.confirmingWinner")
-                                    : t("actions.confirmWinner")}
-                                </Button>
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isRowBusy || !canConfirmRecommendedWinner}
+                                    onClick={() => void runLifecycleAction(experiment, "confirmWinner")}
+                                  >
+                                    {pendingAction === `confirmWinner:${experiment.id}`
+                                      ? t("feedback.confirmingWinner")
+                                      : t("actions.confirmWinner")}
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isRowBusy || !canHoldRecommendedWinnerForReview}
+                                    onClick={() => void runLifecycleAction(experiment, "holdForReview")}
+                                  >
+                                    {pendingAction === `holdForReview:${experiment.id}`
+                                      ? t("feedback.holdingForReview")
+                                      : t("actions.holdForReview")}
+                                  </Button>
+                                </>
                               ) : null}
                               {experiment.status === "draft" && !isEditingCurrentRow ? (
                                 <Button
