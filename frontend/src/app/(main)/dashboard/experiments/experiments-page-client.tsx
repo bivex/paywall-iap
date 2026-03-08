@@ -295,10 +295,12 @@ export function ExperimentsPageClient({
 
                   return (
                     <TableRow key={experiment.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{experiment.name}</p>
-                          <p className="max-w-sm text-muted-foreground text-xs">{experiment.description || "—"}</p>
+                      <TableCell className="min-w-72 whitespace-normal align-top">
+                        <div className="max-w-sm">
+                          <p className="break-words font-medium">{experiment.name}</p>
+                          <p className="whitespace-normal break-words text-muted-foreground text-xs">
+                            {experiment.description || "—"}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>
