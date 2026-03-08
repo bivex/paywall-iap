@@ -229,7 +229,7 @@ ok "Cold-start test data seeded"
 # ── Step 7: Start frontend ─────────────────────────────────────────────────────
 export FRONTEND_PORT
 export NEXT_PUBLIC_API_URL="http://localhost:${API_PORT_HOST}"
-export BACKEND_URL="http://paywall-api-1:8080"
+export BACKEND_URL="http://host.docker.internal:${API_PORT_HOST}"
 
 info "Building frontend image (Next.js hot-reload)..."
 docker compose -f "$FRONTEND_COMPOSE" build 2>&1 | tail -5

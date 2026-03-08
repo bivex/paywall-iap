@@ -11,7 +11,7 @@ services:
       - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8081}
-      - BACKEND_URL=${BACKEND_URL:-http://paywall-api-1:8080}
+      - BACKEND_URL=${BACKEND_URL:-http://host.docker.internal:8081}
       - WATCHPACK_POLLING=true   # needed for file-watch inside Docker on macOS
     volumes:
       - .:/app                   # mount source → hot reload picks up changes
