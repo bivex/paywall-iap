@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -66,15 +67,15 @@ func NewCurrencyRateService(redisClient *redis.Client, logger *zap.Logger) *Curr
 		},
 		ecbAPIURL: "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
 		fallbackRates: map[string]float64{
-			"EUR": 0.92,  // Euro to USD
-			"GBP": 0.79,  // British Pound to USD
+			"EUR": 0.92,   // Euro to USD
+			"GBP": 0.79,   // British Pound to USD
 			"JPY": 149.50, // Japanese Yen to USD
-			"CAD": 1.36,  // Canadian Dollar to USD
-			"AUD": 1.53,  // Australian Dollar to USD
-			"CHF": 0.88,  // Swiss Franc to USD
-			"CNY": 7.19,  // Chinese Yuan to USD
-			"INR": 83.12, // Indian Rupee to USD
-			"BRL": 4.97,  // Brazilian Real to USD
+			"CAD": 1.36,   // Canadian Dollar to USD
+			"AUD": 1.53,   // Australian Dollar to USD
+			"CHF": 0.88,   // Swiss Franc to USD
+			"CNY": 7.19,   // Chinese Yuan to USD
+			"INR": 83.12,  // Indian Rupee to USD
+			"BRL": 4.97,   // Brazilian Real to USD
 			"KRW": 1330.0, // South Korean Won to USD
 		},
 	}
@@ -253,22 +254,22 @@ func (s *CurrencyRateService) UpdateRates(ctx context.Context) error {
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to fetch rates: %w", err)
+		return fmt.Errorf("%w: failed to fetch rates: %v", domainErrors.ErrExternalServiceUnavailable, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return fmt.Errorf("%w: unexpected status code: %d", domainErrors.ErrExternalServiceUnavailable, resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
+		return fmt.Errorf("%w: failed to read response: %v", domainErrors.ErrExternalServiceUnavailable, err)
 	}
 
 	var ecbRates ECBCurrencyRates
 	if err := xml.Unmarshal(body, &ecbRates); err != nil {
-		return fmt.Errorf("failed to parse XML: %w", err)
+		return fmt.Errorf("%w: failed to parse XML: %v", domainErrors.ErrExternalServiceUnavailable, err)
 	}
 
 	// Find EUR to USD rate
@@ -281,7 +282,7 @@ func (s *CurrencyRateService) UpdateRates(ctx context.Context) error {
 	}
 
 	if eurToUsdRate == 0 {
-		return errors.New("EUR to USD rate not found in ECB response")
+		return fmt.Errorf("%w: EUR to USD rate not found in ECB response", domainErrors.ErrExternalServiceUnavailable)
 	}
 
 	// Cache all rates

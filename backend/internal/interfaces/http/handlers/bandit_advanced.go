@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
 
@@ -99,7 +101,7 @@ func (h *BanditAdvancedHandler) UpdateCurrencyRates(w http.ResponseWriter, r *ht
 
 	if err := h.currencyService.UpdateRates(r.Context()); err != nil {
 		h.logger.Error("Failed to update currency rates", zap.Error(err))
-		respondError(w, http.StatusInternalServerError, "Failed to update rates")
+		respondError(w, statusForServiceError(err, http.StatusInternalServerError), "Failed to update rates")
 		return
 	}
 
@@ -452,6 +454,10 @@ func statusForServiceError(err error, defaultStatus int) int {
 
 	if strings.Contains(strings.ToLower(err.Error()), "not found") {
 		return http.StatusNotFound
+	}
+
+	if errors.Is(err, domainErrors.ErrExternalServiceUnavailable) {
+		return http.StatusServiceUnavailable
 	}
 
 	return defaultStatus

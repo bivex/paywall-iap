@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
 
@@ -127,6 +128,12 @@ func TestStatusForServiceError_PreservesDefaultForOtherErrors(t *testing.T) {
 	status := statusForServiceError(assertAnError("validation failed"), http.StatusBadRequest)
 
 	require.Equal(t, http.StatusBadRequest, status)
+}
+
+func TestStatusForServiceError_ReturnsServiceUnavailableForExternalServiceErrors(t *testing.T) {
+	status := statusForServiceError(domainErrors.ErrExternalServiceUnavailable, http.StatusInternalServerError)
+
+	require.Equal(t, http.StatusServiceUnavailable, status)
 }
 
 func TestGetObjectiveScores_GinWrappedRouteAcceptsValidExperimentID(t *testing.T) {

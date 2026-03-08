@@ -67,7 +67,9 @@ func main() {
 	automationJobRunRepo := repository.NewAutomationJobRunRepository(dbPool)
 	experimentAdminRepo := repository.NewExperimentAdminRepository(dbPool)
 	experimentAdminService := service.NewExperimentAdminService(experimentAdminRepo)
+	experimentRepairService := service.NewExperimentRepairService(experimentAdminRepo, banditRepo)
 	experimentReconciler := service.NewExperimentAutomationReconciler(experimentAdminRepo, experimentAdminService)
+	experimentRepairReconciler := service.NewExperimentRepairReconciler(experimentAdminRepo, experimentRepairService)
 	automationJobExecutor := service.NewAutomationJobExecutionService(automationJobRunRepo)
 	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
 	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
@@ -106,6 +108,7 @@ func main() {
 	worker_tasks.RegisterCurrencyTasks(mux, currencyService, automationJobExecutor, logging.Logger)
 	worker_tasks.RegisterBanditMaintenanceTasks(mux, advancedBanditEngine, automationJobExecutor, logging.Logger)
 	worker_tasks.RegisterExperimentAutomationTasks(mux, experimentReconciler, automationJobExecutor, logging.Logger)
+	worker_tasks.RegisterExperimentRepairTasks(mux, experimentRepairReconciler, automationJobExecutor, logging.Logger)
 
 	// Start server in background
 	if err := server.Start(mux); err != nil {
@@ -120,6 +123,7 @@ func main() {
 	worker_tasks.RegisterCurrencyScheduledTasks(scheduler)
 	worker_tasks.RegisterBanditMaintenanceScheduledTasks(scheduler)
 	worker_tasks.RegisterExperimentAutomationScheduledTasks(scheduler)
+	worker_tasks.RegisterExperimentRepairScheduledTasks(scheduler)
 
 	// Start scheduler
 	if err := scheduler.Start(); err != nil {
