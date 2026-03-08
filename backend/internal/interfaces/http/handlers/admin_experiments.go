@@ -126,6 +126,16 @@ type updateAdminExperimentRequest struct {
 	AutomationPolicy           *service.ExperimentAutomationPolicy `json:"automation_policy,omitempty"`
 }
 
+type lockAdminExperimentRequest struct {
+	LockedUntil *time.Time `json:"locked_until"`
+	Reason      string     `json:"reason"`
+}
+
+type repairAdminExperimentResponse struct {
+	Experiment AdminExperiment                  `json:"experiment"`
+	Summary    *service.ExperimentRepairSummary `json:"summary"`
+}
+
 const adminExperimentSelectBase = `
 		SELECT e.id,
 		       e.name,
@@ -201,6 +211,11 @@ func normalizeUpdateAdminExperimentRequest(req updateAdminExperimentRequest) upd
 	req.AlgorithmType = strings.ToLower(strings.TrimSpace(req.AlgorithmType))
 	normalizedPolicy := service.NormalizeExperimentAutomationPolicy(req.AutomationPolicy)
 	req.AutomationPolicy = &normalizedPolicy
+	return req
+}
+
+func normalizeLockAdminExperimentRequest(req lockAdminExperimentRequest) lockAdminExperimentRequest {
+	req.Reason = strings.TrimSpace(req.Reason)
 	return req
 }
 
@@ -722,6 +737,123 @@ func (h *AdminHandler) ResumeAdminExperiment(c *gin.Context) {
 
 func (h *AdminHandler) CompleteAdminExperiment(c *gin.Context) {
 	h.updateAdminExperimentStatus(c, "completed")
+}
+
+func (h *AdminHandler) LockAdminExperiment(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+	if h.experimentAdminService == nil {
+		response.InternalError(c, "Experiment service is unavailable")
+		return
+	}
+
+	var req lockAdminExperimentRequest
+	if c.Request.ContentLength > 0 {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			response.BadRequest(c, "Invalid request body")
+			return
+		}
+	}
+	req = normalizeLockAdminExperimentRequest(req)
+	if req.LockedUntil != nil && !req.LockedUntil.After(time.Now().UTC()) {
+		response.UnprocessableEntity(c, "locked_until must be in the future")
+		return
+	}
+
+	var adminID *uuid.UUID
+	if value, ok := c.Get("admin_id"); ok {
+		if id, ok := value.(uuid.UUID); ok {
+			adminID = &id
+		}
+	}
+
+	err = h.experimentAdminService.LockExperimentAutomation(c.Request.Context(), experimentID, service.ExperimentLockInput{
+		LockedUntil: req.LockedUntil,
+		LockedBy:    adminID,
+		LockReason:  req.Reason,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrExperimentNotFound):
+			response.NotFound(c, "Experiment not found")
+		default:
+			response.InternalError(c, "Failed to lock experiment automation")
+		}
+		return
+	}
+
+	updatedExperiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated experiment")
+		return
+	}
+
+	response.OK(c, updatedExperiment)
+}
+
+func (h *AdminHandler) UnlockAdminExperiment(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+	if h.experimentAdminService == nil {
+		response.InternalError(c, "Experiment service is unavailable")
+		return
+	}
+
+	err = h.experimentAdminService.UnlockExperimentAutomation(c.Request.Context(), experimentID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrExperimentNotFound):
+			response.NotFound(c, "Experiment not found")
+		default:
+			response.InternalError(c, "Failed to unlock experiment automation")
+		}
+		return
+	}
+
+	updatedExperiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated experiment")
+		return
+	}
+
+	response.OK(c, updatedExperiment)
+}
+
+func (h *AdminHandler) RepairAdminExperiment(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+	if h.experimentRepairService == nil {
+		response.InternalError(c, "Experiment repair service is unavailable")
+		return
+	}
+
+	summary, err := h.experimentRepairService.RepairExperiment(c.Request.Context(), experimentID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrExperimentNotFound):
+			response.NotFound(c, "Experiment not found")
+		default:
+			response.InternalError(c, "Failed to repair experiment derived state")
+		}
+		return
+	}
+
+	updatedExperiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated experiment")
+		return
+	}
+
+	response.OK(c, repairAdminExperimentResponse{Experiment: updatedExperiment, Summary: summary})
 }
 
 func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus string) {

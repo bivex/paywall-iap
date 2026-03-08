@@ -9,6 +9,26 @@ export interface ExperimentAutomationPolicy {
   readonly complete_on_sample_size: boolean;
   readonly complete_on_confidence: boolean;
   readonly manual_override: boolean;
+  readonly locked_until?: string | null;
+  readonly locked_by?: string | null;
+  readonly lock_reason?: string | null;
+}
+
+export interface ExperimentRepairSummary {
+  readonly assignment_snapshot: {
+    readonly total: number;
+    readonly active: number;
+  };
+  readonly missing_arm_stats_inserted: number;
+  readonly pending_rewards_total: number;
+  readonly expired_pending_rewards: number;
+  readonly pending_rewards_processed: number;
+  readonly winner_confidence_percent: number | null;
+}
+
+export interface ExperimentRepairResult {
+  readonly experiment: ExperimentSummary;
+  readonly summary: ExperimentRepairSummary;
 }
 
 export interface ExperimentLifecycleAudit {

@@ -13,6 +13,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 
 	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
@@ -25,19 +26,20 @@ import (
 
 // AdminHandler handles admin endpoints
 type AdminHandler struct {
-	subscriptionRepo       domainRepo.SubscriptionRepository
-	userRepo               domainRepo.UserRepository
-	queries                *generated.Queries
-	dbPool                 *pgxpool.Pool
-	redisClient            *redis.Client
-	analyticsService       *service.AnalyticsService
-	auditService           *service.AuditService
-	revenueOpsService      *service.RevenueOpsService
-	analyticsReportService *service.AnalyticsReportService
-	userProfileService     *service.UserProfileService
-	winbackService         *service.WinbackService
-	experimentAdminService *service.ExperimentAdminService
-	asynqClient            *asynq.Client
+	subscriptionRepo        domainRepo.SubscriptionRepository
+	userRepo                domainRepo.UserRepository
+	queries                 *generated.Queries
+	dbPool                  *pgxpool.Pool
+	redisClient             *redis.Client
+	analyticsService        *service.AnalyticsService
+	auditService            *service.AuditService
+	revenueOpsService       *service.RevenueOpsService
+	analyticsReportService  *service.AnalyticsReportService
+	userProfileService      *service.UserProfileService
+	winbackService          *service.WinbackService
+	experimentAdminService  *service.ExperimentAdminService
+	experimentRepairService *service.ExperimentRepairService
+	asynqClient             *asynq.Client
 }
 
 // NewAdminHandler creates a new admin handler
@@ -56,24 +58,31 @@ func NewAdminHandler(
 	asynqClient *asynq.Client,
 ) *AdminHandler {
 	var experimentAdminService *service.ExperimentAdminService
+	var experimentRepairService *service.ExperimentRepairService
 	if dbPool != nil {
-		experimentAdminService = service.NewExperimentAdminService(persistenceRepo.NewExperimentAdminRepository(dbPool))
+		experimentRepo := persistenceRepo.NewExperimentAdminRepository(dbPool)
+		experimentAdminService = service.NewExperimentAdminService(experimentRepo)
+		experimentRepairService = service.NewExperimentRepairService(
+			experimentRepo,
+			persistenceRepo.NewPostgresBanditRepository(dbPool, zap.NewNop()),
+		)
 	}
 
 	return &AdminHandler{
-		subscriptionRepo:       subscriptionRepo,
-		userRepo:               userRepo,
-		queries:                queries,
-		dbPool:                 dbPool,
-		redisClient:            redisClient,
-		analyticsService:       analyticsService,
-		auditService:           auditService,
-		revenueOpsService:      revenueOpsService,
-		analyticsReportService: analyticsReportService,
-		userProfileService:     userProfileService,
-		winbackService:         winbackService,
-		experimentAdminService: experimentAdminService,
-		asynqClient:            asynqClient,
+		subscriptionRepo:        subscriptionRepo,
+		userRepo:                userRepo,
+		queries:                 queries,
+		dbPool:                  dbPool,
+		redisClient:             redisClient,
+		analyticsService:        analyticsService,
+		auditService:            auditService,
+		revenueOpsService:       revenueOpsService,
+		analyticsReportService:  analyticsReportService,
+		userProfileService:      userProfileService,
+		winbackService:          winbackService,
+		experimentAdminService:  experimentAdminService,
+		experimentRepairService: experimentRepairService,
+		asynqClient:             asynqClient,
 	}
 }
 

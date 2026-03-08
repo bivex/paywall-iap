@@ -1,0 +1,1 @@
+bash ./scripts/test_api_contract_schemathesis.sh --max-failures 1 

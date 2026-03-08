@@ -321,10 +321,7 @@ func setupAdminAuthRoutes(v1 *gin.RouterGroup, d *dependencies) {
 	adminAuth := v1.Group("/admin/auth")
 	{
 		adminAuth.POST("/login", d.authHandler.AdminLogin)
-		adminAuth.POST("/logout",
-			d.jwtMiddleware.Authenticate(),
-			d.authHandler.AdminLogout,
-		)
+		adminAuth.POST("/logout", d.authHandler.AdminLogout)
 	}
 }
 
@@ -404,6 +401,9 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 		admin.POST("/experiments/:id/pause", d.adminHandler.PauseAdminExperiment)
 		admin.POST("/experiments/:id/resume", d.adminHandler.ResumeAdminExperiment)
 		admin.POST("/experiments/:id/complete", d.adminHandler.CompleteAdminExperiment)
+		admin.POST("/experiments/:id/lock", d.adminHandler.LockAdminExperiment)
+		admin.POST("/experiments/:id/unlock", d.adminHandler.UnlockAdminExperiment)
+		admin.POST("/experiments/:id/repair", d.adminHandler.RepairAdminExperiment)
 		admin.GET("/pricing-tiers", d.adminHandler.ListPricingTiers)
 		admin.POST("/pricing-tiers", d.adminHandler.CreatePricingTier)
 		admin.PUT("/pricing-tiers/:id", d.adminHandler.UpdatePricingTier)

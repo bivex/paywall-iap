@@ -10,8 +10,11 @@ import { toast } from "sonner";
 
 import {
   completeExperimentAction,
+  lockExperimentAction,
   pauseExperimentAction,
+  repairExperimentAction,
   resumeExperimentAction,
+  unlockExperimentAction,
   updateExperimentAction,
 } from "@/actions/experiments";
 import { PricingTierManager } from "@/components/pricing/pricing-tier-manager";
@@ -31,6 +34,7 @@ import type {
 } from "@/lib/experiment-studio";
 import {
   type ExperimentAlgorithm,
+  type ExperimentRepairSummary,
   type ExperimentStatus,
   type ExperimentSummary,
   formatExperimentLifecycleCode,
@@ -98,6 +102,25 @@ function formatRevenue(value: number) {
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
   return `${(value * 100).toFixed(digits)}%`;
+}
+
+function formatPercentNumber(value: number | null | undefined, digits = 1) {
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+  return `${value.toFixed(digits)}%`;
+}
+
+function toDatetimeLocalValue(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+function hasActiveTimedLock(value: string | null | undefined) {
+  if (!value) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.getTime() > Date.now();
 }
 
 function formatLifecycleReason(t: ReturnType<typeof useTranslations>, experiment: ExperimentSummary) {
@@ -198,8 +221,13 @@ export function StudioPageClient({
   const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
-  const [pendingLifecycleAction, setPendingLifecycleAction] = useState<"pause" | "resume" | "complete" | null>(null);
+  const [pendingLifecycleAction, setPendingLifecycleAction] = useState<
+    "pause" | "resume" | "complete" | "lock" | "unlock" | "repair" | null
+  >(null);
   const [pendingSave, setPendingSave] = useState(false);
+  const [lockReason, setLockReason] = useState("");
+  const [lockUntil, setLockUntil] = useState("");
+  const [repairSummary, setRepairSummary] = useState<ExperimentRepairSummary | null>(null);
 
   useEffect(() => {
     setHasHydrated(true);
@@ -241,6 +269,11 @@ export function StudioPageClient({
     setDraftMetadata(draftMetadataBaseline);
   }, [draftMetadataBaseline]);
 
+  useEffect(() => {
+    setLockReason(selectedExperiment?.automation_policy?.lock_reason ?? "");
+    setLockUntil(toDatetimeLocalValue(selectedExperiment?.automation_policy?.locked_until));
+  }, [selectedExperiment?.automation_policy?.lock_reason, selectedExperiment?.automation_policy?.locked_until]);
+
   const isDraftDirty =
     draftMetadata !== null &&
     draftMetadataBaseline !== null &&
@@ -267,9 +300,13 @@ export function StudioPageClient({
               { key: "complete", label: t("actions.complete") },
             ]
           : [];
+  const hasManualOverride = Boolean(selectedExperiment?.automation_policy?.manual_override);
+  const hasTimedLock = hasActiveTimedLock(selectedExperiment?.automation_policy?.locked_until);
+  const schedulerLocked = hasManualOverride || hasTimedLock;
 
   const refreshSnapshot = (experimentId: string) => {
     setSelectedId(experimentId);
+    setRepairSummary(null);
     startTransition(async () => {
       try {
         const data = await fetchStudioJson<ExperimentStudioSnapshot>(
@@ -302,6 +339,71 @@ export function StudioPageClient({
     syncExperiment(result.data);
     toast.success(t("feedback.statusUpdated"));
     refreshSnapshot(result.data.id);
+  }
+
+  async function runLockAction() {
+    if (!selectedExperiment) return;
+
+    let lockedUntilISO: string | null = null;
+    if (lockUntil) {
+      const parsed = new Date(lockUntil);
+      if (Number.isNaN(parsed.getTime())) {
+        toast.error(t("feedback.lockFailed"));
+        return;
+      }
+      lockedUntilISO = parsed.toISOString();
+    }
+
+    setPendingLifecycleAction("lock");
+    const result = await lockExperimentAction(selectedExperiment.id, {
+      locked_until: lockedUntilISO,
+      reason: lockReason,
+    });
+    setPendingLifecycleAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.lockFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    toast.success(lockedUntilISO ? t("feedback.lockTimed") : t("feedback.locked"));
+    refreshSnapshot(result.data.id);
+  }
+
+  async function runUnlockAction() {
+    if (!selectedExperiment) return;
+
+    setPendingLifecycleAction("unlock");
+    const result = await unlockExperimentAction(selectedExperiment.id);
+    setPendingLifecycleAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.unlockFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    toast.success(t("feedback.unlocked"));
+    refreshSnapshot(result.data.id);
+  }
+
+  async function runRepairAction() {
+    if (!selectedExperiment) return;
+
+    setPendingLifecycleAction("repair");
+    const result = await repairExperimentAction(selectedExperiment.id);
+    setPendingLifecycleAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.repairFailed"));
+      return;
+    }
+
+    syncExperiment(result.data.experiment);
+    setRepairSummary(result.data.summary);
+    toast.success(t("feedback.repaired"));
+    refreshSnapshot(result.data.experiment.id);
   }
 
   async function saveDraftMetadata(event: FormEvent<HTMLFormElement>) {
@@ -657,6 +759,113 @@ export function StudioPageClient({
                           ))
                         )}
                       </div>
+                    </div>
+
+                    <div className="rounded-md border p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-sm">{t("lifecycle.lockTitle")}</p>
+                          <p className="mt-1 text-muted-foreground text-xs">{t("lifecycle.lockDescription")}</p>
+                        </div>
+                        <Badge variant={schedulerLocked ? "default" : "outline"}>
+                          {schedulerLocked ? t("lifecycle.lockActive") : t("lifecycle.lockInactive")}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {hasManualOverride ? (
+                          <Badge variant="outline">{t("lifecycle.manualOverrideActive")}</Badge>
+                        ) : null}
+                        {hasTimedLock ? <Badge variant="outline">{t("lifecycle.timedLockActive")}</Badge> : null}
+                        {!hasTimedLock && selectedExperiment?.automation_policy?.locked_until ? (
+                          <Badge variant="outline">{t("lifecycle.timedLockExpired")}</Badge>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        <div className="space-y-1">
+                          <p className="font-medium text-xs">{t("lifecycle.lockUntilLabel")}</p>
+                          <Input
+                            type="datetime-local"
+                            value={lockUntil}
+                            onChange={(event) => setLockUntil(event.target.value)}
+                            disabled={isPending || pendingLifecycleAction !== null}
+                          />
+                          <p className="text-[11px] text-muted-foreground">{t("lifecycle.lockUntilHint")}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-medium text-xs">{t("lifecycle.lockReasonLabel")}</p>
+                          <Input
+                            value={lockReason}
+                            onChange={(event) => setLockReason(event.target.value)}
+                            placeholder={t("lifecycle.lockReasonPlaceholder")}
+                            disabled={isPending || pendingLifecycleAction !== null}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-4 space-y-1 text-muted-foreground text-xs">
+                        <p>
+                          {t("lifecycle.lockedUntilValue")}:{" "}
+                          {formatDate(selectedExperiment?.automation_policy?.locked_until ?? null)}
+                        </p>
+                        <p>
+                          {t("lifecycle.lockedByValue")}: {selectedExperiment?.automation_policy?.locked_by ?? "—"}
+                        </p>
+                        <p>
+                          {t("lifecycle.lockReasonValue")}: {selectedExperiment?.automation_policy?.lock_reason || "—"}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isPending || pendingLifecycleAction !== null}
+                          onClick={() => void runLockAction()}
+                        >
+                          {pendingLifecycleAction === "lock" ? t("feedback.locking") : t("actions.lock")}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isPending || pendingLifecycleAction !== null || !schedulerLocked}
+                          onClick={() => void runUnlockAction()}
+                        >
+                          {pendingLifecycleAction === "unlock" ? t("feedback.unlocking") : t("actions.unlock")}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isPending || pendingLifecycleAction !== null}
+                          onClick={() => void runRepairAction()}
+                        >
+                          {pendingLifecycleAction === "repair" ? t("feedback.repairing") : t("actions.repair")}
+                        </Button>
+                      </div>
+
+                      {repairSummary ? (
+                        <div className="mt-4 rounded-md border border-dashed p-3 text-xs">
+                          <p className="font-medium text-sm">{t("lifecycle.repairSummaryTitle")}</p>
+                          <div className="mt-2 space-y-1 text-muted-foreground">
+                            <p>
+                              {t("lifecycle.repairAssignments")}: {repairSummary.assignment_snapshot.active}/
+                              {repairSummary.assignment_snapshot.total}
+                            </p>
+                            <p>
+                              {t("lifecycle.repairArmStats")}: {repairSummary.missing_arm_stats_inserted}
+                            </p>
+                            <p>
+                              {t("lifecycle.repairPendingRewards")}: {repairSummary.pending_rewards_processed}/
+                              {repairSummary.expired_pending_rewards}
+                            </p>
+                            <p>
+                              {t("lifecycle.repairWinnerConfidence")}:{" "}
+                              {formatPercentNumber(repairSummary.winner_confidence_percent)}
+                            </p>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div className="rounded-md border p-4">

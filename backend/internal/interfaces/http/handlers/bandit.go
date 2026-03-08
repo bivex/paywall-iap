@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -104,19 +105,19 @@ func (h *BanditHandler) Assign(c *gin.Context) {
 
 // RewardRequest represents the request to record a reward/conversion
 type RewardRequest struct {
-	ExperimentID string  `json:"experiment_id" binding:"required,uuid"`
-	ArmID        string  `json:"arm_id" binding:"required,uuid"`
-	UserID       string  `json:"user_id" binding:"required,uuid"`
+	ExperimentID string   `json:"experiment_id" binding:"required,uuid"`
+	ArmID        string   `json:"arm_id" binding:"required,uuid"`
+	UserID       string   `json:"user_id" binding:"required,uuid"`
 	Reward       *float64 `json:"reward" binding:"required"`
-	Currency     string  `json:"currency,omitempty"`
+	Currency     string   `json:"currency,omitempty"`
 }
 
 // RewardResponse represents the response after recording a reward
 type RewardResponse struct {
-	ExperimentID string `json:"experiment_id"`
-	ArmID        string `json:"arm_id"`
+	ExperimentID string  `json:"experiment_id"`
+	ArmID        string  `json:"arm_id"`
 	Reward       float64 `json:"reward"`
-	Updated      bool   `json:"updated"`
+	Updated      bool    `json:"updated"`
 }
 
 // Reward records a reward (conversion or revenue) for an arm
@@ -184,20 +185,20 @@ type StatisticsRequest struct {
 
 // StatisticsResponse represents the statistics for all arms
 type StatisticsResponse struct {
-	ExperimentID string                `json:"experiment_id"`
-	Arms         []ArmStatistics       `json:"arms"`
-	WinProbs     map[string]float64    `json:"win_probabilities,omitempty"`
+	ExperimentID string             `json:"experiment_id"`
+	Arms         []ArmStatistics    `json:"arms"`
+	WinProbs     map[string]float64 `json:"win_probabilities,omitempty"`
 }
 
 // ArmStatistics represents statistics for a single arm
 type ArmStatistics struct {
-	ArmID       string  `json:"arm_id"`
-	Alpha       float64 `json:"alpha"`
-	Beta        float64 `json:"beta"`
-	Samples     int     `json:"samples"`
-	Conversions int     `json:"conversions"`
-	Revenue     float64 `json:"revenue"`
-	AvgReward   float64 `json:"avg_reward"`
+	ArmID          string  `json:"arm_id"`
+	Alpha          float64 `json:"alpha"`
+	Beta           float64 `json:"beta"`
+	Samples        int     `json:"samples"`
+	Conversions    int     `json:"conversions"`
+	Revenue        float64 `json:"revenue"`
+	AvgReward      float64 `json:"avg_reward"`
 	ConversionRate float64 `json:"conversion_rate"`
 }
 
@@ -212,6 +213,17 @@ type ArmStatistics struct {
 // @Failure 404 {object} response.ErrorResponse
 // @Router /api/v1/bandit/statistics [get]
 func (h *BanditHandler) Statistics(c *gin.Context) {
+	allowedQueryParams := map[string]struct{}{
+		"experiment_id": {},
+		"win_probs":     {},
+	}
+	for key := range c.Request.URL.Query() {
+		if _, ok := allowedQueryParams[key]; !ok {
+			response.BadRequest(c, "Unknown query parameter: "+key)
+			return
+		}
+	}
+
 	var req StatisticsRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.BadRequest(c, "Invalid request format: "+err.Error())
@@ -240,13 +252,13 @@ func (h *BanditHandler) Statistics(c *gin.Context) {
 		}
 
 		arms = append(arms, ArmStatistics{
-			ArmID:         stats.ArmID.String(),
-			Alpha:         stats.Alpha,
-			Beta:          stats.Beta,
-			Samples:       stats.Samples,
-			Conversions:   stats.Conversions,
-			Revenue:       stats.Revenue,
-			AvgReward:     stats.AvgReward,
+			ArmID:          stats.ArmID.String(),
+			Alpha:          stats.Alpha,
+			Beta:           stats.Beta,
+			Samples:        stats.Samples,
+			Conversions:    stats.Conversions,
+			Revenue:        stats.Revenue,
+			AvgReward:      stats.AvgReward,
 			ConversionRate: conversionRate,
 		})
 	}
@@ -257,7 +269,20 @@ func (h *BanditHandler) Statistics(c *gin.Context) {
 	}
 
 	// Optionally include win probabilities
-	if rawWinProbs := c.Query("win_probs"); rawWinProbs != "" {
+	if queryValues, hasWinProbs := c.Request.URL.Query()["win_probs"]; hasWinProbs {
+		rawWinProbs := ""
+		if len(queryValues) > 0 {
+			rawWinProbs = strings.TrimSpace(queryValues[0])
+		}
+		if rawWinProbs == "" {
+			response.BadRequest(c, "Invalid win_probs value")
+			return
+		}
+		if !strings.EqualFold(rawWinProbs, "true") && !strings.EqualFold(rawWinProbs, "false") {
+			response.BadRequest(c, "Invalid win_probs value")
+			return
+		}
+
 		includeWinProbs, parseErr := strconv.ParseBool(rawWinProbs)
 		if parseErr != nil {
 			response.BadRequest(c, "Invalid win_probs value")
@@ -290,7 +315,7 @@ func (h *BanditHandler) Statistics(c *gin.Context) {
 // @Router /api/v1/bandit/health [get]
 func (h *BanditHandler) Health(c *gin.Context) {
 	response.OK(c, gin.H{
-		"status": "healthy",
+		"status":  "healthy",
 		"service": "bandit",
 	})
 }

@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import type { ExperimentInput, ExperimentSummary, ExperimentUpdateInput } from "@/lib/experiments";
+import type {
+  ExperimentInput,
+  ExperimentRepairResult,
+  ExperimentSummary,
+  ExperimentUpdateInput,
+} from "@/lib/experiments";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -26,6 +31,12 @@ async function parseResponse<T>(res: Response): Promise<ActionResult<T>> {
     };
   }
   return { ok: true, data: ((body as { data?: T }).data ?? body) as T };
+}
+
+function revalidateExperimentPaths() {
+  revalidatePath("/dashboard/experiments");
+  revalidatePath("/dashboard/experiments/studio");
+  revalidatePath("/dashboard/experiments/bandit");
 }
 
 export async function getExperiments(): Promise<ExperimentSummary[] | null> {
@@ -55,7 +66,7 @@ export async function createExperimentAction(payload: ExperimentInput) {
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
-    if (parsed.ok) revalidatePath("/dashboard/experiments");
+    if (parsed.ok) revalidateExperimentPaths();
     return parsed;
   } catch (error) {
     return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
@@ -73,11 +84,7 @@ export async function updateExperimentAction(id: string, payload: ExperimentUpda
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
-    if (parsed.ok) {
-      revalidatePath("/dashboard/experiments");
-      revalidatePath("/dashboard/experiments/studio");
-      revalidatePath("/dashboard/experiments/bandit");
-    }
+    if (parsed.ok) revalidateExperimentPaths();
     return parsed;
   } catch (error) {
     return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
@@ -94,7 +101,7 @@ async function postExperimentLifecycleAction(id: string, action: "pause" | "resu
       headers: { Authorization: `Bearer ${token}` },
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
-    if (parsed.ok) revalidatePath("/dashboard/experiments");
+    if (parsed.ok) revalidateExperimentPaths();
     return parsed;
   } catch (error) {
     return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
@@ -111,4 +118,59 @@ export async function resumeExperimentAction(id: string) {
 
 export async function completeExperimentAction(id: string) {
   return postExperimentLifecycleAction(id, "complete");
+}
+
+export async function lockExperimentAction(id: string, payload?: { locked_until?: string | null; reason?: string }) {
+  const token = await getAdminToken();
+  if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/lock`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        locked_until: payload?.locked_until ?? null,
+        reason: payload?.reason?.trim() ? payload.reason.trim() : undefined,
+      }),
+    });
+    const parsed = await parseResponse<ExperimentSummary>(res);
+    if (parsed.ok) revalidateExperimentPaths();
+    return parsed;
+  } catch (error) {
+    return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
+  }
+}
+
+export async function unlockExperimentAction(id: string) {
+  const token = await getAdminToken();
+  if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/unlock`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const parsed = await parseResponse<ExperimentSummary>(res);
+    if (parsed.ok) revalidateExperimentPaths();
+    return parsed;
+  } catch (error) {
+    return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
+  }
+}
+
+export async function repairExperimentAction(id: string) {
+  const token = await getAdminToken();
+  if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentRepairResult>;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/repair`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const parsed = await parseResponse<ExperimentRepairResult>(res);
+    if (parsed.ok) revalidateExperimentPaths();
+    return parsed;
+  } catch (error) {
+    return { ok: false, error: String(error) } satisfies ActionResult<ExperimentRepairResult>;
+  }
 }

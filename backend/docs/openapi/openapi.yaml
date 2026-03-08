@@ -134,14 +134,6 @@ paths:
     post:
       tags: [admin-auth]
       summary: Admin logout
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminLogoutRequest'
       responses:
         '200':
           description: Admin logged out
@@ -1293,7 +1285,8 @@ components:
       properties:
         refresh_token:
           type: string
-          minLength: 1
+          minLength: 50
+          pattern: '^[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}$'
     RefreshTokenResponse:
       type: object
       required: [access_token, refresh_token, expires_in]
@@ -1330,11 +1323,11 @@ components:
           format: int64
     AdminLogoutRequest:
       type: object
-      required: [refresh_token]
       properties:
         refresh_token:
           type: string
-          minLength: 1
+          minLength: 50
+          pattern: '^[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}$'
     AssignRequest:
       type: object
       required: [experiment_id, user_id]
@@ -1495,8 +1488,36 @@ components:
         objective_weights:
           type: object
           minProperties: 1
-          additionalProperties:
-            type: number
+          additionalProperties: false
+          properties:
+            conversion:
+              type: number
+              minimum: 0
+            ltv:
+              type: number
+              minimum: 0
+            revenue:
+              type: number
+              minimum: 0
+          anyOf:
+            - required: [conversion]
+              properties:
+                conversion:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+            - required: [ltv]
+              properties:
+                ltv:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+            - required: [revenue]
+              properties:
+                revenue:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
     ObjectiveConfigUpdateResponse:
       type: object
       required: [message, experiment_id, objective_type, weights]
@@ -1611,6 +1632,7 @@ components:
     ProcessConversionRequest:
       type: object
       required: [transaction_id, user_id, conversion_value, currency]
+      additionalProperties: false
       properties:
         transaction_id:
           type: string
@@ -1622,6 +1644,7 @@ components:
         currency:
           type: string
           minLength: 1
+          pattern: '^[A-Z]{3}$'
     ProcessConversionResponse:
       type: object
       required: [message, transaction_id]
@@ -1816,7 +1839,8 @@ components:
         is_control: { type: boolean }
         traffic_weight:
           type: number
-          exclusiveMinimum: 0
+          minimum: 0
+          exclusiveMinimum: true
     CreateAdminExperimentRequest:
       type: object
       required: [name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent, arms]
@@ -1844,7 +1868,8 @@ components:
           minimum: 1
         confidence_threshold_percent:
           type: number
-          exclusiveMinimum: 0
+          minimum: 0
+          exclusiveMinimum: true
           maximum: 100
         start_at:
           type: string
@@ -1885,7 +1910,8 @@ components:
           minimum: 1
         confidence_threshold_percent:
           type: number
-          exclusiveMinimum: 0
+          minimum: 0
+          exclusiveMinimum: true
           maximum: 100
         start_at:
           type: string
@@ -1935,11 +1961,13 @@ components:
         description: { type: string }
         monthly_price:
           type: number
-          exclusiveMinimum: 0
+          minimum: 0
+          exclusiveMinimum: true
           nullable: true
         annual_price:
           type: number
-          exclusiveMinimum: 0
+          minimum: 0
+          exclusiveMinimum: true
           nullable: true
         currency:
           type: string

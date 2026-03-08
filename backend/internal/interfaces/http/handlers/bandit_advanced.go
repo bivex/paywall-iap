@@ -116,12 +116,14 @@ func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.R
 		Currency string   `json:"currency"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	if req.Amount == nil || strings.TrimSpace(req.Currency) == "" {
+	if req.Amount == nil || !isISO4217CurrencyCode(req.Currency) {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -196,7 +198,9 @@ func (h *BanditAdvancedHandler) SetObjectiveConfig(w http.ResponseWriter, r *htt
 		ObjectiveWeights map[string]float64    `json:"objective_weights"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -271,7 +275,16 @@ func (h *BanditAdvancedHandler) ExportWindowEvents(w http.ResponseWriter, r *htt
 	}
 
 	limit := int64(100)
-	if rawLimit := r.URL.Query().Get("limit"); rawLimit != "" {
+	if queryValues, hasLimit := r.URL.Query()["limit"]; hasLimit {
+		rawLimit := ""
+		if len(queryValues) > 0 {
+			rawLimit = strings.TrimSpace(queryValues[0])
+		}
+		if rawLimit == "" {
+			respondError(w, http.StatusBadRequest, "Invalid limit")
+			return
+		}
+
 		parsedLimit, parseErr := strconv.ParseInt(rawLimit, 10, 64)
 		if parseErr != nil || parsedLimit <= 0 {
 			respondError(w, http.StatusBadRequest, "Invalid limit")
@@ -302,12 +315,14 @@ func (h *BanditAdvancedHandler) ProcessConversion(w http.ResponseWriter, r *http
 		Currency        string    `json:"currency"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	if req.TransactionID == uuid.Nil || req.UserID == uuid.Nil || req.ConversionValue == nil || strings.TrimSpace(req.Currency) == "" {
+	if req.TransactionID == uuid.Nil || req.UserID == uuid.Nil || req.ConversionValue == nil || !isISO4217CurrencyCode(req.Currency) {
 		respondError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -440,4 +455,16 @@ func statusForServiceError(err error, defaultStatus int) int {
 	}
 
 	return defaultStatus
+}
+
+func isISO4217CurrencyCode(value string) bool {
+	if len(value) != 3 {
+		return false
+	}
+	for _, char := range value {
+		if char < 'A' || char > 'Z' {
+			return false
+		}
+	}
+	return true
 }

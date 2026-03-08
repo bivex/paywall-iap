@@ -82,3 +82,51 @@ func TestReward_ReturnsNotFoundForMissingArm(t *testing.T) {
 	require.Equal(t, http.StatusNotFound, recorder.Code, "body=%s", recorder.Body.String())
 	require.Contains(t, recorder.Body.String(), `"Arm not found"`)
 }
+
+func TestStatistics_RejectsEmptyWinProbs(t *testing.T) {
+	t.Helper()
+	gin.SetMode(gin.TestMode)
+
+	handler := NewBanditHandler(banditServiceStub{})
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/bandit/statistics?experiment_id=e3e70682-c209-4cac-629f-6fbed82c07cd&win_probs=", nil)
+
+	handler.Statistics(ctx)
+
+	require.Equal(t, http.StatusBadRequest, recorder.Code, "body=%s", recorder.Body.String())
+	require.Contains(t, recorder.Body.String(), `"Invalid win_probs value"`)
+}
+
+func TestStatistics_RejectsNumericWinProbs(t *testing.T) {
+	t.Helper()
+	gin.SetMode(gin.TestMode)
+
+	handler := NewBanditHandler(banditServiceStub{})
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/bandit/statistics?experiment_id=e3e70682-c209-4cac-629f-6fbed82c07cd&win_probs=0", nil)
+
+	handler.Statistics(ctx)
+
+	require.Equal(t, http.StatusBadRequest, recorder.Code, "body=%s", recorder.Body.String())
+	require.Contains(t, recorder.Body.String(), `"Invalid win_probs value"`)
+}
+
+func TestStatistics_RejectsUnknownQueryParameter(t *testing.T) {
+	t.Helper()
+	gin.SetMode(gin.TestMode)
+
+	handler := NewBanditHandler(banditServiceStub{})
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/v1/bandit/statistics?experiment_id=e3e70682-c209-4cac-629f-6fbed82c07cd&extra=1", nil)
+
+	handler.Statistics(ctx)
+
+	require.Equal(t, http.StatusBadRequest, recorder.Code, "body=%s", recorder.Body.String())
+	require.Contains(t, recorder.Body.String(), `"Unknown query parameter: extra"`)
+}

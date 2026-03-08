@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,20 +16,24 @@ var (
 )
 
 type ExperimentMutationState struct {
-	ID      uuid.UUID
-	Status  string
-	StartAt *time.Time
-	EndAt   *time.Time
+	ID               uuid.UUID
+	Status           string
+	StartAt          *time.Time
+	EndAt            *time.Time
+	AutomationPolicy ExperimentAutomationPolicy
 }
 
 type ExperimentAutomationPolicy struct {
-	Enabled              bool `json:"enabled"`
-	AutoStart            bool `json:"auto_start"`
-	AutoComplete         bool `json:"auto_complete"`
-	CompleteOnEndTime    bool `json:"complete_on_end_time"`
-	CompleteOnSampleSize bool `json:"complete_on_sample_size"`
-	CompleteOnConfidence bool `json:"complete_on_confidence"`
-	ManualOverride       bool `json:"manual_override"`
+	Enabled              bool       `json:"enabled"`
+	AutoStart            bool       `json:"auto_start"`
+	AutoComplete         bool       `json:"auto_complete"`
+	CompleteOnEndTime    bool       `json:"complete_on_end_time"`
+	CompleteOnSampleSize bool       `json:"complete_on_sample_size"`
+	CompleteOnConfidence bool       `json:"complete_on_confidence"`
+	ManualOverride       bool       `json:"manual_override"`
+	LockedUntil          *time.Time `json:"locked_until"`
+	LockedBy             *uuid.UUID `json:"locked_by"`
+	LockReason           *string    `json:"lock_reason"`
 }
 
 func DefaultExperimentAutomationPolicy() ExperimentAutomationPolicy {
@@ -56,12 +61,30 @@ func NormalizeExperimentAutomationPolicy(policy *ExperimentAutomationPolicy) Exp
 	normalized.CompleteOnSampleSize = policy.CompleteOnSampleSize
 	normalized.CompleteOnConfidence = policy.CompleteOnConfidence
 	normalized.ManualOverride = policy.ManualOverride
+	if policy.LockedUntil != nil {
+		value := policy.LockedUntil.UTC()
+		normalized.LockedUntil = &value
+	}
+	if policy.LockedBy != nil {
+		value := *policy.LockedBy
+		normalized.LockedBy = &value
+	}
+	if policy.LockReason != nil {
+		trimmed := strings.TrimSpace(*policy.LockReason)
+		if trimmed != "" {
+			normalized.LockReason = &trimmed
+		}
+	}
 
 	if normalized.AutoComplete && !normalized.CompleteOnEndTime && !normalized.CompleteOnSampleSize && !normalized.CompleteOnConfidence {
 		normalized.CompleteOnEndTime = true
 	}
 
 	return normalized
+}
+
+func (p ExperimentAutomationPolicy) HasActiveLock(now time.Time) bool {
+	return p.LockedUntil != nil && p.LockedUntil.After(now)
 }
 
 type UpdateExperimentInput struct {
@@ -89,6 +112,13 @@ type ExperimentMutationRepository interface {
 	UpdateExperimentDraft(ctx context.Context, experimentID uuid.UUID, input UpdateExperimentInput) error
 	UpdateExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string, startAt, endAt *time.Time) error
 	UpdateExperimentStatusWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, audit *ExperimentStatusTransitionAudit) error
+	UpdateExperimentAutomationPolicy(ctx context.Context, experimentID uuid.UUID, policy ExperimentAutomationPolicy) error
+}
+
+type ExperimentLockInput struct {
+	LockedUntil *time.Time
+	LockedBy    *uuid.UUID
+	LockReason  string
 }
 
 type InvalidExperimentStatusTransitionError struct {
@@ -133,6 +163,47 @@ func (s *ExperimentAdminService) TransitionExperimentStatus(ctx context.Context,
 
 func (s *ExperimentAdminService) TransitionExperimentStatusWithAudit(ctx context.Context, experimentID uuid.UUID, nextStatus string, audit *ExperimentStatusTransitionAudit) error {
 	return s.transitionExperimentStatus(ctx, experimentID, nextStatus, audit)
+}
+
+func (s *ExperimentAdminService) LockExperimentAutomation(ctx context.Context, experimentID uuid.UUID, input ExperimentLockInput) error {
+	experiment, err := s.repo.GetExperimentMutationState(ctx, experimentID)
+	if err != nil {
+		return err
+	}
+
+	policy := NormalizeExperimentAutomationPolicy(&experiment.AutomationPolicy)
+	policy.ManualOverride = input.LockedUntil == nil
+	policy.LockedUntil = nil
+	if input.LockedUntil != nil {
+		value := input.LockedUntil.UTC()
+		policy.LockedUntil = &value
+	}
+	policy.LockedBy = nil
+	if input.LockedBy != nil {
+		value := *input.LockedBy
+		policy.LockedBy = &value
+	}
+	policy.LockReason = nil
+	if trimmed := strings.TrimSpace(input.LockReason); trimmed != "" {
+		policy.LockReason = &trimmed
+	}
+
+	return s.repo.UpdateExperimentAutomationPolicy(ctx, experimentID, policy)
+}
+
+func (s *ExperimentAdminService) UnlockExperimentAutomation(ctx context.Context, experimentID uuid.UUID) error {
+	experiment, err := s.repo.GetExperimentMutationState(ctx, experimentID)
+	if err != nil {
+		return err
+	}
+
+	policy := NormalizeExperimentAutomationPolicy(&experiment.AutomationPolicy)
+	policy.ManualOverride = false
+	policy.LockedUntil = nil
+	policy.LockedBy = nil
+	policy.LockReason = nil
+
+	return s.repo.UpdateExperimentAutomationPolicy(ctx, experimentID, policy)
 }
 
 func (s *ExperimentAdminService) transitionExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string, audit *ExperimentStatusTransitionAudit) error {

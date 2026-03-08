@@ -264,6 +264,32 @@ func TestProcessConversion_RejectsNullConversionValue(t *testing.T) {
 	require.JSONEq(t, `{"error":"Invalid request body"}`, res.Body.String())
 }
 
+func TestProcessConversion_RejectsInvalidCurrencyCode(t *testing.T) {
+	t.Helper()
+
+	handler := NewBanditAdvancedHandler(nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/conversions", strings.NewReader(`{"transaction_id":"e3e70682-c209-4cac-629f-6fbed82c07cd","user_id":"e3e70682-c209-4cac-629f-6fbed82c07cd","conversion_value":0,"currency":"0"}`))
+	res := httptest.NewRecorder()
+
+	handler.ProcessConversion(res, req)
+
+	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
+	require.JSONEq(t, `{"error":"Invalid request body"}`, res.Body.String())
+}
+
+func TestProcessConversion_RejectsUnknownFields(t *testing.T) {
+	t.Helper()
+
+	handler := NewBanditAdvancedHandler(nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/conversions", strings.NewReader(`{"transaction_id":"e3e70682-c209-4cac-629f-6fbed82c07cd","user_id":"e3e70682-c209-4cac-629f-6fbed82c07cd","conversion_value":0,"currency":"USD","x-schemathesis-unknown-property":42}`))
+	res := httptest.NewRecorder()
+
+	handler.ProcessConversion(res, req)
+
+	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
+	require.JSONEq(t, `{"error":"Invalid request body"}`, res.Body.String())
+}
+
 func TestConvertCurrency_RejectsNullCurrency(t *testing.T) {
 	t.Helper()
 
@@ -288,6 +314,19 @@ func TestConvertCurrency_RejectsNullAmount(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
 	require.JSONEq(t, `{"error":"Invalid request body"}`, res.Body.String())
+}
+
+func TestExportWindowEvents_RejectsEmptyLimit(t *testing.T) {
+	t.Helper()
+
+	handler := NewBanditAdvancedHandler(nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodGet, "/v1/bandit/experiments/e3e70682-c209-4cac-629f-6fbed82c07cd/window/events?limit=", nil)
+	res := httptest.NewRecorder()
+
+	handler.ExportWindowEvents(res, req)
+
+	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
+	require.JSONEq(t, `{"error":"Invalid limit"}`, res.Body.String())
 }
 
 type assertAnError string

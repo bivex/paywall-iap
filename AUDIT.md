@@ -84,6 +84,14 @@
 | P3 | Dunning page product decision | либо делать отдельный config/editor экран, либо честно оставить её как operations mirror Revenue Ops |
 | P3 | Matomo dedicated analytics UX | embed через saved settings работает, но page-level KPI/config experience минимален |
 
+### Top-3 ближайших ticket'а (рекомендуемый порядок)
+
+| Порядок | Ticket | Почему сейчас |
+|---|---|---|
+| 1 | True builder workflow для `Experiment Studio` | это самый заметный truthful UX gap: metadata и lifecycle уже есть, но Studio всё ещё не собирает experiment как полноценный draft/builder workflow |
+| 2 | Persisted pricing tier ↔ arm linkage model | без этого tiers и arms остаются рядом, но не становятся одной доменной моделью; это блокирует честный experiment builder и rollout story |
+| 3 | Repository-backed bandit maintenance jobs | automation foundation уже есть, и следующий сильный backend шаг — убрать placeholder-логики из remaining maintenance paths |
+
 ## Concrete implementation checklist by file/path (top 3)
 
 ### 1) Experiment Studio builder / arm editor
@@ -117,19 +125,19 @@
 
 ## Какие backend-механизмы потребуются для автоматики
 
-Ниже — не «идеальный wish-list», а то, что реально понадобится, если доводить experiment/bandit/admin workflows до автоматического режима. Важно: часть базы уже есть — в проекте уже поднят `worker` на `asynq`, есть `Scheduler`, а также зарегистрированы bandit maintenance tasks. Но часть логики всё ещё placeholder-уровня и не даёт построить полноценную автоматику поверх UI.
+Ниже — не «идеальный wish-list», а то, что реально понадобится, если доводить experiment/bandit/admin workflows до автоматического режима. Важно: часть базы уже есть — в проекте уже поднят `worker` на `asynq`, есть `Scheduler`, persisted execution log/idempotency contract для scheduled automation jobs и lifecycle audit/history surface. Но часть bandit maintenance логики всё ещё placeholder-уровня и не даёт построить полноценную автоматику поверх UI.
 
 | Механизм | Что уже есть | Что ещё потребуется добить |
 |---|---|---|
-| Background worker + scheduler | уже есть `backend/cmd/worker/main.go`, `backend/internal/worker/tasks/tasks.go`, scheduled jobs на `asynq` | использовать этот же контур как основной execution layer для experiment automation вместо попыток делать автоматику прямо из HTTP handlers |
-| Experiment lifecycle reconciler | ручные transitions уже есть в `backend/internal/interfaces/http/handlers/admin_experiments.go` (`draft → running → paused/completed`) | нужен периодический job, который будет сканировать `ab_tests` и автоматически: запускать просроченные `draft`, завершать истекшие `running`, а при необходимости ставить safety-pause по правилам |
+| Background worker + scheduler | уже есть `backend/cmd/worker/main.go`, `backend/internal/worker/tasks/tasks.go`, scheduled jobs на `asynq`; experiment automation и maintenance уже реально идут через этот execution layer | дальше добивать не сам контур запуска, а observability, richer repair flows и production-grade maintenance internals |
+| Experiment lifecycle reconciler | ручные transitions уже вынесены в общий service/use-case слой, а периодический reconciler уже сканирует `ab_tests` и запускает auto-start / auto-complete | при необходимости следующим этапом добавлять safety-pause rules и более богатые guardrails, а не базовый reconciler с нуля |
 | Единый command/service layer для lifecycle | сейчас lifecycle в основном живёт в HTTP handler-логике | вынести transitions в domain/service слой, чтобы и manual UI actions, и cron/worker automation использовали один и тот же код с одинаковой валидацией переходов |
 | Persisted automation policy | сейчас у эксперимента есть status/algorithm/sample/confidence, но нет явной модели automation rules | нужна явная конфигурация: auto-start, auto-stop by end date, auto-complete by sample size/confidence, safety thresholds, manual override flags |
-| Очередь/джобы для bandit maintenance | scheduled maintenance уже регистрируется в `backend/internal/worker/tasks/currency_asynq.go` | довести jobs до реальной repository-backed логики: `process_expired_rewards`, `trim_windows`, `cleanup_old_context_data`, `sync_objective_stats` сейчас частично placeholder и не дают полной автоматической эксплуатации |
+| Очередь/джобы для bandit maintenance | scheduled maintenance уже регистрируется в `backend/internal/worker/tasks/currency_asynq.go`, проходит через persisted idempotency contract, а `RunMaintenance` уже реально обрабатывает expired rewards и currency refresh | довести оставшиеся maintenance paths до полной repository-backed логики: `trim_windows`, `cleanup_old_context_data`, `sync_objective_stats` и related stats maintenance всё ещё частично placeholder |
 | Immutable event / conversion log | assignments и агрегаты уже есть, но в `bandit_repository.go` у `SaveConversion` прямо стоит TODO про отдельную conversions table | для доверенной автоматики нужна нормальная event history таблица (assignments, impressions, conversions, revenue, delayed feedback resolution), чтобы решения не опирались только на агрегаты |
-| Idempotent job execution | текущие scheduled tasks уже запускаются через `asynq`, но для experiment automation это надо жёстко фиксировать | все auto-actions должны быть идемпотентны: повторный запуск job не должен второй раз завершать/паузить один и тот же эксперимент или повторно применять reward processing |
-| Audit trail для auto-actions | audit/logging в проекте есть в других областях, но для experiment lifecycle automation отдельного слоя пока не видно | нужно писать, кто и почему изменил статус: user action vs system job, rule name, thresholds, timestamp, previous/new state |
-| Reconciliation / repair jobs | есть maintenance scheduler для bandit/currency | нужен отдельный reconciler, который может чинить рассинхрон: пересчитать arm stats, objective stats, pending rewards, expired assignments, если realtime path или миграции что-то пропустили |
+| Idempotent job execution | scheduler-backed automation и maintenance jobs теперь используют persisted execution log с window-based idempotency key, claim/skip semantics и retry-after-failure | дальше развивать это как единый contract для новых scheduled paths, а не возвращаться к best-effort execution |
+| Audit trail для auto-actions | для experiment lifecycle automation уже есть отдельный audit layer: source/reason/transition/time, latest audit в summary payloads и full history endpoint/UI | при расширении автоматики сохранять тот же уровень прозрачности для новых decision paths, а не откатываться к «silent background changes» |
+| Reconciliation / repair jobs | есть explicit admin repair path: он делает assignment snapshot, создаёт missing `ab_test_arm_stats`, пересчитывает `winner_confidence` и обрабатывает expired pending rewards из persisted sources | до полноценного reconciler/scheduled repair job всё ещё не хватает фонового self-heal path для более широкого derived state (`objective stats`, expired assignments cleanup и т.д.) |
 | Experiment arm editing backend | create experiment с arms уже есть, edit существующего draft пока ограничен metadata-only update | для настоящего Studio builder понадобится persisted arm CRUD + server-side validation суммарных weight/control arm invariants |
 | Pricing tier linkage model | live pricing tiers уже есть, но truthful linkage tier ↔ arm пока отсутствует | если Studio должен автоматизировать pricing-experiment workflows, нужна отдельная persisted linkage model/table, а не просто соседние UI-блоки |
 | Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
@@ -211,22 +219,22 @@
 
 | Stage | Ticket | Приоритет | Статус | Что должно получиться |
 |---|---|---|---|---|
-| Stage 1 | Вынести experiment lifecycle в service/use-case слой | P1 | ✅ Done | ручные actions и будущая автоматика используют один и тот же transition engine, без дублирования логики в HTTP handlers |
-| Stage 1 | Persisted automation policy для `ab_tests` | P1 | ✅ Done | у эксперимента появляются сохраняемые правила auto-start / auto-stop / auto-complete / override |
-| Stage 1 | Idempotent contract для automation jobs | P1 | ✅ Done | scheduler-backed automation/maintenance jobs теперь используют persisted execution log с unique idempotency key, window-based claim/skip semantics и retry-after-failure contract |
-| Stage 1 | Audit trail для system-triggered lifecycle changes | P1 | ✅ Done | видно, что изменение статуса сделал именно system job, по какой rule и когда |
-| Stage 1 | Observability для automation worker path | P2 | 🟡 Partial | worker/logging уже есть, но появляются отдельные метрики/alerts по failed jobs, stale experiments и skipped automation runs |
-| Stage 2 | Scheduled experiment reconciler job | P1 | ✅ Done | периодический worker проходится по `ab_tests` и применяет automation policy |
-| Stage 2 | Auto-start / auto-complete rules | P1 | ✅ Done | experiments автоматически стартуют/завершаются по времени и/или threshold rules |
-| Stage 2 | Manual override / lock semantics | P1 | 🟡 Partial | `manual_override` уже уважает scheduler, но richer lock semantics (`locked_until`, operator lock ownership) всё ещё нет |
-| Stage 2 | Reconciliation / repair job для derived experiment state | P2 | ⚪ Not started | можно безопасно пересчитать assignments/stats/pending state после сбоев или пропусков |
-| Stage 2 | Admin-visible reason codes для auto-transitions | P2 | ✅ Done | в admin payload/UI видно, почему и каким правилом система перевела эксперимент в новый статус |
-| Stage 2 | Full lifecycle audit history UI/API surface | P2 | ✅ Done | доступен отдельный history endpoint и truthful lifecycle timeline в Studio с полным audit trail по experiment |
-| Stage 3 | Repository-backed bandit maintenance jobs | P1 | 🟡 Partial | scheduled bandit maintenance уже зарегистрирован, но placeholder-логика заменена на реальную обработку rewards/windows/objective stats |
-| Stage 3 | Immutable conversions / decisions log | P1 | ⚪ Not started | backend хранит полную историю assign/impression/conversion/reward-resolution событий для trustworthy automation |
-| Stage 3 | Winner recommendation policy | P2 | ⚪ Not started | система сначала умеет безопасно рекомендовать winner, не делая мгновенный auto-rollout |
-| Stage 3 | Safe auto-rollout controls | P2 | ⚪ Not started | после recommendation и guards появляются controlled auto-promote / auto-reweight flows |
-| Stage 3 | Persisted pricing tier ↔ arm linkage model | P1 | ⚪ Not started | pricing tiers становятся реальной частью experiment/bandit domain модели, а не только соседним CRUD UI |
+| Stage 1 | Вынести experiment lifecycle в service/use-case слой | P1 | ✅ Done | manual actions и scheduler automation используют единый transition engine без дублирования логики в HTTP handlers |
+| Stage 1 | Persisted automation policy для `ab_tests` | P1 | ✅ Done | experiment domain хранит persisted правила auto-start / auto-complete / override и связанные thresholds |
+| Stage 1 | Idempotent contract для automation jobs | P1 | ✅ Done | scheduler-backed automation/maintenance jobs используют persisted execution log с unique idempotency key, window-based claim/skip semantics и retry-after-failure |
+| Stage 1 | Audit trail для system-triggered lifecycle changes | P1 | ✅ Done | lifecycle changes прозрачно фиксируют source, reason, transition и timestamp для system-triggered paths |
+| Stage 1 | Observability для automation worker path | P2 | 🟡 Partial | structured worker logs и persisted job-run log уже есть, но отдельных метрик, dashboards и alerts по failed/skipped/stale automation runs пока нет |
+| Stage 2 | Scheduled experiment reconciler job | P1 | ✅ Done | периодический worker scan-ит `ab_tests` и применяет automation policy через общий lifecycle service |
+| Stage 2 | Auto-start / auto-complete rules | P1 | ✅ Done | experiments автоматически стартуют и завершаются по времени, sample-size и confidence-driven rules |
+| Stage 2 | Manual override / lock semantics | P1 | ✅ Done | persisted `automation_policy` теперь поддерживает `manual_override`, `locked_until`, `locked_by`, `lock_reason`, отдельные admin `lock/unlock` flows и reconciler уважает как explicit manual lock, так и time-bound lock window |
+| Stage 2 | Reconciliation / repair job для derived experiment state | P2 | 🟡 Partial | есть explicit admin `repair` path: он делает assignment snapshot, создаёт missing arm-stats rows, пересчитывает `winner_confidence` и обрабатывает expired pending rewards из persisted state, но это пока не scheduled/background reconciler и не покрывает весь derived surface |
+| Stage 2 | Admin-visible reason codes для auto-transitions | P2 | ✅ Done | admin payload/UI показывает, каким rule и по какой причине система перевела experiment в новый status |
+| Stage 2 | Full lifecycle audit history UI/API surface | P2 | ✅ Done | admin API и Studio UI отдают полный newest-first lifecycle audit trail по experiment без mock-данных |
+| Stage 3 | Repository-backed bandit maintenance jobs | P1 | 🟡 Partial | scheduler wiring и idempotent execution уже есть, а `RunMaintenance` реально закрывает expired rewards/currency refresh, но `trim_windows`, context cleanup и objective stats maintenance ещё не production-grade |
+| Stage 3 | Immutable conversions / decisions log | P1 | ⚪ Not started | trustworthy automation требует отдельной immutable history для assign/impression/conversion/reward-resolution и decision events |
+| Stage 3 | Winner recommendation policy | P2 | ⚪ Not started | система должна сначала уметь безопасно рекомендовать winner/operator action без мгновенного auto-rollout |
+| Stage 3 | Safe auto-rollout controls | P2 | ⚪ Not started | после recommendation layer нужны guarded auto-promote / auto-reweight flows с явными safety controls |
+| Stage 3 | Persisted pricing tier ↔ arm linkage model | P1 | ⚪ Not started | pricing tiers должны стать реальной частью experiment/bandit domain модели, а не только соседним CRUD UI |
 
 ### Что уже можно считать опорой, а не отдельными backlog-задачами
 
@@ -234,7 +242,7 @@
 |---|---|---|
 | `asynq` worker + scheduler | ✅ Done | базовый execution layer уже есть в проекте |
 | Ручные experiment lifecycle endpoints | ✅ Done | `pause/resume/complete` уже работают и пригодятся как референс для service extraction |
-| Bandit maintenance scheduling hooks | 🟡 Partial | scheduler wiring есть, но сами jobs ещё не везде production-grade |
+| Bandit maintenance scheduling hooks | 🟡 Partial | scheduler wiring и persisted idempotency уже есть, но не все maintenance handlers ещё production-grade и repository-backed |
 | Admin experiment metadata update | ✅ Done | draft metadata уже можно сохранять, это полезная база для будущего automation policy UI |
 
 ## Cross-cutting замечания

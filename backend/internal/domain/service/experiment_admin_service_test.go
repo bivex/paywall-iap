@@ -18,6 +18,7 @@ type stubExperimentMutationRepository struct {
 	updatedStatusStart *time.Time
 	updatedStatusEnd   *time.Time
 	updatedStatusAudit *ExperimentStatusTransitionAudit
+	updatedPolicy      *ExperimentAutomationPolicy
 }
 
 func (s *stubExperimentMutationRepository) GetExperimentMutationState(context.Context, uuid.UUID) (*ExperimentMutationState, error) {
@@ -44,6 +45,11 @@ func (s *stubExperimentMutationRepository) UpdateExperimentStatusWithAudit(_ con
 	s.updatedStatusStart = startAt
 	s.updatedStatusEnd = endAt
 	s.updatedStatusAudit = audit
+	return nil
+}
+
+func (s *stubExperimentMutationRepository) UpdateExperimentAutomationPolicy(_ context.Context, _ uuid.UUID, policy ExperimentAutomationPolicy) error {
+	s.updatedPolicy = &policy
 	return nil
 }
 
@@ -126,6 +132,46 @@ func TestExperimentAdminService(t *testing.T) {
 		err := svc.TransitionExperimentStatus(ctx, experimentID, "running")
 
 		require.ErrorIs(t, err, ErrExperimentNotFound)
+	})
+
+	t.Run("LockExperimentAutomation stores manual override metadata", func(t *testing.T) {
+		actorID := uuid.New()
+		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "running", AutomationPolicy: DefaultExperimentAutomationPolicy()}}
+		svc := NewExperimentAdminService(repo)
+
+		err := svc.LockExperimentAutomation(ctx, experimentID, ExperimentLockInput{LockedBy: &actorID, LockReason: "Freeze automation"})
+
+		require.NoError(t, err)
+		require.NotNil(t, repo.updatedPolicy)
+		assert.True(t, repo.updatedPolicy.ManualOverride)
+		assert.Nil(t, repo.updatedPolicy.LockedUntil)
+		require.NotNil(t, repo.updatedPolicy.LockedBy)
+		assert.Equal(t, actorID, *repo.updatedPolicy.LockedBy)
+		require.NotNil(t, repo.updatedPolicy.LockReason)
+		assert.Equal(t, "Freeze automation", *repo.updatedPolicy.LockReason)
+	})
+
+	t.Run("UnlockExperimentAutomation clears lock metadata", func(t *testing.T) {
+		lockedUntil := time.Date(2026, 3, 9, 8, 0, 0, 0, time.UTC)
+		actorID := uuid.New()
+		reason := "Freeze automation"
+		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "running", AutomationPolicy: ExperimentAutomationPolicy{
+			Enabled:        true,
+			ManualOverride: true,
+			LockedUntil:    &lockedUntil,
+			LockedBy:       &actorID,
+			LockReason:     &reason,
+		}}}
+		svc := NewExperimentAdminService(repo)
+
+		err := svc.UnlockExperimentAutomation(ctx, experimentID)
+
+		require.NoError(t, err)
+		require.NotNil(t, repo.updatedPolicy)
+		assert.False(t, repo.updatedPolicy.ManualOverride)
+		assert.Nil(t, repo.updatedPolicy.LockedUntil)
+		assert.Nil(t, repo.updatedPolicy.LockedBy)
+		assert.Nil(t, repo.updatedPolicy.LockReason)
 	})
 
 	t.Run("TransitionExperimentStatusWithAudit forwards audit metadata", func(t *testing.T) {

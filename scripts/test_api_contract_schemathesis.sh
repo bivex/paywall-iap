@@ -12,6 +12,8 @@ SCHEMATHESIS_AUTH_TOKEN="${SCHEMATHESIS_AUTH_TOKEN:-}"
 SCHEMATHESIS_HEADER="${SCHEMATHESIS_HEADER:-}"
 SCHEMATHESIS_PHASES="${SCHEMATHESIS_PHASES:-examples,coverage,fuzzing}"
 SKIP_HEALTHCHECK="${SKIP_HEALTHCHECK:-0}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-admin@paywall.local}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin12345}"
 
 if [[ -z "$SCHEMA_URL" && -z "$SCHEMA_PATH" ]]; then
   SCHEMA_URL="$API_BASE/openapi.yaml"
@@ -79,6 +81,36 @@ detect_base_url_flag() {
   fi
 }
 
+try_fetch_admin_token() {
+  command -v curl >/dev/null 2>&1 || return 0
+  command -v python3 >/dev/null 2>&1 || return 0
+
+  local login_payload response token
+  login_payload=$(printf '{"email":"%s","password":"%s"}' "$ADMIN_EMAIL" "$ADMIN_PASSWORD")
+  response="$(curl -sS -X POST "$API_BASE/v1/admin/auth/login" -H 'Content-Type: application/json' -d "$login_payload" || true)"
+
+  token="$(RESPONSE_JSON="$response" python3 - <<'PY'
+import json, os
+raw = os.environ.get('RESPONSE_JSON', '')
+try:
+    payload = json.loads(raw)
+except Exception:
+    print('')
+    raise SystemExit(0)
+data = payload.get('data') or {}
+token = data.get('access_token') or payload.get('access_token') or ''
+print(token)
+PY
+)"
+
+  if [[ -n "$token" ]]; then
+    SCHEMATHESIS_AUTH_TOKEN="$token"
+    say "Using admin bearer token obtained via /v1/admin/auth/login"
+  else
+    say "Could not obtain admin bearer token automatically; running without explicit auth header"
+  fi
+}
+
 main() {
   local schema_target
   local -a cmd
@@ -95,6 +127,10 @@ main() {
     command -v curl >/dev/null 2>&1 || fail "Missing required command: curl"
     say "Checking API health"
     curl -fsS "$API_BASE/health" >/dev/null || fail "Health check failed for $API_BASE/health"
+  fi
+
+  if [[ -z "$SCHEMATHESIS_AUTH_TOKEN" && -z "$SCHEMATHESIS_HEADER" ]]; then
+    try_fetch_admin_token
   fi
 
   say "Running Schemathesis"

@@ -1,22 +1,25 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
+	"io"
+	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/dto"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
+	"github.com/gin-gonic/gin"
 )
 
 // AuthHandler handles authentication endpoints
 type AuthHandler struct {
-	registerCmd      *command.RegisterCommand
-	adminLoginCmd    *command.AdminLoginCommand
-	jwtMiddleware    *middleware.JWTMiddleware
+	registerCmd   *command.RegisterCommand
+	adminLoginCmd *command.AdminLoginCommand
+	jwtMiddleware *middleware.JWTMiddleware
 }
 
 // NewAuthHandler creates a new auth handler
@@ -139,19 +142,19 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 // @Failure 401 {object} response.ErrorResponse
 // @Router /admin/auth/login [post]
 func (h *AuthHandler) AdminLogin(c *gin.Context) {
-var req dto.AdminLoginRequest
-if err := c.ShouldBindJSON(&req); err != nil {
-response.BadRequest(c, err.Error())
-return
-}
+	var req dto.AdminLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
 
-resp, err := h.adminLoginCmd.Execute(c.Request.Context(), &req)
-if err != nil {
-response.Unauthorized(c, err.Error())
-return
-}
+	resp, err := h.adminLoginCmd.Execute(c.Request.Context(), &req)
+	if err != nil {
+		response.Unauthorized(c, err.Error())
+		return
+	}
 
-response.OK(c, resp)
+	response.OK(c, resp)
 }
 
 // AdminLogout revokes the provided refresh token.
@@ -159,30 +162,93 @@ response.OK(c, resp)
 // @Tags admin-auth
 // @Accept json
 // @Produce json
-// @Param request body dto.AdminLogoutRequest true "Logout request"
-// @Security BearerAuth
 // @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} response.ErrorResponse
 // @Failure 401 {object} response.ErrorResponse
 // @Router /admin/auth/logout [post]
 func (h *AuthHandler) AdminLogout(c *gin.Context) {
-var req dto.AdminLogoutRequest
-if err := c.ShouldBindJSON(&req); err != nil {
-response.BadRequest(c, err.Error())
-return
+	var req dto.AdminLogoutRequest
+	hasRefreshTokenField := false
+	if c.Request.Body != nil {
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			response.BadRequest(c, "Failed to read request body")
+			return
+		}
+		if strings.TrimSpace(string(body)) != "" {
+			if strings.TrimSpace(string(body)) == "null" {
+				response.BadRequest(c, "Invalid request body")
+				return
+			}
+
+			var raw map[string]json.RawMessage
+			if err := json.Unmarshal(body, &raw); err != nil {
+				response.BadRequest(c, "Invalid request body")
+				return
+			}
+			if rawToken, ok := raw["refresh_token"]; ok {
+				hasRefreshTokenField = true
+				if strings.TrimSpace(string(rawToken)) == "null" {
+					response.BadRequest(c, "Invalid request body")
+					return
+				}
+				if err := json.Unmarshal(rawToken, &req.RefreshToken); err != nil {
+					response.BadRequest(c, "Invalid request body")
+					return
+				}
+				if strings.TrimSpace(req.RefreshToken) == "" {
+					response.BadRequest(c, "Invalid request body")
+					return
+				}
+			}
+		}
+	}
+
+	ctx := c.Request.Context()
+	hasAuthHeader := false
+	if authHeader := strings.TrimSpace(c.GetHeader("Authorization")); authHeader != "" {
+		hasAuthHeader = true
+		tokenString, ok := bearerTokenFromHeader(authHeader)
+		if !ok {
+			response.Unauthorized(c, "Invalid authorization header format")
+			return
+		}
+
+		claims, err := h.jwtMiddleware.ParseToken(tokenString)
+		if err != nil {
+			response.Unauthorized(c, "Invalid token")
+			return
+		}
+
+		if remainingTTL := time.Until(claims.ExpiresAt.Time); remainingTTL > 0 {
+			_ = h.jwtMiddleware.RevokeToken(ctx, claims.JTI, remainingTTL)
+		}
+	}
+
+	if !hasAuthHeader && !hasRefreshTokenField {
+		response.Unauthorized(c, "Missing authorization or refresh_token")
+		return
+	}
+
+	if hasRefreshTokenField {
+		claims, err := h.jwtMiddleware.ParseToken(req.RefreshToken)
+		if err != nil {
+			response.Unauthorized(c, "Invalid refresh token")
+			return
+		}
+
+		if remainingTTL := time.Until(claims.ExpiresAt.Time); remainingTTL > 0 {
+			_ = h.jwtMiddleware.RevokeToken(ctx, claims.JTI, remainingTTL)
+		}
+	}
+
+	response.OK(c, gin.H{"message": "logged out"})
 }
 
-ctx := c.Request.Context()
-
-claims, err := h.jwtMiddleware.ParseToken(req.RefreshToken)
-if err != nil {
-response.Unauthorized(c, "Invalid refresh token")
-return
-}
-
-remainingTTL := time.Until(claims.ExpiresAt.Time)
-if remainingTTL > 0 {
-_ = h.jwtMiddleware.RevokeToken(ctx, claims.JTI, remainingTTL)
-}
-
-response.OK(c, gin.H{"message": "logged out"})
+func bearerTokenFromHeader(authHeader string) (string, bool) {
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || parts[0] != "Bearer" || strings.TrimSpace(parts[1]) == "" {
+		return "", false
+	}
+	return parts[1], true
 }

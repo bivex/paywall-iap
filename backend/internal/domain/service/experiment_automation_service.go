@@ -94,7 +94,7 @@ type experimentAutomationDecision struct {
 }
 
 func (r *ExperimentAutomationReconciler) nextDecision(state ExperimentAutomationState, now time.Time) experimentAutomationDecision {
-	if !state.AutomationPolicy.Enabled || state.AutomationPolicy.ManualOverride {
+	if !state.AutomationPolicy.Enabled || state.AutomationPolicy.ManualOverride || state.AutomationPolicy.HasActiveLock(now) {
 		return experimentAutomationDecision{}
 	}
 
