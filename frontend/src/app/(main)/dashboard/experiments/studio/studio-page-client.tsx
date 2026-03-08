@@ -51,6 +51,7 @@ import {
   getExperimentLifecycleSourceKey,
 } from "@/lib/experiments";
 import type { PricingTier } from "@/lib/pricing-tiers";
+import { formatAdminDateTime as formatDate, toDateTimeLocalInputValue } from "@/lib/time";
 
 async function fetchStudioJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });
@@ -88,16 +89,6 @@ function endpointClass(ok: boolean) {
   return ok ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
 }
 
-function formatDate(value: string | null) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
 function formatRevenue(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -115,14 +106,6 @@ function formatPercent(value: number | null | undefined, digits = 1) {
 function formatPercentNumber(value: number | null | undefined, digits = 1) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";
   return `${value.toFixed(digits)}%`;
-}
-
-function toDatetimeLocalValue(value: string | null | undefined) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
 }
 
 function hasActiveTimedLock(value: string | null | undefined) {
@@ -172,14 +155,6 @@ type DraftMetadataFormValues = {
   end_at: string;
 };
 
-function toDateTimeLocalValue(value: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
 function buildDraftMetadataForm(experiment: ExperimentSummary): DraftMetadataFormValues {
   return {
     name: experiment.name,
@@ -188,8 +163,8 @@ function buildDraftMetadataForm(experiment: ExperimentSummary): DraftMetadataFor
     is_bandit: experiment.is_bandit,
     min_sample_size: experiment.min_sample_size.toString(),
     confidence_threshold_percent: experiment.confidence_threshold_percent.toString(),
-    start_at: toDateTimeLocalValue(experiment.start_at),
-    end_at: toDateTimeLocalValue(experiment.end_at),
+    start_at: toDateTimeLocalInputValue(experiment.start_at),
+    end_at: toDateTimeLocalInputValue(experiment.end_at),
   };
 }
 
@@ -300,7 +275,7 @@ export function StudioPageClient({
 
   useEffect(() => {
     setLockReason(selectedExperiment?.automation_policy?.lock_reason ?? "");
-    setLockUntil(toDatetimeLocalValue(selectedExperiment?.automation_policy?.locked_until));
+    setLockUntil(toDateTimeLocalInputValue(selectedExperiment?.automation_policy?.locked_until));
   }, [selectedExperiment?.automation_policy?.lock_reason, selectedExperiment?.automation_policy?.locked_until]);
 
   const draftArmValidationCode = draftArms ? validateDraftExperimentArms(draftArms) : null;
@@ -652,7 +627,7 @@ export function StudioPageClient({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {selectedExperiment.status === "draft" && draftMetadata ? (
+                  {selectedExperiment.status === "draft" && draftMetadata ? (
                     <form className="space-y-4" onSubmit={(event) => void handleDraftSubmit(event)}>
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-1">
@@ -1080,12 +1055,19 @@ export function StudioPageClient({
                                 <Badge variant={arm.is_control ? "default" : "outline"}>
                                   {arm.is_control ? t("arms.controlBadge") : t("arms.variantBadge")}
                                 </Badge>
-                                <Badge variant="outline">{arm.id ? t("arms.persistedBadge") : t("arms.newBadge")}</Badge>
+                                <Badge variant="outline">
+                                  {arm.id ? t("arms.persistedBadge") : t("arms.newBadge")}
+                                </Badge>
                               </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {!arm.is_control ? (
-                                <Button type="button" size="sm" variant="outline" onClick={() => setControlArm(arm.client_id)}>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setControlArm(arm.client_id)}
+                                >
                                   {t("arms.setControl")}
                                 </Button>
                               ) : null}
@@ -1153,7 +1135,9 @@ export function StudioPageClient({
                                 inputMode="decimal"
                                 placeholder={t("arms.weightPlaceholder")}
                                 value={arm.traffic_weight}
-                                onChange={(event) => updateDraftArm(arm.client_id, { traffic_weight: event.target.value })}
+                                onChange={(event) =>
+                                  updateDraftArm(arm.client_id, { traffic_weight: event.target.value })
+                                }
                               />
                             </div>
                           </div>

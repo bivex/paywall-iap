@@ -25,9 +25,9 @@
 | Platform Settings | `getPlatformSettings()` → `/v1/admin/settings` | `updatePlatformSettings()`, `changeAdminPasswordAction()` | ✅ Работает | save/password wiring есть и уже давно не placeholder |
 | Dunning | `getRevenueOps(1)` + `DunningQueueCard` | page-local filters/search в query state, без backend mutation | 🟡 Частично | это живой экран очереди с операторскими фильтрами, но отдельного config/editor flow на странице нет |
 | Winback | `getWinbackCampaigns()` | `launchWinbackCampaignAction()`, `deactivateWinbackCampaignAction()` | 🟡 Частично | список, запуск и деактивация кампании реальные; полноценного edit/update flow для существующих кампаний по-прежнему нет |
-| Pricing Tiers | `getPricingTiers()` | `createPricingTierAction()`, `updatePricingTierAction()`, `activatePricingTierAction()`, `deactivatePricingTierAction()` | ✅ Работает | standalone CRUD wiring подключён; тот же live manager встроен в Studio, но linkage tier↔experiment arms всё ещё нет |
+| Pricing Tiers | `getPricingTiers()` | `createPricingTierAction()`, `updatePricingTierAction()`, `activatePricingTierAction()`, `deactivatePricingTierAction()` | ✅ Работает | standalone CRUD wiring подключён; тот же live manager встроен в Studio, а draft arm builder теперь использует реальный tier↔experiment arm linkage |
 | A/B Tests | `getExperiments()` | `createExperimentAction()`, `pauseExperimentAction()`, `resumeExperimentAction()`, `completeExperimentAction()` | 🟡 Частично | список/создание/lifecycle реальные; всё ещё нет inline edit для существующих экспериментов, и остаётся hydration mismatch на timestamp render |
-| Experiment Studio | `getStudioDashboardFromCookies()` + `/api/admin/studio/*` | `updateExperimentAction()`, `pauseExperimentAction()`, `resumeExperimentAction()`, `completeExperimentAction()`, embedded `PricingTierManager` actions | 🟡 Частично | metadata edit, lifecycle controls и live pricing manager уже есть; но полноценного arm editor / draft builder / явного tier-per-arm workflow пока нет |
+| Experiment Studio | `getStudioDashboardFromCookies()` + `/api/admin/studio/*` | `updateExperimentAction()`, `pauseExperimentAction()`, `resumeExperimentAction()`, `completeExperimentAction()`, embedded `PricingTierManager` actions | 🟡 Частично | truthful draft builder уже есть: metadata edit, full arm-set editing, tier-per-arm linkage, lifecycle controls и live pricing manager; дальше остаётся в основном UX/polish поверх этого persisted contract |
 | Bandit Model | `getBanditDashboardFromCookies()` + `/api/admin/bandit/*` | `updateExperimentAction()` (draft config), `pauseExperimentAction()`, `resumeExperimentAction()`, `completeExperimentAction()` | 🟡 Частично | live stats + lifecycle + draft config edit уже есть; runtime-specific bandit knobs/workbench beyond persisted experiment fields всё ещё отсутствуют |
 | Delayed Feedback | `getDelayedFeedbackDashboardFromCookies()` + `/api/admin/delayed-feedback/*` | manual POST ingest через `/api/admin/delayed-feedback/conversions`, pending lookups via `/api/admin/delayed-feedback/pending/*` и `/api/admin/delayed-feedback/users/*` | 🟡 Частично | это уже не mock: есть probes, ручной conversion ingest и lookup pending rewards; editor/questionnaire management не реализован |
 | Sliding Window | `getSlidingWindowDashboardFromCookies()` + `/api/admin/sliding-window/*` | trim через `/api/admin/sliding-window/trim`, events inspect/export via `/api/admin/sliding-window/events` | 🟡 Частично | live read-path, trim и export событий уже есть; полноценного config/reset management beyond trim нет |
@@ -57,14 +57,14 @@
 | Что добили | Что именно теперь есть |
 |---|---|
 | A/B Tests lifecycle | реальные `Start/Pause/Resume/Complete` actions на странице и backend lifecycle endpoints под них |
-| Experiment Studio controls | lifecycle controls для выбранного эксперимента, draft metadata edit и встраивание live `PricingTierManager` |
+| Experiment Studio controls | lifecycle controls для выбранного эксперимента, truthful draft arm builder/edit/save flow и встраивание live `PricingTierManager` |
 | Bandit Model controls | lifecycle controls и truthful draft config edit для сохранённых полей эксперимента |
 | Winback management | добавлена реальная деактивация существующих winback campaigns, а не только launch |
 | Dunning usability | добавлены операторские filters/search вместо полностью статичного standalone экрана |
 | Delayed Feedback tooling | lookup pending rewards по reward id и user id через реальные admin proxy routes |
 | Sliding Window tooling | inspect/export live window events через реальный `/api/admin/sliding-window/events` |
 | Multi-Objective config wiring | форма больше не стартует из hardcoded defaults — грузит и сохраняет persisted config |
-| Studio / pricing truthfulness | pricing tiers редактируются из Studio тем же live CRUD, что и на standalone pricing page |
+| Studio / pricing truthfulness | pricing tiers редактируются из Studio тем же live CRUD, а draft arm builder умеет реальный arm→tier linkage |
 | Cold-start local data | есть `scripts/seed_all_test_data.sh`, интеграция в `run_dev.sh`, и детерминированные experiment/bandit fixtures для непустых admin pages |
 | UI polish | в A/B Tests исправлено перекрытие long description text в таблице; Studio hydration mismatch по датам уже был добит ранее |
 | Experiment automation foundation | backend теперь имеет единый lifecycle service layer, persisted `automation_policy`, scheduled reconciler, transactional lifecycle audit/idempotency, `latest_lifecycle_audit` и full lifecycle history surface в admin payloads/UI |
@@ -74,10 +74,9 @@
 
 | Приоритет | Что добивать | Почему |
 |---|---|---|
-| P0 | True builder workflow для `Experiment Studio` | backend уже почти готов: draft metadata, lifecycle, persisted arm↔tier linkage и full draft arm-set update есть; главный блокер теперь — добить Studio UI/editor поверх этого truthful contract |
-| P1 | Truthful linkage pricing tiers ↔ experiment arms | backend linkage уже есть (`ab_test_arms.pricing_tier_id`, create/update/read path), но Studio ещё не использует его как полноценный arm→tier workflow |
-| P1 | `A/B Tests` polish: inline edit + hydration-safe timestamps | lifecycle уже добит, но редактирование существующих экспериментов и SSR/client timestamp mismatch ещё торчат |
-| P2 | Runtime-specific config UX для `Bandit Model` | draft-only persisted config edit есть, но не хватает более глубокого runtime workbench поверх bandit metrics |
+| P0 | `A/B Tests` polish: inline edit + hydration-safe timestamps | lifecycle уже добит, но редактирование существующих экспериментов и SSR/client timestamp mismatch ещё торчат |
+| P1 | Guarded rollout / recommendation UX | recommendation audit/history уже есть, но richer operator surfacing и safe rollout controls ещё не начаты |
+| P1 | Runtime-specific config UX для `Bandit Model` | draft-only persisted config edit есть, но не хватает более глубокого runtime workbench поверх bandit metrics |
 | P2 | Winback management beyond launch/deactivate | launch и deactivate работают, но нет полноценного update/edit flow кампаний |
 | P2 | Sliding Window config/reset UX | trim и export уже есть, но экран не даёт полноценного runtime/config management |
 | P2 | Multi-Objective optimizer workbench | persisted config и score inspection есть, но это ещё не полный decision cockpit |
@@ -88,33 +87,13 @@
 
 | Порядок | Ticket | Почему сейчас |
 |---|---|---|
-| 1 | True builder workflow для `Experiment Studio` | backend contract уже достаточно truthful; теперь самый заметный gap — UI/editor для draft arms и arm→tier orchestration |
-| 2 | `A/B Tests` polish: inline edit + hydration-safe timestamps | после builder workflow это остаётся самым заметным UX debt на experiment surfaces |
-| 3 | Guarded rollout/recommendation UX | recommendation audit/history уже есть, но richer operator surfacing и safe rollout controls ещё не начаты |
+| 1 | `A/B Tests` polish: inline edit + hydration-safe timestamps | после закрытия Studio builder это остаётся самым заметным UX debt на experiment surfaces |
+| 2 | Guarded rollout/recommendation UX | recommendation audit/history уже есть, но richer operator surfacing и safe rollout controls ещё не начаты |
+| 3 | Runtime-specific config UX для `Bandit Model` | Bandit page уже truthful по persisted config, но не хватает более глубокого runtime workbench поверх текущих метрик |
 
 ## Concrete implementation checklist by file/path (top 3)
 
-### 1) Experiment Studio builder / arm editor
-
-| File/path | Checklist |
-|---|---|
-| `frontend/src/app/(main)/dashboard/experiments/studio/studio-page-client.tsx` | добавить truthful arm editor для draft experiments: create/remove/relabel arms, editable weights/descriptions, clear save/apply UX |
-| `frontend/src/lib/experiment-studio.ts` | расширить types/validation под editable arm payload, а не только metadata form state |
-| `frontend/src/actions/experiments.ts` | если backend позволит, добавить server actions для arm create/update/delete без изобретения отдельной модели |
-| `backend/internal/interfaces/http/handlers/admin_experiments.go` | расширить существующий draft update contract до полного arm-set edit (add/remove/relabel/reweight/link) и держать его основой для Studio builder |
-| `backend/tests/integration/admin_experiments_test.go` | покрыть draft arm-edit сценарии и защиту от некорректных weight/status комбинаций |
-
-### 2) Pricing tier linkage to experiments
-
-| File/path | Checklist |
-|---|---|
-| `backend/internal/domain/*` + `backend/internal/infrastructure/db/*` | определить, есть ли truthful место для persisted связи arm ↔ pricing tier; если нет — сначала ввести явную модель/таблицу вместо UI-притворства |
-| `backend/internal/interfaces/http/handlers/admin_experiments.go` | отдать linkage в admin payload, если доменная связь будет добавлена |
-| `frontend/src/lib/server/studio-admin.ts` | вернуть linkage в enriched Studio payload рядом с arms/pricing catalogue |
-| `frontend/src/app/(main)/dashboard/experiments/studio/studio-page-client.tsx` | показывать/редактировать реальное сопоставление arm→pricing tier, а не просто два соседних независимых блока |
-| `frontend/src/components/admin/pricing-tier-manager.tsx` | при необходимости поддержать режим pick/link, а не только standalone CRUD |
-
-### 3) A/B Tests polish and remaining truthfulness gaps
+### 1) A/B Tests polish and edit UX
 
 | File/path | Checklist |
 |---|---|
@@ -122,6 +101,24 @@
 | `frontend/src/lib/experiments.ts` | при необходимости расширить UI types под richer edit state/result |
 | `frontend/src/actions/experiments.ts` | переиспользовать существующий update action для overview-page editing, не разводя дублирующий mutation слой |
 | `frontend/src/lib/time.ts` / shared date helpers | вынести единый hydration-safe форматтер дат, чтобы не ловить повторно SSR/client mismatch на experiment pages |
+
+### 2) Guarded rollout / recommendation UX
+
+| File/path | Checklist |
+|---|---|
+| `frontend/src/app/(main)/dashboard/experiments/bandit/bandit-page-client.tsx` | показать recommendation history/guards/operator-safe next actions поверх уже существующего recommendation layer |
+| `frontend/src/app/(main)/dashboard/experiments/studio/studio-page-client.tsx` | surfacing safe rollout guidance и richer recommendation context рядом с lifecycle/repair controls |
+| `backend/internal/interfaces/http/handlers/admin_bandit.go` + related service layer | отдать более богатый recommendation payload/operator affordances без смешивания с auto-rollout |
+| `backend/tests/integration/*bandit*` | покрыть recommendation history/guard semantics и operator-safe responses |
+
+### 3) Bandit Model runtime workbench
+
+| File/path | Checklist |
+|---|---|
+| `frontend/src/app/(main)/dashboard/experiments/bandit/bandit-page-client.tsx` | добавить richer runtime workbench поверх уже имеющихся metrics/probabilities/config views |
+| `frontend/src/lib/bandit.ts` | при необходимости расширить UI types под richer runtime/recommendation payload |
+| `frontend/src/lib/server/bandit-admin.ts` | вернуть дополнительные truthful runtime fields, если они уже существуют в backend contract |
+| `backend/internal/interfaces/http/handlers/admin_bandit.go` | безопасно расширять только реально существующие runtime/config surfaces, не выдумывая hidden knobs |
 
 ## Какие backend-механизмы потребуются для автоматики
 
@@ -138,8 +135,8 @@
 | Idempotent job execution | scheduler-backed automation и maintenance jobs теперь используют persisted execution log с window-based idempotency key, claim/skip semantics и retry-after-failure | дальше развивать это как единый contract для новых scheduled paths, а не возвращаться к best-effort execution |
 | Audit trail для auto-actions | для experiment lifecycle automation уже есть отдельный audit layer: source/reason/transition/time, latest audit в summary payloads и full history endpoint/UI | при расширении автоматики сохранять тот же уровень прозрачности для новых decision paths, а не откатываться к «silent background changes» |
 | Reconciliation / repair jobs | есть explicit admin repair path и scheduled background repair reconciler на `asynq` с window-idempotent execution log; explicit repair теперь делает assignment snapshot, создаёт missing `ab_test_arm_stats`, синхронизирует per-experiment `objective stats`, пересчитывает `winner_confidence` и обрабатывает expired pending rewards, а maintenance layer отдельно чистит stale context/expired assignments и даёт targeted operator scopes для этих cleanup paths | coverage автоматики всё ещё не полная: следующий gap уже больше про richer recommendation/decision/event surfaces, чем про базовый cleanup plumbing |
-| Experiment arm editing backend | draft experiment update теперь умеет persist full arm-set changes через существующий `PUT /v1/admin/experiments/:id`: add/remove/relabel/reweight arms и обновлять `pricing_tier_id` вместе с metadata | дальше добить Studio UI/editor и save/apply UX поверх этого contract |
-| Pricing tier linkage model | live pricing tiers уже truthfully связаны с arms через `ab_test_arms.pricing_tier_id`, create/update/read paths уже есть | дальше linkage нужно довести до полноценного Studio workflow, а не backend-only surface |
+| Experiment arm editing backend | draft experiment update теперь умеет persist full arm-set changes через существующий `PUT /v1/admin/experiments/:id`: add/remove/relabel/reweight arms и обновлять `pricing_tier_id` вместе с metadata | Studio frontend теперь тоже использует этот contract как реальный draft builder, так что следующий шаг уже про polish, а не про wiring |
+| Pricing tier linkage model | live pricing tiers уже truthfully связаны с arms через `ab_test_arms.pricing_tier_id`, create/update/read paths уже есть | linkage уже surfaced и в Studio draft workflow; дальше только richer operator surfacing там, где это реально полезно |
 | Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment, а admin read-path теперь отдаёт safe winner recommendation по win probability / sample-size / confidence guards | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
 | Manual override + lock semantics | persisted `automation_policy` уже поддерживает `manual_override`, `locked_until`, `locked_by`, `lock_reason`, а admin API/UI уже умеют `lock/unlock` experiment automation | дальше держать это как единый contract: все scheduler-driven automation paths должны уважать как explicit manual override, так и time-bound lock window |
 | Observability для автоматики | worker/logging уже присутствуют | нужны метрики и алерты: сколько auto transitions прошло, сколько jobs упало, сколько stale experiments, сколько pending rewards не обработано, сколько window trims skipped |
@@ -148,11 +145,11 @@
 
 Если делать не «всё сразу», а минимальный полезный следующий backend-срез, то приоритет теперь выглядит так:
 
-1. **Добить Studio builder UI** поверх уже существующего truthful backend contract для draft experiments.
-2. **Использовать persisted arm CRUD + linkage** в Studio как единый arm→tier workflow, а не как разрозненные блоки.
-3. **Добавить richer recommendation/operator surfacing** поверх уже существующего append-only audit trail.
-4. **Ввести safe auto-rollout controls** только поверх уже существующего recommendation layer.
-5. **Полировать overview/edit UX** на `A/B Tests`, не откатываясь к mock-поведению.
+1. **Полировать overview/edit UX** на `A/B Tests`, не откатываясь к mock-поведению.
+2. **Добавить richer recommendation/operator surfacing** поверх уже существующего append-only audit trail.
+3. **Ввести safe auto-rollout controls** только поверх уже существующего recommendation layer.
+4. **Расширить runtime workbench** на `Bandit Model` поверх уже существующих truthful метрик.
+5. **Держать pricing/tier linkage visible only where it adds real operator value**, а не плодить дублирующие псевдо-editor flows.
 
 Без этих пяти вещей автоматика останется либо UI-имитацией, либо набором хрупких cron-скриптов поверх уже существующих ручных endpoints.
 
@@ -196,7 +193,7 @@
 | Immutable decisions/conversions log | ✅ append-only история automation decisions, reward-resolution событий, arm assignments, impressions и winner recommendation evaluations уже есть; дальше новые slices уже не про базовый event trail |
 | Winner recommendation policy | 🟡 уже есть admin-facing recommendation layer и append-only recommendation audit trail/history; дальше расширять policy/action layer, не смешивая это с auto-rollout |
 | Safe rollout controls | только после накопления audit log и policy guards — вводить auto-promote / auto-reweight / auto-stop loser flows |
-| Pricing/arm linkage | если bandit/Studio должны автоматически работать с pricing tiers, сначала ввести persisted arm↔tier linkage model |
+| Pricing/arm linkage | ✅ persisted arm↔tier linkage model и Studio draft workflow уже есть; дальше использовать этот metadata surface только там, где он реально нужен automation/operator layers |
 
 **Результат Stage 3:** появляется не просто «bandit dashboard», а реальная backend-автоматика для эксплуатации и принятия решений с контролируемым риском.
 
@@ -258,5 +255,5 @@
 
 ## Короткий вывод
 
-Старый `AUDIT.md` был заметно устаревшим. На текущем коде уже **полностью рабочие** как минимум `Platform Settings` и `Pricing Tiers`, а `Winback`, `A/B Tests` и advanced experiment pages уже имеют **реальный wiring**, scheduler-backed experiment automation и lifecycle audit/history surface. Главный остаток сейчас — не «подключить хоть что-то», а добить последние truthful workflow gaps: полноценный Studio builder, реальную связку pricing tiers с experiment arms и полировку overview/edit UX на `A/B Tests`.
+Старый `AUDIT.md` был заметно устаревшим. На текущем коде уже **полностью рабочие** как минимум `Platform Settings` и `Pricing Tiers`, а `Winback`, `A/B Tests` и advanced experiment pages уже имеют **реальный wiring**, scheduler-backed experiment automation и lifecycle audit/history surface. После добивки truthful draft builder в `Experiment Studio` главный остаток сейчас — не «подключить хоть что-то», а полировать оставшиеся UX/operator gaps: overview/edit experience на `A/B Tests`, richer recommendation surfacing и более глубокий runtime workbench для `Bandit Model`.
 

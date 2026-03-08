@@ -1,11 +1,13 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useTranslations } from "next-intl";
 
 import { loginAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -107,19 +109,34 @@ export function LoginForm() {
           {isLoading ? t("submitting") : t("submit")}
         </Button>
         {process.env.NODE_ENV !== "production" && (
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-muted-foreground"
-            disabled={isLoading}
-            onClick={() => {
-              form.setValue("email", "admin@paywall.local");
-              form.setValue("password", "admin12345");
-              form.handleSubmit(onSubmit)();
-            }}
-          >
-            ⚡ Fast login (dev)
-          </Button>
+          <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-muted-foreground"
+              disabled={isLoading}
+              onClick={() => {
+                form.setValue("email", "admin@paywall.local");
+                form.setValue("password", "admin12345");
+                form.handleSubmit(onSubmit)();
+              }}
+            >
+              ⚡ Fast login (dev)
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-amber-500/50 text-amber-600"
+              disabled={isLoading}
+              onClick={() => {
+                window.setTimeout(() => {
+                  throw new Error("Test JS Error");
+                }, 0);
+              }}
+            >
+              🧪 Test JS Error
+            </Button>
+          </div>
         )}
         {serverError && <p className="text-center text-destructive text-sm">{serverError}</p>}
       </form>

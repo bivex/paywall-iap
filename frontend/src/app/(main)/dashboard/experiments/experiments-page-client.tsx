@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -15,6 +15,7 @@ import {
   createExperimentAction,
   pauseExperimentAction,
   resumeExperimentAction,
+  updateExperimentAction,
 } from "@/actions/experiments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import {
   getExperimentLifecycleReasonKey,
   getExperimentLifecycleSourceKey,
 } from "@/lib/experiments";
+import { formatAdminDateTime, toDateTimeLocalInputValue } from "@/lib/time";
 
 const formSchema = z
   .object({
@@ -79,6 +81,19 @@ const formSchema = z
 
 type ExperimentFormValues = z.infer<typeof formSchema>;
 
+type ExperimentEditorValidationCode = "name" | "minSampleSize" | "confidenceThreshold" | "confidenceRange" | "endAt";
+
+type ExperimentEditorFormValues = {
+  name: string;
+  description: string;
+  algorithm_type: ExperimentAlgorithm;
+  is_bandit: boolean;
+  min_sample_size: string;
+  confidence_threshold_percent: string;
+  start_at: string;
+  end_at: string;
+};
+
 const EMPTY_FORM_VALUES: ExperimentFormValues = {
   name: EMPTY_EXPERIMENT_INPUT.name,
   description: EMPTY_EXPERIMENT_INPUT.description,
@@ -100,16 +115,6 @@ const EMPTY_FORM_VALUES: ExperimentFormValues = {
 function fieldError(error?: { message?: string }) {
   if (!error?.message) return null;
   return <p className="text-destructive text-xs">{error.message}</p>;
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 function formatRevenue(value: number) {
@@ -135,6 +140,34 @@ function formatLifecycleReason(t: ReturnType<typeof useTranslations>, experiment
 function formatLifecycleSource(t: ReturnType<typeof useTranslations>, experiment: ExperimentSummary) {
   const sourceKey = getExperimentLifecycleSourceKey(experiment.latest_lifecycle_audit?.source);
   return sourceKey ? t(`table.${sourceKey}`) : formatExperimentLifecycleCode(experiment.latest_lifecycle_audit?.source);
+}
+
+function buildEditorValues(experiment: ExperimentSummary): ExperimentEditorFormValues {
+  return {
+    name: experiment.name,
+    description: experiment.description,
+    algorithm_type: experiment.algorithm_type ?? "thompson_sampling",
+    is_bandit: experiment.is_bandit,
+    min_sample_size: experiment.min_sample_size.toString(),
+    confidence_threshold_percent: experiment.confidence_threshold_percent.toString(),
+    start_at: toDateTimeLocalInputValue(experiment.start_at),
+    end_at: toDateTimeLocalInputValue(experiment.end_at),
+  };
+}
+
+function validateEditorValues(values: ExperimentEditorFormValues): ExperimentEditorValidationCode | null {
+  if (!values.name.trim()) return "name";
+
+  const minSampleSize = Number(values.min_sample_size);
+  if (!Number.isFinite(minSampleSize) || minSampleSize <= 0) return "minSampleSize";
+
+  const threshold = Number(values.confidence_threshold_percent);
+  if (!Number.isFinite(threshold) || threshold <= 0) return "confidenceThreshold";
+  if (threshold > 100) return "confidenceRange";
+
+  if (values.start_at && values.end_at && values.end_at < values.start_at) return "endAt";
+
+  return null;
 }
 
 function toPayload(values: ExperimentFormValues): ExperimentInput {
@@ -187,17 +220,47 @@ export function ExperimentsPageClient({
 }) {
   const t = useTranslations("experiments");
   const router = useRouter();
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [experiments, setExperiments] = useState(initialExperiments);
   const [pendingCreate, setPendingCreate] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [editingExperimentId, setEditingExperimentId] = useState<string | null>(null);
+  const [editorValues, setEditorValues] = useState<ExperimentEditorFormValues | null>(null);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const form = useForm<ExperimentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: EMPTY_FORM_VALUES,
   });
 
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
+
   const runningCount = experiments.filter((experiment) => experiment.status === "running").length;
   const draftCount = experiments.filter((experiment) => experiment.status === "draft").length;
   const totalRevenue = experiments.reduce((sum, experiment) => sum + experiment.total_revenue, 0);
+
+  function syncExperiment(updatedExperiment: ExperimentSummary) {
+    setExperiments((current) => current.map((item) => (item.id === updatedExperiment.id ? updatedExperiment : item)));
+  }
+
+  function startEditingExperiment(experiment: ExperimentSummary) {
+    if (experiment.status !== "draft") return;
+    setEditingExperimentId(experiment.id);
+    setEditorValues(buildEditorValues(experiment));
+  }
+
+  function cancelEditingExperiment() {
+    setEditingExperimentId(null);
+    setEditorValues(null);
+  }
+
+  function updateEditorValue<Key extends keyof ExperimentEditorFormValues>(
+    key: Key,
+    value: ExperimentEditorFormValues[Key],
+  ) {
+    setEditorValues((current) => (current ? { ...current, [key]: value } : current));
+  }
 
   const createExperiment = form.handleSubmit(async (values) => {
     setPendingCreate(true);
@@ -230,8 +293,45 @@ export function ExperimentsPageClient({
       return;
     }
 
-    setExperiments((current) => current.map((item) => (item.id === result.data.id ? result.data : item)));
+    if (editingExperimentId === result.data.id && result.data.status !== "draft") {
+      cancelEditingExperiment();
+    }
+
+    syncExperiment(result.data);
     toast.success(t("feedback.statusUpdated"));
+    router.refresh();
+  }
+
+  async function saveExperimentMetadata(experiment: ExperimentSummary) {
+    if (!editorValues || editingExperimentId !== experiment.id) return;
+
+    const validationError = validateEditorValues(editorValues);
+    if (validationError) {
+      toast.error(t(`editor.validation.${validationError}`));
+      return;
+    }
+
+    setPendingEditId(experiment.id);
+    const result = await updateExperimentAction(experiment.id, {
+      name: editorValues.name.trim(),
+      description: editorValues.description.trim(),
+      algorithm_type: editorValues.algorithm_type,
+      is_bandit: editorValues.is_bandit,
+      min_sample_size: Number(editorValues.min_sample_size),
+      confidence_threshold_percent: Number(editorValues.confidence_threshold_percent),
+      start_at: editorValues.start_at ? new Date(editorValues.start_at).toISOString() : null,
+      end_at: editorValues.end_at ? new Date(editorValues.end_at).toISOString() : null,
+    });
+    setPendingEditId(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.updateFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    cancelEditingExperiment();
+    toast.success(t("feedback.experimentUpdated"));
     router.refresh();
   }
 
@@ -293,6 +393,11 @@ export function ExperimentsPageClient({
                 {experiments.map((experiment) => {
                   const actionKey = pendingAction ?? "";
                   const isRowPending = actionKey.endsWith(`:${experiment.id}`);
+                  const isEditingCurrentRow = editingExperimentId === experiment.id && editorValues !== null;
+                  const isEditDirty = isEditingCurrentRow
+                    ? JSON.stringify(editorValues) !== JSON.stringify(buildEditorValues(experiment))
+                    : false;
+                  const isRowBusy = isRowPending || pendingEditId === experiment.id;
                   const actions: Array<{ key: "pause" | "resume" | "complete"; label: string }> =
                     experiment.status === "draft"
                       ? [{ key: "resume", label: t("actions.start") }]
@@ -309,88 +414,229 @@ export function ExperimentsPageClient({
                           : [];
 
                   return (
-                    <TableRow key={experiment.id}>
-                      <TableCell className="min-w-72 whitespace-normal align-top">
-                        <div className="max-w-sm">
-                          <p className="break-words font-medium">{experiment.name}</p>
-                          <p className="whitespace-normal break-words text-muted-foreground text-xs">
-                            {experiment.description || "—"}
-                          </p>
-                          {experiment.latest_lifecycle_audit ? (
-                            <div className="mt-2 rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
-                              <p>
-                                {t("table.latestLifecycleLabel")}: {formatLifecycleSource(t, experiment)} ·{" "}
-                                {formatLifecycleReason(t, experiment)}
-                              </p>
-                              <p className="mt-1">
-                                {t(`status.${experiment.latest_lifecycle_audit.from_status}`)} →{" "}
-                                {t(`status.${experiment.latest_lifecycle_audit.to_status}`)} ·{" "}
-                                {formatDate(experiment.latest_lifecycle_audit.created_at)}
-                              </p>
-                            </div>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={statusClass(experiment.status)}>{t(`status.${experiment.status}`)}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <p>{formatAlgorithm(experiment.algorithm_type)}</p>
-                          <p className="text-muted-foreground text-xs">
-                            {experiment.is_bandit ? t("table.banditEnabled") : t("table.banditDisabled")}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1 text-xs">
-                          {experiment.arms.map((arm) => (
-                            <span key={arm.id}>
-                              {arm.is_control ? t("table.controlArm") : t("table.variantArm")} {arm.name}
+                    <Fragment key={experiment.id}>
+                      <TableRow>
+                        <TableCell className="min-w-72 whitespace-normal align-top">
+                          <div className="max-w-sm">
+                            <p className="break-words font-medium">{experiment.name}</p>
+                            <p className="whitespace-normal break-words text-muted-foreground text-xs">
+                              {experiment.description || "—"}
+                            </p>
+                            {experiment.latest_lifecycle_audit ? (
+                              <div className="mt-2 rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
+                                <p>
+                                  {t("table.latestLifecycleLabel")}: {formatLifecycleSource(t, experiment)} ·{" "}
+                                  {formatLifecycleReason(t, experiment)}
+                                </p>
+                                <p className="mt-1">
+                                  {t(`status.${experiment.latest_lifecycle_audit.from_status}`)} →{" "}
+                                  {t(`status.${experiment.latest_lifecycle_audit.to_status}`)} ·{" "}
+                                  {hasHydrated
+                                    ? formatAdminDateTime(experiment.latest_lifecycle_audit.created_at)
+                                    : "—"}
+                                </p>
+                              </div>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusClass(experiment.status)}>{t(`status.${experiment.status}`)}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <p>{formatAlgorithm(experiment.algorithm_type)}</p>
+                            <p className="text-muted-foreground text-xs">
+                              {experiment.is_bandit ? t("table.banditEnabled") : t("table.banditDisabled")}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1 text-xs">
+                            {experiment.arms.map((arm) => (
+                              <span key={arm.id}>
+                                {arm.is_control ? t("table.controlArm") : t("table.variantArm")} {arm.name}
+                              </span>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{experiment.total_samples}</TableCell>
+                        <TableCell className="font-mono text-sm">{experiment.total_conversions}</TableCell>
+                        <TableCell className="font-mono text-sm">{experiment.active_assignments}</TableCell>
+                        <TableCell className="font-mono text-sm">{formatRevenue(experiment.total_revenue)}</TableCell>
+                        <TableCell className="text-xs">
+                          <div className="flex flex-col gap-1">
+                            <span>{experiment.confidence_threshold_percent.toFixed(0)}%</span>
+                            <span className="text-muted-foreground">
+                              {experiment.winner_confidence_percent === null
+                                ? t("table.noWinner")
+                                : `${experiment.winner_confidence_percent.toFixed(1)}%`}
                             </span>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{experiment.total_samples}</TableCell>
-                      <TableCell className="font-mono text-sm">{experiment.total_conversions}</TableCell>
-                      <TableCell className="font-mono text-sm">{experiment.active_assignments}</TableCell>
-                      <TableCell className="font-mono text-sm">{formatRevenue(experiment.total_revenue)}</TableCell>
-                      <TableCell className="text-xs">
-                        <div className="flex flex-col gap-1">
-                          <span>{experiment.confidence_threshold_percent.toFixed(0)}%</span>
-                          <span className="text-muted-foreground">
-                            {experiment.winner_confidence_percent === null
-                              ? t("table.noWinner")
-                              : `${experiment.winner_confidence_percent.toFixed(1)}%`}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {formatDate(experiment.updated_at)}
-                      </TableCell>
-                      <TableCell>
-                        {actions.length === 0 ? (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            {actions.map((action) => {
-                              const currentActionKey = `${action.key}:${experiment.id}`;
-                              return (
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-xs">
+                          {hasHydrated ? formatAdminDateTime(experiment.updated_at) : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {actions.length === 0 && experiment.status !== "draft" ? (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-2">
+                              {actions.map((action) => {
+                                const currentActionKey = `${action.key}:${experiment.id}`;
+                                return (
+                                  <Button
+                                    key={currentActionKey}
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isRowBusy}
+                                    onClick={() => void runLifecycleAction(experiment, action.key)}
+                                  >
+                                    {pendingAction === currentActionKey ? t("feedback.updating") : action.label}
+                                  </Button>
+                                );
+                              })}
+                              {experiment.status === "draft" && !isEditingCurrentRow ? (
                                 <Button
-                                  key={currentActionKey}
                                   variant="outline"
                                   size="sm"
-                                  disabled={isRowPending}
-                                  onClick={() => void runLifecycleAction(experiment, action.key)}
+                                  disabled={isRowBusy}
+                                  onClick={() => startEditingExperiment(experiment)}
                                 >
-                                  {pendingAction === currentActionKey ? t("feedback.updating") : action.label}
+                                  {t("actions.edit")}
                                 </Button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                              ) : null}
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                      {isEditingCurrentRow ? (
+                        <TableRow>
+                          <TableCell colSpan={11} className="bg-muted/20">
+                            <div className="rounded-md border border-dashed p-4">
+                              <div>
+                                <p className="font-medium text-sm">{t("editor.title")}</p>
+                                <p className="mt-1 text-muted-foreground text-xs">{t("editor.description")}</p>
+                              </div>
+
+                              <form
+                                className="mt-4 space-y-4"
+                                onSubmit={(event) => {
+                                  event.preventDefault();
+                                  void saveExperimentMetadata(experiment);
+                                }}
+                              >
+                                <div className="grid gap-4 md:grid-cols-2">
+                                  <div className="space-y-1">
+                                    <p className="font-medium text-xs">{t("form.name")}</p>
+                                    <Input
+                                      value={editorValues.name}
+                                      onChange={(event) => updateEditorValue("name", event.target.value)}
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <p className="font-medium text-xs">{t("form.algorithm")}</p>
+                                    <Select
+                                      value={editorValues.algorithm_type}
+                                      onValueChange={(value) =>
+                                        updateEditorValue("algorithm_type", value as ExperimentAlgorithm)
+                                      }
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="thompson_sampling">Thompson Sampling</SelectItem>
+                                        <SelectItem value="ucb">UCB</SelectItem>
+                                        <SelectItem value="epsilon_greedy">Epsilon Greedy</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  <div className="space-y-1 md:col-span-2">
+                                    <p className="font-medium text-xs">{t("form.descriptionLabel")}</p>
+                                    <Textarea
+                                      rows={3}
+                                      value={editorValues.description}
+                                      onChange={(event) => updateEditorValue("description", event.target.value)}
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <p className="font-medium text-xs">{t("form.minSampleSize")}</p>
+                                    <Input
+                                      inputMode="numeric"
+                                      value={editorValues.min_sample_size}
+                                      onChange={(event) => updateEditorValue("min_sample_size", event.target.value)}
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <p className="font-medium text-xs">{t("form.confidenceThreshold")}</p>
+                                    <Input
+                                      inputMode="decimal"
+                                      value={editorValues.confidence_threshold_percent}
+                                      onChange={(event) =>
+                                        updateEditorValue("confidence_threshold_percent", event.target.value)
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <p className="font-medium text-xs">{t("form.startAt")}</p>
+                                    <Input
+                                      type="datetime-local"
+                                      value={hasHydrated ? editorValues.start_at : ""}
+                                      onChange={(event) => updateEditorValue("start_at", event.target.value)}
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <p className="font-medium text-xs">{t("form.endAt")}</p>
+                                    <Input
+                                      type="datetime-local"
+                                      value={hasHydrated ? editorValues.end_at : ""}
+                                      onChange={(event) => updateEditorValue("end_at", event.target.value)}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  <Switch
+                                    checked={editorValues.is_bandit}
+                                    onCheckedChange={(checked) => updateEditorValue("is_bandit", checked)}
+                                  />
+                                  <span className="text-sm">{t("form.isBandit")}</span>
+                                </div>
+
+                                <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                                  {t("editor.armHint")}
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    type="submit"
+                                    size="sm"
+                                    disabled={pendingEditId === experiment.id || !isEditDirty}
+                                  >
+                                    {pendingEditId === experiment.id ? t("feedback.updating") : t("actions.save")}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={pendingEditId === experiment.id}
+                                    onClick={cancelEditingExperiment}
+                                  >
+                                    {t("actions.cancel")}
+                                  </Button>
+                                </div>
+                              </form>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : null}
+                    </Fragment>
                   );
                 })}
               </TableBody>

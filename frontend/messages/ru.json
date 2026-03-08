@@ -194,6 +194,9 @@
     "subtitle": "Управляйте реальными экспериментами из базы ab_tests и ab_test_arms и отслеживайте живую агрегированную статистику по каждому эксперименту.",
     "actions": {
       "create": "Создать эксперимент",
+      "edit": "Редактировать draft",
+      "save": "Сохранить изменения",
+      "cancel": "Отменить",
       "reset": "Сбросить",
       "start": "Запустить",
       "pause": "Пауза",
@@ -220,7 +223,9 @@
       "creating": "Создание...",
       "updating": "Обновление...",
       "experimentCreated": "Эксперимент создан.",
+      "experimentUpdated": "Эксперимент обновлён.",
       "createFailed": "Не удалось создать эксперимент.",
+      "updateFailed": "Не удалось обновить эксперимент.",
       "statusUpdated": "Статус эксперимента обновлён.",
       "statusFailed": "Не удалось обновить статус эксперимента."
     },
@@ -254,6 +259,18 @@
       "reasonManualRunning": "Ручной старт/возобновление",
       "reasonManualCompleted": "Ручное завершение"
     },
+    "editor": {
+      "title": "Редактирование draft-метаданных",
+      "description": "Обновляйте сохранённые draft-метаданные прямо со страницы overview, не перезаписывая сохранённый план веток.",
+      "armHint": "Редактирование веток, перевзвешивание трафика и linkage к pricing tiers по-прежнему остаются в Experiment Studio, чтобы overview-страница не подменяла собой полный сохранённый arm set.",
+      "validation": {
+        "name": "Название эксперимента обязательно.",
+        "minSampleSize": "Минимальный размер выборки должен быть больше нуля.",
+        "confidenceThreshold": "Порог уверенности должен быть больше нуля.",
+        "confidenceRange": "Порог уверенности не может быть больше 100%.",
+        "endAt": "Время окончания должно быть позже времени начала."
+      }
+    },
     "form": {
       "title": "Создать A/B эксперимент",
       "description": "Эта форма пишет напрямую в ab_tests и ab_test_arms. Здесь оставлены только поля, которые реально сохраняются сегодня.",
@@ -277,7 +294,7 @@
   },
   "experimentStudio": {
     "title": "Experiment Studio",
-    "subtitle": "Live control room для сохранённых experiments. Эта страница намеренно фокусируется на orchestration, health и runtime visibility, а не притворяется полноценным visual builder'ом.",
+    "subtitle": "Live control room для сохранённых experiments. Для draft-экспериментов здесь теперь можно править метаданные, набор веток, веса трафика и linkage ветка→pricing tier через реальный update contract.",
     "actions": {
       "openExperiments": "Открыть A/B Tests",
       "openBandit": "Открыть Bandit Model",
@@ -374,25 +391,58 @@
       "windowInfo": "Sliding-window info"
     },
     "arms": {
-      "title": "Сохранённый план веток",
-      "description": "Эти arms берутся из persisted admin experiments table. Live win probabilities показываются только когда доступен bandit statistics endpoint."
+      "title": "Ветки эксперимента",
+      "description": "Эти arms берутся из persisted admin experiments table. Live win probabilities показываются только когда доступен bandit statistics endpoint.",
+      "draftDescription": "Редактируйте полный сохранённый набор веток для этого draft-эксперимента. Изменения остаются локальными, пока вы не сохраните черновик.",
+      "builderTitle": "Draft arm builder",
+      "draftHelp": "Добавляйте, удаляйте, переименовывайте, перевзвешивайте ветки и связывайте их с pricing tiers для сохранённого draft arm set. Backend по-прежнему требует минимум две ветки, ровно одну control arm и положительные веса трафика.",
+      "weightTotal": "Текущая сумма весов: {total}",
+      "addArm": "Добавить ветку",
+      "setControl": "Сделать контрольной",
+      "remove": "Удалить ветку",
+      "saveHint": "Кнопка Save draft сохраняет и метаданные, и текущий план веток.",
+      "armLabel": "Ветка {index}",
+      "controlBadge": "Контрольная ветка",
+      "variantBadge": "Вариант",
+      "persistedBadge": "Сохранённая ветка",
+      "newBadge": "Новая ветка",
+      "name": "Название ветки",
+      "namePlaceholder": "Вариант C",
+      "descriptionLabel": "Описание ветки",
+      "descriptionPlaceholder": "Что меняется в этой ветке?",
+      "weight": "Вес трафика",
+      "weightPlaceholder": "1",
+      "pricingTier": "Связанный pricing tier",
+      "pricingTierPlaceholder": "Выберите pricing tier",
+      "noPricingTier": "Без связанного pricing tier",
+      "inactiveTier": "Неактивный tier",
+      "pricingLoadFailed": "Не удалось загрузить pricing tiers, поэтому linkage сейчас нельзя отредактировать.",
+      "validation": {
+        "minimumArms": "Нужно как минимум две ветки.",
+        "singleControl": "Должна быть выбрана ровно одна control arm.",
+        "armName": "У каждой ветки должно быть название.",
+        "trafficWeight": "У каждой ветки должен быть вес трафика больше нуля."
+      }
     },
     "pricing": {
       "title": "Pricing Tiers",
       "description": "Редактируйте живой каталог pricing_tiers прямо из Studio, используя тот же реальный admin CRUD, что и отдельная страница Pricing.",
       "noteTitle": "Границы поддержки",
-      "noteBody": "Pricing tiers теперь можно редактировать здесь, но backend пока не хранит связь между experiment arms и pricing tiers. Этот блок управляет только реальным общим каталогом pricing tiers."
+      "noteBody": "Этот блок управляет реальным общим каталогом pricing tiers. Связь draft arm→tier теперь редактируется выше, в draft arm builder, через тот же persisted experiment update contract."
     },
     "table": {
       "arm": "Ветка",
       "type": "Тип",
       "weight": "Сохранённый вес",
+      "pricingTier": "Связанный pricing tier",
       "samples": "Сэмплы",
       "conversions": "Конверсии",
       "winProbability": "Вероятность победы",
       "revenue": "Выручка",
       "control": "Контроль",
-      "variant": "Вариант"
+      "variant": "Вариант",
+      "unlinked": "Не связан",
+      "unknownTier": "Неизвестный tier"
     },
     "runtime": {
       "title": "Runtime-сигналы",
@@ -407,20 +457,20 @@
       "title": "Операционные заметки",
       "description": "Studio объясняет, что реально подключено сегодня и где выполнять поддерживаемые действия.",
       "builderTitle": "Создание/редактирование эксперимента",
-      "builderBody": "Используйте A/B Tests для создания экспериментов и редактирования планов веток. Studio теперь поддерживает правку метаданных черновика и lifecycle controls, но всё ещё не притворяется полноценным visual builder'ом.",
+      "builderBody": "Используйте A/B Tests для создания экспериментов. Studio теперь честно поддерживает правку метаданных черновика, полный draft arm editing, перевзвешивание трафика и linkage ветка→tier поверх persisted experiment contract.",
       "banditTitle": "Bandit monitoring",
       "banditBody": "Используйте Bandit Model для отдельного bandit telemetry. Studio показывает только минимальный runtime status, нужный для orchestration.",
       "pricingTitle": "Pricing tiers",
-      "pricingBody": "Studio теперь показывает реальный shared CRUD для pricing tiers, но эти tiers всё ещё не привязаны к конкретным experiment arms в backend data model.",
+      "pricingBody": "Studio показывает реальный shared CRUD для pricing tiers, а draft-эксперименты теперь могут привязывать эти tiers к конкретным веткам прямо из arm builder'а.",
       "advancedTitle": "Advanced endpoints",
       "advancedBody": "Objective scoring и sliding-window routes показываются ровно так, как они ведут себя в текущем runtime, включая ошибки или placeholder responses.",
-      "readOnly": "Метаданные черновика теперь можно обновлять здесь, но редактирование веток и более широкий дизайн эксперимента по-прежнему должны происходить в A/B Tests."
+      "readOnly": "Для не-draft экспериментов Studio остаётся read-only поверхностью для runtime и orchestration и показывает последний сохранённый план веток."
     },
     "editor": {
-      "title": "Метаданные черновика",
-      "description": "Обновляйте сохранённые поля черновика, которые уже реально существуют в ab_tests. Редактирование веток по-прежнему остаётся в A/B Tests.",
-      "lockedDescription": "Здесь можно редактировать только сохранённые эксперименты в статусе черновика.",
-      "lockedBody": "Управление lifecycle по-прежнему работает здесь, но редактирование метаданных намеренно ограничено только черновиками.",
+      "title": "Draft builder",
+      "description": "Обновляйте сохранённые метаданные черновика, полный набор веток, веса трафика и linkage pricing tier для каждой ветки через существующий experiment update contract.",
+      "lockedDescription": "Здесь можно редактировать только эксперименты в статусе черновика. Для остальных показывается сохранённый план и runtime state.",
+      "lockedBody": "Lifecycle controls по-прежнему работают здесь, но builder editing намеренно ограничен только draft-экспериментами.",
       "name": "Название эксперимента",
       "namePlaceholder": "Акцент на годовой подписке на главной",
       "descriptionLabel": "Описание",

@@ -194,6 +194,9 @@
     "subtitle": "Manage real database-backed experiments stored in ab_tests and ab_test_arms, and monitor the live aggregate stats recorded for each experiment.",
     "actions": {
       "create": "Create Experiment",
+      "edit": "Edit draft",
+      "save": "Save changes",
+      "cancel": "Cancel",
       "reset": "Reset",
       "start": "Start",
       "pause": "Pause",
@@ -220,7 +223,9 @@
       "creating": "Creating...",
       "updating": "Updating...",
       "experimentCreated": "Experiment created.",
+      "experimentUpdated": "Experiment updated.",
       "createFailed": "Failed to create experiment.",
+      "updateFailed": "Failed to update experiment.",
       "statusUpdated": "Experiment status updated.",
       "statusFailed": "Failed to update experiment status."
     },
@@ -254,6 +259,18 @@
       "reasonManualRunning": "Manual resume/start",
       "reasonManualCompleted": "Manual complete"
     },
+    "editor": {
+      "title": "Edit draft metadata",
+      "description": "Update the persisted draft metadata from the overview page without rewriting the saved arm plan.",
+      "armHint": "Arm editing, traffic reweighting, and pricing-tier linkage still belong in Experiment Studio so this overview page does not accidentally replace the full saved arm set.",
+      "validation": {
+        "name": "Experiment name is required.",
+        "minSampleSize": "Minimum sample size must be greater than zero.",
+        "confidenceThreshold": "Confidence threshold must be greater than zero.",
+        "confidenceRange": "Confidence threshold cannot exceed 100%.",
+        "endAt": "End time must be after the start time."
+      }
+    },
     "form": {
       "title": "Create A/B Experiment",
       "description": "This form writes directly to ab_tests and ab_test_arms. It intentionally captures only the fields that are truly persisted today.",
@@ -277,7 +294,7 @@
   },
   "experimentStudio": {
     "title": "Experiment Studio",
-    "subtitle": "Live control room for persisted experiments. This page intentionally focuses on orchestration, health, and runtime visibility instead of pretending a full visual builder already exists.",
+    "subtitle": "Live control room for persisted experiments. Draft experiments can now edit metadata, saved arms, traffic weights, and arm-to-tier linkage through the real experiment update contract.",
     "actions": {
       "openExperiments": "Open A/B Tests",
       "openBandit": "Open Bandit Model",
@@ -374,25 +391,58 @@
       "windowInfo": "Sliding-window info"
     },
     "arms": {
-      "title": "Saved Arm Plan",
-      "description": "These arms come from the persisted admin experiments table. Live win probabilities are shown only when the bandit statistics endpoint is available."
+      "title": "Experiment Arms",
+      "description": "These arms come from the persisted admin experiments table. Live win probabilities are shown only when the bandit statistics endpoint is available.",
+      "draftDescription": "Edit the full saved arm set for this draft experiment. Changes remain local until you save the draft.",
+      "builderTitle": "Draft arm builder",
+      "draftHelp": "Add, remove, relabel, reweight, and link pricing tiers for the persisted draft arm set. The backend still enforces at least two arms, exactly one control arm, and positive traffic weights.",
+      "weightTotal": "Current total weight: {total}",
+      "addArm": "Add arm",
+      "setControl": "Set as control",
+      "remove": "Remove arm",
+      "saveHint": "Use Save draft to persist both metadata and the current arm plan.",
+      "armLabel": "Arm {index}",
+      "controlBadge": "Control arm",
+      "variantBadge": "Variant arm",
+      "persistedBadge": "Persisted arm",
+      "newBadge": "New arm",
+      "name": "Arm Name",
+      "namePlaceholder": "Variant C",
+      "descriptionLabel": "Arm Description",
+      "descriptionPlaceholder": "What changes in this arm?",
+      "weight": "Traffic Weight",
+      "weightPlaceholder": "1",
+      "pricingTier": "Linked Pricing Tier",
+      "pricingTierPlaceholder": "Select pricing tier",
+      "noPricingTier": "No linked pricing tier",
+      "inactiveTier": "Inactive tier",
+      "pricingLoadFailed": "Pricing tiers could not be loaded, so tier linkage cannot be edited right now.",
+      "validation": {
+        "minimumArms": "At least two arms are required.",
+        "singleControl": "Select exactly one control arm.",
+        "armName": "Every arm needs a name.",
+        "trafficWeight": "Every arm must have a traffic weight greater than zero."
+      }
     },
     "pricing": {
       "title": "Pricing Tiers",
       "description": "Edit the live pricing_tiers catalog from Studio using the same real admin CRUD that powers the dedicated Pricing page.",
       "noteTitle": "Scope",
-      "noteBody": "Pricing tiers are editable here now, but the backend does not yet persist any experiment-arm-to-pricing-tier linkage. This section manages the real shared pricing tier catalog only."
+      "noteBody": "This section manages the real shared pricing tier catalog. Draft arm-to-tier linkage now lives in the draft arm builder above, using the same persisted experiment update contract."
     },
     "table": {
       "arm": "Arm",
       "type": "Type",
       "weight": "Configured Weight",
+      "pricingTier": "Linked Pricing Tier",
       "samples": "Samples",
       "conversions": "Conversions",
       "winProbability": "Win Probability",
       "revenue": "Revenue",
       "control": "Control",
-      "variant": "Variant"
+      "variant": "Variant",
+      "unlinked": "Unlinked",
+      "unknownTier": "Unknown tier"
     },
     "runtime": {
       "title": "Runtime Signals",
@@ -407,20 +457,20 @@
       "title": "Operational Notes",
       "description": "Studio explains what is actually wired today and where to perform supported actions.",
       "builderTitle": "Experiment creation/editing",
-      "builderBody": "Use A/B Tests to create experiments and edit arm plans. Studio now supports draft metadata edits and lifecycle controls, but it is still not pretending to be a full visual builder.",
+      "builderBody": "Use A/B Tests to create experiments. Studio now truthfully supports draft metadata edits, full draft arm editing, traffic reweighting, and arm-to-tier linkage against the persisted experiment contract.",
       "banditTitle": "Bandit monitoring",
       "banditBody": "Use Bandit Model for dedicated bandit telemetry. Studio surfaces only the minimum runtime status needed for orchestration.",
       "pricingTitle": "Pricing tiers",
-      "pricingBody": "Studio now exposes the real shared pricing tier CRUD, but those tiers are still not attached to specific experiment arms in the backend data model yet.",
+      "pricingBody": "Studio exposes the real shared pricing tier CRUD, and draft experiments can now attach those tiers to specific arms from the arm builder.",
       "advancedTitle": "Advanced endpoints",
       "advancedBody": "Objective scoring and sliding-window routes are shown exactly as they behave in the current runtime, including failures or placeholder responses.",
-      "readOnly": "Draft metadata can now be updated here, but arm editing and broader experiment design still belong in A/B Tests."
+      "readOnly": "For non-draft experiments, Studio remains a read-only runtime and orchestration surface that shows the last saved arm plan."
     },
     "editor": {
-      "title": "Draft metadata",
-      "description": "Update the persisted draft fields that already exist in ab_tests. Arm editing still stays in A/B Tests.",
-      "lockedDescription": "Only persisted draft experiments can be edited here.",
-      "lockedBody": "Start, pause, and complete continue to work here for lifecycle control, but metadata editing is intentionally limited to drafts.",
+      "title": "Draft builder",
+      "description": "Update persisted draft metadata, the full saved arm set, traffic weights, and per-arm pricing tier linkage through the existing experiment update contract.",
+      "lockedDescription": "Only draft experiments can be edited here. Non-draft experiments show the saved plan and runtime state.",
+      "lockedBody": "Lifecycle controls still work here, but builder editing is intentionally limited to draft experiments.",
       "name": "Experiment Name",
       "namePlaceholder": "Homepage pricing emphasis",
       "descriptionLabel": "Description",
