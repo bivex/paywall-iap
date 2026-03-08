@@ -234,7 +234,7 @@
 | Stage 3 | Immutable conversions / decisions log | P1 | ✅ Done | append-only `experiment_automation_decision_log`, `bandit_conversion_events`, `bandit_assignment_events`, `bandit_impression_events` и `experiment_winner_recommendation_log` уже покрывают lifecycle/runtime/recommendation history |
 | Stage 3 | Winner recommendation policy | P2 | 🟡 Partial | recommendation layer уже считает candidate winner, пишет append-only audit trail и отдаёт history endpoint; дальше нужны richer UI surfacing и guarded auto-rollout controls |
 | Stage 3 | Safe auto-rollout controls | P2 | ⚪ Not started | после recommendation layer нужны guarded auto-promote / auto-reweight flows с явными safety controls |
-| Stage 3 | Persisted pricing tier ↔ arm linkage model | P1 | ⚪ Not started | pricing tiers должны стать реальной частью experiment/bandit domain модели, а не только соседним CRUD UI |
+| Stage 3 | Persisted pricing tier ↔ arm linkage model | P1 | 🟡 Partial | `ab_test_arms` теперь truthfully хранят `pricing_tier_id`, admin payload/read path возвращает linkage, create experiment умеет persist linkage, и появился draft-only endpoint для обновления arm→tier связей; дальше добивать Studio UI/editor поверх этого backend contract |
 
 ### Что уже можно считать опорой, а не отдельными backlog-задачами
 

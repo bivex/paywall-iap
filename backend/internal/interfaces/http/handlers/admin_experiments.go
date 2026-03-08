@@ -17,15 +17,16 @@ import (
 )
 
 type AdminExperimentArm struct {
-	ID            uuid.UUID `json:"id"`
-	Name          string    `json:"name"`
-	Description   string    `json:"description"`
-	IsControl     bool      `json:"is_control"`
-	TrafficWeight float64   `json:"traffic_weight"`
-	Samples       int       `json:"samples"`
-	Conversions   int       `json:"conversions"`
-	Revenue       float64   `json:"revenue"`
-	AvgReward     float64   `json:"avg_reward"`
+	ID            uuid.UUID  `json:"id"`
+	Name          string     `json:"name"`
+	Description   string     `json:"description"`
+	IsControl     bool       `json:"is_control"`
+	TrafficWeight float64    `json:"traffic_weight"`
+	PricingTierID *uuid.UUID `json:"pricing_tier_id,omitempty"`
+	Samples       int        `json:"samples"`
+	Conversions   int        `json:"conversions"`
+	Revenue       float64    `json:"revenue"`
+	AvgReward     float64    `json:"avg_reward"`
 }
 
 type AdminExperiment struct {
@@ -146,10 +147,11 @@ func scanAdminExperimentWinnerRecommendationAudit(scanner interface{ Scan(dest .
 }
 
 type createAdminExperimentArmRequest struct {
-	Name          string  `json:"name"`
-	Description   string  `json:"description"`
-	IsControl     bool    `json:"is_control"`
-	TrafficWeight float64 `json:"traffic_weight"`
+	Name          string     `json:"name"`
+	Description   string     `json:"description"`
+	IsControl     bool       `json:"is_control"`
+	TrafficWeight float64    `json:"traffic_weight"`
+	PricingTierID *uuid.UUID `json:"pricing_tier_id,omitempty"`
 }
 
 type createAdminExperimentRequest struct {
@@ -178,6 +180,15 @@ type updateAdminExperimentRequest struct {
 	AutomationPolicy           *service.ExperimentAutomationPolicy `json:"automation_policy,omitempty"`
 }
 
+type updateAdminExperimentArmPricingTierRequest struct {
+	ArmID         uuid.UUID  `json:"arm_id"`
+	PricingTierID *uuid.UUID `json:"pricing_tier_id,omitempty"`
+}
+
+type updateAdminExperimentArmPricingTiersRequest struct {
+	Arms []updateAdminExperimentArmPricingTierRequest `json:"arms"`
+}
+
 type lockAdminExperimentRequest struct {
 	LockedUntil *time.Time `json:"locked_until"`
 	Reason      string     `json:"reason"`
@@ -187,6 +198,11 @@ type repairAdminExperimentResponse struct {
 	Experiment AdminExperiment                  `json:"experiment"`
 	Summary    *service.ExperimentRepairSummary `json:"summary"`
 }
+
+var (
+	errAdminPricingTierNotFound   = errors.New("pricing tier not found")
+	errAdminExperimentArmNotFound = errors.New("experiment arm not found")
+)
 
 const adminExperimentSelectBase = `
 		SELECT e.id,
@@ -340,6 +356,23 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 	return ""
 }
 
+func validateUpdateAdminExperimentArmPricingTiersRequest(req updateAdminExperimentArmPricingTiersRequest) string {
+	if len(req.Arms) == 0 {
+		return "At least one arm pricing tier update is required"
+	}
+	seen := make(map[uuid.UUID]struct{}, len(req.Arms))
+	for _, arm := range req.Arms {
+		if arm.ArmID == uuid.Nil {
+			return "Every arm linkage must include an arm_id"
+		}
+		if _, exists := seen[arm.ArmID]; exists {
+			return "Each arm may only appear once in a pricing tier update"
+		}
+		seen[arm.ArmID] = struct{}{}
+	}
+	return ""
+}
+
 func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExperiment, error) {
 	var experiment AdminExperiment
 	var description sql.NullString
@@ -446,12 +479,14 @@ func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExp
 func scanAdminExperimentArm(scanner interface{ Scan(dest ...any) error }) (AdminExperimentArm, error) {
 	var arm AdminExperimentArm
 	var description sql.NullString
+	var pricingTierID uuid.NullUUID
 	err := scanner.Scan(
 		&arm.ID,
 		&arm.Name,
 		&description,
 		&arm.IsControl,
 		&arm.TrafficWeight,
+		&pricingTierID,
 		&arm.Samples,
 		&arm.Conversions,
 		&arm.Revenue,
@@ -463,7 +498,75 @@ func scanAdminExperimentArm(scanner interface{ Scan(dest ...any) error }) (Admin
 	if description.Valid {
 		arm.Description = description.String
 	}
+	if pricingTierID.Valid {
+		value := pricingTierID.UUID
+		arm.PricingTierID = &value
+	}
 	return arm, nil
+}
+
+func pricingTierIDsFromCreateExperimentArms(arms []createAdminExperimentArmRequest) []uuid.UUID {
+	seen := make(map[uuid.UUID]struct{})
+	ids := make([]uuid.UUID, 0)
+	for _, arm := range arms {
+		if arm.PricingTierID == nil {
+			continue
+		}
+		if _, exists := seen[*arm.PricingTierID]; exists {
+			continue
+		}
+		seen[*arm.PricingTierID] = struct{}{}
+		ids = append(ids, *arm.PricingTierID)
+	}
+	return ids
+}
+
+func pricingTierIDsFromArmPricingTierUpdates(arms []updateAdminExperimentArmPricingTierRequest) []uuid.UUID {
+	seen := make(map[uuid.UUID]struct{})
+	ids := make([]uuid.UUID, 0)
+	for _, arm := range arms {
+		if arm.PricingTierID == nil {
+			continue
+		}
+		if _, exists := seen[*arm.PricingTierID]; exists {
+			continue
+		}
+		seen[*arm.PricingTierID] = struct{}{}
+		ids = append(ids, *arm.PricingTierID)
+	}
+	return ids
+}
+
+func validatePricingTiersExist(ctx context.Context, tx pgx.Tx, pricingTierIDs []uuid.UUID) error {
+	for _, pricingTierID := range pricingTierIDs {
+		if err := tx.QueryRow(ctx, `
+			SELECT 1
+			FROM pricing_tiers
+			WHERE id = $1 AND deleted_at IS NULL`, pricingTierID).Scan(new(int)); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return errAdminPricingTierNotFound
+			}
+			return err
+		}
+	}
+	return nil
+}
+
+func applyExperimentArmPricingTierUpdates(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, arms []updateAdminExperimentArmPricingTierRequest) error {
+	for _, arm := range arms {
+		commandTag, err := tx.Exec(ctx, `
+			UPDATE ab_test_arms
+			SET pricing_tier_id = $3,
+			    updated_at = now()
+			WHERE id = $1 AND experiment_id = $2`, arm.ArmID, experimentID, arm.PricingTierID)
+		if err != nil {
+			return err
+		}
+		if commandTag.RowsAffected() == 0 {
+			return errAdminExperimentArmNotFound
+		}
+	}
+	return nil
 }
 
 func (h *AdminHandler) hasAssignmentTable(c *gin.Context) bool {
@@ -498,6 +601,7 @@ func (h *AdminHandler) listExperimentArms(ctx *gin.Context, experimentID uuid.UU
 		       a.description,
 		       a.is_control,
 		       a.traffic_weight::double precision,
+		       a.pricing_tier_id,
 		       COALESCE(s.samples, 0)::int,
 		       COALESCE(s.conversions, 0)::int,
 		       COALESCE(s.revenue, 0)::double precision,
@@ -778,17 +882,27 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 		response.InternalError(c, "Failed to create experiment")
 		return
 	}
+	if err := validatePricingTiersExist(ctx, tx, pricingTierIDsFromCreateExperimentArms(req.Arms)); err != nil {
+		switch {
+		case errors.Is(err, errAdminPricingTierNotFound):
+			response.UnprocessableEntity(c, "Linked pricing tier not found")
+		default:
+			response.InternalError(c, "Failed to validate pricing tier linkage")
+		}
+		return
+	}
 
 	for _, arm := range req.Arms {
 		_, err = tx.Exec(ctx, `
-			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
-			VALUES ($1, $2, $3, $4, $5, $6)`,
+				INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight, pricing_tier_id)
+				VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 			uuid.New(),
 			experimentID,
 			arm.Name,
 			arm.Description,
 			arm.IsControl,
 			arm.TrafficWeight,
+			arm.PricingTierID,
 		)
 		if err != nil {
 			response.InternalError(c, "Failed to create experiment arms")
@@ -872,6 +986,79 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 		default:
 			response.InternalError(c, "Failed to update experiment")
 		}
+		return
+	}
+
+	updatedExperiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated experiment")
+		return
+	}
+
+	response.OK(c, updatedExperiment)
+}
+
+func (h *AdminHandler) UpdateAdminExperimentArmPricingTiers(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+
+	var req updateAdminExperimentArmPricingTiersRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid experiment arm pricing tier payload")
+		return
+	}
+	if message := validateUpdateAdminExperimentArmPricingTiersRequest(req); message != "" {
+		response.UnprocessableEntity(c, message)
+		return
+	}
+
+	experiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.NotFound(c, "Experiment not found")
+			return
+		}
+		response.InternalError(c, "Failed to load experiment")
+		return
+	}
+	if experiment.Status != "draft" {
+		response.UnprocessableEntity(c, "Only draft experiments can be edited")
+		return
+	}
+
+	ctx := c.Request.Context()
+	tx, err := h.dbPool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		response.InternalError(c, "Failed to start experiment arm pricing tier transaction")
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	if err := validatePricingTiersExist(ctx, tx, pricingTierIDsFromArmPricingTierUpdates(req.Arms)); err != nil {
+		switch {
+		case errors.Is(err, errAdminPricingTierNotFound):
+			response.UnprocessableEntity(c, "Linked pricing tier not found")
+		default:
+			response.InternalError(c, "Failed to validate pricing tier linkage")
+		}
+		return
+	}
+
+	if err := applyExperimentArmPricingTierUpdates(ctx, tx, experimentID, req.Arms); err != nil {
+		switch {
+		case errors.Is(err, errAdminExperimentArmNotFound):
+			response.UnprocessableEntity(c, "All arm IDs must belong to the experiment")
+		default:
+			response.InternalError(c, "Failed to update experiment arm pricing tiers")
+		}
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		response.InternalError(c, "Failed to commit experiment arm pricing tier update")
 		return
 	}
 

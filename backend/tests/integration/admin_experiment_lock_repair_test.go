@@ -28,6 +28,19 @@ func TestAdminExperimentLockAndRepairHandlers(t *testing.T) {
 
 	for _, statement := range []string{
 		`CREATE EXTENSION IF NOT EXISTS pgcrypto`,
+		`CREATE TABLE pricing_tiers (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			name TEXT NOT NULL UNIQUE,
+			description TEXT,
+			monthly_price NUMERIC(10,2),
+			annual_price NUMERIC(10,2),
+			currency CHAR(3) NOT NULL DEFAULT 'USD',
+			features JSONB,
+			is_active BOOLEAN NOT NULL DEFAULT true,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			deleted_at TIMESTAMPTZ
+		)`,
 		`CREATE TABLE users (
 			id UUID PRIMARY KEY,
 			platform_user_id TEXT UNIQUE NOT NULL,
@@ -64,6 +77,7 @@ func TestAdminExperimentLockAndRepairHandlers(t *testing.T) {
 			description TEXT,
 			is_control BOOLEAN NOT NULL DEFAULT false,
 			traffic_weight NUMERIC(3,2) NOT NULL DEFAULT 1.0,
+			pricing_tier_id UUID REFERENCES pricing_tiers(id),
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 		)`,

@@ -438,6 +438,7 @@ CREATE TABLE ab_test_arms (
     description     TEXT,
     is_control      BOOLEAN NOT NULL DEFAULT false,
     traffic_weight  NUMERIC(3,2) NOT NULL DEFAULT 1.0,
+    pricing_tier_id UUID REFERENCES pricing_tiers(id),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -455,6 +456,9 @@ CHECK (traffic_weight >= 0)
 COMMENT ON TABLE ab_test_arms IS 'Arms (variants) for A/B test experiments';
 COMMENT ON COLUMN ab_test_arms.is_control IS 'True if this is the control/baseline variant';
 COMMENT ON COLUMN ab_test_arms.traffic_weight IS 'Initial traffic weight for bandit algorithms';
+COMMENT ON COLUMN ab_test_arms.pricing_tier_id IS 'Optional pricing tier linked to this experiment arm';
+
+CREATE INDEX idx_ab_test_arms_pricing_tier_id ON ab_test_arms(pricing_tier_id) WHERE pricing_tier_id IS NOT NULL;
 
 
 -- ------------------------------------------------------------

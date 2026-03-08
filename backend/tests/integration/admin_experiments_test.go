@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,6 +27,19 @@ func TestAdminExperimentsHandler(t *testing.T) {
 
 	_, err = db.Exec(ctx, `
 		CREATE EXTENSION IF NOT EXISTS pgcrypto;
+		CREATE TABLE pricing_tiers (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			name TEXT NOT NULL UNIQUE,
+			description TEXT,
+			monthly_price NUMERIC(10,2),
+			annual_price NUMERIC(10,2),
+			currency CHAR(3) NOT NULL DEFAULT 'USD',
+			features JSONB,
+			is_active BOOLEAN NOT NULL DEFAULT true,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			deleted_at TIMESTAMPTZ
+		);
 		CREATE TABLE users (
 			id UUID PRIMARY KEY,
 			platform_user_id TEXT UNIQUE NOT NULL,
@@ -62,6 +76,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			description TEXT,
 			is_control BOOLEAN NOT NULL DEFAULT false,
 			traffic_weight NUMERIC(3,2) NOT NULL DEFAULT 1.0,
+			pricing_tier_id UUID REFERENCES pricing_tiers(id),
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 		);
@@ -135,6 +150,16 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	primaryTierID := uuid.New()
+	upsellTierID := uuid.New()
+	_, err = db.Exec(ctx, `
+		INSERT INTO pricing_tiers (id, name, description, monthly_price, annual_price, currency, features, is_active)
+		VALUES
+			($1, 'Pro', 'Primary paid tier', 9.99, 99.99, 'USD', '["Unlimited access"]'::jsonb, TRUE),
+			($2, 'Plus', 'Upsell paid tier', 19.99, 199.99, 'USD', '["Priority support"]'::jsonb, TRUE)
+	`, primaryTierID, upsellTierID)
+	require.NoError(t, err)
+
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
@@ -162,6 +187,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	admin.GET("/experiments", handler.ListAdminExperiments)
 	admin.POST("/experiments", handler.CreateAdminExperiment)
 	admin.PUT("/experiments/:id", handler.UpdateAdminExperiment)
+	admin.PUT("/experiments/:id/arms/pricing-tiers", handler.UpdateAdminExperimentArmPricingTiers)
 	admin.GET("/experiments/:id/lifecycle-audit", handler.GetAdminExperimentLifecycleAuditHistory)
 	admin.GET("/experiments/:id/winner-recommendation-audit", handler.GetAdminExperimentWinnerRecommendationAuditHistory)
 	admin.POST("/experiments/:id/pause", handler.PauseAdminExperiment)
@@ -170,6 +196,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 
 	var runningExperiment handlers.AdminExperiment
 	var draftExperiment handlers.AdminExperiment
+	missingTierID := uuid.New()
 
 	t.Run("GET returns empty list before creation", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
@@ -185,7 +212,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	})
 
 	t.Run("POST creates a db-backed experiment with arms", func(t *testing.T) {
-		body := []byte(`{
+		body := []byte(fmt.Sprintf(`{
 			"name":"Pricing homepage CTA",
 			"description":"Compare control vs annual emphasis",
 			"status":"running",
@@ -196,9 +223,9 @@ func TestAdminExperimentsHandler(t *testing.T) {
 				"automation_policy":{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_sample_size":true},
 			"arms":[
 				{"name":"Control","description":"Baseline paywall","is_control":true,"traffic_weight":1},
-				{"name":"Variant A","description":"Annual plan emphasis","is_control":false,"traffic_weight":1}
+					{"name":"Variant A","description":"Annual plan emphasis","is_control":false,"traffic_weight":1,"pricing_tier_id":%q}
 			]
-		}`)
+			}`, primaryTierID.String()))
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
@@ -219,6 +246,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.True(t, resp.Data.AutomationPolicy.CompleteOnSampleSize)
 		assert.False(t, resp.Data.AutomationPolicy.ManualOverride)
 		assert.Len(t, resp.Data.Arms, 2)
+		require.NotNil(t, resp.Data.Arms[1].PricingTierID)
+		assert.Equal(t, primaryTierID, *resp.Data.Arms[1].PricingTierID)
 		assert.Equal(t, 2, resp.Data.ArmCount)
 		assert.Equal(t, 0, resp.Data.TotalSamples)
 		runningExperiment = resp.Data
@@ -267,6 +296,37 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		require.Len(t, resp.Data, 2)
 		assert.Equal(t, "Draft onboarding test", resp.Data[0].Name)
 		assert.Len(t, resp.Data[0].Arms, 2)
+
+		var foundRunning bool
+		for _, experiment := range resp.Data {
+			if experiment.ID != runningExperiment.ID {
+				continue
+			}
+			foundRunning = true
+			require.NotNil(t, experiment.Arms[1].PricingTierID)
+			assert.Equal(t, primaryTierID, *experiment.Arms[1].PricingTierID)
+		}
+		assert.True(t, foundRunning)
+	})
+
+	t.Run("POST rejects nonexistent pricing tier linkage", func(t *testing.T) {
+		body := []byte(fmt.Sprintf(`{
+				"name":"Broken pricing linkage",
+				"status":"draft",
+				"is_bandit":false,
+				"min_sample_size":100,
+				"confidence_threshold_percent":95,
+				"arms":[
+					{"name":"Control","is_control":true,"traffic_weight":1},
+					{"name":"Variant","is_control":false,"traffic_weight":1,"pricing_tier_id":%q}
+				]
+			}`, missingTierID.String()))
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 
 	t.Run("GET returns latest lifecycle audit reason when present", func(t *testing.T) {
@@ -478,6 +538,72 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Equal(t, "draft", resp.Data.Status)
 		assert.Len(t, resp.Data.Arms, 2)
 		draftExperiment = resp.Data
+	})
+
+	t.Run("PUT updates draft arm pricing tier linkage", func(t *testing.T) {
+		var controlArmID uuid.UUID
+		var variantArmID uuid.UUID
+		for _, arm := range draftExperiment.Arms {
+			switch arm.Name {
+			case "Control":
+				controlArmID = arm.ID
+			case "Variant B":
+				variantArmID = arm.ID
+			}
+		}
+		require.NotEqual(t, uuid.Nil, controlArmID)
+		require.NotEqual(t, uuid.Nil, variantArmID)
+
+		body := []byte(fmt.Sprintf(`{
+				"arms":[
+					{"arm_id":%q,"pricing_tier_id":%q},
+					{"arm_id":%q,"pricing_tier_id":%q}
+				]
+			}`, controlArmID.String(), primaryTierID.String(), variantArmID.String(), upsellTierID.String()))
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String()+"/arms/pricing-tiers", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+
+		links := make(map[string]uuid.UUID)
+		for _, arm := range resp.Data.Arms {
+			if arm.PricingTierID != nil {
+				links[arm.Name] = *arm.PricingTierID
+			}
+		}
+		assert.Equal(t, primaryTierID, links["Control"])
+		assert.Equal(t, upsellTierID, links["Variant B"])
+		draftExperiment = resp.Data
+	})
+
+	t.Run("PUT rejects nonexistent draft arm pricing tier linkage", func(t *testing.T) {
+		body := []byte(fmt.Sprintf(`{
+				"arms":[{"arm_id":%q,"pricing_tier_id":%q}]
+			}`, draftExperiment.Arms[0].ID.String(), missingTierID.String()))
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String()+"/arms/pricing-tiers", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("PUT rejects updating arm pricing tiers for non-draft experiment", func(t *testing.T) {
+		body := []byte(fmt.Sprintf(`{
+				"arms":[{"arm_id":%q,"pricing_tier_id":%q}]
+			}`, runningExperiment.Arms[0].ID.String(), primaryTierID.String()))
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/arms/pricing-tiers", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 
 	t.Run("PUT rejects updating a non-draft experiment", func(t *testing.T) {
