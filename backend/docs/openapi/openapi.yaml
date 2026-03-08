@@ -1422,8 +1422,11 @@ components:
     ConvertCurrencyRequest:
       type: object
       required: [amount, currency]
+      additionalProperties: false
       properties:
-        amount: { type: number }
+        amount:
+          type: number
+          maximum: 1e300
         currency:
           type: string
           minLength: 1

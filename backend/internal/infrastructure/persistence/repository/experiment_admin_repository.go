@@ -351,27 +351,30 @@ func (r *ExperimentAdminRepository) UpdateExperimentWinnerConfidence(ctx context
 
 func (r *ExperimentAdminRepository) ListExperimentRepairCandidateIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT DISTINCT e.id
-		FROM ab_tests e
-		WHERE e.is_bandit = TRUE
-		  AND (
-			e.status IN ('running', 'paused')
-			OR EXISTS (
-				SELECT 1
-				FROM bandit_pending_rewards pr
-				WHERE pr.experiment_id = e.id
-				  AND pr.processed_at IS NULL
-			)
-			OR EXISTS (
-				SELECT 1
-				FROM ab_test_arms a
-				LEFT JOIN ab_test_arm_stats s ON s.arm_id = a.id
-				WHERE a.experiment_id = e.id
-				  AND s.arm_id IS NULL
-			)
-			OR (e.status = 'completed' AND e.winner_confidence IS NULL)
-		  )
-		ORDER BY e.updated_at DESC, e.id
+		SELECT candidate.id
+		FROM (
+			SELECT DISTINCT e.id, e.updated_at
+			FROM ab_tests e
+			WHERE e.is_bandit = TRUE
+			  AND (
+				e.status IN ('running', 'paused')
+				OR EXISTS (
+					SELECT 1
+					FROM bandit_pending_rewards pr
+					WHERE pr.experiment_id = e.id
+					  AND pr.processed_at IS NULL
+				)
+				OR EXISTS (
+					SELECT 1
+					FROM ab_test_arms a
+					LEFT JOIN ab_test_arm_stats s ON s.arm_id = a.id
+					WHERE a.experiment_id = e.id
+					  AND s.arm_id IS NULL
+				)
+				OR (e.status = 'completed' AND e.winner_confidence IS NULL)
+			  )
+		) AS candidate
+		ORDER BY candidate.updated_at DESC, candidate.id
 		LIMIT $1`, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query experiment repair candidates: %w", err)

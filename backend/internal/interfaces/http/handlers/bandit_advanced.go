@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -138,6 +139,10 @@ func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.R
 	converted, err := h.currencyService.ConvertToUSD(r.Context(), *req.Amount, req.Currency)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if !isFiniteJSONNumber(converted) {
+		respondError(w, http.StatusBadRequest, "Amount is too large")
 		return
 	}
 
@@ -473,4 +478,8 @@ func isISO4217CurrencyCode(value string) bool {
 		}
 	}
 	return true
+}
+
+func isFiniteJSONNumber(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0)
 }

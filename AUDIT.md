@@ -137,7 +137,7 @@
 | Immutable event / conversion log | assignments и агрегаты уже есть, но в `bandit_repository.go` у `SaveConversion` прямо стоит TODO про отдельную conversions table | для доверенной автоматики нужна нормальная event history таблица (assignments, impressions, conversions, revenue, delayed feedback resolution), чтобы решения не опирались только на агрегаты |
 | Idempotent job execution | scheduler-backed automation и maintenance jobs теперь используют persisted execution log с window-based idempotency key, claim/skip semantics и retry-after-failure | дальше развивать это как единый contract для новых scheduled paths, а не возвращаться к best-effort execution |
 | Audit trail для auto-actions | для experiment lifecycle automation уже есть отдельный audit layer: source/reason/transition/time, latest audit в summary payloads и full history endpoint/UI | при расширении автоматики сохранять тот же уровень прозрачности для новых decision paths, а не откатываться к «silent background changes» |
-| Reconciliation / repair jobs | есть explicit admin repair path: он делает assignment snapshot, создаёт missing `ab_test_arm_stats`, пересчитывает `winner_confidence` и обрабатывает expired pending rewards из persisted sources | до полноценного reconciler/scheduled repair job всё ещё не хватает фонового self-heal path для более широкого derived state (`objective stats`, expired assignments cleanup и т.д.) |
+| Reconciliation / repair jobs | есть explicit admin repair path и scheduled background repair reconciler на `asynq` с window-idempotent execution log: они делают assignment snapshot, создают missing `ab_test_arm_stats`, пересчитывают `winner_confidence` и обрабатывают expired pending rewards из persisted sources | coverage derived state всё ещё не полная: пока нет self-heal для `objective stats`, expired assignments cleanup и других производных поверхностей |
 | Experiment arm editing backend | create experiment с arms уже есть, edit существующего draft пока ограничен metadata-only update | для настоящего Studio builder понадобится persisted arm CRUD + server-side validation суммарных weight/control arm invariants |
 | Pricing tier linkage model | live pricing tiers уже есть, но truthful linkage tier ↔ arm пока отсутствует | если Studio должен автоматизировать pricing-experiment workflows, нужна отдельная persisted linkage model/table, а не просто соседние UI-блоки |
 | Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
@@ -146,13 +146,13 @@
 
 ### Минимальный truthful backend slice для следующего этапа автоматики
 
-Если делать не «всё сразу», а минимальный полезный срез, то backend-приоритет выглядит так:
+Если делать не «всё сразу», а минимальный полезный следующий backend-срез, то приоритет теперь выглядит так:
 
-1. **Вынести lifecycle transitions из handler-уровня в service/use-case слой**.
-2. **Добавить scheduled experiment reconciler job** на существующем `asynq` worker.
-3. **Ввести persisted automation policy** для `ab_tests`.
-4. **Добить repository-backed bandit maintenance jobs**, которые сейчас местами placeholder.
-5. **Добавить immutable conversions / decisions log** для доверенного auto-complete / auto-winner flow.
+1. **Добить repository-backed bandit maintenance jobs**, которые сейчас местами placeholder.
+2. **Расширить repair/self-heal coverage** на `objective stats`, expired assignments cleanup и другие derived surfaces.
+3. **Добавить immutable conversions / decisions log** для доверенного auto-complete / auto-winner flow.
+4. **Добить persisted arm CRUD + validation** для truthful experiment builder workflow.
+5. **Ввести persisted pricing tier ↔ arm linkage model** для реального pricing-experiment orchestration.
 
 Без этих пяти вещей автоматика останется либо UI-имитацией, либо набором хрупких cron-скриптов поверх уже существующих ручных endpoints.
 
@@ -227,7 +227,7 @@
 | Stage 2 | Scheduled experiment reconciler job | P1 | ✅ Done | периодический worker scan-ит `ab_tests` и применяет automation policy через общий lifecycle service |
 | Stage 2 | Auto-start / auto-complete rules | P1 | ✅ Done | experiments автоматически стартуют и завершаются по времени, sample-size и confidence-driven rules |
 | Stage 2 | Manual override / lock semantics | P1 | ✅ Done | persisted `automation_policy` теперь поддерживает `manual_override`, `locked_until`, `locked_by`, `lock_reason`, отдельные admin `lock/unlock` flows и reconciler уважает как explicit manual lock, так и time-bound lock window |
-| Stage 2 | Reconciliation / repair job для derived experiment state | P2 | 🟡 Partial | есть explicit admin `repair` path: он делает assignment snapshot, создаёт missing arm-stats rows, пересчитывает `winner_confidence` и обрабатывает expired pending rewards из persisted state, но это пока не scheduled/background reconciler и не покрывает весь derived surface |
+| Stage 2 | Reconciliation / repair job для derived experiment state | P2 | 🟡 Partial | есть explicit admin `repair` path и scheduled/background repair reconciler на `asynq` с window-idempotent execution: они делают assignment snapshot, создают missing arm-stats rows, пересчитывают `winner_confidence` и обрабатывают expired pending rewards из persisted state, но coverage всего derived surface пока неполная |
 | Stage 2 | Admin-visible reason codes для auto-transitions | P2 | ✅ Done | admin payload/UI показывает, каким rule и по какой причине система перевела experiment в новый status |
 | Stage 2 | Full lifecycle audit history UI/API surface | P2 | ✅ Done | admin API и Studio UI отдают полный newest-first lifecycle audit trail по experiment без mock-данных |
 | Stage 3 | Repository-backed bandit maintenance jobs | P1 | 🟡 Partial | scheduler wiring и idempotent execution уже есть, а `RunMaintenance` реально закрывает expired rewards/currency refresh, но `trim_windows`, context cleanup и objective stats maintenance ещё не production-grade |

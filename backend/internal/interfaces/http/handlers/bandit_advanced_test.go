@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -134,6 +135,12 @@ func TestStatusForServiceError_ReturnsServiceUnavailableForExternalServiceErrors
 	status := statusForServiceError(domainErrors.ErrExternalServiceUnavailable, http.StatusInternalServerError)
 
 	require.Equal(t, http.StatusServiceUnavailable, status)
+}
+
+func TestIsFiniteJSONNumber(t *testing.T) {
+	require.True(t, isFiniteJSONNumber(42.5))
+	require.False(t, isFiniteJSONNumber(math.Inf(1)))
+	require.False(t, isFiniteJSONNumber(math.NaN()))
 }
 
 func TestGetObjectiveScores_GinWrappedRouteAcceptsValidExperimentID(t *testing.T) {
