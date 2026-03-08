@@ -17,7 +17,7 @@
 
 import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
+const BACKEND_URL = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8081";
 // Cookies are secure only when served over HTTPS (set HTTPS=true in production with TLS)
 const SECURE_COOKIES = process.env.HTTPS === "true";
 
@@ -97,7 +97,7 @@ export async function logoutAction(): Promise<{ redirectTo: string }> {
     await fetch(`${BACKEND_URL}/v1/admin/auth/logout`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-    }).catch(() => {});
+    }).catch(() => undefined);
   }
 
   cookieStore.delete("admin_access_token");
