@@ -19,6 +19,7 @@
       "dunning": "Управление долгами",
       "winback": "Возврат клиентов",
       "pricingTiers": "Тарифные планы",
+      "paywallCreator": "Конструктор пейволлов",
       "webhooks": "Вебхуки",
       "abTests": "A/B тесты",
       "studio": "Студия",
@@ -867,6 +868,48 @@
       "features": "Фичи",
       "featuresPlaceholder": "Одна фича на строку",
       "active": "Тариф активен"
+    }
+  },
+  "paywallCreator": {
+    "title": "Конструктор пейволлов",
+    "subtitle": "Проектируйте paywall-экраны через JSON schema и сразу смотрите, как они рендерятся в web и mobile до подключения к реальным продуктам.",
+    "actions": {
+      "mobileTemplate": "Загрузить mobile-шаблон",
+      "webTemplate": "Загрузить web-шаблон",
+      "format": "Форматировать JSON"
+    },
+    "summary": {
+      "validation": "Статус схемы",
+      "plans": "Планы",
+      "features": "Фичи"
+    },
+    "status": {
+      "valid": "Валидна",
+      "invalid": "Нужны исправления"
+    },
+    "editor": {
+      "title": "Редактор JSON schema",
+      "description": "Редактируйте paywall JSON напрямую. Валидация идёт в реальном времени, а preview сохраняет последнюю валидную схему.",
+      "validationFailed": "Валидация схемы не пройдена",
+      "validationSuccess": "Схема валидна",
+      "validationSuccessDescription": "Превью ниже рендерятся из текущей JSON schema."
+    },
+    "preview": {
+      "title": "Live-превью",
+      "description": "Переключайтесь между web и mobile режимами, чтобы увидеть paywall глазами пользователя.",
+      "web": "Web",
+      "mobile": "Mobile",
+      "fallback": "Показано последнее валидное превью"
+    },
+    "schema": {
+      "title": "Поддерживаемая структура JSON",
+      "description": "Верхнеуровневые объекты, обязательные для конструктора.",
+      "rules": {
+        "colors": "Цвета в theme должны быть hex-значениями вроде #7C3AED.",
+        "features": "В features должно быть от 2 до 8 буллетов.",
+        "plans": "В plans должно быть от 1 до 3 вариантов покупки.",
+        "highlight": "Одновременно можно выделить только один план."
+      }
     }
   },
   "revenueOps": {

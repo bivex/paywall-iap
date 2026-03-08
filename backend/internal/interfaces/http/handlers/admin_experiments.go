@@ -68,6 +68,17 @@ type createAdminExperimentRequest struct {
 	Arms                       []createAdminExperimentArmRequest `json:"arms"`
 }
 
+type updateAdminExperimentRequest struct {
+	Name                       string     `json:"name"`
+	Description                string     `json:"description"`
+	AlgorithmType              string     `json:"algorithm_type"`
+	IsBandit                   bool       `json:"is_bandit"`
+	MinSampleSize              int        `json:"min_sample_size"`
+	ConfidenceThresholdPercent float64    `json:"confidence_threshold_percent"`
+	StartAt                    *time.Time `json:"start_at"`
+	EndAt                      *time.Time `json:"end_at"`
+}
+
 const adminExperimentSelectBase = `
 		SELECT e.id,
 		       e.name,
@@ -112,6 +123,13 @@ func normalizeCreateAdminExperimentRequest(req createAdminExperimentRequest) cre
 	return req
 }
 
+func normalizeUpdateAdminExperimentRequest(req updateAdminExperimentRequest) updateAdminExperimentRequest {
+	req.Name = strings.TrimSpace(req.Name)
+	req.Description = strings.TrimSpace(req.Description)
+	req.AlgorithmType = strings.ToLower(strings.TrimSpace(req.AlgorithmType))
+	return req
+}
+
 func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) string {
 	if req.Name == "" {
 		return "Experiment name is required"
@@ -147,6 +165,29 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	}
 	if controlCount != 1 {
 		return "Exactly one control arm is required"
+	}
+	if req.IsBandit {
+		switch req.AlgorithmType {
+		case "thompson_sampling", "ucb", "epsilon_greedy":
+		default:
+			return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
+		}
+	}
+	return ""
+}
+
+func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) string {
+	if req.Name == "" {
+		return "Experiment name is required"
+	}
+	if req.MinSampleSize <= 0 {
+		return "Minimum sample size must be greater than zero"
+	}
+	if req.ConfidenceThresholdPercent <= 0 || req.ConfidenceThresholdPercent > 100 {
+		return "Confidence threshold must be between 0 and 100"
+	}
+	if req.StartAt != nil && req.EndAt != nil && req.EndAt.Before(*req.StartAt) {
+		return "End time must be after start time"
 	}
 	if req.IsBandit {
 		switch req.AlgorithmType {
@@ -434,6 +475,79 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 	}
 
 	response.Created(c, experiment)
+}
+
+func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+
+	var req updateAdminExperimentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid experiment payload")
+		return
+	}
+	req = normalizeUpdateAdminExperimentRequest(req)
+	if message := validateUpdateAdminExperimentRequest(req); message != "" {
+		response.UnprocessableEntity(c, message)
+		return
+	}
+
+	experiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.NotFound(c, "Experiment not found")
+			return
+		}
+		response.InternalError(c, "Failed to load experiment")
+		return
+	}
+	if experiment.Status != "draft" {
+		response.UnprocessableEntity(c, "Only draft experiments can be edited")
+		return
+	}
+
+	var algorithmType any
+	if req.IsBandit {
+		algorithmType = req.AlgorithmType
+	}
+
+	_, err = h.dbPool.Exec(c.Request.Context(), `
+		UPDATE ab_tests
+		SET name = $2,
+		    description = $3,
+		    algorithm_type = $4,
+		    is_bandit = $5,
+		    min_sample_size = $6,
+		    confidence_threshold = $7,
+		    start_at = $8,
+		    end_at = $9,
+		    updated_at = now()
+		WHERE id = $1`,
+		experimentID,
+		req.Name,
+		req.Description,
+		algorithmType,
+		req.IsBandit,
+		req.MinSampleSize,
+		req.ConfidenceThresholdPercent/100,
+		req.StartAt,
+		req.EndAt,
+	)
+	if err != nil {
+		response.InternalError(c, "Failed to update experiment")
+		return
+	}
+
+	updatedExperiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated experiment")
+		return
+	}
+
+	response.OK(c, updatedExperiment)
 }
 
 func (h *AdminHandler) PauseAdminExperiment(c *gin.Context) {

@@ -19,6 +19,7 @@
       "dunning": "Dunning",
       "winback": "Winback",
       "pricingTiers": "Pricing Tiers",
+      "paywallCreator": "Paywall Creator",
       "webhooks": "Webhooks",
       "abTests": "A/B Tests",
       "studio": "Studio",
@@ -867,6 +868,48 @@
       "features": "Features",
       "featuresPlaceholder": "One feature per line",
       "active": "Tier is active"
+    }
+  },
+  "paywallCreator": {
+    "title": "Paywall Creator",
+    "subtitle": "Design paywall screens from JSON schema and preview how they render on web and mobile before wiring them to real products.",
+    "actions": {
+      "mobileTemplate": "Load mobile template",
+      "webTemplate": "Load web template",
+      "format": "Format JSON"
+    },
+    "summary": {
+      "validation": "Schema status",
+      "plans": "Plans",
+      "features": "Features"
+    },
+    "status": {
+      "valid": "Valid",
+      "invalid": "Needs fixes"
+    },
+    "editor": {
+      "title": "JSON schema editor",
+      "description": "Edit the paywall JSON directly. Validation runs live and the preview keeps the last valid schema.",
+      "validationFailed": "Schema validation failed",
+      "validationSuccess": "Schema is valid",
+      "validationSuccessDescription": "The previews below are rendering from the current JSON schema."
+    },
+    "preview": {
+      "title": "Live previews",
+      "description": "Switch between web and mobile render modes to see how the paywall will look to users.",
+      "web": "Web",
+      "mobile": "Mobile",
+      "fallback": "Showing last valid preview"
+    },
+    "schema": {
+      "title": "Accepted JSON shape",
+      "description": "Top-level objects required by the creator.",
+      "rules": {
+        "colors": "theme colors must use hex values like #7C3AED.",
+        "features": "features must contain between 2 and 8 bullet points.",
+        "plans": "plans must contain between 1 and 3 purchase options.",
+        "highlight": "Only one plan can be highlighted at a time."
+      }
     }
   },
   "revenueOps": {

@@ -130,6 +130,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	admin := router.Group("/v1/admin")
 	admin.GET("/experiments", handler.ListAdminExperiments)
 	admin.POST("/experiments", handler.CreateAdminExperiment)
+	admin.PUT("/experiments/:id", handler.UpdateAdminExperiment)
 	admin.POST("/experiments/:id/pause", handler.PauseAdminExperiment)
 	admin.POST("/experiments/:id/resume", handler.ResumeAdminExperiment)
 	admin.POST("/experiments/:id/complete", handler.CompleteAdminExperiment)
@@ -225,6 +226,74 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		require.Len(t, resp.Data, 2)
 		assert.Equal(t, "Draft onboarding test", resp.Data[0].Name)
 		assert.Len(t, resp.Data[0].Arms, 2)
+	})
+
+	t.Run("PUT rejects invalid draft metadata payload", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Draft onboarding test",
+			"description":"Prepare a staged rollout",
+			"algorithm_type":"thompson_sampling",
+			"is_bandit":true,
+			"min_sample_size":150,
+			"confidence_threshold_percent":101
+		}`)
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("PUT updates a draft experiment metadata", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Draft onboarding test v2",
+			"description":"Prepare a staged rollout with classic allocation",
+			"algorithm_type":"epsilon_greedy",
+			"is_bandit":false,
+			"min_sample_size":220,
+			"confidence_threshold_percent":92,
+			"start_at":"2026-01-05T10:00:00Z",
+			"end_at":"2026-01-12T10:00:00Z"
+		}`)
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "Draft onboarding test v2", resp.Data.Name)
+		assert.Equal(t, "Prepare a staged rollout with classic allocation", resp.Data.Description)
+		assert.False(t, resp.Data.IsBandit)
+		assert.Nil(t, resp.Data.AlgorithmType)
+		assert.Equal(t, 220, resp.Data.MinSampleSize)
+		assert.InDelta(t, 92, resp.Data.ConfidenceThresholdPercent, 0.001)
+		require.NotNil(t, resp.Data.StartAt)
+		require.NotNil(t, resp.Data.EndAt)
+		assert.Equal(t, "draft", resp.Data.Status)
+		assert.Len(t, resp.Data.Arms, 2)
+		draftExperiment = resp.Data
+	})
+
+	t.Run("PUT rejects updating a non-draft experiment", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Running experiment edit",
+			"description":"Should fail",
+			"algorithm_type":"thompson_sampling",
+			"is_bandit":true,
+			"min_sample_size":250,
+			"confidence_threshold_percent":95
+		}`)
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+runningExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
 	})
 
 	t.Run("POST rejects invalid arms payload", func(t *testing.T) {
