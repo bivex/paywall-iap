@@ -329,6 +329,12 @@
       "title": "Saved Arm Plan",
       "description": "These arms come from the persisted admin experiments table. Live win probabilities are shown only when the bandit statistics endpoint is available."
     },
+    "pricing": {
+      "title": "Pricing Tiers",
+      "description": "Edit the live pricing_tiers catalog from Studio using the same real admin CRUD that powers the dedicated Pricing page.",
+      "noteTitle": "Scope",
+      "noteBody": "Pricing tiers are editable here now, but the backend does not yet persist any experiment-arm-to-pricing-tier linkage. This section manages the real shared pricing tier catalog only."
+    },
     "table": {
       "arm": "Arm",
       "type": "Type",
@@ -356,6 +362,8 @@
       "builderBody": "Use A/B Tests to create experiments and edit arm plans. Studio now supports draft metadata edits and lifecycle controls, but it is still not pretending to be a full visual builder.",
       "banditTitle": "Bandit monitoring",
       "banditBody": "Use Bandit Model for dedicated bandit telemetry. Studio surfaces only the minimum runtime status needed for orchestration.",
+      "pricingTitle": "Pricing tiers",
+      "pricingBody": "Studio now exposes the real shared pricing tier CRUD, but those tiers are still not attached to specific experiment arms in the backend data model yet.",
       "advancedTitle": "Advanced endpoints",
       "advancedBody": "Objective scoring and sliding-window routes are shown exactly as they behave in the current runtime, including failures or placeholder responses.",
       "readOnly": "Draft metadata can now be updated here, but arm editing and broader experiment design still belong in A/B Tests."

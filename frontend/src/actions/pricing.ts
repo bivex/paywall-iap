@@ -39,7 +39,10 @@ async function mutate<T>(path: string, method: "POST" | "PUT", payload?: Pricing
       body: payload ? JSON.stringify(payload) : undefined,
     });
     const parsed = await parseResponse<T>(res);
-    if (parsed.ok) revalidatePath("/dashboard/pricing");
+    if (parsed.ok) {
+      revalidatePath("/dashboard/pricing");
+      revalidatePath("/dashboard/experiments/studio");
+    }
     return parsed;
   } catch (error) {
     return { ok: false, error: String(error) };

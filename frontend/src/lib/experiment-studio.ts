@@ -1,5 +1,6 @@
 import type { BanditSnapshot } from "@/lib/bandit";
 import type { ExperimentSummary } from "@/lib/experiments";
+import type { PricingTier } from "@/lib/pricing-tiers";
 
 export interface StudioEndpointProbe {
   ok: boolean;
@@ -28,5 +29,7 @@ export interface ExperimentStudioDashboardData {
   experiments: ExperimentSummary[];
   selectedExperimentId: string | null;
   snapshot: ExperimentStudioSnapshot | null;
+  pricingTiers: PricingTier[];
+  pricingLoadFailed: boolean;
   loadFailed: boolean;
 }

@@ -10,6 +10,8 @@ export default async function ExperimentStudioPage() {
       initialExperiments={data.experiments}
       initialSelectedExperimentId={data.selectedExperimentId}
       initialSnapshot={data.snapshot}
+      initialPricingTiers={data.pricingTiers}
+      pricingLoadFailed={data.pricingLoadFailed}
       loadFailed={data.loadFailed}
     />
   );

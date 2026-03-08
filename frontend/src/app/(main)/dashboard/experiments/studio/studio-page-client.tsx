@@ -14,6 +14,7 @@ import {
   resumeExperimentAction,
   updateExperimentAction,
 } from "@/actions/experiments";
+import { PricingTierManager } from "@/components/pricing/pricing-tier-manager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,7 @@ import type {
   StudioEndpointProbe,
 } from "@/lib/experiment-studio";
 import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
+import type { PricingTier } from "@/lib/pricing-tiers";
 
 async function fetchStudioJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });
@@ -143,11 +145,15 @@ export function StudioPageClient({
   initialExperiments,
   initialSelectedExperimentId = null,
   initialSnapshot = null,
+  initialPricingTiers = [],
+  pricingLoadFailed: initialPricingLoadFailed = false,
   loadFailed: initialLoadFailed = false,
 }: {
   initialExperiments?: ExperimentSummary[];
   initialSelectedExperimentId?: string | null;
   initialSnapshot?: ExperimentStudioSnapshot | null;
+  initialPricingTiers?: PricingTier[];
+  pricingLoadFailed?: boolean;
   loadFailed?: boolean;
 }) {
   const hasInitialPayload = initialExperiments !== undefined;
@@ -155,6 +161,8 @@ export function StudioPageClient({
   const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
   const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
   const [snapshot, setSnapshot] = useState<ExperimentStudioSnapshot | null>(initialSnapshot ?? null);
+  const [pricingTiers, setPricingTiers] = useState<PricingTier[]>(initialPricingTiers);
+  const [pricingLoadFailed, setPricingLoadFailed] = useState(initialPricingLoadFailed);
   const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
@@ -170,9 +178,12 @@ export function StudioPageClient({
         setExperiments(data.experiments);
         setSelectedId(data.selectedExperimentId ?? "");
         setSnapshot(data.snapshot);
+        setPricingTiers(data.pricingTiers ?? []);
+        setPricingLoadFailed(data.pricingLoadFailed);
         setLoadFailed(data.loadFailed);
       } catch {
         setLoadFailed(true);
+        setPricingLoadFailed(true);
       } finally {
         setIsBootstrapping(false);
       }
@@ -681,6 +692,20 @@ export function StudioPageClient({
                 </CardContent>
               </Card>
 
+              <div className="space-y-3">
+                <div>
+                  <h2 className="font-semibold text-lg tracking-tight">{t("pricing.title")}</h2>
+                  <p className="mt-1 text-muted-foreground text-sm">{t("pricing.description")}</p>
+                </div>
+
+                <div className="rounded-md border border-dashed p-4 text-muted-foreground text-xs">
+                  <p className="font-medium text-foreground text-sm">{t("pricing.noteTitle")}</p>
+                  <p className="mt-1">{t("pricing.noteBody")}</p>
+                </div>
+
+                <PricingTierManager embedded initialTiers={pricingTiers} loadFailed={pricingLoadFailed} />
+              </div>
+
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_1fr]">
                 <Card>
                   <CardHeader>
@@ -728,6 +753,10 @@ export function StudioPageClient({
                     <div className="rounded-md border p-3">
                       <p className="font-medium">{t("notes.banditTitle")}</p>
                       <p className="mt-1 text-muted-foreground text-xs">{t("notes.banditBody")}</p>
+                    </div>
+                    <div className="rounded-md border p-3">
+                      <p className="font-medium">{t("notes.pricingTitle")}</p>
+                      <p className="mt-1 text-muted-foreground text-xs">{t("notes.pricingBody")}</p>
                     </div>
                     <div className="rounded-md border p-3">
                       <p className="font-medium">{t("notes.advancedTitle")}</p>

@@ -10,6 +10,7 @@ import type {
   StudioEndpointProbe,
 } from "@/lib/experiment-studio";
 import type { ExperimentSummary } from "@/lib/experiments";
+import type { PricingTier } from "@/lib/pricing-tiers";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -75,6 +76,16 @@ export async function getAdminExperimentsFromCookies(): Promise<ExperimentSummar
   if (!token) return null;
 
   const res = await fetchProbe<ExperimentSummary[]>(`${BACKEND_URL}/v1/admin/experiments`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.ok ? res.data : null;
+}
+
+export async function getPricingTiersFromCookies(): Promise<PricingTier[] | null> {
+  const token = await getAdminToken();
+  if (!token) return null;
+
+  const res = await fetchProbe<PricingTier[]>(`${BACKEND_URL}/v1/admin/pricing-tiers`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.ok ? res.data : null;
@@ -156,14 +167,31 @@ export async function getStudioSnapshotFromCookies(experimentId: string): Promis
 }
 
 export async function getStudioDashboardFromCookies(): Promise<ExperimentStudioDashboardData> {
-  const experiments = await getAdminExperimentsFromCookies();
+  const [experiments, pricingTiers] = await Promise.all([
+    getAdminExperimentsFromCookies(),
+    getPricingTiersFromCookies(),
+  ]);
   if (!experiments) {
-    return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
+    return {
+      experiments: [],
+      selectedExperimentId: null,
+      snapshot: null,
+      pricingTiers: pricingTiers ?? [],
+      pricingLoadFailed: pricingTiers === null,
+      loadFailed: true,
+    };
   }
 
   const selected = pickDefaultExperiment(experiments);
   if (!selected) {
-    return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
+    return {
+      experiments,
+      selectedExperimentId: null,
+      snapshot: null,
+      pricingTiers: pricingTiers ?? [],
+      pricingLoadFailed: pricingTiers === null,
+      loadFailed: false,
+    };
   }
 
   const snapshot = await getStudioSnapshotFromCookies(selected.id);
@@ -171,6 +199,8 @@ export async function getStudioDashboardFromCookies(): Promise<ExperimentStudioD
     experiments,
     selectedExperimentId: selected.id,
     snapshot,
+    pricingTiers: pricingTiers ?? [],
+    pricingLoadFailed: pricingTiers === null,
     loadFailed: false,
   };
 }

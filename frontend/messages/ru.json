@@ -329,6 +329,12 @@
       "title": "Сохранённый план веток",
       "description": "Эти arms берутся из persisted admin experiments table. Live win probabilities показываются только когда доступен bandit statistics endpoint."
     },
+    "pricing": {
+      "title": "Pricing Tiers",
+      "description": "Редактируйте живой каталог pricing_tiers прямо из Studio, используя тот же реальный admin CRUD, что и отдельная страница Pricing.",
+      "noteTitle": "Границы поддержки",
+      "noteBody": "Pricing tiers теперь можно редактировать здесь, но backend пока не хранит связь между experiment arms и pricing tiers. Этот блок управляет только реальным общим каталогом pricing tiers."
+    },
     "table": {
       "arm": "Ветка",
       "type": "Тип",
@@ -356,6 +362,8 @@
       "builderBody": "Используйте A/B Tests для создания экспериментов и редактирования планов веток. Studio теперь поддерживает правку метаданных черновика и lifecycle controls, но всё ещё не притворяется полноценным visual builder'ом.",
       "banditTitle": "Bandit monitoring",
       "banditBody": "Используйте Bandit Model для отдельного bandit telemetry. Studio показывает только минимальный runtime status, нужный для orchestration.",
+      "pricingTitle": "Pricing tiers",
+      "pricingBody": "Studio теперь показывает реальный shared CRUD для pricing tiers, но эти tiers всё ещё не привязаны к конкретным experiment arms в backend data model.",
       "advancedTitle": "Advanced endpoints",
       "advancedBody": "Objective scoring и sliding-window routes показываются ровно так, как они ведут себя в текущем runtime, включая ошибки или placeholder responses.",
       "readOnly": "Метаданные черновика теперь можно обновлять здесь, но редактирование веток и более широкий дизайн эксперимента по-прежнему должны происходить в A/B Tests."
