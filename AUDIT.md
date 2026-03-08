@@ -32,6 +32,22 @@
 | Delayed Feedback | `getDelayedFeedbackDashboardFromCookies()` + `/api/admin/delayed-feedback/*` | manual POST ingest через `/api/admin/delayed-feedback/conversions`, pending lookups via `/api/admin/delayed-feedback/pending/*` и `/api/admin/delayed-feedback/users/*` | 🟡 Частично | это уже не mock: есть probes, ручной conversion ingest и lookup pending rewards; editor/questionnaire management не реализован |
 | Sliding Window | `getSlidingWindowDashboardFromCookies()` + `/api/admin/sliding-window/*` | trim через `/api/admin/sliding-window/trim`, events inspect/export via `/api/admin/sliding-window/events` | 🟡 Частично | live read-path, trim и export событий уже есть; полноценного config/reset management beyond trim нет |
 | Multi-Objective | `getMultiObjectiveDashboardFromCookies()` + `/api/admin/multi-objective/*` | config read/save через `/api/admin/multi-objective/config` | 🟡 Частично | objective scores и persisted config wiring уже живые; отсутствует более широкий optimizer/workbench поверх этого экрана |
+| Analytics Reports | `getAnalyticsReport()` → `/v1/admin/analytics/report` | — | ⚪ Read-only | основная analytics page уже грузит live report из backend, но cohort/LTV sub-surface всё ещё не полностью truthful |
+| Audit Log | `getAuditLog()` + CSV export proxy | — | ⚪ Read-only | реальный list/filter/export surface для admin audit trail, без ожидаемых page-local mutations |
+| Users | `getUsers()` + `/dashboard/users/[id]` | user detail operator actions (`force-cancel`, `force-renew`, `grant-grace`) | ✅ Работает | list/detail и operator actions уже живые, это больше не placeholder admin surface |
+| Subscriptions | `getSubscriptions()` + detail sheet | — | ⚪ Read-only | список и detail уже живые, но сортировка по дате пока местами остаётся frontend-only workaround |
+| Transactions | `getTransactions()` + detail sheet | — | ⚪ Read-only | KPI/list/detail реально подключены, но backend sort contract ещё не добит и часть сортировки остаётся на фронте |
+| Webhook Events | `getWebhooks()` | `replayWebhook()` | ✅ Работает | реальный list/filter/replay surface уже есть; главный оставшийся gap — не страница, а production-grade webhook automation pipeline |
+| Paywall Creator | `getPricingTiers()` + local schema/preview state | — | 🟡 Частично | editor/preview и tier→plan mapping локально работают, но persisted create/update/publish path и runtime/mobile render contract ещё отсутствуют |
+
+## Дополнительные placeholder / demo epics, которые раньше не были явно зафиксированы
+
+| Epic | Что найдено | Почему это важно |
+|---|---|---|
+| Finance dashboard | `frontend/src/app/(main)/dashboard/finance/_components/*` держит hardcoded card/chart data без server actions или backend fetch | это не truthful admin/paywall surface, а template/demo dashboard, и его не стоит считать «почти готовым продуктовым epic» |
+| CRM dashboard | `frontend/src/app/(main)/dashboard/crm/_components/crm.config.ts` целиком построен на статических sales/demo массивах | пока нет real CRM data contract, это placeholder/demo route, а не недополированный production screen |
+| Cohort / LTV analytics sub-surface | `backend/internal/interfaces/http/handlers/analytics_cohorts.go` для LTV всё ещё возвращает mock estimates (`ltv30/90/365`) вместо реального расчёта | основной analytics report живой, но cohort/LTV epic нельзя считать полностью truthful |
+| Public winback offers surface | `backend/internal/interfaces/http/handlers/winback.go` в `GetActiveOffers` всё ещё содержит TODO и возвращает пустой список | admin winback management уже real, но user-facing/read-path часть winback epic всё ещё placeholder-level |
 
 ## Что в старом аудите уже неверно
 
@@ -79,9 +95,16 @@
 | P1 | Runtime-specific config UX для `Bandit Model` | draft config edit и recommendation surfacing уже есть, но не хватает более глубокого runtime workbench поверх metrics/probabilities/current history surfaces |
 | P2 | Safe auto-rollout controls | truthful policy layer уже есть, а recommendation layer теперь даёт guarded `confirm winner` и `hold for review` operator actions; дальше остаются explicit auto-promote / auto-reweight |
 | P2 | Winback management beyond launch/deactivate | launch и deactivate работают, но нет полноценного update/edit flow кампаний |
+| P2 | Webhook ingestion automation pipeline | перевести webhook flow из хрупкого synchronous-only intake в queued/background processing с retry, idempotency, failure visibility и operator-safe observability |
+| P2 | Paywall Creator persistence / publish path | текущая страница умеет только локальный schema edit/preview и tier→plan mapping, но не имеет persisted paywall CRUD/publish/runtime contract |
+| P2 | Cohort / LTV analytics truthfulness | основной analytics report живой, но cohort/LTV sub-surface всё ещё опирается на backend mock estimates и не должен считаться production-ready analytics epic |
 | P2 | Sliding Window config/reset UX | trim и export уже есть, но экран не даёт полноценного runtime/config management |
 | P2 | Multi-Objective optimizer workbench | persisted config и score inspection есть, но это ещё не полный decision cockpit |
+| P2 | Mobile paywall renderer runtime surface | нужен реальный mobile paywall renderer, который truthfully рендерит сохранённую paywall-конфигурацию и варианты для клиентского runtime, а не отсутствующий/placeholder surface |
+| P3 | Public winback offers read path | admin winback уже real, но пользовательский `GET /winback/offers` всё ещё TODO/empty-list и не закрывает end-to-end winback product flow |
 | P3 | Dunning page product decision | либо делать отдельный config/editor экран, либо честно оставить её как operations mirror Revenue Ops |
+| P3 | CRM dashboard product decision | текущий route — это static sales demo, поэтому нужно либо убрать/перемаркировать его, либо строить под него реальный data contract |
+| P3 | Finance dashboard product decision | текущий route — это static finance template, а не truthful paywall backoffice surface; нужен либо removal/relabel, либо реальный backend wiring |
 | P3 | Matomo dedicated analytics UX | embed через saved settings работает, но page-level KPI/config experience минимален |
 
 ### Top-3 ближайших ticket'а (рекомендуемый порядок)
@@ -136,6 +159,12 @@
 | Idempotent job execution | scheduler-backed automation и maintenance jobs теперь используют persisted execution log с window-based idempotency key, claim/skip semantics и retry-after-failure | дальше развивать это как единый contract для новых scheduled paths, а не возвращаться к best-effort execution |
 | Audit trail для auto-actions | для experiment lifecycle automation уже есть отдельный audit layer: source/reason/transition/time, latest audit в summary payloads и full history endpoint/UI | при расширении автоматики сохранять тот же уровень прозрачности для новых decision paths, а не откатываться к «silent background changes» |
 | Reconciliation / repair jobs | есть explicit admin repair path и scheduled background repair reconciler на `asynq` с window-idempotent execution log; explicit repair теперь делает assignment snapshot, создаёт missing `ab_test_arm_stats`, синхронизирует per-experiment `objective stats`, пересчитывает `winner_confidence` и обрабатывает expired pending rewards, а maintenance layer отдельно чистит stale context/expired assignments и даёт targeted operator scopes для этих cleanup paths | coverage автоматики всё ещё не полная: следующий gap уже больше про richer recommendation/decision/event surfaces, чем про базовый cleanup plumbing |
+| Webhook ingestion automation | HTTP webhook endpoints и contract/examples уже заведены, но это пока не полноценный automation contour для production ingestion | нужен queued/background processing path с retry, idempotency, dead-letter / failure visibility, чтобы webhook handling крутился автоматически и не зависел от хрупкого synchronous-only flow |
+| Dunning retry orchestration | базовые `dunning` entity/service/worker hooks и hourly pending scan уже есть | текущий worker path всё ещё simulation-heavy (`paymentSuccess := false`, локальный enqueue client, без provider-aware policy), поэтому нужен production-grade retry orchestration layer с нормальной outcome semantics и observability |
+| Notification delivery pipeline | доменный `NotificationService` уже есть и automation flows умеют в него стучаться | сейчас это в основном `fmt.Printf` + TODO на реальные integrations, поэтому нужен async delivery pipeline с channel-aware retries, delivery status tracking и operator-visible failures |
+| Analytics snapshot automation | scheduled analytics jobs уже считаются по расписанию | job пока только логирует «computed» метрики вместо persisted snapshots/backfill contract, так что нужен materialized analytics snapshot pipeline с idempotent recompute и operator-visible job status |
+| Winback campaign automation policy | winback background jobs уже умеют обрабатывать expired offers и создавать weekly campaign | пока это hardcoded scheduler path (`weekly_winback_*`, fixed discount/window), поэтому нужен persisted policy/template layer, targeting guards и idempotent campaign generation |
+| Async LTV recalculation triggers | LTV service и hourly update path уже существуют | после LTV-affecting событий всё ещё нет честного invalidate+enqueue recalculation flow, поэтому нужен async trigger pipeline вместо TODO/manual recompute semantics |
 | Experiment arm editing backend | draft experiment update теперь умеет persist full arm-set changes через существующий `PUT /v1/admin/experiments/:id`: add/remove/relabel/reweight arms и обновлять `pricing_tier_id` вместе с metadata | Studio frontend теперь тоже использует этот contract как реальный draft builder, так что следующий шаг уже про polish, а не про wiring |
 | Pricing tier linkage model | live pricing tiers уже truthfully связаны с arms через `ab_test_arms.pricing_tier_id`, create/update/read paths уже есть | linkage уже surfaced и в Studio draft workflow; дальше только richer operator surfacing там, где это реально полезно |
 | Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment, а admin read-path теперь отдаёт safe winner recommendation по win probability / sample-size / confidence guards | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
@@ -232,7 +261,71 @@
 | Stage 3 | Immutable conversions / decisions log | P1 | ✅ Done | append-only `experiment_automation_decision_log`, `bandit_conversion_events`, `bandit_assignment_events`, `bandit_impression_events` и `experiment_winner_recommendation_log` уже покрывают lifecycle/runtime/recommendation history, включая runtime selection rationale в assignment-event metadata |
 | Stage 3 | Winner recommendation policy | P2 | 🟡 Partial | recommendation layer уже считает candidate winner, пишет append-only audit trail/history и truthfully surfaced в `Bandit Model`/`Experiment Studio`; дальше нужны guarded action/policy controls поверх этого слоя |
 | Stage 3 | Safe auto-rollout controls | P2 | 🟡 Partial | persisted `automation_policy` truthfully редактируется для live experiments, а recommendation layer уже даёт guarded explicit `confirm winner` и `hold for review` operator actions с admin/lifecycle audit log и без обхода `manual_override` / `locked_until`; explicit auto-promote / auto-reweight flows всё ещё впереди |
+| Stage 3 | Webhook ingestion automation pipeline | P2 | 🟡 Partial | webhook intake endpoint уже есть, но production-ready contour должен прогонять события через queued/background processing с retry, idempotency, failure visibility и operator-safe observability вместо хрупкого synchronous-only flow |
+| Stage 3 | Production-grade dunning retry orchestration | P1 | ⚪ Not started | dunning worker path должен уйти от simulation-only retry semantics к provider-aware retry orchestration, observable failure states и safe operator replay/inspection |
+| Stage 3 | Async notification delivery pipeline | P1 | ⚪ Not started | automation paths должны отправлять email/push/webhook-like notifications через реальный async delivery layer с retry, delivery status и channel-aware failure handling вместо `fmt.Printf` stubs |
+| Stage 3 | Persisted analytics snapshot job | P2 | ⚪ Not started | daily analytics automation должна сохранять materialized snapshots и поддерживать idempotent backfill/recompute вместо logging-only execution |
+| Stage 3 | Persisted winback campaign policy + scheduler | P2 | 🟡 Partial | winback automation уже умеет weekly generation и expired-offer cleanup, но policy/template model, targeting guards и non-hardcoded scheduling всё ещё не реализованы |
+| Stage 3 | Async LTV recalculation triggers | P2 | ⚪ Not started | события, влияющие на LTV, должны invalidate cache и enqueue recalculation/job recompute вместо TODO/manual follow-up semantics |
 | Stage 3 | Persisted pricing tier ↔ arm linkage model | P1 | ✅ Done | `ab_test_arms` truthfully хранят `pricing_tier_id`, admin payload/read path возвращает linkage, draft update contract его сохраняет, а Studio builder уже использует это end-to-end |
+| Stage 4 | Mobile paywall renderer runtime surface | P2 | ⚪ Not started | mobile client/runtime должен уметь truthfully рендерить сохранённую paywall-конфигурацию и experiment/bandit variants вместо отсутствующего renderer layer |
+
+### Ticket-ready decomposition for new backlog items
+
+#### Webhook ingestion automation pipeline
+
+| Epic | Sub-ticket | Приоритет | Что должно получиться |
+|---|---|---|---|
+| Webhook ingestion automation pipeline | Queue-backed webhook ingestion | P1 | входящие Apple / Google webhook events сохраняются и передаются в worker/job pipeline вместо хрупкой synchronous-only обработки в HTTP request path |
+| Webhook ingestion automation pipeline | Idempotent webhook processing contract | P1 | повторные доставки одного и того же webhook event безопасно дедуплицируются по persisted idempotency key и не создают double-processing side effects |
+| Webhook ingestion automation pipeline | Retry / DLQ / operator failure visibility | P2 | transient failures автоматически ретраятся, irrecoverable cases попадают в DLQ или явный failure queue, а оператор видит stuck/failed webhook jobs |
+| Webhook ingestion automation pipeline | Webhook observability and audit surface | P2 | есть базовые metrics/logs/audit trail по intake, processing result, retry count и terminal failure state без «silent drops» |
+
+#### Mobile paywall renderer runtime surface
+
+| Epic | Sub-ticket | Приоритет | Что должно получиться |
+|---|---|---|---|
+| Mobile paywall renderer runtime surface | Runtime paywall render contract | P1 | появляется явный contract между saved paywall config / experiment variant resolution и mobile renderer input model без ad hoc mapping на клиенте |
+| Mobile paywall renderer runtime surface | Variant-aware paywall resolution | P1 | mobile runtime truthfully выбирает и получает correct paywall variant с учётом experiment / bandit assignment вместо fallback-only поведения |
+| Mobile paywall renderer runtime surface | Client-side renderer implementation | P1 | мобильный клиент реально рендерит paywall layout, pricing tiers, copy/media и CTA из сохранённой конфигурации, а не placeholder screen |
+| Mobile paywall renderer runtime surface | QA / smoke coverage for rendered paywalls | P2 | есть smoke/integration coverage, подтверждающая что базовые paywall variants реально отображаются и не ломаются на seeded/runtime данных |
+
+#### Additional backend automation backlog
+
+| Epic | Sub-ticket | Приоритет | Что должно получиться |
+|---|---|---|---|
+| Production-grade dunning retry orchestration | Provider-aware retry policy | P1 | dunning retries больше не живут на simulation-only логике и учитывают реальные provider/store outcome semantics |
+| Production-grade dunning retry orchestration | Dunning retry failure visibility | P1 | оператор видит failed/stuck retry attempts и может безопасно разбирать/переигрывать проблемные случаи |
+| Async notification delivery pipeline | Channel-backed notification delivery | P1 | email/push notifications уходят через реальный async delivery path вместо `fmt.Printf` stubs |
+| Async notification delivery pipeline | Delivery status + retry tracking | P1 | у каждой automation-triggered notification есть delivery state, retry count и terminal failure visibility |
+| Persisted analytics snapshot job | Materialized analytics snapshots | P2 | scheduled analytics job сохраняет ежедневные snapshot records, а не только пишет computed values в лог |
+| Persisted analytics snapshot job | Analytics backfill / recompute path | P2 | можно безопасно пересчитать snapshots за диапазон дат через idempotent background job |
+| Persisted winback campaign policy + scheduler | Persisted campaign template / policy model | P2 | weekly winback generation уходит от hardcoded discount/window к persisted editable policy/template |
+| Persisted winback campaign policy + scheduler | Idempotent campaign generation guards | P2 | scheduler не создаёт duplicate campaigns/offers и учитывает targeting guards для churn windows |
+| Async LTV recalculation triggers | LTV invalidate + enqueue contract | P2 | LTV-affecting events инвалидируют stale cache и ставят recalculation в background queue автоматически |
+
+#### Newly found placeholder / product-decision epics
+
+| Epic | Sub-ticket | Приоритет | Что должно получиться |
+|---|---|---|---|
+| Paywall Creator persistence / publish path | Persisted paywall CRUD contract | P1 | paywall editor сохраняет и обновляет конфигурации через реальный backend contract вместо purely local schema state |
+| Paywall Creator persistence / publish path | Paywall publish/versioning flow | P1 | у paywall configuration появляется publishable/versioned lifecycle, чтобы preview и runtime ссылались на стабильную опубликованную версию |
+| Paywall Creator persistence / publish path | Runtime payload / preview parity | P2 | preview использует тот же payload shape, что и runtime/mobile consumers, без отдельной ad hoc трансформации только для UI |
+| Paywall Creator persistence / publish path | Operator smoke coverage | P2 | есть минимальная smoke/integration coverage на create → update → publish → fetch published paywall path |
+| Cohort / LTV analytics truthfulness | Real LTV computation model | P1 | cohort/LTV API перестаёт возвращать mock estimates и начинает считать реальные LTV values из subscription / revenue событий |
+| Cohort / LTV analytics truthfulness | Persisted cohort snapshot/backfill path | P2 | cohort aggregates и LTV snapshots можно безопасно пересчитать/backfill'ить через repeatable backend path |
+| Cohort / LTV analytics truthfulness | Analytics API contract cleanup | P2 | frontend получает явно документированный truthful cohort/LTV payload без placeholder fields, замаскированных под real analytics |
+| Cohort / LTV analytics truthfulness | Cohort/LTV smoke verification | P2 | есть проверка, что cohort/LTV экран не деградирует обратно в mock math при seeded/runtime данных |
+| Public winback offers read path | Offer eligibility resolver | P2 | backend умеет truthfully определять active/eligible public winback offers для пользователя вместо TODO/empty-list semantics |
+| Public winback offers read path | Public offers API contract | P2 | `GET /winback/offers` возвращает реальный список offer cards / metadata / expiry, пригодный для клиентского runtime |
+| Public winback offers read path | Offer exposure / claim safety hooks | P3 | публичный read path не обходит eligibility guards и может безопасно логировать exposure/claim intent для дальнейшего redemption flow |
+| Public winback offers read path | End-to-end smoke coverage | P3 | seeded сценарий подтверждает, что launched campaign реально появляется в public offers read path |
+| CRM dashboard product decision | Route disposition decision | P3 | принимается явное решение: удаляем/прячем demo CRM route или инвестируем в real CRM product surface |
+| CRM dashboard product decision | Demo labeling / guardrails | P3 | пока решения нет, route явно помечен как demo/placeholder и не создаёт ложного ощущения готовой production feature |
+| CRM dashboard product decision | Real data contract scope (if kept) | P3 | если epic остаётся, у него появляется минимальный backend/data contract scope вместо статического sales config |
+| Finance dashboard product decision | Route disposition decision | P3 | принимается явное решение: удаляем/прячем finance template route или переводим его в реальный finance/revenue surface |
+| Finance dashboard product decision | Demo labeling / guardrails | P3 | до реализации route явно маркируется как demo/template и не выглядит как truthful paywall backoffice screen |
+| Finance dashboard product decision | Real KPI/data contract scope (if kept) | P3 | если epic сохраняют, определяется минимальный backend contract для KPI/charts вместо hardcoded dashboard cards |
 
 ### Что уже можно считать опорой, а не отдельными backlog-задачами
 
@@ -250,6 +343,10 @@
 | Механизм `comingSoon` существует | да |
 | Частично готовые страницы явно помечены как `comingSoon` | нет — `comingSoonUrls` пустой, поэтому partial pages выглядят как fully ready |
 | `Subscriptions` и `Transactions` всё ещё имеют технический долг по sort | да, сортировка местами остаётся на фронте |
+| `Finance` и `CRM` routes сейчас остаются template/demo surfaces, а не truthful admin pages | да |
+| `Paywall Creator` пока только local preview/editor без persisted publish path | да |
+| `Analytics Reports` page живая, но cohort/LTV sub-surface ещё нельзя считать полностью truthful | да |
+| Public `winback/offers` read path всё ещё placeholder-level | да |
 | `Delayed Feedback` probe для pending-by-id больше не должен считаться broken из-за ожидаемого `404` | да, это уже исправлено |
 | Локальный cold-start для demo/admin страниц теперь воспроизводим | да — через `scripts/seed_all_test_data.sh`, интегрированный в `run_dev.sh` |
 | Playwright smoke по seeded experiment pages уже проходили | да — страницы грузятся с непустыми данными; hydration mismatch на `/dashboard/experiments` timestamps больше не должен считаться актуальным открытым gap |
