@@ -123,13 +123,24 @@ function isValidUuid(value: string) {
   return UUID_PATTERN.test(value.trim());
 }
 
-export function DelayedFeedbackPageClient() {
+export function DelayedFeedbackPageClient({
+  initialExperiments,
+  initialSelectedExperimentId = null,
+  initialSnapshot = null,
+  loadFailed: initialLoadFailed = false,
+}: {
+  initialExperiments?: ExperimentSummary[];
+  initialSelectedExperimentId?: string | null;
+  initialSnapshot?: DelayedFeedbackSnapshot | null;
+  loadFailed?: boolean;
+}) {
+  const hasInitialPayload = initialExperiments !== undefined;
   const t = useTranslations("feedback");
-  const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [snapshot, setSnapshot] = useState<DelayedFeedbackSnapshot | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
+  const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
+  const [snapshot, setSnapshot] = useState<DelayedFeedbackSnapshot | null>(initialSnapshot ?? null);
+  const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
+  const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
   const [submission, setSubmission] = useState<DelayedConversionResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -141,6 +152,8 @@ export function DelayedFeedbackPageClient() {
   });
 
   useEffect(() => {
+    if (!isBootstrapping) return;
+
     startTransition(async () => {
       try {
         const data = await fetchJson<DelayedFeedbackDashboardData>("/api/admin/delayed-feedback/dashboard");
@@ -154,7 +167,7 @@ export function DelayedFeedbackPageClient() {
         setIsBootstrapping(false);
       }
     });
-  }, []);
+  }, [isBootstrapping]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,

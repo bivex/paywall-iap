@@ -250,7 +250,9 @@
     "actions": {
       "openExperiments": "Open A/B Tests",
       "openBandit": "Open Bandit Model",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "trimWindow": "Trim window now",
+      "trimming": "Trimming..."
     },
     "selector": {
       "title": "Selected Experiment",
@@ -557,6 +559,11 @@
       "control": "Control",
       "variant": "Variant"
     },
+    "trim": {
+      "title": "Manual Trim",
+      "description": "Call the live trim mutation explicitly for the selected experiment.",
+      "body": "This sends a real POST request to the sliding-window trim route for the current experiment and then reloads the latest snapshot."
+    },
     "notes": {
       "title": "Operational Notes",
       "description": "This page documents the current sliding-window runtime exactly as it exists today.",
@@ -565,7 +572,7 @@
       "readRoutesTitle": "Read route truthfulness",
       "readRoutesBody": "Window info and event export are probed directly from the live backend. If they fail, this page shows the real response instead of fake window metrics.",
       "trimTitle": "Trim mutation",
-      "trimBody": "Trim is intentionally not auto-called from a read-only page load. The route exists in code, but this screen does not pretend it is safe or fully wired for operators yet."
+      "trimBody": "Trim is intentionally not auto-called from page load. Instead, this screen exposes an explicit operator action that calls the real mutation only when requested."
     },
     "readiness": {
       "title": "Window Readiness",
@@ -581,7 +588,9 @@
       "emptyBody": "Create a bandit-enabled experiment before using Sliding Window."
     },
     "feedback": {
-      "loadFailed": "Failed to refresh sliding window data."
+      "loadFailed": "Failed to refresh sliding window data.",
+      "trimmed": "Sliding window trimmed.",
+      "trimFailed": "Failed to trim sliding window."
     }
   },
   "multiObjective": {
@@ -590,7 +599,9 @@
     "actions": {
       "openExperiments": "Open A/B Tests",
       "openBandit": "Open Bandit Model",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "saveConfig": "Save objective config",
+      "savingConfig": "Saving..."
     },
     "status": {
       "running": "Running",
@@ -625,6 +636,18 @@
       "objectiveConfig": {
         "label": "Objective config update (PUT /v1/bandit/experiments/:id/objectives/config)"
       }
+    },
+    "config": {
+      "title": "Objective Config",
+      "description": "Submit a real objective configuration update for the selected experiment.",
+      "objectiveType": "Objective type",
+      "weights": {
+        "conversion": "Conversion weight",
+        "ltv": "LTV weight",
+        "revenue": "Revenue weight"
+      },
+      "hybridHint": "Hybrid mode uses all three weights. Enter non-negative numeric values before saving.",
+      "singleHint": "Single-objective modes ignore the weight inputs and send only the selected objective type."
     },
     "catalog": {
       "title": "Supported Objective Model",
@@ -685,7 +708,7 @@
       "runtimeTitle": "Route truthfulness",
       "runtimeBody": "Objective score availability is probed directly from the live backend. If the route fails for the current experiment, this page shows that failure instead of fake optimization output.",
       "configTitle": "Config updates",
-      "configBody": "The admin experiments payload currently does not expose persisted objective config to this screen, and config mutation is intentionally not auto-triggered from a read-only page load."
+      "configBody": "The admin experiments payload still does not expose persisted objective config on initial read, but this page now provides an explicit form that calls the real config mutation when an operator saves changes."
     },
     "readiness": {
       "title": "Objective Readiness",
@@ -701,7 +724,9 @@
       "emptyBody": "Create a bandit-enabled experiment before using Multi-Objective."
     },
     "feedback": {
-      "loadFailed": "Failed to refresh multi-objective data."
+      "loadFailed": "Failed to refresh multi-objective data.",
+      "configSaved": "Objective configuration saved.",
+      "saveFailed": "Failed to save objective configuration."
     }
   },
   "matomo": {

@@ -250,7 +250,9 @@
     "actions": {
       "openExperiments": "Открыть A/B Tests",
       "openBandit": "Открыть Bandit Model",
-      "refresh": "Обновить"
+      "refresh": "Обновить",
+      "trimWindow": "Запустить trim window",
+      "trimming": "Выполняется trim..."
     },
     "selector": {
       "title": "Выбранный эксперимент",
@@ -557,6 +559,11 @@
       "control": "Контроль",
       "variant": "Вариант"
     },
+    "trim": {
+      "title": "Ручной trim",
+      "description": "Явно вызовите live trim mutation для выбранного эксперимента.",
+      "body": "Это отправляет реальный POST-запрос на sliding-window trim route для текущего эксперимента и затем перезагружает свежий snapshot."
+    },
     "notes": {
       "title": "Операционные заметки",
       "description": "Эта страница документирует текущий sliding-window runtime ровно таким, какой он есть сегодня.",
@@ -565,7 +572,7 @@
       "readRoutesTitle": "Честность read routes",
       "readRoutesBody": "Window info и export events проверяются напрямую через live backend. Если они падают, страница показывает реальный ответ вместо вымышленных window metrics.",
       "trimTitle": "Trim mutation",
-      "trimBody": "Trim намеренно не вызывается автоматически при read-only загрузке. Route существует в коде, но этот экран не притворяется, что она уже безопасна или полноценно wired для операторов."
+      "trimBody": "Trim намеренно не вызывается автоматически при загрузке страницы. Вместо этого экран даёт явное действие оператора, которое вызывает реальную mutation только по запросу."
     },
     "readiness": {
       "title": "Готовность window API",
@@ -581,7 +588,9 @@
       "emptyBody": "Сначала создайте bandit-enabled experiment, а затем используйте Sliding Window."
     },
     "feedback": {
-      "loadFailed": "Не удалось обновить sliding window data."
+      "loadFailed": "Не удалось обновить sliding window data.",
+      "trimmed": "Sliding window обновлён через trim.",
+      "trimFailed": "Не удалось выполнить trim sliding window."
     }
   },
   "multiObjective": {
@@ -590,7 +599,9 @@
     "actions": {
       "openExperiments": "Открыть A/B Tests",
       "openBandit": "Открыть Bandit Model",
-      "refresh": "Обновить"
+      "refresh": "Обновить",
+      "saveConfig": "Сохранить objective config",
+      "savingConfig": "Сохранение..."
     },
     "status": {
       "running": "Запущен",
@@ -625,6 +636,18 @@
       "objectiveConfig": {
         "label": "Обновление objective config (PUT /v1/bandit/experiments/:id/objectives/config)"
       }
+    },
+    "config": {
+      "title": "Objective config",
+      "description": "Отправьте реальное обновление objective configuration для выбранного эксперимента.",
+      "objectiveType": "Тип objective",
+      "weights": {
+        "conversion": "Вес conversion",
+        "ltv": "Вес LTV",
+        "revenue": "Вес revenue"
+      },
+      "hybridHint": "В hybrid-режиме используются все три веса. Перед сохранением укажите неотрицательные числовые значения.",
+      "singleHint": "В single-objective режимах поля весов игнорируются, и отправляется только выбранный objective type."
     },
     "catalog": {
       "title": "Поддерживаемая objective model",
@@ -685,7 +708,7 @@
       "runtimeTitle": "Честность runtime routes",
       "runtimeBody": "Доступность objective scores проверяется напрямую через live backend. Если route падает для текущего эксперимента, страница показывает это вместо fake optimization output.",
       "configTitle": "Config updates",
-      "configBody": "Текущий admin experiments payload не отдаёт persisted objective config на этот экран, а config mutation намеренно не вызывается автоматически из read-only page load."
+      "configBody": "Текущий admin experiments payload всё ещё не отдаёт persisted objective config в initial read, но страница теперь даёт явную форму, которая вызывает реальную config mutation при сохранении оператором."
     },
     "readiness": {
       "title": "Готовность objective API",
@@ -701,7 +724,9 @@
       "emptyBody": "Сначала создайте bandit-enabled experiment, а затем используйте Multi-Objective."
     },
     "feedback": {
-      "loadFailed": "Не удалось обновить multi-objective data."
+      "loadFailed": "Не удалось обновить multi-objective data.",
+      "configSaved": "Objective configuration сохранён.",
+      "saveFailed": "Не удалось сохранить objective configuration."
     }
   },
   "matomo": {

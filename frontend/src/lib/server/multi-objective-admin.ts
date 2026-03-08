@@ -120,9 +120,7 @@ export async function getMultiObjectiveSnapshotFromCookies(
     objectiveScores: objectiveScoresResult.data ? normalizeObjectiveScores(objectiveScoresResult.data) : null,
     probes: {
       objectiveScores: objectiveScoresResult.probe,
-      objectiveConfig: manualProbe(
-        "Live PUT route exists, but this page does not auto-call objective configuration mutations during a read-only load.",
-      ),
+      objectiveConfig: manualProbe("Live PUT route exists. Use the objective config form on this page to call it."),
     },
   };
 }

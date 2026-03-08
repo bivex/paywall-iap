@@ -1,6 +1,8 @@
 import type { BanditSnapshot } from "@/lib/bandit";
 import type { ExperimentSummary } from "@/lib/experiments";
 
+export type ObjectiveType = "conversion" | "ltv" | "revenue" | "hybrid";
+
 export interface ObjectiveEndpointProbe {
   state: "available" | "manual" | "unavailable";
   status: number | null;
@@ -41,4 +43,12 @@ export interface MultiObjectiveDashboardData {
   selectedExperimentId: string | null;
   snapshot: MultiObjectiveSnapshot | null;
   loadFailed: boolean;
+}
+
+export interface ObjectiveConfigResult {
+  ok: boolean;
+  status: number;
+  message: string;
+  objectiveType?: ObjectiveType;
+  weights?: Record<string, number>;
 }

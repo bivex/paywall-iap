@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,7 +20,9 @@ import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@
 import type {
   MultiObjectiveDashboardData,
   MultiObjectiveSnapshot,
+  ObjectiveConfigResult,
   ObjectiveEndpointProbe,
+  ObjectiveType,
 } from "@/lib/multi-objective";
 
 const SUPPORTED_OBJECTIVES = [
@@ -128,16 +131,33 @@ function mergeArmStats(experiment: ExperimentSummary | null, snapshot: MultiObje
   });
 }
 
-export function MultiObjectivePageClient() {
+export function MultiObjectivePageClient({
+  initialExperiments,
+  initialSelectedExperimentId = null,
+  initialSnapshot = null,
+  loadFailed: initialLoadFailed = false,
+}: {
+  initialExperiments?: ExperimentSummary[];
+  initialSelectedExperimentId?: string | null;
+  initialSnapshot?: MultiObjectiveSnapshot | null;
+  loadFailed?: boolean;
+}) {
+  const hasInitialPayload = initialExperiments !== undefined;
   const t = useTranslations("multiObjective");
-  const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [snapshot, setSnapshot] = useState<MultiObjectiveSnapshot | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
+  const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
+  const [snapshot, setSnapshot] = useState<MultiObjectiveSnapshot | null>(initialSnapshot ?? null);
+  const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
+  const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
+  const [objectiveType, setObjectiveType] = useState<ObjectiveType>("hybrid");
+  const [weightInputs, setWeightInputs] = useState({ conversion: "0.5", ltv: "0.3", revenue: "0.2" });
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [configResult, setConfigResult] = useState<ObjectiveConfigResult | null>(null);
 
   useEffect(() => {
+    if (!isBootstrapping) return;
+
     startTransition(async () => {
       try {
         const data = await fetchMultiObjectiveJson<MultiObjectiveDashboardData>("/api/admin/multi-objective/dashboard");
@@ -151,7 +171,7 @@ export function MultiObjectivePageClient() {
         setIsBootstrapping(false);
       }
     });
-  }, []);
+  }, [isBootstrapping]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,
@@ -164,6 +184,7 @@ export function MultiObjectivePageClient() {
 
   const refreshSnapshot = (experimentId: string) => {
     setSelectedId(experimentId);
+    setConfigResult(null);
     startTransition(async () => {
       try {
         const data = await fetchMultiObjectiveJson<MultiObjectiveSnapshot>(
@@ -174,6 +195,78 @@ export function MultiObjectivePageClient() {
         toast.error(t("feedback.loadFailed"));
       }
     });
+  };
+
+  const hybridWeightsValid = [weightInputs.conversion, weightInputs.ltv, weightInputs.revenue].every((value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0;
+  });
+
+  const saveObjectiveConfig = async () => {
+    if (!selectedId || (objectiveType === "hybrid" && !hybridWeightsValid)) return;
+    setIsSavingConfig(true);
+
+    try {
+      const res = await fetch("/api/admin/multi-objective/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          experimentId: selectedId,
+          objectiveType,
+          objectiveWeights:
+            objectiveType === "hybrid"
+              ? {
+                  conversion: Number(weightInputs.conversion),
+                  ltv: Number(weightInputs.ltv),
+                  revenue: Number(weightInputs.revenue),
+                }
+              : undefined,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      const result = {
+        ok: res.ok,
+        status: res.status,
+        message:
+          (body as { message?: string; error?: string }).message ??
+          (body as { error?: string }).error ??
+          `HTTP ${res.status}`,
+        objectiveType: ((body as { objective_type?: ObjectiveType }).objective_type ??
+          (body as { data?: { objective_type?: ObjectiveType } }).data?.objective_type ??
+          objectiveType) as ObjectiveType,
+        weights:
+          (body as { weights?: Record<string, number> }).weights ??
+          (body as { data?: { weights?: Record<string, number> } }).data?.weights,
+      } satisfies ObjectiveConfigResult;
+
+      setConfigResult(result);
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+
+      if (result.weights) {
+        setWeightInputs({
+          conversion: String(result.weights.conversion ?? 0),
+          ltv: String(result.weights.ltv ?? 0),
+          revenue: String(result.weights.revenue ?? 0),
+        });
+      }
+      setObjectiveType(result.objectiveType ?? objectiveType);
+      toast.success(t("feedback.configSaved"));
+      refreshSnapshot(selectedId);
+    } catch {
+      const result = {
+        ok: false,
+        status: 500,
+        message: t("feedback.saveFailed"),
+        objectiveType,
+      } satisfies ObjectiveConfigResult;
+      setConfigResult(result);
+      toast.error(result.message);
+    } finally {
+      setIsSavingConfig(false);
+    }
   };
 
   const probeRows = snapshot
@@ -319,37 +412,97 @@ export function MultiObjectivePageClient() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">{t("catalog.title")}</CardTitle>
-                <CardDescription>{t("catalog.description")}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {SUPPORTED_OBJECTIVES.map((objective) => (
-                  <div key={objective.key} className="rounded-md border p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-medium text-sm">{t(`catalog.objectives.${objective.key}.label`)}</p>
-                      {objective.weightPercent === null ? (
-                        <Badge variant="outline">{t("catalog.derived")}</Badge>
-                      ) : (
-                        <Badge variant="outline">{objective.weightPercent}%</Badge>
-                      )}
-                    </div>
-                    <p className="mt-1 text-muted-foreground text-xs">
-                      {t(`catalog.objectives.${objective.key}.body`)}
-                    </p>
-                    {objective.weightPercent !== null ? (
-                      <div className="mt-2 space-y-1">
-                        <Progress value={objective.weightPercent} className="h-2" />
-                        <p className="text-muted-foreground text-xs">
-                          {t("catalog.defaultHybridWeight")} {objective.defaultWeight?.toFixed(1)}
-                        </p>
-                      </div>
-                    ) : null}
+            <div className="flex flex-col gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("config.title")}</CardTitle>
+                  <CardDescription>{t("config.description")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-1">
+                    <p className="font-medium text-xs">{t("config.objectiveType")}</p>
+                    <Select value={objectiveType} onValueChange={(value) => setObjectiveType(value as ObjectiveType)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPORTED_OBJECTIVES.map((objective) => (
+                          <SelectItem key={objective.key} value={objective.key}>
+                            {t(`catalog.objectives.${objective.key}.label`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {(["conversion", "ltv", "revenue"] as const).map((key) => (
+                      <div key={key} className="space-y-1">
+                        <p className="font-medium text-xs">{t(`config.weights.${key}`)}</p>
+                        <Input
+                          value={weightInputs[key]}
+                          onChange={(event) =>
+                            setWeightInputs((current) => ({ ...current, [key]: event.target.value }))
+                          }
+                          disabled={objectiveType !== "hybrid"}
+                          inputMode="decimal"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                    {t(objectiveType === "hybrid" ? "config.hybridHint" : "config.singleHint")}
+                  </div>
+
+                  <Button
+                    onClick={saveObjectiveConfig}
+                    disabled={!selectedId || isSavingConfig || (objectiveType === "hybrid" && !hybridWeightsValid)}
+                  >
+                    {isSavingConfig ? t("actions.savingConfig") : t("actions.saveConfig")}
+                  </Button>
+
+                  {configResult ? (
+                    <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                      {configResult.status ? `HTTP ${configResult.status} · ` : ""}
+                      {configResult.message}
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("catalog.title")}</CardTitle>
+                  <CardDescription>{t("catalog.description")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {SUPPORTED_OBJECTIVES.map((objective) => (
+                    <div key={objective.key} className="rounded-md border p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium text-sm">{t(`catalog.objectives.${objective.key}.label`)}</p>
+                        {objective.weightPercent === null ? (
+                          <Badge variant="outline">{t("catalog.derived")}</Badge>
+                        ) : (
+                          <Badge variant="outline">{objective.weightPercent}%</Badge>
+                        )}
+                      </div>
+                      <p className="mt-1 text-muted-foreground text-xs">
+                        {t(`catalog.objectives.${objective.key}.body`)}
+                      </p>
+                      {objective.weightPercent !== null ? (
+                        <div className="mt-2 space-y-1">
+                          <Progress value={objective.weightPercent} className="h-2" />
+                          <p className="text-muted-foreground text-xs">
+                            {t("catalog.defaultHybridWeight")} {objective.defaultWeight?.toFixed(1)}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           <Card>

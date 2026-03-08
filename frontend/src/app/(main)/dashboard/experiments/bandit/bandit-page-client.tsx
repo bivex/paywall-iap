@@ -102,7 +102,7 @@ async function fetchBanditJson<T>(url: string): Promise<T> {
 }
 
 export function BanditPageClient({
-  initialExperiments = [],
+  initialExperiments,
   initialSelectedExperimentId = null,
   initialSnapshot = null,
   loadFailed: initialLoadFailed = false,
@@ -113,16 +113,12 @@ export function BanditPageClient({
   loadFailed?: boolean;
 }) {
   const t = useTranslations("bandit");
-  const [experiments, setExperiments] = useState(initialExperiments);
+  const hasInitialPayload = initialExperiments !== undefined;
+  const [experiments, setExperiments] = useState(initialExperiments ?? []);
   const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
-  const [isBootstrapping, setIsBootstrapping] = useState(
-    initialExperiments.length === 0 &&
-      initialSelectedExperimentId === null &&
-      initialSnapshot === null &&
-      !initialLoadFailed,
-  );
+  const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {

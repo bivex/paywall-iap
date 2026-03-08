@@ -20,6 +20,7 @@ import type {
   SlidingWindowDashboardData,
   SlidingWindowEndpointProbe,
   SlidingWindowSnapshot,
+  TrimWindowResult,
 } from "@/lib/sliding-window";
 
 async function fetchSlidingWindowJson<T>(url: string): Promise<T> {
@@ -114,16 +115,31 @@ function mergeArmStats(experiment: ExperimentSummary | null, snapshot: SlidingWi
   });
 }
 
-export function SlidingWindowPageClient() {
+export function SlidingWindowPageClient({
+  initialExperiments,
+  initialSelectedExperimentId = null,
+  initialSnapshot = null,
+  loadFailed: initialLoadFailed = false,
+}: {
+  initialExperiments?: ExperimentSummary[];
+  initialSelectedExperimentId?: string | null;
+  initialSnapshot?: SlidingWindowSnapshot | null;
+  loadFailed?: boolean;
+}) {
+  const hasInitialPayload = initialExperiments !== undefined;
   const t = useTranslations("slidingWindow");
-  const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [snapshot, setSnapshot] = useState<SlidingWindowSnapshot | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
+  const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
+  const [snapshot, setSnapshot] = useState<SlidingWindowSnapshot | null>(initialSnapshot ?? null);
+  const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
+  const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
+  const [isTrimming, setIsTrimming] = useState(false);
+  const [trimResult, setTrimResult] = useState<TrimWindowResult | null>(null);
 
   useEffect(() => {
+    if (!isBootstrapping) return;
+
     startTransition(async () => {
       try {
         const data = await fetchSlidingWindowJson<SlidingWindowDashboardData>("/api/admin/sliding-window/dashboard");
@@ -137,7 +153,7 @@ export function SlidingWindowPageClient() {
         setIsBootstrapping(false);
       }
     });
-  }, []);
+  }, [isBootstrapping]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,
@@ -152,6 +168,7 @@ export function SlidingWindowPageClient() {
 
   const refreshSnapshot = (experimentId: string) => {
     setSelectedId(experimentId);
+    setTrimResult(null);
     startTransition(async () => {
       try {
         const data = await fetchSlidingWindowJson<SlidingWindowSnapshot>(
@@ -162,6 +179,49 @@ export function SlidingWindowPageClient() {
         toast.error(t("feedback.loadFailed"));
       }
     });
+  };
+
+  const trimWindow = async () => {
+    if (!selectedId) return;
+    setIsTrimming(true);
+
+    try {
+      const res = await fetch("/api/admin/sliding-window/trim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experimentId: selectedId }),
+      });
+      const body = await res.json().catch(() => ({}));
+      const result = {
+        ok: res.ok,
+        status: res.status,
+        message:
+          (body as { message?: string; error?: string }).message ??
+          (body as { error?: string }).error ??
+          `HTTP ${res.status}`,
+        experimentId: selectedId,
+      } satisfies TrimWindowResult;
+
+      setTrimResult(result);
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(t("feedback.trimmed"));
+      refreshSnapshot(selectedId);
+    } catch {
+      const result = {
+        ok: false,
+        status: 500,
+        message: t("feedback.trimFailed"),
+        experimentId: selectedId,
+      } satisfies TrimWindowResult;
+      setTrimResult(result);
+      toast.error(result.message);
+    } finally {
+      setIsTrimming(false);
+    }
   };
 
   const probeRows = snapshot
@@ -305,26 +365,50 @@ export function SlidingWindowPageClient() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">{t("notes.title")}</CardTitle>
-                <CardDescription>{t("notes.description")}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="rounded-md border p-3">
-                  <p className="font-medium">{t("notes.strategyTitle")}</p>
-                  <p className="mt-1 text-muted-foreground text-xs">{t("notes.strategyBody")}</p>
-                </div>
-                <div className="rounded-md border p-3">
-                  <p className="font-medium">{t("notes.readRoutesTitle")}</p>
-                  <p className="mt-1 text-muted-foreground text-xs">{t("notes.readRoutesBody")}</p>
-                </div>
-                <div className="rounded-md border p-3">
-                  <p className="font-medium">{t("notes.trimTitle")}</p>
-                  <p className="mt-1 text-muted-foreground text-xs">{t("notes.trimBody")}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("trim.title")}</CardTitle>
+                  <CardDescription>{t("trim.description")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="rounded-md border p-3">
+                    <p className="font-medium">{selectedExperiment?.name ?? "—"}</p>
+                    <p className="mt-1 text-muted-foreground text-xs">{t("trim.body")}</p>
+                  </div>
+                  <Button onClick={trimWindow} disabled={!selectedId || isPending || isTrimming}>
+                    {isTrimming ? t("actions.trimming") : t("actions.trimWindow")}
+                  </Button>
+                  {trimResult ? (
+                    <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
+                      {trimResult.status ? `HTTP ${trimResult.status} · ` : ""}
+                      {trimResult.message}
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("notes.title")}</CardTitle>
+                  <CardDescription>{t("notes.description")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="rounded-md border p-3">
+                    <p className="font-medium">{t("notes.strategyTitle")}</p>
+                    <p className="mt-1 text-muted-foreground text-xs">{t("notes.strategyBody")}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="font-medium">{t("notes.readRoutesTitle")}</p>
+                    <p className="mt-1 text-muted-foreground text-xs">{t("notes.readRoutesBody")}</p>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="font-medium">{t("notes.trimTitle")}</p>
+                    <p className="mt-1 text-muted-foreground text-xs">{t("notes.trimBody")}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           <Card>

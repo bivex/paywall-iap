@@ -29,3 +29,10 @@ export interface SlidingWindowDashboardData {
   snapshot: SlidingWindowSnapshot | null;
   loadFailed: boolean;
 }
+
+export interface TrimWindowResult {
+  ok: boolean;
+  status: number;
+  message: string;
+  experimentId?: string;
+}

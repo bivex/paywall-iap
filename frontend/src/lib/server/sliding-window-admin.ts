@@ -80,9 +80,7 @@ export async function getSlidingWindowSnapshotFromCookies(experimentId: string):
     probes: {
       windowInfo: windowInfoResult.probe,
       windowEvents: windowEventsResult.probe,
-      trimWindow: manualProbe(
-        "Live POST route exists, but this page does not auto-call mutating trim operations during a read-only load.",
-      ),
+      trimWindow: manualProbe("Live POST route exists. Use the explicit trim control on this page to call it."),
     },
   };
 }

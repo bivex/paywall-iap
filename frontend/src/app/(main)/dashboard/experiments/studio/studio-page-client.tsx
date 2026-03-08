@@ -98,16 +98,29 @@ function leadingArm(snapshot: ExperimentStudioSnapshot | null) {
   );
 }
 
-export function StudioPageClient() {
+export function StudioPageClient({
+  initialExperiments,
+  initialSelectedExperimentId = null,
+  initialSnapshot = null,
+  loadFailed: initialLoadFailed = false,
+}: {
+  initialExperiments?: ExperimentSummary[];
+  initialSelectedExperimentId?: string | null;
+  initialSnapshot?: ExperimentStudioSnapshot | null;
+  loadFailed?: boolean;
+}) {
+  const hasInitialPayload = initialExperiments !== undefined;
   const t = useTranslations("experimentStudio");
-  const [experiments, setExperiments] = useState<ExperimentSummary[]>([]);
-  const [selectedId, setSelectedId] = useState("");
-  const [snapshot, setSnapshot] = useState<ExperimentStudioSnapshot | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
+  const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
+  const [snapshot, setSnapshot] = useState<ExperimentStudioSnapshot | null>(initialSnapshot ?? null);
+  const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
+  const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    if (!isBootstrapping) return;
+
     startTransition(async () => {
       try {
         const data = await fetchStudioJson<ExperimentStudioDashboardData>("/api/admin/studio/dashboard");
@@ -121,7 +134,7 @@ export function StudioPageClient() {
         setIsBootstrapping(false);
       }
     });
-  }, []);
+  }, [isBootstrapping]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,
