@@ -150,6 +150,178 @@ SET alpha = EXCLUDED.alpha,
     original_currency = EXCLUDED.original_currency,
     original_revenue = EXCLUDED.original_revenue;
 
+INSERT INTO users (id, platform_user_id, platform, app_version, email, role, ltv, created_at)
+VALUES
+  ('33333333-3333-4333-8333-000000000001', 'usr_contract_bandit_1', 'ios', '3.0.0', 'bandit-contract-1@seed.example.com', 'user', 49.99, now() - interval '14 days'),
+  ('33333333-3333-4333-8333-000000000002', 'usr_contract_bandit_2', 'android', '3.0.0', 'bandit-contract-2@seed.example.com', 'user', 79.99, now() - interval '10 days'),
+  ('33333333-3333-4333-8333-000000000003', 'usr_contract_bandit_3', 'ios', '3.0.0', 'bandit-contract-3@seed.example.com', 'user', 129.99, now() - interval '7 days')
+ON CONFLICT (id) DO UPDATE
+SET platform_user_id = EXCLUDED.platform_user_id,
+    platform = EXCLUDED.platform,
+    app_version = EXCLUDED.app_version,
+    email = EXCLUDED.email,
+    role = EXCLUDED.role,
+    ltv = EXCLUDED.ltv;
+
+INSERT INTO ab_tests (
+  id, name, description, status, start_at, end_at,
+  algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence,
+  automation_policy,
+  created_at, updated_at,
+  window_type, window_size, window_min_samples,
+  objective_type, objective_weights,
+  price_normalization, enable_contextual, enable_delayed, enable_currency, exploration_alpha
+)
+VALUES (
+  '11111111-1111-4111-8111-111111111111',
+  'Bandit Contract Fixture',
+  'Schema-valid UUID contract fixture for bandit Schemathesis coverage.',
+  'running',
+  now() - interval '5 days',
+  now() + interval '10 days',
+  'thompson_sampling', true, 25, 0.95, NULL,
+  '{"enabled":true,"auto_start":true,"auto_complete":false,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false,"locked_until":null,"locked_by":null,"lock_reason":null}'::jsonb,
+  now() - interval '5 days', now(),
+  'events', 250, 25,
+  'hybrid', '{"conversion":0.5,"ltv":0.2,"revenue":0.3}'::jsonb,
+  true, true, true, true, 0.25
+)
+ON CONFLICT (id) DO UPDATE
+SET status = EXCLUDED.status,
+    algorithm_type = EXCLUDED.algorithm_type,
+    is_bandit = EXCLUDED.is_bandit,
+    min_sample_size = EXCLUDED.min_sample_size,
+    confidence_threshold = EXCLUDED.confidence_threshold,
+    automation_policy = EXCLUDED.automation_policy,
+    updated_at = now(),
+    window_type = EXCLUDED.window_type,
+    window_size = EXCLUDED.window_size,
+    window_min_samples = EXCLUDED.window_min_samples,
+    objective_type = EXCLUDED.objective_type,
+    objective_weights = EXCLUDED.objective_weights,
+    price_normalization = EXCLUDED.price_normalization,
+    enable_contextual = EXCLUDED.enable_contextual,
+    enable_delayed = EXCLUDED.enable_delayed,
+    enable_currency = EXCLUDED.enable_currency,
+    exploration_alpha = EXCLUDED.exploration_alpha;
+
+INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight, created_at, updated_at)
+VALUES
+  ('22222222-2222-4222-8222-000000000001', '11111111-1111-4111-8111-111111111111', 'contract_control', 'Contract fixture control arm.', true, 0.34, now() - interval '5 days', now()),
+  ('22222222-2222-4222-8222-000000000002', '11111111-1111-4111-8111-111111111111', 'contract_anchor', 'Contract fixture anchor arm.', false, 0.33, now() - interval '5 days', now()),
+  ('22222222-2222-4222-8222-000000000003', '11111111-1111-4111-8111-111111111111', 'contract_lifetime', 'Contract fixture lifetime arm.', false, 0.33, now() - interval '5 days', now())
+ON CONFLICT (id) DO UPDATE
+SET experiment_id = EXCLUDED.experiment_id,
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    is_control = EXCLUDED.is_control,
+    traffic_weight = EXCLUDED.traffic_weight,
+    updated_at = now();
+
+INSERT INTO ab_test_arm_stats (arm_id, alpha, beta, samples, conversions, revenue, avg_reward, updated_at, revenue_usd, original_currency, original_revenue)
+VALUES
+  ('22222222-2222-4222-8222-000000000001', 24.00, 76.00, 100, 23, 310.00, 3.1000, now(), 310.00, 'USD', 310.00),
+  ('22222222-2222-4222-8222-000000000002', 31.00, 69.00, 110, 30, 520.00, 4.7273, now(), 520.00, 'USD', 520.00),
+  ('22222222-2222-4222-8222-000000000003', 37.00, 63.00, 120, 36, 890.00, 7.4167, now(), 890.00, 'USD', 890.00)
+ON CONFLICT (arm_id) DO UPDATE
+SET alpha = EXCLUDED.alpha,
+    beta = EXCLUDED.beta,
+    samples = EXCLUDED.samples,
+    conversions = EXCLUDED.conversions,
+    revenue = EXCLUDED.revenue,
+    avg_reward = EXCLUDED.avg_reward,
+    updated_at = now(),
+    revenue_usd = EXCLUDED.revenue_usd,
+    original_currency = EXCLUDED.original_currency,
+    original_revenue = EXCLUDED.original_revenue;
+
+INSERT INTO bandit_user_context (user_id, country, device, app_version, days_since_install, total_spent, last_purchase_at, updated_at)
+VALUES
+  ('33333333-3333-4333-8333-000000000001', 'US', 'ios', '3.0.0', 14, 49.99, now() - interval '2 days', now()),
+  ('33333333-3333-4333-8333-000000000002', 'DE', 'android', '3.0.0', 10, 79.99, now() - interval '3 days', now()),
+  ('33333333-3333-4333-8333-000000000003', 'GB', 'ios', '3.0.0', 7, 129.99, now() - interval '1 days', now())
+ON CONFLICT (user_id) DO UPDATE
+SET country = EXCLUDED.country,
+    device = EXCLUDED.device,
+    app_version = EXCLUDED.app_version,
+    days_since_install = EXCLUDED.days_since_install,
+    total_spent = EXCLUDED.total_spent,
+    last_purchase_at = EXCLUDED.last_purchase_at,
+    updated_at = now();
+
+INSERT INTO bandit_arm_context_model (arm_id, dimension, matrix_a, vector_b, theta, samples_count, updated_at)
+VALUES
+  ('22222222-2222-4222-8222-000000000001', 20, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 100, now()),
+  ('22222222-2222-4222-8222-000000000002', 20, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 110, now()),
+  ('22222222-2222-4222-8222-000000000003', 20, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 120, now())
+ON CONFLICT (arm_id) DO UPDATE
+SET dimension = EXCLUDED.dimension,
+    matrix_a = EXCLUDED.matrix_a,
+    vector_b = EXCLUDED.vector_b,
+    theta = EXCLUDED.theta,
+    samples_count = EXCLUDED.samples_count,
+    updated_at = now();
+
+INSERT INTO ab_test_assignments (id, experiment_id, user_id, arm_id, assigned_at, expires_at)
+VALUES
+  (gen_random_uuid(), '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000001', '22222222-2222-4222-8222-000000000001', now() - interval '6 hours', now() + interval '18 hours'),
+  (gen_random_uuid(), '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000002', '22222222-2222-4222-8222-000000000002', now() - interval '5 hours', now() + interval '18 hours'),
+  (gen_random_uuid(), '11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-000000000003', '22222222-2222-4222-8222-000000000003', now() - interval '4 hours', now() + interval '18 hours')
+ON CONFLICT (experiment_id, user_id) DO UPDATE
+SET arm_id = EXCLUDED.arm_id,
+    assigned_at = EXCLUDED.assigned_at,
+    expires_at = EXCLUDED.expires_at;
+
+INSERT INTO bandit_pending_rewards (id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted, conversion_value, conversion_currency, converted_at, processed_at)
+VALUES
+  ('44444444-4444-4444-8444-000000000001', '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-000000000001', '33333333-3333-4333-8333-000000000001', now() - interval '8 hours', now() + interval '12 hours', false, NULL, NULL, NULL, NULL),
+  ('44444444-4444-4444-8444-000000000002', '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-000000000002', '33333333-3333-4333-8333-000000000002', now() - interval '7 hours', now() + interval '12 hours', false, NULL, NULL, NULL, NULL),
+  ('44444444-4444-4444-8444-000000000003', '11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-000000000003', '33333333-3333-4333-8333-000000000003', now() - interval '6 hours', now() + interval '12 hours', true, 89.99, 'USD', now() - interval '2 hours', now() - interval '90 minutes')
+ON CONFLICT (id) DO UPDATE
+SET arm_id = EXCLUDED.arm_id,
+    user_id = EXCLUDED.user_id,
+    assigned_at = EXCLUDED.assigned_at,
+    expires_at = EXCLUDED.expires_at,
+    converted = EXCLUDED.converted,
+    conversion_value = EXCLUDED.conversion_value,
+    conversion_currency = EXCLUDED.conversion_currency,
+    converted_at = EXCLUDED.converted_at,
+    processed_at = EXCLUDED.processed_at;
+
+INSERT INTO bandit_conversion_links (pending_id, transaction_id)
+VALUES ('44444444-4444-4444-8444-000000000003', '55555555-5555-4555-8555-000000000001')
+ON CONFLICT (pending_id, transaction_id) DO NOTHING;
+
+INSERT INTO bandit_arm_objective_stats (arm_id, objective_type, alpha, beta, samples, conversions, total_revenue, avg_ltv, updated_at)
+VALUES
+  ('22222222-2222-4222-8222-000000000001', 'conversion', 24.00, 76.00, 100, 23, 310.00, 36.00, now()),
+  ('22222222-2222-4222-8222-000000000001', 'ltv',        19.00, 81.00, 100, 19, 310.00, 33.00, now()),
+  ('22222222-2222-4222-8222-000000000001', 'revenue',    26.00, 74.00, 100, 23, 310.00, 36.00, now()),
+  ('22222222-2222-4222-8222-000000000002', 'conversion', 31.00, 69.00, 110, 30, 520.00, 48.00, now()),
+  ('22222222-2222-4222-8222-000000000002', 'ltv',        26.00, 74.00, 110, 25, 520.00, 45.00, now()),
+  ('22222222-2222-4222-8222-000000000002', 'revenue',    34.00, 66.00, 110, 30, 520.00, 48.00, now()),
+  ('22222222-2222-4222-8222-000000000003', 'conversion', 37.00, 63.00, 120, 36, 890.00, 71.00, now()),
+  ('22222222-2222-4222-8222-000000000003', 'ltv',        32.00, 68.00, 120, 29, 890.00, 67.00, now()),
+  ('22222222-2222-4222-8222-000000000003', 'revenue',    40.00, 60.00, 120, 36, 890.00, 71.00, now())
+ON CONFLICT (arm_id, objective_type) DO UPDATE
+SET alpha = EXCLUDED.alpha,
+    beta = EXCLUDED.beta,
+    samples = EXCLUDED.samples,
+    conversions = EXCLUDED.conversions,
+    total_revenue = EXCLUDED.total_revenue,
+    avg_ltv = EXCLUDED.avg_ltv,
+    updated_at = now();
+
+INSERT INTO bandit_window_events (experiment_id, arm_id, user_id, event_type, reward_value, timestamp)
+SELECT * FROM (VALUES
+  ('11111111-1111-4111-8111-111111111111'::uuid, '22222222-2222-4222-8222-000000000001'::uuid, '33333333-3333-4333-8333-000000000001'::uuid, 'impression', NULL::numeric, now() - interval '9 hours'),
+  ('11111111-1111-4111-8111-111111111111'::uuid, '22222222-2222-4222-8222-000000000002'::uuid, '33333333-3333-4333-8333-000000000002'::uuid, 'conversion', 89.99::numeric, now() - interval '7 hours'),
+  ('11111111-1111-4111-8111-111111111111'::uuid, '22222222-2222-4222-8222-000000000003'::uuid, '33333333-3333-4333-8333-000000000003'::uuid, 'no_conversion', NULL::numeric, now() - interval '5 hours')
+) AS seeded(experiment_id, arm_id, user_id, event_type, reward_value, timestamp)
+WHERE NOT EXISTS (
+  SELECT 1 FROM bandit_window_events WHERE experiment_id = '11111111-1111-4111-8111-111111111111'::uuid
+);
+
 WITH seeded_users AS (
   SELECT id, row_number() OVER (ORDER BY created_at, email) AS rn
   FROM users
