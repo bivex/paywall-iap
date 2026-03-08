@@ -102,7 +102,8 @@ async function postExperimentLifecycleAction(
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/${action}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
     if (parsed.ok) revalidateExperimentPaths();
@@ -160,7 +161,8 @@ export async function unlockExperimentAction(id: string) {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/unlock`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
     if (parsed.ok) revalidateExperimentPaths();
@@ -177,7 +179,8 @@ export async function repairExperimentAction(id: string) {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/repair`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentRepairResult>(res);
     if (parsed.ok) revalidateExperimentPaths();

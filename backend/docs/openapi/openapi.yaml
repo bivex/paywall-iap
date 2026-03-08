@@ -929,6 +929,12 @@ paths:
       summary: Pause experiment
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyObjectRequest'
       parameters:
         - $ref: '#/components/parameters/ResourceId'
       responses:
@@ -950,6 +956,12 @@ paths:
       summary: Resume experiment
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyObjectRequest'
       parameters:
         - $ref: '#/components/parameters/ResourceId'
       responses:
@@ -971,6 +983,12 @@ paths:
       summary: Complete experiment
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyObjectRequest'
       parameters:
         - $ref: '#/components/parameters/ResourceId'
       responses:
@@ -992,6 +1010,12 @@ paths:
       summary: Confirm recommended experiment winner
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyObjectRequest'
       parameters:
         - $ref: '#/components/parameters/ExperimentId'
       responses:
@@ -1013,6 +1037,12 @@ paths:
       summary: Pause experiment and hold winner recommendation for review
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyObjectRequest'
       parameters:
         - $ref: '#/components/parameters/ExperimentId'
       responses:
@@ -1774,7 +1804,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ExperimentId'
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
@@ -1798,6 +1828,12 @@ paths:
       summary: Unlock experiment automation
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyObjectRequest'
       parameters:
         - $ref: '#/components/parameters/ExperimentId'
       responses:
@@ -1818,6 +1854,12 @@ paths:
       summary: Repair experiment derived state
       security:
         - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyObjectRequest'
       parameters:
         - $ref: '#/components/parameters/ExperimentId'
       responses:
@@ -2772,8 +2814,10 @@ components:
         name:
           type: string
           minLength: 1
-          pattern: '.*\S.*'
-        description: { type: string }
+          pattern: '^(?=.*\S)[^\u0000-\u001F\u007F-\u009F]*$'
+        description:
+          type: string
+          pattern: '^[^\u0000]*$'
         is_control: { type: boolean }
         traffic_weight:
           type: number
@@ -2787,8 +2831,10 @@ components:
         name:
           type: string
           minLength: 1
-          pattern: '.*\S.*'
-        description: { type: string }
+          pattern: '^(?=.*\S)[^\u0000-\u001F\u007F-\u009F]*$'
+        description:
+          type: string
+          pattern: '^[^\u0000]*$'
         status:
           type: string
           enum: [draft, running, paused, completed]
@@ -2839,8 +2885,10 @@ components:
         name:
           type: string
           minLength: 1
-          pattern: '.*\S.*'
-        description: { type: string }
+          pattern: '^(?=.*\S)[^\u0000-\u001F\u007F-\u009F]*$'
+        description:
+          type: string
+          pattern: '^[^\u0000]*$'
         algorithm_type:
           type: string
           enum: [thompson_sampling, ucb, epsilon_greedy]
@@ -2902,8 +2950,10 @@ components:
         name:
           type: string
           minLength: 1
-          pattern: '.*\S.*'
-        description: { type: string }
+          pattern: '^(?=.*\S)[^\u0000-\u001F\u007F-\u009F]*$'
+        description:
+          type: string
+          pattern: '^[^\u0000]*$'
         monthly_price:
           type: number
           minimum: 0
@@ -3035,6 +3085,9 @@ components:
           minimum: 1
         reason:
           type: string
+    EmptyObjectRequest:
+      type: object
+      additionalProperties: false
     LockAdminExperimentRequest:
       type: object
       additionalProperties: false

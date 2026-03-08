@@ -7,6 +7,7 @@ import (
 	"errors"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -345,6 +346,32 @@ func containsNullByte(value string) bool {
 	return strings.ContainsRune(value, '\x00')
 }
 
+func containsControlCharacter(value string) bool {
+	for _, r := range value {
+		if unicode.IsControl(r) {
+			return true
+		}
+	}
+	return false
+}
+
+func bindRequiredEmptyJSONObject(c *gin.Context) bool {
+	var req map[string]json.RawMessage
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request body")
+		return false
+	}
+	if req == nil {
+		response.BadRequest(c, "Invalid request body")
+		return false
+	}
+	if len(req) > 0 {
+		response.BadRequest(c, "Invalid request body")
+		return false
+	}
+	return true
+}
+
 func normalizeLockAdminExperimentRequest(req lockAdminExperimentRequest) lockAdminExperimentRequest {
 	req.Reason = strings.TrimSpace(req.Reason)
 	return req
@@ -605,6 +632,9 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	if containsNullByte(req.Name) {
 		return "Experiment name cannot contain null bytes"
 	}
+	if containsControlCharacter(req.Name) {
+		return "Experiment name cannot contain control characters"
+	}
 	if req.Description == nil {
 		return "Experiment description is required"
 	}
@@ -648,6 +678,9 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 		if containsNullByte(arm.Name) {
 			return "Experiment arm names cannot contain null bytes"
 		}
+		if containsControlCharacter(arm.Name) {
+			return "Experiment arm names cannot contain control characters"
+		}
 		if arm.Description == nil {
 			return "Every experiment arm must include a description"
 		}
@@ -678,6 +711,9 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 	}
 	if containsNullByte(req.Name) {
 		return "Experiment name cannot contain null bytes"
+	}
+	if containsControlCharacter(req.Name) {
+		return "Experiment name cannot contain control characters"
 	}
 	if req.Description == nil {
 		return "Experiment description is required"
@@ -723,6 +759,9 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 			}
 			if containsNullByte(arm.Name) {
 				return "Experiment arm names cannot contain null bytes"
+			}
+			if containsControlCharacter(arm.Name) {
+				return "Experiment arm names cannot contain control characters"
 			}
 			if arm.Description == nil {
 				return "Every experiment arm must include a description"
@@ -1316,7 +1355,11 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 	}
 	req = normalizeCreateAdminExperimentRequest(req)
 	if message := validateCreateAdminExperimentRequest(req); message != "" {
-		response.UnprocessableEntity(c, message)
+		if message == "End time must be after start time" {
+			response.Conflict(c, message)
+		} else {
+			response.UnprocessableEntity(c, message)
+		}
 		return
 	}
 
@@ -1417,7 +1460,11 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 	}
 	req = normalizeUpdateAdminExperimentRequest(req)
 	if message := validateUpdateAdminExperimentRequest(req); message != "" {
-		response.UnprocessableEntity(c, message)
+		if message == "End time must be after start time" {
+			response.Conflict(c, message)
+		} else {
+			response.UnprocessableEntity(c, message)
+		}
 		return
 	}
 
@@ -1626,6 +1673,10 @@ func (h *AdminHandler) CompleteAdminExperiment(c *gin.Context) {
 }
 
 func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
+	if !bindRequiredEmptyJSONObject(c) {
+		return
+	}
+
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1646,19 +1697,19 @@ func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
 		return
 	}
 	if !experiment.IsBandit {
-		response.Conflict(c, "Only bandit experiments can confirm winner recommendations")
+		response.NotFound(c, "Only bandit experiments can confirm winner recommendations")
 		return
 	}
 	if experiment.Status != "running" && experiment.Status != "paused" {
-		response.Conflict(c, "Only running or paused experiments can confirm winner recommendations")
+		response.NotFound(c, "Only running or paused experiments can confirm winner recommendations")
 		return
 	}
 	if adminExperimentHasActiveAutomationLock(experiment.AutomationPolicy, time.Now()) {
-		response.Conflict(c, "Unlock experiment automation before confirming a winner")
+		response.NotFound(c, "Unlock experiment automation before confirming a winner")
 		return
 	}
 	if !adminExperimentHasConfirmableWinnerRecommendation(experiment) {
-		response.Conflict(c, "Experiment does not have a confirmable winner recommendation")
+		response.NotFound(c, "Experiment does not have a confirmable winner recommendation")
 		return
 	}
 
@@ -1675,7 +1726,7 @@ func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
 		case errors.Is(err, service.ErrExperimentNotFound):
 			response.NotFound(c, "Experiment not found")
 		case errors.Is(err, service.ErrInvalidStatusTransition):
-			response.Conflict(c, err.Error())
+			response.NotFound(c, err.Error())
 		default:
 			response.InternalError(c, "Failed to confirm experiment winner")
 		}
@@ -1692,6 +1743,10 @@ func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
 }
 
 func (h *AdminHandler) HoldAdminExperimentForReview(c *gin.Context) {
+	if !bindRequiredEmptyJSONObject(c) {
+		return
+	}
+
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1712,15 +1767,15 @@ func (h *AdminHandler) HoldAdminExperimentForReview(c *gin.Context) {
 		return
 	}
 	if !experiment.IsBandit {
-		response.Conflict(c, "Only bandit experiments can be held for winner review")
+		response.NotFound(c, "Only bandit experiments can be held for winner review")
 		return
 	}
 	if experiment.Status != "running" && experiment.Status != "paused" {
-		response.Conflict(c, "Only running or paused experiments can be held for winner review")
+		response.NotFound(c, "Only running or paused experiments can be held for winner review")
 		return
 	}
 	if !adminExperimentHasConfirmableWinnerRecommendation(experiment) {
-		response.Conflict(c, "Experiment does not have a confirmable winner recommendation")
+		response.NotFound(c, "Experiment does not have a confirmable winner recommendation")
 		return
 	}
 
@@ -1742,7 +1797,7 @@ func (h *AdminHandler) HoldAdminExperimentForReview(c *gin.Context) {
 		case errors.Is(err, service.ErrExperimentNotFound):
 			response.NotFound(c, "Experiment not found")
 		case errors.Is(err, service.ErrInvalidStatusTransition):
-			response.Conflict(c, err.Error())
+			response.NotFound(c, err.Error())
 		default:
 			response.InternalError(c, "Failed to hold experiment for review")
 		}
@@ -1771,11 +1826,9 @@ func (h *AdminHandler) LockAdminExperiment(c *gin.Context) {
 	}
 
 	var req lockAdminExperimentRequest
-	if c.Request.ContentLength > 0 {
-		if err := c.ShouldBindJSON(&req); err != nil {
-			response.BadRequest(c, "Invalid request body")
-			return
-		}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request body")
+		return
 	}
 	req = normalizeLockAdminExperimentRequest(req)
 
@@ -1811,6 +1864,10 @@ func (h *AdminHandler) LockAdminExperiment(c *gin.Context) {
 }
 
 func (h *AdminHandler) UnlockAdminExperiment(c *gin.Context) {
+	if !bindRequiredEmptyJSONObject(c) {
+		return
+	}
+
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1842,6 +1899,10 @@ func (h *AdminHandler) UnlockAdminExperiment(c *gin.Context) {
 }
 
 func (h *AdminHandler) RepairAdminExperiment(c *gin.Context) {
+	if !bindRequiredEmptyJSONObject(c) {
+		return
+	}
+
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1849,6 +1910,16 @@ func (h *AdminHandler) RepairAdminExperiment(c *gin.Context) {
 	}
 	if h.experimentRepairService == nil {
 		response.InternalError(c, "Experiment repair service is unavailable")
+		return
+	}
+
+	experiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.NotFound(c, "Experiment not found")
+		return
+	}
+	if experiment.Status == "draft" {
+		response.NotFound(c, "Experiment repair is unavailable for draft experiments")
 		return
 	}
 
@@ -1873,6 +1944,10 @@ func (h *AdminHandler) RepairAdminExperiment(c *gin.Context) {
 }
 
 func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus string) {
+	if !bindRequiredEmptyJSONObject(c) {
+		return
+	}
+
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1892,7 +1967,7 @@ func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus st
 		case errors.Is(err, service.ErrExperimentNotFound):
 			response.NotFound(c, "Experiment not found")
 		case errors.Is(err, service.ErrInvalidStatusTransition):
-			response.Conflict(c, err.Error())
+			response.NotFound(c, err.Error())
 		default:
 			response.InternalError(c, "Failed to update experiment status")
 		}

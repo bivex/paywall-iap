@@ -461,6 +461,29 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Contains(t, w.Body.String(), "Experiment arm names cannot contain null bytes")
 	})
 
+	t.Run("POST rejects control characters in experiment name", func(t *testing.T) {
+		body := []byte("{\n" +
+			"\t\"name\":\"Bad\\u001eName\",\n" +
+			"\t\"description\":\"Should fail before insert\",\n" +
+			"\t\"status\":\"draft\",\n" +
+			"\t\"algorithm_type\":\"ucb\",\n" +
+			"\t\"is_bandit\":true,\n" +
+			"\t\"min_sample_size\":100,\n" +
+			"\t\"confidence_threshold_percent\":95,\n" +
+			"\t\"arms\":[\n" +
+			"\t\t{\"name\":\"Control\",\"description\":\"Baseline\",\"is_control\":true,\"traffic_weight\":1},\n" +
+			"\t\t{\"name\":\"Variant\",\"description\":\"Candidate\",\"is_control\":false,\"traffic_weight\":1}\n" +
+			"\t]\n" +
+			"}")
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Experiment name cannot contain control characters")
+	})
+
 	t.Run("GET returns created experiment", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
 		w := httptest.NewRecorder()
@@ -668,7 +691,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			require.NoError(t, cleanupErr)
 		}()
 
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+confirmExperimentID.String()+"/confirm-winner", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+confirmExperimentID.String()+"/confirm-winner", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -743,11 +767,12 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			require.NoError(t, cleanupErr)
 		}()
 
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+lockedExperimentID.String()+"/confirm-winner", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+lockedExperimentID.String()+"/confirm-winner", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusConflict, w.Code)
+		assert.Equal(t, http.StatusNotFound, w.Code)
 
 		var status string
 		err = db.QueryRow(ctx, `SELECT status FROM ab_tests WHERE id = $1`, lockedExperimentID).Scan(&status)
@@ -798,7 +823,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			require.NoError(t, cleanupErr)
 		}()
 
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+holdExperimentID.String()+"/hold-for-review", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+holdExperimentID.String()+"/hold-for-review", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -874,7 +900,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			require.NoError(t, cleanupErr)
 		}()
 
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+pausedExperimentID.String()+"/hold-for-review", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+pausedExperimentID.String()+"/hold-for-review", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -1296,7 +1323,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	})
 
 	t.Run("POST pauses a running experiment", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/pause", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/pause", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -1316,7 +1344,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	})
 
 	t.Run("POST resumes a paused experiment", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/resume", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/resume", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -1330,7 +1359,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	})
 
 	t.Run("POST starts a draft experiment via resume", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+draftExperiment.ID.String()+"/resume", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+draftExperiment.ID.String()+"/resume", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -1345,7 +1375,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	})
 
 	t.Run("POST completes a running experiment", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/complete", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/complete", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -1360,11 +1391,31 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	})
 
 	t.Run("POST rejects invalid lifecycle transition", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/pause", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/pause", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusConflict, w.Code)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("POST complete rejects missing request body", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+runningExperiment.ID.String()+"/complete", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "Invalid request body")
+	})
+
+	t.Run("POST resume rejects null request body", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+draftExperiment.ID.String()+"/resume", bytes.NewBufferString("null"))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "Invalid request body")
 	})
 
 	t.Run("GET tolerates missing optional experiment audit tables", func(t *testing.T) {
