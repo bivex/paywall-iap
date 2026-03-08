@@ -90,7 +90,7 @@
 |---|---|---|
 | 1 | True builder workflow для `Experiment Studio` | это самый заметный truthful UX gap: metadata и lifecycle уже есть, но Studio всё ещё не собирает experiment как полноценный draft/builder workflow |
 | 2 | Persisted pricing tier ↔ arm linkage model | без этого tiers и arms остаются рядом, но не становятся одной доменной моделью; это блокирует честный experiment builder и rollout story |
-| 3 | Remaining repair/self-heal coverage | immutable log и recommendation layer уже появились как backend foundation; следующий backend шаг — добить оставшиеся derived surfaces и reconciliation gaps |
+| 3 | Remaining repair/self-heal coverage | explicit repair/reconciler теперь уже чинят и `objective stats`; следующий backend шаг — добить оставшиеся cleanup/global derived surfaces и reconciliation gaps вне текущего per-experiment repair scope |
 
 ## Concrete implementation checklist by file/path (top 3)
 
@@ -137,7 +137,7 @@
 | Immutable event / conversion log | теперь есть append-only `experiment_automation_decision_log` и `bandit_conversion_events`, direct reward / delayed conversion / expired pending reward уже пишутся в immutable history, а delayed conversion path стал реально обновлять arm stats | дальше расширять event trail до assignments / impressions и richer recommendation events, чтобы автоматика опиралась не только на агрегаты |
 | Idempotent job execution | scheduler-backed automation и maintenance jobs теперь используют persisted execution log с window-based idempotency key, claim/skip semantics и retry-after-failure | дальше развивать это как единый contract для новых scheduled paths, а не возвращаться к best-effort execution |
 | Audit trail для auto-actions | для experiment lifecycle automation уже есть отдельный audit layer: source/reason/transition/time, latest audit в summary payloads и full history endpoint/UI | при расширении автоматики сохранять тот же уровень прозрачности для новых decision paths, а не откатываться к «silent background changes» |
-| Reconciliation / repair jobs | есть explicit admin repair path и scheduled background repair reconciler на `asynq` с window-idempotent execution log; вместе с maintenance layer они уже делают assignment snapshot, создают missing `ab_test_arm_stats`, пересчитывают `winner_confidence`, синхронизируют `objective stats`, обрабатывают expired pending rewards и чистят stale context/expired assignments | coverage derived state всё ещё не полная: за пределами текущего repair/maintenance scope остаются другие derived surfaces и richer recommendation/decision paths |
+| Reconciliation / repair jobs | есть explicit admin repair path и scheduled background repair reconciler на `asynq` с window-idempotent execution log; explicit repair теперь делает assignment snapshot, создаёт missing `ab_test_arm_stats`, синхронизирует per-experiment `objective stats`, пересчитывает `winner_confidence` и обрабатывает expired pending rewards, а maintenance layer отдельно чистит stale context/expired assignments | coverage derived state всё ещё не полная: за пределами текущего per-experiment repair/maintenance scope остаются другие cleanup/global surfaces и richer recommendation/decision paths |
 | Experiment arm editing backend | create experiment с arms уже есть, edit существующего draft пока ограничен metadata-only update | для настоящего Studio builder понадобится persisted arm CRUD + server-side validation суммарных weight/control arm invariants |
 | Pricing tier linkage model | live pricing tiers уже есть, но truthful linkage tier ↔ arm пока отсутствует | если Studio должен автоматизировать pricing-experiment workflows, нужна отдельная persisted linkage model/table, а не просто соседние UI-блоки |
 | Automation-safe selection policy | bandit runtime уже выбирает arm и кэширует sticky assignment, а admin read-path теперь отдаёт safe winner recommendation по win probability / sample-size / confidence guards | если вводить auto-promotion / auto-winner / auto-rollout, потребуется отдельная policy-логика: когда система только рекомендует winner, а когда реально меняет allocation/status автоматически |
@@ -148,7 +148,7 @@
 
 Если делать не «всё сразу», а минимальный полезный следующий backend-срез, то приоритет теперь выглядит так:
 
-1. **Расширить repair/self-heal coverage** на оставшиеся derived surfaces вне текущего repair/maintenance scope.
+1. **Расширить repair/self-heal coverage** на оставшиеся cleanup/global derived surfaces вне текущего per-experiment repair scope.
 2. **Добить persisted arm CRUD + validation** для truthful experiment builder workflow.
 3. **Ввести persisted pricing tier ↔ arm linkage model** для реального pricing-experiment orchestration.
 4. **Расширить immutable event trail** до assignments / impressions / richer decision events.
@@ -227,7 +227,7 @@
 | Stage 2 | Scheduled experiment reconciler job | P1 | ✅ Done | периодический worker scan-ит `ab_tests` и применяет automation policy через общий lifecycle service |
 | Stage 2 | Auto-start / auto-complete rules | P1 | ✅ Done | experiments автоматически стартуют и завершаются по времени, sample-size и confidence-driven rules |
 | Stage 2 | Manual override / lock semantics | P1 | ✅ Done | persisted `automation_policy` теперь поддерживает `manual_override`, `locked_until`, `locked_by`, `lock_reason`, отдельные admin `lock/unlock` flows и reconciler уважает как explicit manual lock, так и time-bound lock window |
-| Stage 2 | Reconciliation / repair job для derived experiment state | P2 | 🟡 Partial | есть explicit admin `repair` path и scheduled/background repair reconciler на `asynq` с window-idempotent execution: они делают assignment snapshot, создают missing arm-stats rows, пересчитывают `winner_confidence` и обрабатывают expired pending rewards из persisted state, но coverage всего derived surface пока неполная |
+| Stage 2 | Reconciliation / repair job для derived experiment state | P2 | 🟡 Partial | есть explicit admin `repair` path и scheduled/background repair reconciler на `asynq` с window-idempotent execution: они делают assignment snapshot, создают missing arm-stats rows, синхронизируют per-experiment objective stats, пересчитывают `winner_confidence` и обрабатывают expired pending rewards из persisted state, но coverage всего derived surface пока неполная |
 | Stage 2 | Admin-visible reason codes для auto-transitions | P2 | ✅ Done | admin payload/UI показывает, каким rule и по какой причине система перевела experiment в новый status |
 | Stage 2 | Full lifecycle audit history UI/API surface | P2 | ✅ Done | admin API и Studio UI отдают полный newest-first lifecycle audit trail по experiment без mock-данных |
 | Stage 3 | Repository-backed bandit maintenance jobs | P1 | ✅ Done | scheduler wiring и idempotent execution уже есть, а maintenance layer теперь реально закрывает expired rewards, currency refresh, `trim_windows`, context cleanup, objective stats sync и expired assignment cleanup через repository-backed paths |
