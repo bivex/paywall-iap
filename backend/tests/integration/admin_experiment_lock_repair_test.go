@@ -313,6 +313,12 @@ func TestAdminExperimentLockAndRepairHandlers(t *testing.T) {
 		assert.Equal(t, 1, controlSamples)
 		assert.Equal(t, 2, controlBeta)
 
+		var objectiveSamples, objectiveBeta int
+		err = db.QueryRow(ctx, `SELECT samples, beta::int FROM bandit_arm_objective_stats WHERE arm_id = $1 AND objective_type = 'conversion'`, controlArmID).Scan(&objectiveSamples, &objectiveBeta)
+		require.NoError(t, err)
+		assert.Equal(t, 1, objectiveSamples)
+		assert.Equal(t, 2, objectiveBeta)
+
 		err = db.QueryRow(ctx, `SELECT COUNT(*)::int FROM bandit_pending_rewards WHERE experiment_id = $1 AND processed_at IS NOT NULL`, experimentID).Scan(&pendingProcessed)
 		require.NoError(t, err)
 		assert.Equal(t, 1, pendingProcessed)

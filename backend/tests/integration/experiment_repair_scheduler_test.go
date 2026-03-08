@@ -168,6 +168,11 @@ func TestExperimentRepairScheduledTaskRepairsCandidatesAndIsIdempotent(t *testin
 	assert.Equal(t, 1, processedPending)
 	assert.Equal(t, 1, runCount)
 
+	var objectiveSamples, objectiveBeta int
+	require.NoError(t, db.QueryRow(ctx, `SELECT samples, beta::int FROM bandit_arm_objective_stats WHERE arm_id = $1 AND objective_type = 'conversion'`, controlArmID).Scan(&objectiveSamples, &objectiveBeta))
+	assert.Equal(t, 1, objectiveSamples)
+	assert.Equal(t, 2, objectiveBeta)
+
 	var status string
 	var detailsJSON []byte
 	require.NoError(t, db.QueryRow(ctx, `SELECT status, details FROM automation_job_run_log WHERE job_name = $1`, worker_tasks.TypeReconcileExperimentRepair).Scan(&status, &detailsJSON))

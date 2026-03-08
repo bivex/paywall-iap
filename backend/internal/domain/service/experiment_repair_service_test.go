@@ -13,6 +13,7 @@ type stubExperimentRepairRepository struct {
 	objectiveConfig    *ExperimentConfig
 	winnerConfidence   *float64
 	mutationStateCalls int
+	processExpiredHook func()
 }
 
 func (s *stubExperimentRepairRepository) GetExperimentMutationState(context.Context, uuid.UUID) (*ExperimentMutationState, error) {
@@ -37,6 +38,9 @@ func (s *stubExperimentRepairRepository) CountExperimentPendingRewards(context.C
 }
 
 func (s *stubExperimentRepairRepository) ProcessExpiredPendingRewards(context.Context, uuid.UUID) (int, error) {
+	if s.processExpiredHook != nil {
+		s.processExpiredHook()
+	}
 	return 1, nil
 }
 
@@ -124,5 +128,41 @@ func TestExperimentRepairServiceRepairsObjectiveStatsAndWinnerConfidence(t *test
 	if assert.Len(t, banditRepo.updatedObjective, 4) {
 		assert.Equal(t, controlArmID, banditRepo.updatedObjective[0].ArmID)
 		assert.Equal(t, ObjectiveConversion, banditRepo.updatedObjective[0].ObjectiveType)
+	}
+}
+
+func TestExperimentRepairServiceSyncsObjectiveStatsAfterExpiredPendingRewards(t *testing.T) {
+	ctx := context.Background()
+	experimentID := uuid.New()
+	controlArmID := uuid.New()
+	repo := &stubExperimentRepairRepository{objectiveConfig: &ExperimentConfig{ID: experimentID, ObjectiveType: ObjectiveConversion}}
+	banditRepo := &stubExperimentRepairBanditRepository{
+		arms: []Arm{{ID: controlArmID}},
+		armStats: map[uuid.UUID]*ArmStats{
+			controlArmID: {ArmID: controlArmID, Alpha: 1, Beta: 1, Samples: 0, Conversions: 0, Revenue: 0, AvgReward: 0},
+		},
+	}
+	repo.processExpiredHook = func() {
+		banditRepo.armStats[controlArmID] = &ArmStats{
+			ArmID:       controlArmID,
+			Alpha:       1,
+			Beta:        2,
+			Samples:     1,
+			Conversions: 0,
+			Revenue:     0,
+			AvgReward:   0,
+		}
+	}
+
+	service := NewExperimentRepairService(repo, banditRepo)
+
+	summary, err := service.RepairExperiment(ctx, experimentID)
+
+	require.NoError(t, err)
+	require.NotNil(t, summary)
+	assert.Equal(t, 1, summary.PendingRewardsProcessed)
+	if assert.Len(t, banditRepo.updatedObjective, 1) {
+		assert.Equal(t, 1, banditRepo.updatedObjective[0].Samples)
+		assert.Equal(t, 2.0, banditRepo.updatedObjective[0].Beta)
 	}
 }

@@ -82,11 +82,11 @@ func (s *ExperimentRepairService) RepairExperiment(ctx context.Context, experime
 	if err != nil {
 		return nil, err
 	}
-	objectiveStatsSynced, err := s.syncObjectiveStats(ctx, experimentID)
+	processed, err := s.repo.ProcessExpiredPendingRewards(ctx, experimentID)
 	if err != nil {
 		return nil, err
 	}
-	processed, err := s.repo.ProcessExpiredPendingRewards(ctx, experimentID)
+	objectiveStatsSynced, err := s.syncObjectiveStats(ctx, experimentID)
 	if err != nil {
 		return nil, err
 	}
