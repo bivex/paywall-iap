@@ -34,11 +34,30 @@ function manualProbe(message: string): DelayedEndpointProbe {
   return { state: "manual", status: null, message };
 }
 
-async function fetchProbe<T>(url: string): Promise<{ probe: DelayedEndpointProbe; data: T | null }> {
+interface ProbeOptions {
+  acceptedErrorStatuses?: number[];
+  acceptedStatusMessages?: Partial<Record<number, string>>;
+}
+
+async function fetchProbe<T>(
+  url: string,
+  options: ProbeOptions = {},
+): Promise<{ probe: DelayedEndpointProbe; data: T | null }> {
   try {
     const res = await fetch(url, { cache: "no-store" });
     const parsed = await parseResponse<T>(res);
     if (!parsed.ok) {
+      if (options.acceptedErrorStatuses?.includes(res.status)) {
+        return {
+          probe: {
+            state: "available",
+            status: res.status,
+            message: options.acceptedStatusMessages?.[res.status] ?? parsed.error,
+          },
+          data: null,
+        };
+      }
+
       return {
         probe: { state: "unavailable", status: res.status, message: parsed.error },
         data: null,
@@ -75,7 +94,12 @@ export async function getDelayedFeedbackSnapshotFromCookies(
   const [banditSnapshot, healthResult, pendingById, userPending] = await Promise.all([
     getBanditSnapshotFromCookies(experimentId),
     getServiceHealth(),
-    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/pending/${PROBE_UUID}`),
+    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/pending/${PROBE_UUID}`, {
+      acceptedErrorStatuses: [404],
+      acceptedStatusMessages: {
+        404: "Endpoint reachable; sentinel pending reward was not found, which is expected for this read-only probe.",
+      },
+    }),
     fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/users/${PROBE_UUID}/pending`),
   ]);
 

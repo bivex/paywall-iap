@@ -506,7 +506,9 @@
     "actions": {
       "openExperiments": "Open A/B Tests",
       "openBandit": "Open Bandit Model",
-      "refresh": "Refresh"
+      "refresh": "Refresh",
+      "trimWindow": "Trim window",
+      "trimming": "Trimming..."
     },
     "status": {
       "running": "Running",
