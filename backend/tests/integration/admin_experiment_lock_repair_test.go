@@ -114,6 +114,21 @@ func TestAdminExperimentLockAndRepairHandlers(t *testing.T) {
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 		)`,
 		`CREATE UNIQUE INDEX idx_experiment_lifecycle_audit_log_idempotency ON experiment_lifecycle_audit_log(idempotency_key)`,
+		`CREATE TABLE experiment_winner_recommendation_log (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+			source TEXT NOT NULL,
+			recommended BOOLEAN NOT NULL DEFAULT FALSE,
+			reason TEXT NOT NULL,
+			winning_arm_id UUID REFERENCES ab_test_arms(id) ON DELETE SET NULL,
+			confidence_percent DOUBLE PRECISION,
+			confidence_threshold_percent DOUBLE PRECISION NOT NULL,
+			observed_samples INT NOT NULL,
+			min_sample_size INT NOT NULL,
+			details JSONB,
+			occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		)`,
 		`CREATE TABLE bandit_pending_rewards (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
