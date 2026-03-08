@@ -40,6 +40,14 @@ func (r *registerRepoStub) ExistsByPlatformID(context.Context, string) (bool, er
 	r.existsCalled = true
 	return false, nil
 }
+func (r *registerRepoStub) UpdatePurchaseChannel(context.Context, uuid.UUID, string) error {
+	return nil
+}
+func (r *registerRepoStub) UpdateEmail(context.Context, uuid.UUID, string) error { return nil }
+func (r *registerRepoStub) IncrementSessionCount(context.Context, uuid.UUID) (int, error) {
+	return 0, nil
+}
+func (r *registerRepoStub) UpdateHasViewedAds(context.Context, uuid.UUID, bool) error { return nil }
 
 func TestRegisterCommand_RejectsNullBytesBeforeRepositoryAccess(t *testing.T) {
 	repo := &registerRepoStub{}

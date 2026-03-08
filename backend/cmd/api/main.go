@@ -104,6 +104,7 @@ func dumpRoutesDependencies() *dependencies {
 		webhookHandler:        (*app_handler.WebhookHandler)(nil),
 		banditHandler:         (*app_handler.BanditHandler)(nil),
 		banditAdvancedHandler: (*app_handler.BanditAdvancedHandler)(nil),
+		paywallHandler:        (*app_handler.PaywallHandler)(nil),
 	}
 }
 
@@ -209,6 +210,7 @@ type dependencies struct {
 	webhookHandler        *app_handler.WebhookHandler
 	banditHandler         *app_handler.BanditHandler
 	banditAdvancedHandler *app_handler.BanditAdvancedHandler
+	paywallHandler        *app_handler.PaywallHandler
 }
 
 // initDependencies initializes all repositories, services, middleware, and handlers
@@ -303,6 +305,12 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	banditHandler := app_handler.NewBanditHandler(banditService)
 	banditAdvancedHandler := app_handler.NewBanditAdvancedHandler(advancedBanditEngine, currencyService, logging.Logger)
 
+	paywallTriggerService := service.NewPaywallTriggerService(userRepo, subscriptionRepo)
+	getTriggerStatusQuery := query.NewGetTriggerStatusQuery(paywallTriggerService)
+	captureEmailCmd := command.NewCaptureEmailCommand(userRepo)
+	trackSessionCmd := command.NewTrackSessionCommand(userRepo)
+	paywallHandler := app_handler.NewPaywallHandler(getTriggerStatusQuery, captureEmailCmd, trackSessionCmd, jwtMiddleware)
+
 	return &dependencies{
 		queries:               queries,
 		userRepo:              userRepo,
@@ -331,6 +339,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		webhookHandler:        webhookHandler,
 		banditHandler:         banditHandler,
 		banditAdvancedHandler: banditAdvancedHandler,
+		paywallHandler:        paywallHandler,
 	}
 }
 
@@ -435,6 +444,13 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, d *dependencies) {
 				d.subscriptionHandler.CheckAccess,
 			)
 			subs.DELETE("", d.subscriptionHandler.CancelSubscription)
+		}
+
+		user := protected.Group("/user")
+		{
+			user.GET("/trigger-status", d.paywallHandler.GetTriggerStatus)
+			user.POST("/email", d.paywallHandler.CaptureEmail)
+			user.POST("/session", d.paywallHandler.TrackSession)
 		}
 	}
 }

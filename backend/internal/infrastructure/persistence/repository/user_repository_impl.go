@@ -120,6 +120,47 @@ func (r *userRepositoryImpl) ExistsByPlatformID(ctx context.Context, platformUse
 	return true, nil
 }
 
+func (r *userRepositoryImpl) UpdatePurchaseChannel(ctx context.Context, id uuid.UUID, channel string) error {
+	_, err := r.queries.UpdateUserPurchaseChannel(ctx, generated.UpdateUserPurchaseChannelParams{
+		ID:              id,
+		PurchaseChannel: &channel,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update purchase channel: %w", err)
+	}
+	return nil
+}
+
+func (r *userRepositoryImpl) UpdateEmail(ctx context.Context, id uuid.UUID, email string) error {
+	_, err := r.queries.UpdateUserEmail(ctx, generated.UpdateUserEmailParams{
+		ID:    id,
+		Email: email,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update email: %w", err)
+	}
+	return nil
+}
+
+func (r *userRepositoryImpl) IncrementSessionCount(ctx context.Context, id uuid.UUID) (int, error) {
+	row, err := r.queries.IncrementUserSessionCount(ctx, id)
+	if err != nil {
+		return 0, fmt.Errorf("failed to increment session count: %w", err)
+	}
+	return int(row.SessionCount), nil
+}
+
+func (r *userRepositoryImpl) UpdateHasViewedAds(ctx context.Context, id uuid.UUID, hasViewedAds bool) error {
+	_, err := r.queries.UpdateUserHasViewedAds(ctx, generated.UpdateUserHasViewedAdsParams{
+		ID:           id,
+		HasViewedAds: hasViewedAds,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update has_viewed_ads: %w", err)
+	}
+	return nil
+}
+
 func (r *userRepositoryImpl) mapToEntity(row generated.User) *entity.User {
 	var deviceID string
 	if row.DeviceID != nil {
@@ -132,17 +173,19 @@ func (r *userRepositoryImpl) mapToEntity(row generated.User) *entity.User {
 	}
 
 	return &entity.User{
-		ID:             row.ID,
-		PlatformUserID: row.PlatformUserID,
-		DeviceID:       deviceID,
-		Platform:       entity.Platform(row.Platform),
-		AppVersion:     row.AppVersion,
-		Email:          row.Email,
-		LTV:            row.Ltv,
-		LTVUpdatedAt:   ltvUpdatedAt,
-		Role:           row.Role,
-		CreatedAt:      row.CreatedAt,
-
-		DeletedAt: row.DeletedAt,
+		ID:              row.ID,
+		PlatformUserID:  row.PlatformUserID,
+		DeviceID:        deviceID,
+		Platform:        entity.Platform(row.Platform),
+		AppVersion:      row.AppVersion,
+		Email:           row.Email,
+		LTV:             row.Ltv,
+		LTVUpdatedAt:    ltvUpdatedAt,
+		Role:            row.Role,
+		CreatedAt:       row.CreatedAt,
+		DeletedAt:       row.DeletedAt,
+		PurchaseChannel: row.PurchaseChannel,
+		SessionCount:    int(row.SessionCount),
+		HasViewedAds:    row.HasViewedAds,
 	}
 }

@@ -58,17 +58,20 @@ type Transaction struct {
 }
 
 type User struct {
-	ID             uuid.UUID  `json:"id"`
-	PlatformUserID string     `json:"platform_user_id"`
-	DeviceID       *string    `json:"device_id"`
-	Platform       string     `json:"platform"`
-	AppVersion     string     `json:"app_version"`
-	Email          string     `json:"email"`
-	Role           string     `json:"role"`
-	Ltv            float64    `json:"ltv"`
-	LtvUpdatedAt   *time.Time `json:"ltv_updated_at"`
-	CreatedAt      time.Time  `json:"created_at"`
-	DeletedAt      *time.Time `json:"deleted_at"`
+	ID              uuid.UUID  `json:"id"`
+	PlatformUserID  string     `json:"platform_user_id"`
+	DeviceID        *string    `json:"device_id"`
+	Platform        string     `json:"platform"`
+	AppVersion      string     `json:"app_version"`
+	Email           string     `json:"email"`
+	Role            string     `json:"role"`
+	Ltv             float64    `json:"ltv"`
+	LtvUpdatedAt    *time.Time `json:"ltv_updated_at"`
+	CreatedAt       time.Time  `json:"created_at"`
+	DeletedAt       *time.Time `json:"deleted_at"`
+	PurchaseChannel *string    `json:"purchase_channel"`
+	SessionCount    int32      `json:"session_count"`
+	HasViewedAds    bool       `json:"has_viewed_ads"`
 }
 
 type AdminCredential struct {

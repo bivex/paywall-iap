@@ -109,3 +109,11 @@ sql:
             go_type: "time.Time"
           - column: "grace_periods.updated_at"
             go_type: "time.Time"
+          - column: "users.purchase_channel"
+            go_type:
+              type: "string"
+              pointer: true
+          - column: "users.session_count"
+            go_type: "int32"
+          - column: "users.has_viewed_ads"
+            go_type: "bool"

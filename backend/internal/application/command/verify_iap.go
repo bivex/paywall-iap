@@ -136,6 +136,8 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.
 			return nil, fmt.Errorf("failed to create subscription: %w", err)
 		}
 		isNew = true
+		// Record that this user purchased via IAP
+		_ = c.userRepo.UpdatePurchaseChannel(ctx, userUUID, entity.PurchaseChannelIAP)
 	}
 
 	// Create transaction record

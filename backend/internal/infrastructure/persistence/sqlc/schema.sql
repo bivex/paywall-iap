@@ -13,7 +13,10 @@ CREATE TABLE users (
     ltv                 NUMERIC(10,2) DEFAULT 0,
     ltv_updated_at      TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at          TIMESTAMPTZ
+    deleted_at          TIMESTAMPTZ,
+    purchase_channel    TEXT CHECK (purchase_channel IN ('iap', 'stripe', 'web')),
+    session_count       INT NOT NULL DEFAULT 0,
+    has_viewed_ads      BOOLEAN NOT NULL DEFAULT false
 );
 
 CREATE TABLE subscriptions (

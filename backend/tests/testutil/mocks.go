@@ -119,6 +119,39 @@ func (r *mockUserRepo) ExistsByPlatformID(ctx context.Context, platformUserID st
 	return exists, err
 }
 
+func (r *mockUserRepo) UpdatePurchaseChannel(ctx context.Context, id uuid.UUID, channel string) error {
+	_, err := r.pool.Exec(ctx,
+		"UPDATE users SET purchase_channel = $2 WHERE id = $1",
+		id, channel,
+	)
+	return err
+}
+
+func (r *mockUserRepo) UpdateEmail(ctx context.Context, id uuid.UUID, email string) error {
+	_, err := r.pool.Exec(ctx,
+		"UPDATE users SET email = $2 WHERE id = $1",
+		id, email,
+	)
+	return err
+}
+
+func (r *mockUserRepo) IncrementSessionCount(ctx context.Context, id uuid.UUID) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx,
+		"UPDATE users SET session_count = session_count + 1 WHERE id = $1 RETURNING session_count",
+		id,
+	).Scan(&count)
+	return count, err
+}
+
+func (r *mockUserRepo) UpdateHasViewedAds(ctx context.Context, id uuid.UUID, hasViewedAds bool) error {
+	_, err := r.pool.Exec(ctx,
+		"UPDATE users SET has_viewed_ads = $2 WHERE id = $1",
+		id, hasViewedAds,
+	)
+	return err
+}
+
 // NewMockSubscriptionRepo creates a mock subscription repository
 func NewMockSubscriptionRepo(pool *pgxpool.Pool) repository.SubscriptionRepository {
 	return &mockSubscriptionRepo{pool: pool}

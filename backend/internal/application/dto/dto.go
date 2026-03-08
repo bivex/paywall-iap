@@ -124,6 +124,31 @@ type RevenueOverview struct {
 	ChurnRate           float64 `json:"churn_rate"`
 }
 
+// ========== PAYWALL DTOs ==========
+
+// TriggerStatusResponse is returned by GET /v1/user/trigger-status
+type TriggerStatusResponse struct {
+	ShouldShowPaywall     bool    `json:"should_show_paywall"`
+	ShowD2CButton         bool    `json:"show_d2c_button"`
+	TriggerReason         string  `json:"trigger_reason"`
+	SessionCount          int     `json:"session_count"`
+	HasActiveSubscription bool    `json:"has_active_subscription"`
+	PurchaseChannel       *string `json:"purchase_channel"`
+}
+
+// CaptureEmailRequest is the body for POST /v1/user/email
+type CaptureEmailRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// TrackSessionRequest is the body for POST /v1/user/session (currently no body needed)
+type TrackSessionRequest struct{}
+
+// TrackSessionResponse is returned by POST /v1/user/session
+type TrackSessionResponse struct {
+	SessionCount int `json:"session_count"`
+}
+
 // ========== ERROR DTOs ==========
 
 // ErrorDetail represents a detailed error

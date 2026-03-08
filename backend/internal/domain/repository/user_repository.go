@@ -29,4 +29,16 @@ type UserRepository interface {
 
 	// ExistsByPlatformID checks if a user exists with the given platform ID
 	ExistsByPlatformID(ctx context.Context, platformUserID string) (bool, error)
+
+	// UpdatePurchaseChannel sets the purchase channel for a user
+	UpdatePurchaseChannel(ctx context.Context, id uuid.UUID, channel string) error
+
+	// UpdateEmail updates the email address of a user
+	UpdateEmail(ctx context.Context, id uuid.UUID, email string) error
+
+	// IncrementSessionCount increments the session count for a user and returns the new count
+	IncrementSessionCount(ctx context.Context, id uuid.UUID) (int, error)
+
+	// UpdateHasViewedAds updates the has_viewed_ads flag for a user
+	UpdateHasViewedAds(ctx context.Context, id uuid.UUID, hasViewedAds bool) error
 }
