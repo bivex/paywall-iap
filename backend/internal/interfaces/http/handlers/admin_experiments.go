@@ -153,7 +153,7 @@ func scanAdminExperimentWinnerRecommendationAudit(scanner interface{ Scan(dest .
 
 type createAdminExperimentArmRequest struct {
 	Name          string     `json:"name"`
-	Description   string     `json:"description"`
+	Description   *string    `json:"description"`
 	IsControl     bool       `json:"is_control"`
 	TrafficWeight float64    `json:"traffic_weight"`
 	PricingTierID *uuid.UUID `json:"pricing_tier_id,omitempty"`
@@ -161,10 +161,10 @@ type createAdminExperimentArmRequest struct {
 
 type createAdminExperimentRequest struct {
 	Name                       string                              `json:"name"`
-	Description                string                              `json:"description"`
+	Description                *string                             `json:"description"`
 	Status                     string                              `json:"status"`
-	AlgorithmType              string                              `json:"algorithm_type"`
-	IsBandit                   bool                                `json:"is_bandit"`
+	AlgorithmType              *string                             `json:"algorithm_type"`
+	IsBandit                   *bool                               `json:"is_bandit"`
 	MinSampleSize              int                                 `json:"min_sample_size"`
 	ConfidenceThresholdPercent float64                             `json:"confidence_threshold_percent"`
 	StartAt                    *time.Time                          `json:"start_at"`
@@ -175,9 +175,9 @@ type createAdminExperimentRequest struct {
 
 type updateAdminExperimentRequest struct {
 	Name                       string                              `json:"name"`
-	Description                string                              `json:"description"`
-	AlgorithmType              string                              `json:"algorithm_type"`
-	IsBandit                   bool                                `json:"is_bandit"`
+	Description                *string                             `json:"description"`
+	AlgorithmType              *string                             `json:"algorithm_type"`
+	IsBandit                   *bool                               `json:"is_bandit"`
 	MinSampleSize              int                                 `json:"min_sample_size"`
 	ConfidenceThresholdPercent float64                             `json:"confidence_threshold_percent"`
 	StartAt                    *time.Time                          `json:"start_at"`
@@ -189,7 +189,7 @@ type updateAdminExperimentRequest struct {
 type updateAdminExperimentArmRequest struct {
 	ID            *uuid.UUID `json:"id,omitempty"`
 	Name          string     `json:"name"`
-	Description   string     `json:"description"`
+	Description   *string    `json:"description"`
 	IsControl     bool       `json:"is_control"`
 	TrafficWeight float64    `json:"traffic_weight"`
 	PricingTierID *uuid.UUID `json:"pricing_tier_id,omitempty"`
@@ -300,12 +300,12 @@ const adminExperimentLatestLifecycleJoin = `
 
 func normalizeCreateAdminExperimentRequest(req createAdminExperimentRequest) createAdminExperimentRequest {
 	req.Name = strings.TrimSpace(req.Name)
-	req.Description = strings.TrimSpace(req.Description)
+	req.Description = normalizeOptionalTrimmedString(req.Description)
 	req.Status = strings.ToLower(strings.TrimSpace(req.Status))
-	req.AlgorithmType = strings.ToLower(strings.TrimSpace(req.AlgorithmType))
+	req.AlgorithmType = normalizeOptionalLowerTrimmedString(req.AlgorithmType)
 	for index := range req.Arms {
 		req.Arms[index].Name = strings.TrimSpace(req.Arms[index].Name)
-		req.Arms[index].Description = strings.TrimSpace(req.Arms[index].Description)
+		req.Arms[index].Description = normalizeOptionalTrimmedString(req.Arms[index].Description)
 	}
 	normalizedPolicy := service.NormalizeExperimentAutomationPolicy(req.AutomationPolicy)
 	req.AutomationPolicy = &normalizedPolicy
@@ -314,15 +314,31 @@ func normalizeCreateAdminExperimentRequest(req createAdminExperimentRequest) cre
 
 func normalizeUpdateAdminExperimentRequest(req updateAdminExperimentRequest) updateAdminExperimentRequest {
 	req.Name = strings.TrimSpace(req.Name)
-	req.Description = strings.TrimSpace(req.Description)
-	req.AlgorithmType = strings.ToLower(strings.TrimSpace(req.AlgorithmType))
+	req.Description = normalizeOptionalTrimmedString(req.Description)
+	req.AlgorithmType = normalizeOptionalLowerTrimmedString(req.AlgorithmType)
 	for index := range req.Arms {
 		req.Arms[index].Name = strings.TrimSpace(req.Arms[index].Name)
-		req.Arms[index].Description = strings.TrimSpace(req.Arms[index].Description)
+		req.Arms[index].Description = normalizeOptionalTrimmedString(req.Arms[index].Description)
 	}
 	normalizedPolicy := service.NormalizeExperimentAutomationPolicy(req.AutomationPolicy)
 	req.AutomationPolicy = &normalizedPolicy
 	return req
+}
+
+func normalizeOptionalTrimmedString(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	normalized := strings.TrimSpace(*value)
+	return &normalized
+}
+
+func normalizeOptionalLowerTrimmedString(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	normalized := strings.ToLower(strings.TrimSpace(*value))
+	return &normalized
 }
 
 func normalizeLockAdminExperimentRequest(req lockAdminExperimentRequest) lockAdminExperimentRequest {
@@ -582,6 +598,12 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	if req.Name == "" {
 		return "Experiment name is required"
 	}
+	if req.Description == nil {
+		return "Experiment description is required"
+	}
+	if req.AlgorithmType == nil {
+		return "Algorithm type is required"
+	}
 	switch req.Status {
 	case "draft", "running", "paused", "completed":
 	default:
@@ -589,6 +611,9 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	}
 	if req.MinSampleSize <= 0 {
 		return "Minimum sample size must be greater than zero"
+	}
+	if req.IsBandit == nil {
+		return "Bandit flag is required"
 	}
 	if req.MinSampleSize > adminExperimentMaxMinSampleSize {
 		return "Minimum sample size must be less than or equal to 2147483647"
@@ -607,6 +632,9 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 		if arm.Name == "" {
 			return "Every experiment arm must have a name"
 		}
+		if arm.Description == nil {
+			return "Every experiment arm must include a description"
+		}
 		if arm.TrafficWeight <= 0 {
 			return "Traffic weight must be greater than zero"
 		}
@@ -617,8 +645,8 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	if controlCount != 1 {
 		return "Exactly one control arm is required"
 	}
-	if req.IsBandit {
-		switch req.AlgorithmType {
+	if *req.IsBandit {
+		switch *req.AlgorithmType {
 		case "thompson_sampling", "ucb", "epsilon_greedy":
 		default:
 			return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
@@ -630,6 +658,15 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) string {
 	if req.Name == "" {
 		return "Experiment name is required"
+	}
+	if req.Description == nil {
+		return "Experiment description is required"
+	}
+	if req.AlgorithmType == nil {
+		return "Algorithm type is required"
+	}
+	if req.IsBandit == nil {
+		return "Bandit flag is required"
 	}
 	if req.MinSampleSize <= 0 {
 		return "Minimum sample size must be greater than zero"
@@ -643,8 +680,8 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 	if req.StartAt != nil && req.EndAt != nil && req.EndAt.Before(*req.StartAt) {
 		return "End time must be after start time"
 	}
-	if req.IsBandit {
-		switch req.AlgorithmType {
+	if *req.IsBandit {
+		switch *req.AlgorithmType {
 		case "thompson_sampling", "ucb", "epsilon_greedy":
 		default:
 			return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
@@ -659,6 +696,9 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 		for _, arm := range req.Arms {
 			if arm.Name == "" {
 				return "Every experiment arm must have a name"
+			}
+			if arm.Description == nil {
+				return "Every experiment arm must include a description"
 			}
 			if arm.TrafficWeight <= 0 {
 				return "Traffic weight must be greater than zero"
@@ -689,7 +729,7 @@ func experimentArmInputsFromUpdateRequest(arms []updateAdminExperimentArmRequest
 		result = append(result, service.ExperimentArmInput{
 			ID:            arm.ID,
 			Name:          arm.Name,
-			Description:   arm.Description,
+			Description:   *arm.Description,
 			IsControl:     arm.IsControl,
 			TrafficWeight: arm.TrafficWeight,
 			PricingTierID: arm.PricingTierID,
@@ -1260,8 +1300,8 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 
 	experimentID := uuid.New()
 	var algorithmType interface{}
-	if req.IsBandit {
-		algorithmType = req.AlgorithmType
+	if *req.IsBandit {
+		algorithmType = *req.AlgorithmType
 	}
 	automationPolicyJSON, err := json.Marshal(req.AutomationPolicy)
 	if err != nil {
@@ -1277,12 +1317,12 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
 		experimentID,
 		req.Name,
-		req.Description,
+			*req.Description,
 		req.Status,
 		req.StartAt,
 		req.EndAt,
 		algorithmType,
-		req.IsBandit,
+		*req.IsBandit,
 		req.MinSampleSize,
 		req.ConfidenceThresholdPercent/100,
 		automationPolicyJSON,
@@ -1308,7 +1348,7 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 			uuid.New(),
 			experimentID,
 			arm.Name,
-			arm.Description,
+				*arm.Description,
 			arm.IsControl,
 			arm.TrafficWeight,
 			arm.PricingTierID,
@@ -1366,8 +1406,8 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 	}
 
 	var algorithmType *string
-	if req.IsBandit {
-		algorithmType = &req.AlgorithmType
+	if *req.IsBandit {
+		algorithmType = req.AlgorithmType
 	}
 
 	if h.experimentAdminService == nil {
@@ -1377,9 +1417,9 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 
 	err = h.experimentAdminService.UpdateDraftExperiment(c.Request.Context(), experimentID, service.UpdateExperimentInput{
 		Name:                req.Name,
-		Description:         req.Description,
+		Description:         *req.Description,
 		AlgorithmType:       algorithmType,
-		IsBandit:            req.IsBandit,
+		IsBandit:            *req.IsBandit,
 		MinSampleSize:       req.MinSampleSize,
 		ConfidenceThreshold: req.ConfidenceThresholdPercent / 100,
 		StartAt:             req.StartAt,

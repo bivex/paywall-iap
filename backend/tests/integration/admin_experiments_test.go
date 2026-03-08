@@ -323,6 +323,29 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Zero(t, experimentCount)
 	})
 
+	t.Run("POST rejects null is_bandit", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Null bandit flag",
+			"description":"Should fail before insert",
+			"status":"draft",
+			"algorithm_type":"ucb",
+			"is_bandit":null,
+			"min_sample_size":100,
+			"confidence_threshold_percent":95,
+			"arms":[
+				{"name":"Control","description":"Baseline","is_control":true,"traffic_weight":1},
+				{"name":"Variant","description":"Candidate","is_control":false,"traffic_weight":1}
+			]
+		}`)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Bandit flag is required")
+	})
+
 	t.Run("GET returns created experiment", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
 		w := httptest.NewRecorder()
@@ -835,6 +858,24 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		err := db.QueryRow(ctx, `SELECT min_sample_size FROM ab_tests WHERE id = $1`, draftExperiment.ID).Scan(&minSampleSize)
 		require.NoError(t, err)
 		assert.Equal(t, draftExperiment.MinSampleSize, minSampleSize)
+	})
+
+	t.Run("PUT rejects null is_bandit", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Draft onboarding test",
+			"description":"Prepare a staged rollout",
+			"algorithm_type":"thompson_sampling",
+			"is_bandit":null,
+			"min_sample_size":150,
+			"confidence_threshold_percent":90
+		}`)
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Bandit flag is required")
 	})
 
 	t.Run("PUT updates a draft experiment metadata", func(t *testing.T) {
