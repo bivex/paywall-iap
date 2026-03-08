@@ -1342,7 +1342,9 @@ export function StudioPageClient({
                               </div>
                               <div className="rounded-md border border-dashed p-3">
                                 <p className="font-medium text-xs">{t("recommendation.confidence")}</p>
-                                <p className="mt-1 text-sm">{formatPercentNumber(currentRecommendation.confidence_percent)}</p>
+                                <p className="mt-1 text-sm">
+                                  {formatPercentNumber(currentRecommendation.confidence_percent)}
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -1354,13 +1356,15 @@ export function StudioPageClient({
                                 {
                                   key: "status",
                                   label: t("recommendation.guardStatus"),
-                                  passed: selectedExperiment.status === "running" || selectedExperiment.status === "paused",
+                                  passed:
+                                    selectedExperiment.status === "running" || selectedExperiment.status === "paused",
                                   value: t(`status.${selectedExperiment.status}`),
                                 },
                                 {
                                   key: "sample",
                                   label: t("recommendation.guardSamples"),
-                                  passed: currentRecommendation.observed_samples >= currentRecommendation.min_sample_size,
+                                  passed:
+                                    currentRecommendation.observed_samples >= currentRecommendation.min_sample_size,
                                   value: `${currentRecommendation.observed_samples}/${currentRecommendation.min_sample_size}`,
                                 },
                                 {
@@ -1369,7 +1373,8 @@ export function StudioPageClient({
                                   passed:
                                     currentRecommendation.confidence_percent !== null &&
                                     currentRecommendation.confidence_percent !== undefined &&
-                                    currentRecommendation.confidence_percent >= currentRecommendation.confidence_threshold_percent,
+                                    currentRecommendation.confidence_percent >=
+                                      currentRecommendation.confidence_threshold_percent,
                                   value: `${formatPercentNumber(currentRecommendation.confidence_percent)} / ${formatPercentNumber(
                                     currentRecommendation.confidence_threshold_percent,
                                   )}`,

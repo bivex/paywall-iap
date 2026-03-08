@@ -524,7 +524,9 @@ export function BanditPageClient({
                           </div>
                           <div className="rounded-md border border-dashed p-3">
                             <p className="font-medium text-xs">{t("recommendation.confidence")}</p>
-                            <p className="mt-1 text-sm">{formatPercentNumber(currentRecommendation.confidence_percent)}</p>
+                            <p className="mt-1 text-sm">
+                              {formatPercentNumber(currentRecommendation.confidence_percent)}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -536,7 +538,8 @@ export function BanditPageClient({
                             {
                               key: "status",
                               label: t("recommendation.guardStatus"),
-                              passed: selectedExperiment?.status === "running" || selectedExperiment?.status === "paused",
+                              passed:
+                                selectedExperiment?.status === "running" || selectedExperiment?.status === "paused",
                               value: selectedExperiment ? t(`status.${selectedExperiment.status}`) : "—",
                             },
                             {
@@ -551,7 +554,8 @@ export function BanditPageClient({
                               passed:
                                 currentRecommendation.confidence_percent !== null &&
                                 currentRecommendation.confidence_percent !== undefined &&
-                                currentRecommendation.confidence_percent >= currentRecommendation.confidence_threshold_percent,
+                                currentRecommendation.confidence_percent >=
+                                  currentRecommendation.confidence_threshold_percent,
                               value: `${formatPercentNumber(currentRecommendation.confidence_percent)} / ${formatPercentNumber(
                                 currentRecommendation.confidence_threshold_percent,
                               )}`,
@@ -580,7 +584,9 @@ export function BanditPageClient({
 
                       <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
                         <p className="font-medium text-foreground text-sm">{t("recommendation.nextActionTitle")}</p>
-                        <p className="mt-1">{t(`recommendation.${recommendationNextActionKey(selectedExperiment, schedulerLocked)}`)}</p>
+                        <p className="mt-1">
+                          {t(`recommendation.${recommendationNextActionKey(selectedExperiment, schedulerLocked)}`)}
+                        </p>
                       </div>
                     </>
                   ) : (
@@ -595,7 +601,10 @@ export function BanditPageClient({
                     {recommendationHistory.length ? (
                       <div className="mt-3 space-y-2">
                         {recommendationHistory.slice(0, 5).map((entry, index) => (
-                          <div key={`${entry.occurred_at}-${entry.reason}-${index}`} className="rounded-md border border-dashed p-3">
+                          <div
+                            key={`${entry.occurred_at}-${entry.reason}-${index}`}
+                            className="rounded-md border border-dashed p-3"
+                          >
                             <div className="flex flex-wrap gap-2">
                               <Badge variant={entry.recommended ? "default" : "outline"}>
                                 {entry.recommended
