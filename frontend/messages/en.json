@@ -531,6 +531,33 @@
       "resultSuccess": "Conversion processed",
       "resultFailure": "Conversion rejected"
     },
+    "lookup": {
+      "pendingTitle": "Pending Reward Lookup",
+      "pendingDescription": "Read the live pending reward record behind GET /v1/bandit/pending/:id.",
+      "userTitle": "User Pending Rewards",
+      "userDescription": "Read the live pending reward list behind GET /v1/bandit/users/:id/pending.",
+      "pendingId": "Pending Reward ID",
+      "pendingPlaceholder": "11111111-1111-1111-1111-111111111111",
+      "userId": "User ID",
+      "userPlaceholder": "22222222-2222-2222-2222-222222222222",
+      "lookupPending": "Lookup Reward",
+      "lookupUser": "Lookup User Rewards",
+      "lookingUp": "Looking up...",
+      "httpStatus": "HTTP {status}",
+      "rewardId": "Reward ID",
+      "experimentId": "Experiment ID",
+      "armId": "Arm ID",
+      "statusLabel": "Status",
+      "assignedAt": "Assigned At",
+      "expiresAt": "Expires At",
+      "conversionValue": "Conversion Value",
+      "convertedAt": "Converted At",
+      "processedAt": "Processed At",
+      "pending": "Pending",
+      "converted": "Converted",
+      "noRewards": "No pending rewards found for this user.",
+      "userResultDescription": "The backend returns the full reward list for this user, including rewards from other experiments."
+    },
     "arms": {
       "title": "Experiment Arm Context",
       "description": "The table below uses live bandit statistics when available so operators can see what conversion processing would affect."
@@ -550,11 +577,11 @@
       "title": "Operational Notes",
       "description": "This page documents the current delayed-feedback runtime exactly as it exists today.",
       "pendingTitle": "Pending reward reads",
-      "pendingBody": "The backend repository supports pending rewards, but the currently exposed read endpoints are not yet returning live reward records in this runtime path.",
+      "pendingBody": "Pending reward read endpoints are live. Use the lookup cards above to inspect a specific reward ID or list a user’s current pending rewards.",
       "conversionTitle": "Conversion writes",
       "conversionBody": "The conversion endpoint is real. If delayed feedback is disabled in the current backend runtime, the response will say so instead of faking success.",
       "operatorTitle": "Operator workflow",
-      "operatorBody": "Use this page to inspect support status and manually process a real conversion when you already have trusted transaction and user identifiers."
+      "operatorBody": "Use this page to inspect pending rewards first, then manually process a real conversion only when you already have trusted transaction and user identifiers."
     },
     "states": {
       "loading": "Loading delayed feedback...",
@@ -565,7 +592,8 @@
     "feedback": {
       "loadFailed": "Failed to refresh delayed feedback data.",
       "processed": "Conversion request sent.",
-      "submitFailed": "Failed to submit conversion request."
+      "submitFailed": "Failed to submit conversion request.",
+      "lookupFailed": "Failed to load pending reward data."
     }
   },
   "slidingWindow": {

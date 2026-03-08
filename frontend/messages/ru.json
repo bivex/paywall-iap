@@ -531,6 +531,33 @@
       "resultSuccess": "Conversion обработан",
       "resultFailure": "Conversion отклонён"
     },
+    "lookup": {
+      "pendingTitle": "Lookup pending reward",
+      "pendingDescription": "Читайте живую запись pending reward через GET /v1/bandit/pending/:id.",
+      "userTitle": "Pending rewards пользователя",
+      "userDescription": "Читайте живой список pending rewards через GET /v1/bandit/users/:id/pending.",
+      "pendingId": "ID pending reward",
+      "pendingPlaceholder": "11111111-1111-1111-1111-111111111111",
+      "userId": "User ID",
+      "userPlaceholder": "22222222-2222-2222-2222-222222222222",
+      "lookupPending": "Найти reward",
+      "lookupUser": "Найти rewards пользователя",
+      "lookingUp": "Поиск...",
+      "httpStatus": "HTTP {status}",
+      "rewardId": "ID reward",
+      "experimentId": "ID эксперимента",
+      "armId": "ID ветки",
+      "statusLabel": "Статус",
+      "assignedAt": "Назначен",
+      "expiresAt": "Истекает",
+      "conversionValue": "Значение conversion",
+      "convertedAt": "Время conversion",
+      "processedAt": "Время обработки",
+      "pending": "Ожидает",
+      "converted": "Конвертирован",
+      "noRewards": "Для этого пользователя pending rewards не найдены.",
+      "userResultDescription": "Backend возвращает полный список rewards для этого пользователя, включая rewards из других экспериментов."
+    },
     "arms": {
       "title": "Контекст веток эксперимента",
       "description": "Таблица ниже использует live bandit statistics, когда они доступны, чтобы оператор видел, на что повлияет обработка conversion."
@@ -550,11 +577,11 @@
       "title": "Операционные заметки",
       "description": "Эта страница описывает текущий delayed-feedback runtime ровно таким, какой он есть сегодня.",
       "pendingTitle": "Чтение pending rewards",
-      "pendingBody": "Backend repository поддерживает pending rewards, но опубликованные read endpoints в текущем runtime path пока не отдают live reward records.",
+      "pendingBody": "Read endpoints для pending rewards уже живые. Используйте карточки выше, чтобы посмотреть конкретный reward по ID или список pending rewards пользователя.",
       "conversionTitle": "Запись conversions",
       "conversionBody": "Conversion endpoint реальный. Если delayed feedback отключён в текущем backend runtime, ответ так и скажет, а не притворится успешным.",
       "operatorTitle": "Операторский workflow",
-      "operatorBody": "Используйте эту страницу, чтобы проверить support status и вручную обработать реальную conversion, когда у вас уже есть доверенные transaction и user identifiers."
+      "operatorBody": "Сначала проверяйте pending rewards на этой странице, а затем вручную обрабатывайте реальную conversion только когда у вас уже есть доверенные transaction и user identifiers."
     },
     "states": {
       "loading": "Загрузка delayed feedback...",
@@ -565,7 +592,8 @@
     "feedback": {
       "loadFailed": "Не удалось обновить delayed feedback data.",
       "processed": "Conversion request отправлен.",
-      "submitFailed": "Не удалось отправить conversion request."
+      "submitFailed": "Не удалось отправить conversion request.",
+      "lookupFailed": "Не удалось загрузить данные pending rewards."
     }
   },
   "slidingWindow": {
