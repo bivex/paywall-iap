@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 import type {
+  ExperimentAutomationPolicyUpdateInput,
   ExperimentInput,
   ExperimentRepairResult,
   ExperimentSummary,
@@ -172,5 +173,26 @@ export async function repairExperimentAction(id: string) {
     return parsed;
   } catch (error) {
     return { ok: false, error: String(error) } satisfies ActionResult<ExperimentRepairResult>;
+  }
+}
+
+export async function updateExperimentAutomationPolicyAction(
+  id: string,
+  payload: ExperimentAutomationPolicyUpdateInput,
+) {
+  const token = await getAdminToken();
+  if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/automation-policy`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const parsed = await parseResponse<ExperimentSummary>(res);
+    if (parsed.ok) revalidateExperimentPaths();
+    return parsed;
+  } catch (error) {
+    return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
   }
 }

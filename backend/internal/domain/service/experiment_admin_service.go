@@ -10,11 +10,12 @@ import (
 )
 
 var (
-	ErrExperimentNotFound      = errors.New("experiment not found")
-	ErrExperimentNotEditable   = errors.New("only draft experiments can be edited")
-	ErrExperimentArmNotFound   = errors.New("experiment arm not found")
-	ErrPricingTierNotFound     = errors.New("pricing tier not found")
-	ErrInvalidStatusTransition = errors.New("invalid experiment status transition")
+	ErrExperimentNotFound                    = errors.New("experiment not found")
+	ErrExperimentNotEditable                 = errors.New("only draft experiments can be edited")
+	ErrExperimentAutomationPolicyNotEditable = errors.New("completed experiments cannot update automation policy")
+	ErrExperimentArmNotFound                 = errors.New("experiment arm not found")
+	ErrPricingTierNotFound                   = errors.New("pricing tier not found")
+	ErrInvalidStatusTransition               = errors.New("invalid experiment status transition")
 )
 
 type ExperimentMutationState struct {
@@ -102,6 +103,15 @@ type UpdateExperimentInput struct {
 	Arms                []ExperimentArmInput
 }
 
+type UpdateExperimentAutomationPolicyInput struct {
+	Enabled              bool
+	AutoStart            bool
+	AutoComplete         bool
+	CompleteOnEndTime    bool
+	CompleteOnSampleSize bool
+	CompleteOnConfidence bool
+}
+
 type ExperimentArmInput struct {
 	ID            *uuid.UUID
 	Name          string
@@ -167,6 +177,27 @@ func (s *ExperimentAdminService) UpdateDraftExperiment(ctx context.Context, expe
 		return ErrExperimentNotEditable
 	}
 	return s.repo.UpdateExperimentDraft(ctx, experimentID, input)
+}
+
+func (s *ExperimentAdminService) UpdateExperimentAutomationPolicy(ctx context.Context, experimentID uuid.UUID, input UpdateExperimentAutomationPolicyInput) error {
+	experiment, err := s.repo.GetExperimentMutationState(ctx, experimentID)
+	if err != nil {
+		return err
+	}
+	if experiment.Status == "completed" {
+		return ErrExperimentAutomationPolicyNotEditable
+	}
+
+	policy := NormalizeExperimentAutomationPolicy(&experiment.AutomationPolicy)
+	policy.Enabled = input.Enabled
+	policy.AutoStart = input.AutoStart
+	policy.AutoComplete = input.AutoComplete
+	policy.CompleteOnEndTime = input.CompleteOnEndTime
+	policy.CompleteOnSampleSize = input.CompleteOnSampleSize
+	policy.CompleteOnConfidence = input.CompleteOnConfidence
+	policy = NormalizeExperimentAutomationPolicy(&policy)
+
+	return s.repo.UpdateExperimentAutomationPolicy(ctx, experimentID, policy)
 }
 
 func (s *ExperimentAdminService) TransitionExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string) error {

@@ -16,6 +16,7 @@ import {
   resumeExperimentAction,
   unlockExperimentAction,
   updateExperimentAction,
+  updateExperimentAutomationPolicyAction,
 } from "@/actions/experiments";
 import { PricingTierManager } from "@/components/pricing/pricing-tier-manager";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ import {
 } from "@/lib/experiment-studio";
 import {
   type ExperimentAlgorithm,
+  type ExperimentAutomationPolicyUpdateInput,
   type ExperimentRepairSummary,
   type ExperimentStatus,
   type ExperimentSummary,
@@ -195,6 +197,8 @@ type DraftMetadataFormValues = {
   end_at: string;
 };
 
+type AutomationPolicyFormValues = ExperimentAutomationPolicyUpdateInput;
+
 function buildDraftMetadataForm(experiment: ExperimentSummary): DraftMetadataFormValues {
   return {
     name: experiment.name,
@@ -205,6 +209,17 @@ function buildDraftMetadataForm(experiment: ExperimentSummary): DraftMetadataFor
     confidence_threshold_percent: experiment.confidence_threshold_percent.toString(),
     start_at: toDateTimeLocalInputValue(experiment.start_at),
     end_at: toDateTimeLocalInputValue(experiment.end_at),
+  };
+}
+
+function buildAutomationPolicyForm(experiment: ExperimentSummary): AutomationPolicyFormValues {
+  return {
+    enabled: experiment.automation_policy?.enabled ?? false,
+    auto_start: experiment.automation_policy?.auto_start ?? false,
+    auto_complete: experiment.automation_policy?.auto_complete ?? false,
+    complete_on_end_time: experiment.automation_policy?.complete_on_end_time ?? true,
+    complete_on_sample_size: experiment.automation_policy?.complete_on_sample_size ?? false,
+    complete_on_confidence: experiment.automation_policy?.complete_on_confidence ?? false,
   };
 }
 
@@ -260,6 +275,7 @@ export function StudioPageClient({
     "pause" | "resume" | "complete" | "lock" | "unlock" | "repair" | null
   >(null);
   const [pendingSave, setPendingSave] = useState(false);
+  const [pendingAutomationSave, setPendingAutomationSave] = useState(false);
   const [lockReason, setLockReason] = useState("");
   const [lockUntil, setLockUntil] = useState("");
   const [repairSummary, setRepairSummary] = useState<ExperimentRepairSummary | null>(null);
@@ -298,16 +314,27 @@ export function StudioPageClient({
     () => (selectedExperiment ? buildDraftMetadataForm(selectedExperiment) : null),
     [selectedExperiment],
   );
+  const automationPolicyBaseline = useMemo(
+    () => (selectedExperiment ? buildAutomationPolicyForm(selectedExperiment) : null),
+    [selectedExperiment],
+  );
   const draftArmBaseline = useMemo(
     () => (selectedExperiment ? buildDraftExperimentArms(selectedExperiment) : null),
     [selectedExperiment],
   );
   const [draftMetadata, setDraftMetadata] = useState<DraftMetadataFormValues | null>(draftMetadataBaseline);
+  const [automationPolicyForm, setAutomationPolicyForm] = useState<AutomationPolicyFormValues | null>(
+    automationPolicyBaseline,
+  );
   const [draftArms, setDraftArms] = useState<DraftExperimentArmForm[] | null>(draftArmBaseline);
 
   useEffect(() => {
     setDraftMetadata(draftMetadataBaseline);
   }, [draftMetadataBaseline]);
+
+  useEffect(() => {
+    setAutomationPolicyForm(automationPolicyBaseline);
+  }, [automationPolicyBaseline]);
 
   useEffect(() => {
     setDraftArms(draftArmBaseline);
@@ -337,6 +364,10 @@ export function StudioPageClient({
     draftArmBaseline !== null &&
     serializeDraftExperimentArms(draftArms) !== serializeDraftExperimentArms(draftArmBaseline);
   const isDraftDirty = isDraftMetadataDirty || isDraftArmDirty;
+  const isAutomationPolicyDirty =
+    automationPolicyForm !== null &&
+    automationPolicyBaseline !== null &&
+    JSON.stringify(automationPolicyForm) !== JSON.stringify(automationPolicyBaseline);
 
   function syncExperiment(updatedExperiment: ExperimentSummary) {
     setExperiments((current) => current.map((item) => (item.id === updatedExperiment.id ? updatedExperiment : item)));
@@ -362,6 +393,7 @@ export function StudioPageClient({
   const hasManualOverride = Boolean(selectedExperiment?.automation_policy?.manual_override);
   const hasTimedLock = hasActiveTimedLock(selectedExperiment?.automation_policy?.locked_until);
   const schedulerLocked = hasManualOverride || hasTimedLock;
+  const canEditAutomationPolicy = selectedExperiment?.status !== "completed";
   const currentRecommendation = selectedExperiment?.winner_recommendation ?? null;
   const recommendationHistory = snapshot?.recommendationHistory ?? [];
 
@@ -465,6 +497,23 @@ export function StudioPageClient({
     setRepairSummary(result.data.summary);
     toast.success(t("feedback.repaired"));
     refreshSnapshot(result.data.experiment.id);
+  }
+
+  async function saveAutomationPolicy() {
+    if (!selectedExperiment || !automationPolicyForm) return;
+
+    setPendingAutomationSave(true);
+    const result = await updateExperimentAutomationPolicyAction(selectedExperiment.id, automationPolicyForm);
+    setPendingAutomationSave(false);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.automationSaveFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    toast.success(t("feedback.automationSaved"));
+    refreshSnapshot(result.data.id);
   }
 
   function resetDraftBuilder() {
@@ -862,6 +911,99 @@ export function StudioPageClient({
                             </Button>
                           ))
                         )}
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-sm">{t("lifecycle.automationTitle")}</p>
+                          <p className="mt-1 text-muted-foreground text-xs">{t("lifecycle.automationDescription")}</p>
+                        </div>
+                        <Badge variant={automationPolicyForm?.enabled ? "default" : "outline"}>
+                          {automationPolicyForm?.enabled
+                            ? t("lifecycle.automationEnabledState")
+                            : t("lifecycle.automationDisabledState")}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        {[
+                          {
+                            key: "enabled",
+                            label: t("lifecycle.automationEnabledLabel"),
+                            hint: t("lifecycle.automationEnabledHint"),
+                          },
+                          {
+                            key: "auto_start",
+                            label: t("lifecycle.automationAutoStartLabel"),
+                            hint: t("lifecycle.automationAutoStartHint"),
+                          },
+                          {
+                            key: "auto_complete",
+                            label: t("lifecycle.automationAutoCompleteLabel"),
+                            hint: t("lifecycle.automationAutoCompleteHint"),
+                          },
+                          {
+                            key: "complete_on_end_time",
+                            label: t("lifecycle.automationCompleteOnEndTimeLabel"),
+                            hint: t("lifecycle.automationCompleteOnEndTimeHint"),
+                          },
+                          {
+                            key: "complete_on_sample_size",
+                            label: t("lifecycle.automationCompleteOnSampleSizeLabel"),
+                            hint: t("lifecycle.automationCompleteOnSampleSizeHint"),
+                          },
+                          {
+                            key: "complete_on_confidence",
+                            label: t("lifecycle.automationCompleteOnConfidenceLabel"),
+                            hint: t("lifecycle.automationCompleteOnConfidenceHint"),
+                          },
+                        ].map((item) => (
+                          <div key={item.key} className="flex items-start justify-between gap-3 rounded-md border p-3">
+                            <div className="space-y-1">
+                              <p className="font-medium text-xs">{item.label}</p>
+                              <p className="text-[11px] text-muted-foreground">{item.hint}</p>
+                            </div>
+                            <Switch
+                              checked={automationPolicyForm?.[item.key as keyof AutomationPolicyFormValues] ?? false}
+                              onCheckedChange={(checked) =>
+                                setAutomationPolicyForm((current) =>
+                                  current ? { ...current, [item.key]: checked } : current,
+                                )
+                              }
+                              disabled={
+                                isPending ||
+                                pendingLifecycleAction !== null ||
+                                pendingAutomationSave ||
+                                !canEditAutomationPolicy
+                              }
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 space-y-1 text-muted-foreground text-xs">
+                        <p>{t("lifecycle.automationNotice")}</p>
+                        {schedulerLocked ? <p>{t("lifecycle.automationLockedNotice")}</p> : null}
+                        {!canEditAutomationPolicy ? <p>{t("lifecycle.automationCompletedNotice")}</p> : null}
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={
+                            isPending ||
+                            pendingLifecycleAction !== null ||
+                            pendingAutomationSave ||
+                            !isAutomationPolicyDirty ||
+                            !canEditAutomationPolicy
+                          }
+                          onClick={() => void saveAutomationPolicy()}
+                        >
+                          {pendingAutomationSave ? t("feedback.savingAutomation") : t("actions.saveAutomation")}
+                        </Button>
                       </div>
                     </div>
 

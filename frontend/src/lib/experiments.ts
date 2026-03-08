@@ -220,6 +220,15 @@ export interface ExperimentUpdateInput {
   arms?: ExperimentArmInput[];
 }
 
+export interface ExperimentAutomationPolicyUpdateInput {
+  enabled: boolean;
+  auto_start: boolean;
+  auto_complete: boolean;
+  complete_on_end_time: boolean;
+  complete_on_sample_size: boolean;
+  complete_on_confidence: boolean;
+}
+
 export const EMPTY_EXPERIMENT_INPUT: ExperimentInput = {
   name: "",
   description: "",

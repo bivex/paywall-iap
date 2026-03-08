@@ -204,6 +204,15 @@ type lockAdminExperimentRequest struct {
 	Reason      string     `json:"reason"`
 }
 
+type updateAdminExperimentAutomationPolicyRequest struct {
+	Enabled              *bool `json:"enabled"`
+	AutoStart            *bool `json:"auto_start"`
+	AutoComplete         *bool `json:"auto_complete"`
+	CompleteOnEndTime    *bool `json:"complete_on_end_time"`
+	CompleteOnSampleSize *bool `json:"complete_on_sample_size"`
+	CompleteOnConfidence *bool `json:"complete_on_confidence"`
+}
+
 type repairAdminExperimentResponse struct {
 	Experiment AdminExperiment                  `json:"experiment"`
 	Summary    *service.ExperimentRepairSummary `json:"summary"`
@@ -314,6 +323,138 @@ func normalizeUpdateAdminExperimentRequest(req updateAdminExperimentRequest) upd
 func normalizeLockAdminExperimentRequest(req lockAdminExperimentRequest) lockAdminExperimentRequest {
 	req.Reason = strings.TrimSpace(req.Reason)
 	return req
+}
+
+func validateUpdateAdminExperimentAutomationPolicyRequest(req updateAdminExperimentAutomationPolicyRequest) string {
+	if req.Enabled == nil || req.AutoStart == nil || req.AutoComplete == nil || req.CompleteOnEndTime == nil || req.CompleteOnSampleSize == nil || req.CompleteOnConfidence == nil {
+		return "Every automation policy field is required"
+	}
+	return ""
+}
+
+func experimentAutomationPolicyUpdateInputFromRequest(req updateAdminExperimentAutomationPolicyRequest) service.UpdateExperimentAutomationPolicyInput {
+	return service.UpdateExperimentAutomationPolicyInput{
+		Enabled:              *req.Enabled,
+		AutoStart:            *req.AutoStart,
+		AutoComplete:         *req.AutoComplete,
+		CompleteOnEndTime:    *req.CompleteOnEndTime,
+		CompleteOnSampleSize: *req.CompleteOnSampleSize,
+		CompleteOnConfidence: *req.CompleteOnConfidence,
+	}
+}
+
+func serializableExperimentAutomationPolicy(policy service.ExperimentAutomationPolicy) map[string]interface{} {
+	result := map[string]interface{}{
+		"enabled":                 policy.Enabled,
+		"auto_start":              policy.AutoStart,
+		"auto_complete":           policy.AutoComplete,
+		"complete_on_end_time":    policy.CompleteOnEndTime,
+		"complete_on_sample_size": policy.CompleteOnSampleSize,
+		"complete_on_confidence":  policy.CompleteOnConfidence,
+		"manual_override":         policy.ManualOverride,
+		"locked_until":            nil,
+		"locked_by":               nil,
+		"lock_reason":             nil,
+	}
+	if policy.LockedUntil != nil {
+		result["locked_until"] = policy.LockedUntil.UTC().Format(time.RFC3339)
+	}
+	if policy.LockedBy != nil {
+		result["locked_by"] = policy.LockedBy.String()
+	}
+	if policy.LockReason != nil {
+		result["lock_reason"] = *policy.LockReason
+	}
+	return result
+}
+
+func experimentAutomationPolicyChangedFields(before, after service.ExperimentAutomationPolicy) []string {
+	fields := make([]string, 0, 10)
+	if before.Enabled != after.Enabled {
+		fields = append(fields, "enabled")
+	}
+	if before.AutoStart != after.AutoStart {
+		fields = append(fields, "auto_start")
+	}
+	if before.AutoComplete != after.AutoComplete {
+		fields = append(fields, "auto_complete")
+	}
+	if before.CompleteOnEndTime != after.CompleteOnEndTime {
+		fields = append(fields, "complete_on_end_time")
+	}
+	if before.CompleteOnSampleSize != after.CompleteOnSampleSize {
+		fields = append(fields, "complete_on_sample_size")
+	}
+	if before.CompleteOnConfidence != after.CompleteOnConfidence {
+		fields = append(fields, "complete_on_confidence")
+	}
+	if before.ManualOverride != after.ManualOverride {
+		fields = append(fields, "manual_override")
+	}
+
+	beforeLockedUntil := ""
+	afterLockedUntil := ""
+	if before.LockedUntil != nil {
+		beforeLockedUntil = before.LockedUntil.UTC().Format(time.RFC3339)
+	}
+	if after.LockedUntil != nil {
+		afterLockedUntil = after.LockedUntil.UTC().Format(time.RFC3339)
+	}
+	if beforeLockedUntil != afterLockedUntil {
+		fields = append(fields, "locked_until")
+	}
+
+	beforeLockedBy := ""
+	afterLockedBy := ""
+	if before.LockedBy != nil {
+		beforeLockedBy = before.LockedBy.String()
+	}
+	if after.LockedBy != nil {
+		afterLockedBy = after.LockedBy.String()
+	}
+	if beforeLockedBy != afterLockedBy {
+		fields = append(fields, "locked_by")
+	}
+
+	beforeLockReason := ""
+	afterLockReason := ""
+	if before.LockReason != nil {
+		beforeLockReason = *before.LockReason
+	}
+	if after.LockReason != nil {
+		afterLockReason = *after.LockReason
+	}
+	if beforeLockReason != afterLockReason {
+		fields = append(fields, "lock_reason")
+	}
+
+	return fields
+}
+
+func (h *AdminHandler) logExperimentAutomationPolicyAction(c *gin.Context, experimentID uuid.UUID, before, after service.ExperimentAutomationPolicy) {
+	if h.auditService == nil {
+		return
+	}
+	adminIDValue, ok := c.Get("admin_id")
+	if !ok {
+		return
+	}
+	adminID, ok := adminIDValue.(uuid.UUID)
+	if !ok {
+		return
+	}
+
+	changedFields := experimentAutomationPolicyChangedFields(before, after)
+	if len(changedFields) == 0 {
+		return
+	}
+
+	_ = h.auditService.LogAction(c.Request.Context(), adminID, "update_experiment_automation_policy", "experiment", nil, map[string]interface{}{
+		"experiment_id":  experimentID.String(),
+		"changed_fields": changedFields,
+		"before":         serializableExperimentAutomationPolicy(before),
+		"after":          serializableExperimentAutomationPolicy(after),
+	})
 }
 
 func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) string {
@@ -1141,6 +1282,64 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 		return
 	}
 
+	response.OK(c, updatedExperiment)
+}
+
+func (h *AdminHandler) UpdateAdminExperimentAutomationPolicy(c *gin.Context) {
+	experimentID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "Invalid experiment ID")
+		return
+	}
+	if h.experimentAdminService == nil {
+		response.InternalError(c, "Experiment service is unavailable")
+		return
+	}
+
+	var req updateAdminExperimentAutomationPolicyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid experiment automation policy payload")
+		return
+	}
+	if message := validateUpdateAdminExperimentAutomationPolicyRequest(req); message != "" {
+		response.UnprocessableEntity(c, message)
+		return
+	}
+
+	experiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			response.NotFound(c, "Experiment not found")
+			return
+		}
+		response.InternalError(c, "Failed to load experiment")
+		return
+	}
+
+	err = h.experimentAdminService.UpdateExperimentAutomationPolicy(
+		c.Request.Context(),
+		experimentID,
+		experimentAutomationPolicyUpdateInputFromRequest(req),
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrExperimentNotFound):
+			response.NotFound(c, "Experiment not found")
+		case errors.Is(err, service.ErrExperimentAutomationPolicyNotEditable):
+			response.UnprocessableEntity(c, "Completed experiments cannot update automation policy")
+		default:
+			response.InternalError(c, "Failed to update experiment automation policy")
+		}
+		return
+	}
+
+	updatedExperiment, err := h.getAdminExperimentByID(c, experimentID)
+	if err != nil {
+		response.InternalError(c, "Failed to load updated experiment")
+		return
+	}
+
+	h.logExperimentAutomationPolicyAction(c, experimentID, experiment.AutomationPolicy, updatedExperiment.AutomationPolicy)
 	response.OK(c, updatedExperiment)
 }
 
