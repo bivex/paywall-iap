@@ -258,6 +258,10 @@
     "actions": {
       "openExperiments": "Open A/B Tests",
       "openBandit": "Open Bandit Model",
+      "start": "Start",
+      "pause": "Pause",
+      "resume": "Resume",
+      "complete": "Complete",
       "refresh": "Refresh",
       "trimWindow": "Trim window now",
       "trimming": "Trimming..."
@@ -291,7 +295,10 @@
       "created": "Created",
       "updated": "Updated",
       "start": "Start At",
-      "end": "End At"
+      "end": "End At",
+      "controlsTitle": "Lifecycle controls",
+      "controlsDescription": "These buttons call the real experiment lifecycle mutations and then reload the latest studio snapshot.",
+      "noActions": "No lifecycle actions available for the current status."
     },
     "capabilities": {
       "title": "Runtime Capability Matrix",
@@ -331,12 +338,12 @@
       "title": "Operational Notes",
       "description": "Studio explains what is actually wired today and where to perform supported actions.",
       "builderTitle": "Experiment creation/editing",
-      "builderBody": "Use A/B Tests to create persisted experiments. Studio is not pretending to be a draft editor with save/launch mutations that do not exist yet.",
+      "builderBody": "Use A/B Tests to create and edit persisted experiments. Studio now supports lifecycle controls, but it is still not pretending to be a full visual draft editor.",
       "banditTitle": "Bandit monitoring",
       "banditBody": "Use Bandit Model for dedicated bandit telemetry. Studio surfaces only the minimum runtime status needed for orchestration.",
       "advancedTitle": "Advanced endpoints",
       "advancedBody": "Objective scoring and sliding-window routes are shown exactly as they behave in the current runtime, including failures or placeholder responses.",
-      "readOnly": "Read-only by design for now. This page is a truthful control room, not a fake workflow builder."
+      "readOnly": "Lifecycle state changes are supported here now, but experiment editing still belongs in A/B Tests."
     },
     "states": {
       "loading": "Loading experiment studio…",
@@ -345,15 +352,22 @@
       "emptyBody": "Create your first experiment in A/B Tests before using Studio."
     },
     "feedback": {
-      "loadFailed": "Failed to refresh studio data."
+      "loadFailed": "Failed to refresh studio data.",
+      "statusUpdating": "Updating...",
+      "statusUpdated": "Experiment status updated.",
+      "statusFailed": "Failed to update experiment status."
     }
   },
   "bandit": {
     "title": "Bandit Model",
-    "subtitle": "Read-only monitoring for live bandit experiments using persisted experiment arms, Thompson statistics, and engine metrics.",
+    "subtitle": "Live monitoring for bandit experiments using persisted experiment arms, Thompson statistics, engine metrics, and real lifecycle controls.",
     "actions": {
       "refresh": "Refresh",
-      "openExperiments": "Open A/B Tests"
+      "openExperiments": "Open A/B Tests",
+      "start": "Start",
+      "pause": "Pause",
+      "resume": "Resume",
+      "complete": "Complete"
     },
     "status": {
       "running": "Running",
@@ -398,11 +412,14 @@
     },
     "config": {
       "title": "Saved Experiment Config",
-      "description": "This page reflects persisted experiment settings but does not pretend to support pause/stop/save actions that are not wired yet.",
+      "description": "This page reflects persisted experiment settings and now exposes the real experiment lifecycle actions that are already wired.",
       "algorithm": "Algorithm",
       "minSampleSize": "Min Sample Size",
       "confidence": "Confidence Threshold",
-      "readOnlyNotice": "Read-only for now: use A/B Tests to create experiments. Runtime bandit assignments and rewards continue to flow through the existing backend endpoints."
+      "controlsTitle": "Lifecycle controls",
+      "controlsDescription": "These buttons call the same real lifecycle mutations used by A/B Tests and then reload the latest bandit snapshot.",
+      "noActions": "No lifecycle actions available for the current status.",
+      "readOnlyNotice": "Configuration editing is still read-only here: use A/B Tests to create or edit experiments. Runtime bandit assignments and rewards continue to flow through the existing backend endpoints."
     },
     "states": {
       "loading": "Loading bandit experiments…",
@@ -411,7 +428,10 @@
       "emptyBody": "Create an experiment with bandit mode enabled in A/B Tests before using this page."
     },
     "feedback": {
-      "loadFailed": "Failed to refresh bandit data."
+      "loadFailed": "Failed to refresh bandit data.",
+      "statusUpdating": "Updating...",
+      "statusUpdated": "Experiment status updated.",
+      "statusFailed": "Failed to update experiment status."
     }
   },
   "feedback": {

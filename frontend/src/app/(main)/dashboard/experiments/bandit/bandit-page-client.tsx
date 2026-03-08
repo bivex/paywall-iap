@@ -8,6 +8,7 @@ import { Brain, FlaskConical, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { completeExperimentAction, pauseExperimentAction, resumeExperimentAction } from "@/actions/experiments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -120,6 +121,7 @@ export function BanditPageClient({
   const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
+  const [pendingLifecycleAction, setPendingLifecycleAction] = useState<"pause" | "resume" | "complete" | null>(null);
 
   useEffect(() => {
     if (!isBootstrapping) return;
@@ -153,6 +155,20 @@ export function BanditPageClient({
     () => [...armRows].sort((left, right) => (right.winProbability ?? -1) - (left.winProbability ?? -1))[0] ?? null,
     [armRows],
   );
+  const lifecycleActions: Array<{ key: "pause" | "resume" | "complete"; label: string }> =
+    selectedExperiment?.status === "draft"
+      ? [{ key: "resume", label: t("actions.start") }]
+      : selectedExperiment?.status === "running"
+        ? [
+            { key: "pause", label: t("actions.pause") },
+            { key: "complete", label: t("actions.complete") },
+          ]
+        : selectedExperiment?.status === "paused"
+          ? [
+              { key: "resume", label: t("actions.resume") },
+              { key: "complete", label: t("actions.complete") },
+            ]
+          : [];
 
   const totalSamples = armRows.reduce((sum, arm) => sum + arm.samples, 0);
   const totalConversions = armRows.reduce((sum, arm) => sum + arm.conversions, 0);
@@ -172,6 +188,31 @@ export function BanditPageClient({
       }
     });
   };
+
+  async function runLifecycleAction(action: "pause" | "resume" | "complete") {
+    if (!selectedExperiment) return;
+
+    setPendingLifecycleAction(action);
+    const result =
+      action === "pause"
+        ? await pauseExperimentAction(selectedExperiment.id)
+        : action === "complete"
+          ? await completeExperimentAction(selectedExperiment.id)
+          : await resumeExperimentAction(selectedExperiment.id);
+    setPendingLifecycleAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.statusFailed"));
+      return;
+    }
+
+    setExperiments((current) => current.map((item) => (item.id === result.data.id ? result.data : item)));
+    setSnapshot((current) =>
+      current?.experiment.id === result.data.id ? { ...current, experiment: result.data } : current,
+    );
+    toast.success(t("feedback.statusUpdated"));
+    loadSnapshot(result.data.id);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -345,7 +386,7 @@ export function BanditPageClient({
                   <CardTitle className="text-sm">{t("config.title")}</CardTitle>
                   <CardDescription>{t("config.description")}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
+                <CardContent className="space-y-3 text-sm">
                   <div className="flex items-center justify-between rounded-md border p-3">
                     <span>{t("config.algorithm")}</span>
                     <span className="font-mono">{formatAlgorithm(selectedExperiment?.algorithm_type ?? null)}</span>
@@ -359,6 +400,28 @@ export function BanditPageClient({
                     <span className="font-mono">
                       {selectedExperiment ? `${selectedExperiment.confidence_threshold_percent.toFixed(0)}%` : "—"}
                     </span>
+                  </div>
+                  <div className="rounded-md border p-3">
+                    <p className="font-medium text-sm">{t("config.controlsTitle")}</p>
+                    <p className="mt-1 text-muted-foreground text-xs">{t("config.controlsDescription")}</p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {lifecycleActions.length === 0 ? (
+                        <span className="text-muted-foreground text-xs">{t("config.noActions")}</span>
+                      ) : (
+                        lifecycleActions.map((action) => (
+                          <Button
+                            key={action.key}
+                            variant="outline"
+                            size="sm"
+                            disabled={isPending || pendingLifecycleAction !== null}
+                            onClick={() => void runLifecycleAction(action.key)}
+                          >
+                            {pendingLifecycleAction === action.key ? t("feedback.statusUpdating") : action.label}
+                          </Button>
+                        ))
+                      )}
+                    </div>
                   </div>
                   <div className="rounded-md border border-dashed p-3 text-muted-foreground text-xs">
                     <Brain className="mb-2 size-4" />

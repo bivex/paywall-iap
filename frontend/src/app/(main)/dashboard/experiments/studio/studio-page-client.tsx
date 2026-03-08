@@ -8,6 +8,7 @@ import { Activity, Brain, CalendarClock, FlaskConical, RefreshCw, Settings2 } fr
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { completeExperimentAction, pauseExperimentAction, resumeExperimentAction } from "@/actions/experiments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,6 +118,7 @@ export function StudioPageClient({
   const [loadFailed, setLoadFailed] = useState(initialLoadFailed);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
+  const [pendingLifecycleAction, setPendingLifecycleAction] = useState<"pause" | "resume" | "complete" | null>(null);
 
   useEffect(() => {
     if (!isBootstrapping) return;
@@ -142,6 +144,21 @@ export function StudioPageClient({
   );
   const currentLeadingArm = useMemo(() => leadingArm(snapshot), [snapshot]);
 
+  const lifecycleActions: Array<{ key: "pause" | "resume" | "complete"; label: string }> =
+    selectedExperiment?.status === "draft"
+      ? [{ key: "resume", label: t("actions.start") }]
+      : selectedExperiment?.status === "running"
+        ? [
+            { key: "pause", label: t("actions.pause") },
+            { key: "complete", label: t("actions.complete") },
+          ]
+        : selectedExperiment?.status === "paused"
+          ? [
+              { key: "resume", label: t("actions.resume") },
+              { key: "complete", label: t("actions.complete") },
+            ]
+          : [];
+
   const refreshSnapshot = (experimentId: string) => {
     setSelectedId(experimentId);
     startTransition(async () => {
@@ -155,6 +172,31 @@ export function StudioPageClient({
       }
     });
   };
+
+  async function runLifecycleAction(action: "pause" | "resume" | "complete") {
+    if (!selectedExperiment) return;
+
+    setPendingLifecycleAction(action);
+    const result =
+      action === "pause"
+        ? await pauseExperimentAction(selectedExperiment.id)
+        : action === "complete"
+          ? await completeExperimentAction(selectedExperiment.id)
+          : await resumeExperimentAction(selectedExperiment.id);
+    setPendingLifecycleAction(null);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.statusFailed"));
+      return;
+    }
+
+    setExperiments((current) => current.map((item) => (item.id === result.data.id ? result.data : item)));
+    setSnapshot((current) =>
+      current?.experiment.id === result.data.id ? { ...current, experiment: result.data } : current,
+    );
+    toast.success(t("feedback.statusUpdated"));
+    refreshSnapshot(result.data.id);
+  }
 
   const capabilityRows: Array<{ key: string; probe: StudioEndpointProbe }> = snapshot
     ? [
@@ -290,18 +332,43 @@ export function StudioPageClient({
                     <CardTitle className="text-sm">{t("lifecycle.title")}</CardTitle>
                     <CardDescription>{t("lifecycle.description")}</CardDescription>
                   </CardHeader>
-                  <CardContent className="grid gap-3 md:grid-cols-2">
-                    {[
-                      { label: t("lifecycle.created"), value: formatDate(selectedExperiment.created_at) },
-                      { label: t("lifecycle.updated"), value: formatDate(selectedExperiment.updated_at) },
-                      { label: t("lifecycle.start"), value: formatDate(selectedExperiment.start_at) },
-                      { label: t("lifecycle.end"), value: formatDate(selectedExperiment.end_at) },
-                    ].map((item) => (
-                      <div key={item.label} className="rounded-md border p-4">
-                        <p className="font-medium text-sm">{item.label}</p>
-                        <p className="mt-1 text-muted-foreground text-sm">{item.value}</p>
+                  <CardContent className="space-y-3">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {[
+                        { label: t("lifecycle.created"), value: formatDate(selectedExperiment.created_at) },
+                        { label: t("lifecycle.updated"), value: formatDate(selectedExperiment.updated_at) },
+                        { label: t("lifecycle.start"), value: formatDate(selectedExperiment.start_at) },
+                        { label: t("lifecycle.end"), value: formatDate(selectedExperiment.end_at) },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-md border p-4">
+                          <p className="font-medium text-sm">{item.label}</p>
+                          <p className="mt-1 text-muted-foreground text-sm">{item.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rounded-md border border-dashed p-4">
+                      <p className="font-medium text-sm">{t("lifecycle.controlsTitle")}</p>
+                      <p className="mt-1 text-muted-foreground text-xs">{t("lifecycle.controlsDescription")}</p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {lifecycleActions.length === 0 ? (
+                          <span className="text-muted-foreground text-xs">{t("lifecycle.noActions")}</span>
+                        ) : (
+                          lifecycleActions.map((action) => (
+                            <Button
+                              key={action.key}
+                              variant="outline"
+                              size="sm"
+                              disabled={isPending || pendingLifecycleAction !== null}
+                              onClick={() => void runLifecycleAction(action.key)}
+                            >
+                              {pendingLifecycleAction === action.key ? t("feedback.statusUpdating") : action.label}
+                            </Button>
+                          ))
+                        )}
                       </div>
-                    ))}
+                    </div>
                   </CardContent>
                 </Card>
 

@@ -258,6 +258,10 @@
     "actions": {
       "openExperiments": "Открыть A/B Tests",
       "openBandit": "Открыть Bandit Model",
+      "start": "Запустить",
+      "pause": "Пауза",
+      "resume": "Продолжить",
+      "complete": "Завершить",
       "refresh": "Обновить",
       "trimWindow": "Запустить trim window",
       "trimming": "Выполняется trim..."
@@ -291,7 +295,10 @@
       "created": "Создан",
       "updated": "Обновлён",
       "start": "Старт",
-      "end": "Окончание"
+      "end": "Окончание",
+      "controlsTitle": "Управление lifecycle",
+      "controlsDescription": "Эти кнопки вызывают реальные lifecycle mutations эксперимента и затем перезагружают свежий studio snapshot.",
+      "noActions": "Для текущего статуса lifecycle-действия недоступны."
     },
     "capabilities": {
       "title": "Матрица runtime-возможностей",
@@ -331,12 +338,12 @@
       "title": "Операционные заметки",
       "description": "Studio объясняет, что реально подключено сегодня и где выполнять поддерживаемые действия.",
       "builderTitle": "Создание/редактирование эксперимента",
-      "builderBody": "Используйте A/B Tests для создания persisted experiments. Studio не притворяется draft editor'ом с save/launch mutations, которых пока нет.",
+      "builderBody": "Используйте A/B Tests для создания и редактирования persisted experiments. Studio теперь поддерживает lifecycle controls, но всё ещё не притворяется полноценным visual draft editor'ом.",
       "banditTitle": "Bandit monitoring",
       "banditBody": "Используйте Bandit Model для отдельного bandit telemetry. Studio показывает только минимальный runtime status, нужный для orchestration.",
       "advancedTitle": "Advanced endpoints",
       "advancedBody": "Objective scoring и sliding-window routes показываются ровно так, как они ведут себя в текущем runtime, включая ошибки или placeholder responses.",
-      "readOnly": "Пока read-only по дизайну. Эта страница — честный control room, а не fake workflow builder."
+      "readOnly": "Менять lifecycle state здесь уже можно, но редактирование эксперимента по-прежнему должно происходить в A/B Tests."
     },
     "states": {
       "loading": "Загрузка experiment studio…",
@@ -345,15 +352,22 @@
       "emptyBody": "Сначала создайте experiment в A/B Tests, а затем используйте Studio."
     },
     "feedback": {
-      "loadFailed": "Не удалось обновить studio data."
+      "loadFailed": "Не удалось обновить studio data.",
+      "statusUpdating": "Обновление...",
+      "statusUpdated": "Статус эксперимента обновлён.",
+      "statusFailed": "Не удалось обновить статус эксперимента."
     }
   },
   "bandit": {
     "title": "Bandit Model",
-    "subtitle": "Read-only мониторинг live bandit experiments на основе сохранённых experiment arms, Thompson-статистики и engine metrics.",
+    "subtitle": "Live-мониторинг bandit experiments на основе сохранённых experiment arms, Thompson-статистики, engine metrics и реальных lifecycle controls.",
     "actions": {
       "refresh": "Обновить",
-      "openExperiments": "Открыть A/B Tests"
+      "openExperiments": "Открыть A/B Tests",
+      "start": "Запустить",
+      "pause": "Пауза",
+      "resume": "Продолжить",
+      "complete": "Завершить"
     },
     "status": {
       "running": "Запущен",
@@ -398,11 +412,14 @@
     },
     "config": {
       "title": "Сохранённая конфигурация эксперимента",
-      "description": "Эта страница отражает persisted experiment settings, но не притворяется, что уже поддерживает pause/stop/save actions, если они не подключены.",
+      "description": "Эта страница отражает persisted experiment settings и теперь показывает реальные lifecycle actions эксперимента, которые уже подключены.",
       "algorithm": "Алгоритм",
       "minSampleSize": "Мин. размер выборки",
       "confidence": "Порог confidence",
-      "readOnlyNotice": "Пока read-only: используйте A/B Tests для создания экспериментов. Runtime bandit assignments и rewards продолжают идти через существующие backend endpoints."
+      "controlsTitle": "Управление lifecycle",
+      "controlsDescription": "Эти кнопки вызывают те же реальные lifecycle mutations, что и в A/B Tests, а затем перезагружают свежий bandit snapshot.",
+      "noActions": "Для текущего статуса lifecycle-действия недоступны.",
+      "readOnlyNotice": "Редактирование конфигурации здесь по-прежнему read-only: используйте A/B Tests для создания и изменения экспериментов. Runtime bandit assignments и rewards продолжают идти через существующие backend endpoints."
     },
     "states": {
       "loading": "Загрузка bandit experiments…",
@@ -411,7 +428,10 @@
       "emptyBody": "Сначала создайте эксперимент с включённым bandit mode в A/B Tests, затем используйте этот экран."
     },
     "feedback": {
-      "loadFailed": "Не удалось обновить bandit data."
+      "loadFailed": "Не удалось обновить bandit data.",
+      "statusUpdating": "Обновление...",
+      "statusUpdated": "Статус эксперимента обновлён.",
+      "statusFailed": "Не удалось обновить статус эксперимента."
     }
   },
   "feedback": {
