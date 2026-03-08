@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useTranslations } from "next-intl";
 
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,25 @@ function SummaryCard({ label, value }: { label: string; value: string | number }
   );
 }
 
-function WebPreview({ paywall }: { paywall: PaywallDefinition }) {
+function getDefaultPreviewMode(platform: PaywallDefinition["platform"]): "desktop" | "phone" {
+  return platform === "mobile" ? "phone" : "desktop";
+}
+
+function getDefaultSelectedPlanId(paywall: PaywallDefinition) {
+  return paywall.plans.find((plan) => plan.highlight)?.id ?? paywall.plans[0]?.id ?? "";
+}
+
+function WebPreview({
+  paywall,
+  selectedPlanId,
+  onSelectPlan,
+  selectedLabel,
+}: {
+  paywall: PaywallDefinition;
+  selectedPlanId: string;
+  onSelectPlan: (planId: string) => void;
+  selectedLabel: string;
+}) {
   const mutedColor = paywall.theme.mode === "dark" ? "#94A3B8" : "#64748B";
   const borderColor = paywall.theme.mode === "dark" ? "rgba(148, 163, 184, 0.18)" : "rgba(15, 23, 42, 0.08)";
   const accentText = getContrastText(paywall.theme.accentColor);
@@ -164,47 +183,78 @@ function WebPreview({ paywall }: { paywall: PaywallDefinition }) {
             paywall.plans.length === 3 ? "lg:grid-cols-1 xl:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-1",
           )}
         >
-          {paywall.plans.map((plan) => (
-            <div
-              key={plan.id}
-              className="rounded-3xl border p-5 shadow-sm"
-              style={{
-                backgroundColor: paywall.theme.surfaceColor,
-                borderColor: plan.highlight ? paywall.theme.accentColor : borderColor,
-                color: paywall.theme.textColor,
-                boxShadow: plan.highlight ? `0 14px 40px ${paywall.theme.accentColor}22` : undefined,
-              }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-lg">{plan.title}</p>
-                  {plan.caption ? (
-                    <p className="mt-1 text-sm" style={{ color: mutedColor }}>
-                      {plan.caption}
-                    </p>
-                  ) : null}
-                </div>
-                {plan.badge ? (
-                  <Badge className="border-0" style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}>
-                    {plan.badge}
-                  </Badge>
-                ) : null}
-              </div>
-              <div className="mt-6 flex items-end gap-1">
-                <span className="font-bold text-4xl">{plan.price}</span>
-                <span className="pb-1 text-sm" style={{ color: mutedColor }}>
-                  {plan.period}
-                </span>
-              </div>
-              <button
-                className="mt-6 w-full rounded-xl px-4 py-3 font-semibold text-sm"
-                style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
-                type="button"
+          {paywall.plans.map((plan) => {
+            const isSelected = plan.id === selectedPlanId;
+
+            return (
+              <div
+                key={plan.id}
+                className="rounded-3xl border p-5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md"
+                onClick={() => onSelectPlan(plan.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelectPlan(plan.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                style={{
+                  backgroundColor: paywall.theme.surfaceColor,
+                  borderColor: isSelected || plan.highlight ? paywall.theme.accentColor : borderColor,
+                  color: paywall.theme.textColor,
+                  boxShadow: isSelected
+                    ? `0 0 0 2px ${paywall.theme.accentColor}, 0 18px 48px ${paywall.theme.accentColor}30`
+                    : plan.highlight
+                      ? `0 14px 40px ${paywall.theme.accentColor}22`
+                      : undefined,
+                  transform: isSelected ? "translateY(-2px)" : undefined,
+                }}
               >
-                {paywall.cta.primaryLabel}
-              </button>
-            </div>
-          ))}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-lg">{plan.title}</p>
+                    {plan.caption ? (
+                      <p className="mt-1 text-sm" style={{ color: mutedColor }}>
+                        {plan.caption}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    {isSelected ? (
+                      <Badge
+                        className="border-0"
+                        style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
+                      >
+                        {selectedLabel}
+                      </Badge>
+                    ) : null}
+                    {plan.badge ? (
+                      <Badge
+                        className="border-0"
+                        style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
+                      >
+                        {plan.badge}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="mt-6 flex items-end gap-1">
+                  <span className="font-bold text-4xl">{plan.price}</span>
+                  <span className="pb-1 text-sm" style={{ color: mutedColor }}>
+                    {plan.period}
+                  </span>
+                </div>
+                <button
+                  className="mt-6 w-full rounded-xl px-4 py-3 font-semibold text-sm"
+                  style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
+                  type="button"
+                >
+                  {paywall.cta.primaryLabel}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
       <Separator className="my-6 opacity-50" />
@@ -227,7 +277,17 @@ function WebPreview({ paywall }: { paywall: PaywallDefinition }) {
   );
 }
 
-function MobilePreview({ paywall }: { paywall: PaywallDefinition }) {
+function MobilePreview({
+  paywall,
+  selectedPlanId,
+  onSelectPlan,
+  selectedLabel,
+}: {
+  paywall: PaywallDefinition;
+  selectedPlanId: string;
+  onSelectPlan: (planId: string) => void;
+  selectedLabel: string;
+}) {
   const mutedColor = paywall.theme.mode === "dark" ? "#94A3B8" : "#64748B";
   const accentText = getContrastText(paywall.theme.accentColor);
   const borderColor = paywall.theme.mode === "dark" ? "rgba(148, 163, 184, 0.22)" : "rgba(15, 23, 42, 0.12)";
@@ -271,45 +331,75 @@ function MobilePreview({ paywall }: { paywall: PaywallDefinition }) {
         </div>
 
         <div className="mt-6 space-y-3">
-          {paywall.plans.map((plan) => (
-            <div
-              key={plan.id}
-              className="rounded-3xl border p-4"
-              style={{
-                backgroundColor: paywall.theme.surfaceColor,
-                borderColor: plan.highlight ? paywall.theme.accentColor : borderColor,
-              }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-base">{plan.title}</p>
-                  {plan.caption ? (
-                    <p className="mt-1 text-xs" style={{ color: mutedColor }}>
-                      {plan.caption}
-                    </p>
-                  ) : null}
-                </div>
-                {plan.badge ? (
-                  <Badge className="border-0" style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}>
-                    {plan.badge}
-                  </Badge>
-                ) : null}
-              </div>
-              <div className="mt-4 flex items-end gap-1">
-                <span className="font-bold text-3xl">{plan.price}</span>
-                <span className="pb-1 text-xs" style={{ color: mutedColor }}>
-                  {plan.period}
-                </span>
-              </div>
-              <button
-                className="mt-4 w-full rounded-2xl px-4 py-3 font-semibold text-sm"
-                style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
-                type="button"
+          {paywall.plans.map((plan) => {
+            const isSelected = plan.id === selectedPlanId;
+
+            return (
+              <div
+                key={plan.id}
+                className="rounded-3xl border p-4 transition-all duration-150"
+                onClick={() => onSelectPlan(plan.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelectPlan(plan.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                style={{
+                  backgroundColor: paywall.theme.surfaceColor,
+                  borderColor: isSelected || plan.highlight ? paywall.theme.accentColor : borderColor,
+                  boxShadow: isSelected
+                    ? `0 0 0 2px ${paywall.theme.accentColor}, 0 16px 36px ${paywall.theme.accentColor}30`
+                    : undefined,
+                  transform: isSelected ? "translateY(-2px)" : undefined,
+                }}
               >
-                {paywall.cta.primaryLabel}
-              </button>
-            </div>
-          ))}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-base">{plan.title}</p>
+                    {plan.caption ? (
+                      <p className="mt-1 text-xs" style={{ color: mutedColor }}>
+                        {plan.caption}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    {isSelected ? (
+                      <Badge
+                        className="border-0"
+                        style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
+                      >
+                        {selectedLabel}
+                      </Badge>
+                    ) : null}
+                    {plan.badge ? (
+                      <Badge
+                        className="border-0"
+                        style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
+                      >
+                        {plan.badge}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="mt-4 flex items-end gap-1">
+                  <span className="font-bold text-3xl">{plan.price}</span>
+                  <span className="pb-1 text-xs" style={{ color: mutedColor }}>
+                    {plan.period}
+                  </span>
+                </div>
+                <button
+                  className="mt-4 w-full rounded-2xl px-4 py-3 font-semibold text-sm"
+                  style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
+                  type="button"
+                >
+                  {paywall.cta.primaryLabel}
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-6 space-y-3 text-center">
@@ -341,6 +431,12 @@ export function PaywallCreatorPageClient({
   const [schemaText, setSchemaText] = useState(() => stringifyPaywallDefinition(DEFAULT_PAYWALL_TEMPLATE));
   const parsed = useMemo(() => parsePaywallDefinition(schemaText), [schemaText]);
   const [previewConfig, setPreviewConfig] = useState(DEFAULT_PAYWALL_TEMPLATE);
+  const [previewMode, setPreviewMode] = useState<"desktop" | "phone">(
+    getDefaultPreviewMode(DEFAULT_PAYWALL_TEMPLATE.platform),
+  );
+  const [selectedPreviewPlanId, setSelectedPreviewPlanId] = useState(() =>
+    getDefaultSelectedPlanId(DEFAULT_PAYWALL_TEMPLATE),
+  );
   const [selectedTierId, setSelectedTierId] = useState<string>(initialTiers[0]?.id ?? "");
 
   const selectedTier = useMemo(
@@ -354,6 +450,20 @@ export function PaywallCreatorPageClient({
       setPreviewConfig(parsed.data);
     }
   }, [parsed]);
+
+  useEffect(() => {
+    setPreviewMode(getDefaultPreviewMode(previewConfig.platform));
+  }, [previewConfig.platform]);
+
+  useEffect(() => {
+    const nextSelectedPlanId = previewConfig.plans.some((plan) => plan.id === selectedPreviewPlanId)
+      ? selectedPreviewPlanId
+      : getDefaultSelectedPlanId(previewConfig);
+
+    if (nextSelectedPlanId !== selectedPreviewPlanId) {
+      setSelectedPreviewPlanId(nextSelectedPlanId);
+    }
+  }, [previewConfig, selectedPreviewPlanId]);
 
   function loadTemplate(template: keyof typeof PAYWALL_TEMPLATES) {
     setSchemaText(stringifyPaywallDefinition(PAYWALL_TEMPLATES[template]));
@@ -388,6 +498,13 @@ export function PaywallCreatorPageClient({
   }
 
   const schemaFields = ["id", "name", "platform", "layout", "theme", "hero", "features[]", "plans[]", "cta", "footer"];
+  const platformLabel =
+    previewConfig.platform === "mobile"
+      ? t("preview.targetMobile")
+      : previewConfig.platform === "web"
+        ? t("preview.targetWeb")
+        : t("preview.targetUniversal");
+  const canvasLabel = previewMode === "phone" ? t("preview.canvasPhone") : t("preview.canvasDesktop");
 
   return (
     <div className="flex flex-col gap-6">
@@ -534,36 +651,59 @@ export function PaywallCreatorPageClient({
           </CardContent>
         </Card>
 
-        <Tabs className="gap-4 xl:sticky xl:top-6 xl:self-start" defaultValue="web">
+        <Tabs
+          className="gap-4 xl:sticky xl:top-6 xl:self-start"
+          value={previewMode}
+          onValueChange={(value) => setPreviewMode(value as "desktop" | "phone")}
+        >
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="font-semibold text-lg">{t("preview.title")}</h2>
               <p className="text-muted-foreground text-sm">{t("preview.description")}</p>
             </div>
             <TabsList>
-              <TabsTrigger value="web">{t("preview.web")}</TabsTrigger>
-              <TabsTrigger value="mobile">{t("preview.mobile")}</TabsTrigger>
+              <TabsTrigger value="desktop">{t("preview.desktopCanvas")}</TabsTrigger>
+              <TabsTrigger value="phone">{t("preview.phoneCanvas")}</TabsTrigger>
             </TabsList>
           </div>
 
           <Card className="overflow-hidden border-primary/20 bg-linear-to-b from-primary/5 via-background to-background shadow-lg shadow-primary/5">
             <CardContent className="space-y-4 pt-6">
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{previewConfig.platform}</Badge>
-                <Badge variant="secondary">{previewConfig.layout}</Badge>
-                <Badge variant="secondary">{previewConfig.theme.mode}</Badge>
+                <Badge variant="secondary">
+                  {t("preview.targetLabel")}: {platformLabel}
+                </Badge>
+                <Badge variant="secondary">
+                  {t("preview.canvasLabel")}: {canvasLabel}
+                </Badge>
+                <Badge variant="secondary">
+                  {t("preview.layoutLabel")}: {previewConfig.layout}
+                </Badge>
+                <Badge variant="secondary">
+                  {t("preview.themeLabel")}: {previewConfig.theme.mode}
+                </Badge>
                 {!parsed.success ? <Badge variant="outline">{t("preview.fallback")}</Badge> : null}
               </div>
 
               <ScrollArea className="h-[min(78vh,860px)] pr-4">
-                <TabsContent value="web" className="mt-0">
+                <TabsContent value="desktop" className="mt-0">
                   <div className="rounded-[32px] bg-muted/30 p-3 sm:p-4">
-                    <WebPreview paywall={previewConfig} />
+                    <WebPreview
+                      paywall={previewConfig}
+                      selectedPlanId={selectedPreviewPlanId}
+                      onSelectPlan={setSelectedPreviewPlanId}
+                      selectedLabel={t("preview.selectedPlan")}
+                    />
                   </div>
                 </TabsContent>
-                <TabsContent value="mobile" className="mt-0">
+                <TabsContent value="phone" className="mt-0">
                   <div className="rounded-[32px] bg-muted/30 p-3 sm:p-4">
-                    <MobilePreview paywall={previewConfig} />
+                    <MobilePreview
+                      paywall={previewConfig}
+                      selectedPlanId={selectedPreviewPlanId}
+                      onSelectPlan={setSelectedPreviewPlanId}
+                      selectedLabel={t("preview.selectedPlan")}
+                    />
                   </div>
                 </TabsContent>
               </ScrollArea>
@@ -575,21 +715,35 @@ export function PaywallCreatorPageClient({
               <CardTitle className="text-sm">{t("schema.title")}</CardTitle>
               <CardDescription>{t("schema.description")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {schemaFields.map((field) => (
-                  <Badge key={field} variant="outline">
-                    {field}
-                  </Badge>
-                ))}
-              </div>
-              <Separator />
-              <ul className="space-y-2 text-muted-foreground text-sm">
-                <li>{t("schema.rules.colors")}</li>
-                <li>{t("schema.rules.features")}</li>
-                <li>{t("schema.rules.plans")}</li>
-                <li>{t("schema.rules.highlight")}</li>
-              </ul>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="schema-details" className="border-none">
+                  <AccordionTrigger className="py-2 hover:no-underline">
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="font-medium text-sm">{t("schema.accordionTitle")}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {schemaFields.length} fields · 4 validation rules
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pt-2">
+                    <div className="flex flex-wrap gap-2">
+                      {schemaFields.map((field) => (
+                        <Badge key={field} variant="outline">
+                          {field}
+                        </Badge>
+                      ))}
+                    </div>
+                    <Separator />
+                    <ul className="space-y-2 text-muted-foreground text-sm">
+                      <li>{t("schema.rules.colors")}</li>
+                      <li>{t("schema.rules.features")}</li>
+                      <li>{t("schema.rules.plans")}</li>
+                      <li>{t("schema.rules.highlight")}</li>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
         </Tabs>

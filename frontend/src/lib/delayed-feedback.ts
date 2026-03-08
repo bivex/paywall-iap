@@ -43,3 +43,22 @@ export interface DelayedConversionResult {
   message: string;
   transactionId?: string;
 }
+
+export interface DelayedPendingReward {
+  ID: string;
+  ExperimentID: string;
+  ArmID: string;
+  UserID: string;
+  AssignedAt: string;
+  ExpiresAt: string;
+  Converted: boolean;
+  ConversionValue: number;
+  ConversionCurrency: string;
+  ConvertedAt: string | null;
+  ProcessedAt: string | null;
+}
+
+export interface DelayedPendingRewardsByUser {
+  user_id: string;
+  rewards: DelayedPendingReward[];
+}

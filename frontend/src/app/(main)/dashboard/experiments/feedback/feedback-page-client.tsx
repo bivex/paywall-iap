@@ -21,6 +21,8 @@ import type {
   DelayedConversionResult,
   DelayedEndpointProbe,
   DelayedFeedbackDashboardData,
+  DelayedPendingReward,
+  DelayedPendingRewardsByUser,
   DelayedFeedbackSnapshot,
 } from "@/lib/delayed-feedback";
 import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
@@ -89,6 +91,57 @@ function formatAlgorithm(value: ExperimentAlgorithm | null) {
   return value.replaceAll("_", " ");
 }
 
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return "—";
+
+  try {
+    return new Date(value).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return value;
+  }
+}
+
+function formatConversionValue(value: number, currency: string) {
+  if (!currency && value === 0) return "—";
+
+  if (currency) {
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value);
+    } catch {
+      return `${value.toFixed(2)} ${currency}`.trim();
+    }
+  }
+
+  return value.toFixed(2);
+}
+
+function conversionStatusClass(converted: boolean) {
+  return converted ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800";
+}
+
+interface LookupResponse<T> {
+  ok: boolean;
+  status: number;
+  message: string;
+  data?: T;
+}
+
+interface PendingRewardLookupResult extends LookupResponse<DelayedPendingReward> {}
+
+interface UserPendingLookupResult extends LookupResponse<DelayedPendingRewardsByUser> {}
+
 function mergeArmStats(experiment: ExperimentSummary | null, snapshot: DelayedFeedbackSnapshot | null) {
   if (!experiment) return [];
 
@@ -144,6 +197,12 @@ export function DelayedFeedbackPageClient({
   const [isPending, startTransition] = useTransition();
   const [submission, setSubmission] = useState<DelayedConversionResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingRewardId, setPendingRewardId] = useState("");
+  const [pendingUserId, setPendingUserId] = useState("");
+  const [pendingLookup, setPendingLookup] = useState<PendingRewardLookupResult | null>(null);
+  const [userPendingLookup, setUserPendingLookup] = useState<UserPendingLookupResult | null>(null);
+  const [isLookingUpPendingReward, setIsLookingUpPendingReward] = useState(false);
+  const [isLookingUpUserPending, setIsLookingUpUserPending] = useState(false);
   const [form, setForm] = useState<DelayedConversionPayload>({
     transactionId: "",
     userId: "",
@@ -183,9 +242,13 @@ export function DelayedFeedbackPageClient({
     Number.isFinite(form.conversionValue) &&
     form.conversionValue > 0 &&
     form.currency.trim().length > 0;
+  const pendingRewardIdValid = isValidUuid(pendingRewardId);
+  const pendingUserIdValid = isValidUuid(pendingUserId);
 
   const refreshSnapshot = (experimentId: string) => {
     setSelectedId(experimentId);
+    setPendingLookup(null);
+    setUserPendingLookup(null);
     startTransition(async () => {
       try {
         const data = await fetchJson<DelayedFeedbackSnapshot>(
@@ -196,6 +259,81 @@ export function DelayedFeedbackPageClient({
         toast.error(t("feedback.loadFailed"));
       }
     });
+  };
+
+  const lookupPendingReward = async () => {
+    if (!pendingRewardIdValid) return;
+
+    setIsLookingUpPendingReward(true);
+    try {
+      const res = await fetch(`/api/admin/delayed-feedback/pending/${encodeURIComponent(pendingRewardId.trim())}`, {
+        cache: "no-store",
+      });
+      const body = await res.json().catch(() => ({}));
+      const result: PendingRewardLookupResult = {
+        ok: res.ok,
+        status: res.status,
+        message:
+          (body as { message?: string; error?: string }).message ??
+          (body as { error?: string }).error ??
+          `HTTP ${res.status}`,
+        data: res.ok ? (((body as { data?: DelayedPendingReward }).data ?? body) as DelayedPendingReward) : undefined,
+      };
+
+      setPendingLookup(result);
+      if (!result.ok) {
+        toast.error(result.message);
+      }
+    } catch {
+      const result = {
+        ok: false,
+        status: 500,
+        message: t("feedback.lookupFailed"),
+      } satisfies PendingRewardLookupResult;
+      setPendingLookup(result);
+      toast.error(result.message);
+    } finally {
+      setIsLookingUpPendingReward(false);
+    }
+  };
+
+  const lookupUserPendingRewards = async () => {
+    if (!pendingUserIdValid) return;
+
+    setIsLookingUpUserPending(true);
+    try {
+      const res = await fetch(
+        `/api/admin/delayed-feedback/users/${encodeURIComponent(pendingUserId.trim())}/pending`,
+        { cache: "no-store" },
+      );
+      const body = await res.json().catch(() => ({}));
+      const result: UserPendingLookupResult = {
+        ok: res.ok,
+        status: res.status,
+        message:
+          (body as { message?: string; error?: string }).message ??
+          (body as { error?: string }).error ??
+          `HTTP ${res.status}`,
+        data: res.ok
+          ? (((body as { data?: DelayedPendingRewardsByUser }).data ?? body) as DelayedPendingRewardsByUser)
+          : undefined,
+      };
+
+      setUserPendingLookup(result);
+      if (!result.ok) {
+        toast.error(result.message);
+      }
+    } catch {
+      const result = {
+        ok: false,
+        status: 500,
+        message: t("feedback.lookupFailed"),
+      } satisfies UserPendingLookupResult;
+      setUserPendingLookup(result);
+      toast.error(result.message);
+    } finally {
+      setIsLookingUpUserPending(false);
+    }
   };
 
   const submitConversion = async () => {
@@ -450,6 +588,176 @@ export function DelayedFeedbackPageClient({
                     <p className="mt-1 text-muted-foreground text-xs">{submission.message}</p>
                     {submission.transactionId ? (
                       <p className="mt-1 text-muted-foreground text-xs">{submission.transactionId}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">{t("lookup.pendingTitle")}</CardTitle>
+                <CardDescription>{t("lookup.pendingDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1.5">
+                  <p className="font-medium text-sm">{t("lookup.pendingId")}</p>
+                  <Input
+                    value={pendingRewardId}
+                    onChange={(event) => setPendingRewardId(event.target.value)}
+                    placeholder={t("lookup.pendingPlaceholder")}
+                  />
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={lookupPendingReward}
+                  disabled={!pendingRewardIdValid || isLookingUpPendingReward}
+                >
+                  <Activity className="size-4" />
+                  {isLookingUpPendingReward ? t("lookup.lookingUp") : t("lookup.lookupPending")}
+                </Button>
+
+                {pendingLookup ? (
+                  <div className="rounded-md border p-3 text-sm">
+                    <p className="font-medium">{t("lookup.httpStatus", { status: pendingLookup.status })}</p>
+                    <p className={`mt-1 text-xs ${pendingLookup.ok ? "text-muted-foreground" : "text-destructive"}`}>
+                      {pendingLookup.message}
+                    </p>
+
+                    {pendingLookup.ok && pendingLookup.data ? (
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.rewardId")}</p>
+                          <p className="break-all font-medium">{pendingLookup.data.ID}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.statusLabel")}</p>
+                          <Badge className={conversionStatusClass(pendingLookup.data.Converted)}>
+                            {pendingLookup.data.Converted ? t("lookup.converted") : t("lookup.pending")}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.experimentId")}</p>
+                          <p className="break-all font-medium">{pendingLookup.data.ExperimentID}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.armId")}</p>
+                          <p className="break-all font-medium">{pendingLookup.data.ArmID}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.userId")}</p>
+                          <p className="break-all font-medium">{pendingLookup.data.UserID}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.conversionValue")}</p>
+                          <p className="font-medium">
+                            {formatConversionValue(
+                              pendingLookup.data.ConversionValue,
+                              pendingLookup.data.ConversionCurrency,
+                            )}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.assignedAt")}</p>
+                          <p className="font-medium">{formatDateTime(pendingLookup.data.AssignedAt)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.expiresAt")}</p>
+                          <p className="font-medium">{formatDateTime(pendingLookup.data.ExpiresAt)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.convertedAt")}</p>
+                          <p className="font-medium">{formatDateTime(pendingLookup.data.ConvertedAt)}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">{t("lookup.processedAt")}</p>
+                          <p className="font-medium">{formatDateTime(pendingLookup.data.ProcessedAt)}</p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">{t("lookup.userTitle")}</CardTitle>
+                <CardDescription>{t("lookup.userDescription")}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1.5">
+                  <p className="font-medium text-sm">{t("lookup.userId")}</p>
+                  <Input
+                    value={pendingUserId}
+                    onChange={(event) => setPendingUserId(event.target.value)}
+                    placeholder={t("lookup.userPlaceholder")}
+                  />
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={lookupUserPendingRewards}
+                  disabled={!pendingUserIdValid || isLookingUpUserPending}
+                >
+                  <Activity className="size-4" />
+                  {isLookingUpUserPending ? t("lookup.lookingUp") : t("lookup.lookupUser")}
+                </Button>
+
+                {userPendingLookup ? (
+                  <div className="rounded-md border p-3 text-sm">
+                    <p className="font-medium">{t("lookup.httpStatus", { status: userPendingLookup.status })}</p>
+                    <p className={`mt-1 text-xs ${userPendingLookup.ok ? "text-muted-foreground" : "text-destructive"}`}>
+                      {userPendingLookup.message}
+                    </p>
+
+                    {userPendingLookup.ok && userPendingLookup.data ? (
+                      <>
+                        <p className="mt-3 text-muted-foreground text-xs">{t("lookup.userResultDescription")}</p>
+                        <p className="mt-1 break-all font-medium">{userPendingLookup.data.user_id}</p>
+
+                        {userPendingLookup.data.rewards.length === 0 ? (
+                          <p className="mt-3 text-muted-foreground text-xs">{t("lookup.noRewards")}</p>
+                        ) : (
+                          <div className="mt-3 overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>{t("lookup.rewardId")}</TableHead>
+                                  <TableHead>{t("lookup.experimentId")}</TableHead>
+                                  <TableHead>{t("lookup.armId")}</TableHead>
+                                  <TableHead>{t("lookup.assignedAt")}</TableHead>
+                                  <TableHead>{t("lookup.expiresAt")}</TableHead>
+                                  <TableHead>{t("lookup.statusLabel")}</TableHead>
+                                  <TableHead>{t("lookup.conversionValue")}</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {userPendingLookup.data.rewards.map((reward) => (
+                                  <TableRow key={reward.ID}>
+                                    <TableCell className="max-w-44 break-all text-xs">{reward.ID}</TableCell>
+                                    <TableCell className="max-w-44 break-all text-xs">{reward.ExperimentID}</TableCell>
+                                    <TableCell className="max-w-44 break-all text-xs">{reward.ArmID}</TableCell>
+                                    <TableCell className="text-xs">{formatDateTime(reward.AssignedAt)}</TableCell>
+                                    <TableCell className="text-xs">{formatDateTime(reward.ExpiresAt)}</TableCell>
+                                    <TableCell>
+                                      <Badge className={conversionStatusClass(reward.Converted)}>
+                                        {reward.Converted ? t("lookup.converted") : t("lookup.pending")}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-xs">
+                                      {formatConversionValue(reward.ConversionValue, reward.ConversionCurrency)}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </>
                     ) : null}
                   </div>
                 ) : null}
