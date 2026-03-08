@@ -40,6 +40,23 @@ cd backend && go run ./cmd/seed --email=admin@paywall.local --password=admin1234
 cd backend && make seed-admin EMAIL=admin@paywall.local PASSWORD=admin12345
 ```
 
+### Seed full cold-start test data
+
+```bash
+# Docker DB/container mode
+DB_CONTAINER=docker-compose-db-1 ./scripts/seed_all_test_data.sh
+
+# Direct Postgres mode
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/iap_db ./scripts/seed_all_test_data.sh
+```
+
+This seeds:
+
+- admin credentials
+- pricing tiers
+- realistic dashboard revenue fixtures
+- deterministic experiment/bandit fixtures for A/B Tests, Studio, Delayed Feedback, Sliding Window, and Multi-Objective pages
+
 ### Auth flow
 
 ```

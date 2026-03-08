@@ -7,10 +7,9 @@
 #   3. Releases any processes holding the required ports
 #   4. Starts postgres + redis + mocks + api + worker
 #   5. Runs migrations, auto-fixes known dirty-flag issues
-#   6. Seeds superadmin if not present
-#   7. Seeds demo pricing tiers for Paywall Creator
-#   8. Starts Next.js frontend with hot-reload
-#   9. Prints health summary + URLs
+#   6. Seeds full cold-start local test data
+#   7. Starts Next.js frontend with hot-reload
+#   8. Prints health summary + URLs
 #
 # Usage:
 #   ./run_dev.sh                         # defaults: admin@paywall.local / admin12345
@@ -168,33 +167,66 @@ rm -f "$SCRIPT_DIR/backend/migrations/015_create_ab_test_assignments.up.sql.bak"
 docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
   -c "UPDATE schema_migrations SET dirty = false WHERE dirty = true;" &>/dev/null || true
 
+# Recover known partial migration gaps from earlier broken runs.
+# If migration 015 was skipped after a dirty-state reset, the table can be missing
+# even though schema_migrations already advanced past version 15.
+HAS_ASSIGNMENTS=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+  -tAc "SELECT to_regclass('public.ab_test_assignments') IS NOT NULL;" 2>/dev/null || echo "f")
+HAS_ASSIGNMENTS="${HAS_ASSIGNMENTS//[[:space:]]/}"
+if [[ "$HAS_ASSIGNMENTS" != "t" ]]; then
+  warn "ab_test_assignments is missing — applying migration 015 directly"
+  docker exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d iap_db \
+    < "$SCRIPT_DIR/backend/migrations/015_create_ab_test_assignments.up.sql"
+fi
+
 info "Building migrator image..."
 docker compose -f "$BACKEND_COMPOSE" build migrator 2>&1 | tail -3
 info "Applying migrations..."
 if ! docker compose -f "$BACKEND_COMPOSE" run --rm migrator 2>&1 | tail -5; then
   warn "Migrator exited non-zero (may be already up-to-date) — continuing"
 fi
-ok "Migrations done"
 
-# ── Step 6: Seed superadmin ────────────────────────────────────────────────────
-info "Checking for superadmin..."
-EXISTING=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
-  -tAc "SELECT COUNT(*) FROM users WHERE role='superadmin';" 2>/dev/null || echo "0")
-EXISTING="${EXISTING//[[:space:]]/}"
-
-if [[ "$EXISTING" == "0" ]]; then
-  info "Seeding admin: $ADMIN_EMAIL"
-  DB_CONTAINER="$DB_CONTAINER" bash "$SCRIPT_DIR/scripts/seed_admin.sh" "$ADMIN_EMAIL" "$ADMIN_PASS"
-else
-  ok "Superadmin already exists ($EXISTING found) — skipping"
+HAS_WEB_PLATFORM=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+  -tAc "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_platform_check' AND pg_get_constraintdef(oid) LIKE '%web%');" 2>/dev/null || echo "f")
+HAS_WEB_PLATFORM="${HAS_WEB_PLATFORM//[[:space:]]/}"
+if [[ "$HAS_WEB_PLATFORM" != "t" ]]; then
+  warn "users_platform_check still does not allow web — applying migration 019 directly"
+  docker exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d iap_db \
+    < "$SCRIPT_DIR/backend/migrations/019_add_web_platform.up.sql"
 fi
 
-# ── Step 7: Seed pricing tiers ─────────────────────────────────────────────────
-info "Seeding pricing tiers for Paywall Creator..."
-DB_CONTAINER="$DB_CONTAINER" bash "$SCRIPT_DIR/scripts/seed_tiers.sh"
-ok "Pricing tiers seeded"
+HAS_ASSIGNMENTS=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+  -tAc "SELECT to_regclass('public.ab_test_assignments') IS NOT NULL;" 2>/dev/null || echo "f")
+HAS_ASSIGNMENTS="${HAS_ASSIGNMENTS//[[:space:]]/}"
+[[ "$HAS_ASSIGNMENTS" == "t" ]] || die "Migration recovery incomplete: ab_test_assignments is still missing"
 
-# ── Step 8: Start frontend ─────────────────────────────────────────────────────
+HAS_WEB_PLATFORM=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+  -tAc "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_platform_check' AND pg_get_constraintdef(oid) LIKE '%web%');" 2>/dev/null || echo "f")
+HAS_WEB_PLATFORM="${HAS_WEB_PLATFORM//[[:space:]]/}"
+[[ "$HAS_WEB_PLATFORM" == "t" ]] || die "Migration recovery incomplete: users platform constraint still rejects web"
+
+HAS_WINDOW_EVENT_TABLE=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+  -tAc "SELECT to_regclass('public.bandit_window_events') IS NOT NULL;" 2>/dev/null || echo "f")
+HAS_WINDOW_EVENT_TABLE="${HAS_WINDOW_EVENT_TABLE//[[:space:]]/}"
+if [[ "$HAS_WINDOW_EVENT_TABLE" == "t" ]]; then
+  WINDOW_EVENT_TYPE_LEN=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+    -tAc "SELECT COALESCE(character_maximum_length, 0) FROM information_schema.columns WHERE table_schema='public' AND table_name='bandit_window_events' AND column_name='event_type';" 2>/dev/null || echo "0")
+  WINDOW_EVENT_TYPE_LEN="${WINDOW_EVENT_TYPE_LEN//[[:space:]]/}"
+  if [[ "$WINDOW_EVENT_TYPE_LEN" -lt 13 ]]; then
+    warn "bandit_window_events.event_type is too narrow (${WINDOW_EVENT_TYPE_LEN}) — widening to VARCHAR(20)"
+    docker exec "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d iap_db \
+      -c "ALTER TABLE bandit_window_events ALTER COLUMN event_type TYPE VARCHAR(20);"
+  fi
+fi
+
+ok "Migrations done"
+
+# ── Step 6: Seed cold-start local test data ────────────────────────────────────
+info "Seeding cold-start local test data..."
+DB_CONTAINER="$DB_CONTAINER" bash "$SCRIPT_DIR/scripts/seed_all_test_data.sh" "$ADMIN_EMAIL" "$ADMIN_PASS"
+ok "Cold-start test data seeded"
+
+# ── Step 7: Start frontend ─────────────────────────────────────────────────────
 export FRONTEND_PORT
 export NEXT_PUBLIC_API_URL="http://localhost:${API_PORT_HOST}"
 export BACKEND_URL="http://paywall-api-1:8080"
@@ -206,7 +238,7 @@ info "Starting frontend container..."
 docker compose -f "$FRONTEND_COMPOSE" up -d
 ok "Frontend container started"
 
-# ── Step 9: Health checks ──────────────────────────────────────────────────────
+# ── Step 8: Health checks ──────────────────────────────────────────────────────
 wait_for_http "http://localhost:${API_PORT_HOST}/health" "Backend API" 30
 wait_for_http "http://localhost:${FRONTEND_PORT}"        "Frontend"    90
 

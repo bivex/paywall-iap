@@ -695,7 +695,7 @@ CREATE TABLE bandit_window_events (
     experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
     arm_id UUID NOT NULL REFERENCES ab_test_arms(id) ON DELETE CASCADE,
     user_id UUID NOT NULL,
-    event_type VARCHAR(10) NOT NULL CHECK (event_type IN ('impression', 'conversion', 'no_conversion')),
+    event_type VARCHAR(20) NOT NULL CHECK (event_type IN ('impression', 'conversion', 'no_conversion')),
     reward_value DECIMAL(12,2),
     timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
