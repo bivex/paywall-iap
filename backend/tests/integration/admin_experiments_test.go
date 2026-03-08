@@ -346,6 +346,121 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Contains(t, w.Body.String(), "Bandit flag is required")
 	})
 
+	t.Run("POST rejects null description", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Null description",
+			"description":null,
+			"status":"draft",
+			"algorithm_type":"ucb",
+			"is_bandit":true,
+			"min_sample_size":100,
+			"confidence_threshold_percent":95,
+			"arms":[
+				{"name":"Control","description":"Baseline","is_control":true,"traffic_weight":1},
+				{"name":"Variant","description":"Candidate","is_control":false,"traffic_weight":1}
+			]
+		}`)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Experiment description is required")
+	})
+
+	t.Run("POST rejects null algorithm_type", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Null algorithm",
+			"description":"Should fail before insert",
+			"status":"draft",
+			"algorithm_type":null,
+			"is_bandit":false,
+			"min_sample_size":100,
+			"confidence_threshold_percent":95,
+			"arms":[
+				{"name":"Control","description":"Baseline","is_control":true,"traffic_weight":1},
+				{"name":"Variant","description":"Candidate","is_control":false,"traffic_weight":1}
+			]
+		}`)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Algorithm type is required")
+	})
+
+	t.Run("POST rejects unsupported algorithm_type even when is_bandit is false", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Unsupported algorithm",
+			"description":"Should fail before insert",
+			"status":"draft",
+			"algorithm_type":"AAA",
+			"is_bandit":false,
+			"min_sample_size":100,
+			"confidence_threshold_percent":95,
+			"arms":[
+				{"name":"Control","description":"Baseline","is_control":true,"traffic_weight":1},
+				{"name":"Variant","description":"Candidate","is_control":false,"traffic_weight":1}
+			]
+		}`)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy")
+	})
+
+	t.Run("POST rejects null arm description", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Null arm description",
+			"description":"Should fail before insert",
+			"status":"draft",
+			"algorithm_type":"ucb",
+			"is_bandit":true,
+			"min_sample_size":100,
+			"confidence_threshold_percent":95,
+			"arms":[
+				{"name":"Control","description":null,"is_control":true,"traffic_weight":1},
+				{"name":"Variant","description":"Candidate","is_control":false,"traffic_weight":1}
+			]
+		}`)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Every experiment arm must include a description")
+	})
+
+	t.Run("POST rejects null bytes in arm names", func(t *testing.T) {
+		body := []byte("{\n" +
+			"\t\"name\":\"Null byte arm\",\n" +
+			"\t\"description\":\"Should fail before insert\",\n" +
+			"\t\"status\":\"draft\",\n" +
+			"\t\"algorithm_type\":\"ucb\",\n" +
+			"\t\"is_bandit\":true,\n" +
+			"\t\"min_sample_size\":100,\n" +
+			"\t\"confidence_threshold_percent\":95,\n" +
+			"\t\"arms\":[\n" +
+			"\t\t{\"name\":\"Control\\u0000Arm\",\"description\":\"Baseline\",\"is_control\":true,\"traffic_weight\":1},\n" +
+			"\t\t{\"name\":\"Variant\",\"description\":\"Candidate\",\"is_control\":false,\"traffic_weight\":1}\n" +
+			"\t]\n" +
+			"}")
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Experiment arm names cannot contain null bytes")
+	})
+
 	t.Run("GET returns created experiment", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
 		w := httptest.NewRecorder()
@@ -375,13 +490,15 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	t.Run("POST rejects nonexistent pricing tier linkage", func(t *testing.T) {
 		body := []byte(fmt.Sprintf(`{
 				"name":"Broken pricing linkage",
+				"description":"Broken pricing linkage description",
 				"status":"draft",
+				"algorithm_type":"thompson_sampling",
 				"is_bandit":false,
 				"min_sample_size":100,
 				"confidence_threshold_percent":95,
 				"arms":[
-					{"name":"Control","is_control":true,"traffic_weight":1},
-					{"name":"Variant","is_control":false,"traffic_weight":1,"pricing_tier_id":%q}
+					{"name":"Control","description":"Baseline","is_control":true,"traffic_weight":1},
+					{"name":"Variant","description":"Candidate","is_control":false,"traffic_weight":1,"pricing_tier_id":%q}
 				]
 			}`, missingTierID.String()))
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
@@ -630,7 +747,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Equal(t, http.StatusConflict, w.Code)
 
 		var status string
 		err = db.QueryRow(ctx, `SELECT status FROM ab_tests WHERE id = $1`, lockedExperimentID).Scan(&status)
@@ -878,6 +995,60 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Contains(t, w.Body.String(), "Bandit flag is required")
 	})
 
+	t.Run("PUT rejects null description", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Draft onboarding test",
+			"description":null,
+			"algorithm_type":"thompson_sampling",
+			"is_bandit":true,
+			"min_sample_size":150,
+			"confidence_threshold_percent":90
+		}`)
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Experiment description is required")
+	})
+
+	t.Run("PUT rejects null algorithm_type", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Draft onboarding test",
+			"description":"Prepare a staged rollout",
+			"algorithm_type":null,
+			"is_bandit":false,
+			"min_sample_size":150,
+			"confidence_threshold_percent":90
+		}`)
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Algorithm type is required")
+	})
+
+	t.Run("PUT rejects unsupported algorithm_type even when is_bandit is false", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Draft onboarding test",
+			"description":"Prepare a staged rollout",
+			"algorithm_type":"AAA",
+			"is_bandit":false,
+			"min_sample_size":150,
+			"confidence_threshold_percent":90
+		}`)
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy")
+	})
+
 	t.Run("PUT updates a draft experiment metadata", func(t *testing.T) {
 		body := []byte(`{
 			"name":"Draft onboarding test v2",
@@ -1102,17 +1273,19 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Equal(t, http.StatusConflict, w.Code)
 	})
 
 	t.Run("POST rejects invalid arms payload", func(t *testing.T) {
 		body := []byte(`{
 			"name":"Broken test",
+			"description":"Broken arm payload",
 			"status":"draft",
+			"algorithm_type":"thompson_sampling",
 			"is_bandit":false,
 			"min_sample_size":100,
 			"confidence_threshold_percent":95,
-			"arms":[{"name":"Only arm","is_control":true,"traffic_weight":1}]
+			"arms":[{"name":"Only arm","description":"Only arm description","is_control":true,"traffic_weight":1}]
 		}`)
 		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -1191,7 +1364,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Equal(t, http.StatusConflict, w.Code)
 	})
 
 	t.Run("GET tolerates missing optional experiment audit tables", func(t *testing.T) {

@@ -905,6 +905,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Validation failed
           content:
@@ -936,7 +942,7 @@ paths:
         '401': { $ref: '#/components/responses/Error401' }
         '403': { $ref: '#/components/responses/Error403' }
         '404': { $ref: '#/components/responses/Error404' }
-        '422': { $ref: '#/components/responses/Error422' }
+        '409': { $ref: '#/components/responses/Error409' }
         '500': { $ref: '#/components/responses/Error500' }
   /v1/admin/experiments/{id}/resume:
     post:
@@ -957,7 +963,7 @@ paths:
         '401': { $ref: '#/components/responses/Error401' }
         '403': { $ref: '#/components/responses/Error403' }
         '404': { $ref: '#/components/responses/Error404' }
-        '422': { $ref: '#/components/responses/Error422' }
+        '409': { $ref: '#/components/responses/Error409' }
         '500': { $ref: '#/components/responses/Error500' }
   /v1/admin/experiments/{id}/complete:
     post:
@@ -978,7 +984,7 @@ paths:
         '401': { $ref: '#/components/responses/Error401' }
         '403': { $ref: '#/components/responses/Error403' }
         '404': { $ref: '#/components/responses/Error404' }
-        '422': { $ref: '#/components/responses/Error422' }
+        '409': { $ref: '#/components/responses/Error409' }
         '500': { $ref: '#/components/responses/Error500' }
   /v1/admin/experiments/{id}/confirm-winner:
     post:
@@ -999,7 +1005,7 @@ paths:
         '401': { $ref: '#/components/responses/Error401' }
         '403': { $ref: '#/components/responses/Error403' }
         '404': { $ref: '#/components/responses/Error404' }
-        '422': { $ref: '#/components/responses/Error422' }
+        '409': { $ref: '#/components/responses/Error409' }
         '500': { $ref: '#/components/responses/Error500' }
   /v1/admin/experiments/{id}/hold-for-review:
     post:
@@ -1020,7 +1026,7 @@ paths:
         '401': { $ref: '#/components/responses/Error401' }
         '403': { $ref: '#/components/responses/Error403' }
         '404': { $ref: '#/components/responses/Error404' }
-        '422': { $ref: '#/components/responses/Error422' }
+        '409': { $ref: '#/components/responses/Error409' }
         '500': { $ref: '#/components/responses/Error500' }
   /v1/admin/pricing-tiers:
     get:
@@ -2014,6 +2020,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    Error409:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     Error422:
       description: Unprocessable entity
       content:
@@ -2760,6 +2772,7 @@ components:
         name:
           type: string
           minLength: 1
+          pattern: '.*\S.*'
         description: { type: string }
         is_control: { type: boolean }
         traffic_weight:
@@ -2770,24 +2783,18 @@ components:
     CreateAdminExperimentRequest:
       type: object
       required: [name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent, arms]
-      anyOf:
-        - properties:
-            is_bandit:
-              const: false
-        - properties:
-            is_bandit:
-              const: true
-            algorithm_type:
-              enum: [thompson_sampling, ucb, epsilon_greedy]
       properties:
         name:
           type: string
           minLength: 1
+          pattern: '.*\S.*'
         description: { type: string }
         status:
           type: string
           enum: [draft, running, paused, completed]
-        algorithm_type: { type: string }
+        algorithm_type:
+          type: string
+          enum: [thompson_sampling, ucb, epsilon_greedy]
         is_bandit: { type: boolean }
         min_sample_size:
           type: integer
@@ -2828,21 +2835,15 @@ components:
     UpdateAdminExperimentRequest:
       type: object
       required: [name, description, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent]
-      anyOf:
-        - properties:
-            is_bandit:
-              const: false
-        - properties:
-            is_bandit:
-              const: true
-            algorithm_type:
-              enum: [thompson_sampling, ucb, epsilon_greedy]
       properties:
         name:
           type: string
           minLength: 1
+          pattern: '.*\S.*'
         description: { type: string }
-        algorithm_type: { type: string }
+        algorithm_type:
+          type: string
+          enum: [thompson_sampling, ucb, epsilon_greedy]
         is_bandit: { type: boolean }
         min_sample_size:
           type: integer
@@ -2901,6 +2902,7 @@ components:
         name:
           type: string
           minLength: 1
+          pattern: '.*\S.*'
         description: { type: string }
         monthly_price:
           type: number

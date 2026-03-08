@@ -341,6 +341,10 @@ func normalizeOptionalLowerTrimmedString(value *string) *string {
 	return &normalized
 }
 
+func containsNullByte(value string) bool {
+	return strings.ContainsRune(value, '\x00')
+}
+
 func normalizeLockAdminExperimentRequest(req lockAdminExperimentRequest) lockAdminExperimentRequest {
 	req.Reason = strings.TrimSpace(req.Reason)
 	return req
@@ -598,11 +602,20 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	if req.Name == "" {
 		return "Experiment name is required"
 	}
+	if containsNullByte(req.Name) {
+		return "Experiment name cannot contain null bytes"
+	}
 	if req.Description == nil {
 		return "Experiment description is required"
 	}
+	if containsNullByte(*req.Description) {
+		return "Experiment description cannot contain null bytes"
+	}
 	if req.AlgorithmType == nil {
 		return "Algorithm type is required"
+	}
+	if containsNullByte(*req.AlgorithmType) {
+		return "Algorithm type cannot contain null bytes"
 	}
 	switch req.Status {
 	case "draft", "running", "paused", "completed":
@@ -632,8 +645,14 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 		if arm.Name == "" {
 			return "Every experiment arm must have a name"
 		}
+		if containsNullByte(arm.Name) {
+			return "Experiment arm names cannot contain null bytes"
+		}
 		if arm.Description == nil {
 			return "Every experiment arm must include a description"
+		}
+		if containsNullByte(*arm.Description) {
+			return "Experiment arm descriptions cannot contain null bytes"
 		}
 		if arm.TrafficWeight <= 0 {
 			return "Traffic weight must be greater than zero"
@@ -645,12 +664,10 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	if controlCount != 1 {
 		return "Exactly one control arm is required"
 	}
-	if *req.IsBandit {
-		switch *req.AlgorithmType {
-		case "thompson_sampling", "ucb", "epsilon_greedy":
-		default:
-			return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
-		}
+	switch *req.AlgorithmType {
+	case "thompson_sampling", "ucb", "epsilon_greedy":
+	default:
+		return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
 	}
 	return ""
 }
@@ -659,11 +676,20 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 	if req.Name == "" {
 		return "Experiment name is required"
 	}
+	if containsNullByte(req.Name) {
+		return "Experiment name cannot contain null bytes"
+	}
 	if req.Description == nil {
 		return "Experiment description is required"
 	}
+	if containsNullByte(*req.Description) {
+		return "Experiment description cannot contain null bytes"
+	}
 	if req.AlgorithmType == nil {
 		return "Algorithm type is required"
+	}
+	if containsNullByte(*req.AlgorithmType) {
+		return "Algorithm type cannot contain null bytes"
 	}
 	if req.IsBandit == nil {
 		return "Bandit flag is required"
@@ -680,12 +706,10 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 	if req.StartAt != nil && req.EndAt != nil && req.EndAt.Before(*req.StartAt) {
 		return "End time must be after start time"
 	}
-	if *req.IsBandit {
-		switch *req.AlgorithmType {
-		case "thompson_sampling", "ucb", "epsilon_greedy":
-		default:
-			return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
-		}
+	switch *req.AlgorithmType {
+	case "thompson_sampling", "ucb", "epsilon_greedy":
+	default:
+		return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
 	}
 	if req.Arms != nil {
 		if len(req.Arms) < 2 {
@@ -697,8 +721,14 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 			if arm.Name == "" {
 				return "Every experiment arm must have a name"
 			}
+			if containsNullByte(arm.Name) {
+				return "Experiment arm names cannot contain null bytes"
+			}
 			if arm.Description == nil {
 				return "Every experiment arm must include a description"
+			}
+			if containsNullByte(*arm.Description) {
+				return "Experiment arm descriptions cannot contain null bytes"
 			}
 			if arm.TrafficWeight <= 0 {
 				return "Traffic weight must be greater than zero"
@@ -1317,7 +1347,7 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
 		experimentID,
 		req.Name,
-			*req.Description,
+		*req.Description,
 		req.Status,
 		req.StartAt,
 		req.EndAt,
@@ -1348,7 +1378,7 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 			uuid.New(),
 			experimentID,
 			arm.Name,
-				*arm.Description,
+			*arm.Description,
 			arm.IsControl,
 			arm.TrafficWeight,
 			arm.PricingTierID,
@@ -1401,7 +1431,7 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 		return
 	}
 	if experiment.Status != "draft" {
-		response.UnprocessableEntity(c, "Only draft experiments can be edited")
+		response.Conflict(c, "Only draft experiments can be edited")
 		return
 	}
 
@@ -1432,7 +1462,7 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 		case errors.Is(err, service.ErrExperimentNotFound):
 			response.NotFound(c, "Experiment not found")
 		case errors.Is(err, service.ErrExperimentNotEditable):
-			response.UnprocessableEntity(c, "Only draft experiments can be edited")
+			response.Conflict(c, "Only draft experiments can be edited")
 		case errors.Is(err, service.ErrExperimentArmNotFound):
 			response.UnprocessableEntity(c, "All persisted arm IDs must belong to the experiment")
 		case errors.Is(err, service.ErrPricingTierNotFound):
@@ -1616,19 +1646,19 @@ func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
 		return
 	}
 	if !experiment.IsBandit {
-		response.UnprocessableEntity(c, "Only bandit experiments can confirm winner recommendations")
+		response.Conflict(c, "Only bandit experiments can confirm winner recommendations")
 		return
 	}
 	if experiment.Status != "running" && experiment.Status != "paused" {
-		response.UnprocessableEntity(c, "Only running or paused experiments can confirm winner recommendations")
+		response.Conflict(c, "Only running or paused experiments can confirm winner recommendations")
 		return
 	}
 	if adminExperimentHasActiveAutomationLock(experiment.AutomationPolicy, time.Now()) {
-		response.UnprocessableEntity(c, "Unlock experiment automation before confirming a winner")
+		response.Conflict(c, "Unlock experiment automation before confirming a winner")
 		return
 	}
 	if !adminExperimentHasConfirmableWinnerRecommendation(experiment) {
-		response.UnprocessableEntity(c, "Experiment does not have a confirmable winner recommendation")
+		response.Conflict(c, "Experiment does not have a confirmable winner recommendation")
 		return
 	}
 
@@ -1645,7 +1675,7 @@ func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
 		case errors.Is(err, service.ErrExperimentNotFound):
 			response.NotFound(c, "Experiment not found")
 		case errors.Is(err, service.ErrInvalidStatusTransition):
-			response.UnprocessableEntity(c, err.Error())
+			response.Conflict(c, err.Error())
 		default:
 			response.InternalError(c, "Failed to confirm experiment winner")
 		}
@@ -1682,15 +1712,15 @@ func (h *AdminHandler) HoldAdminExperimentForReview(c *gin.Context) {
 		return
 	}
 	if !experiment.IsBandit {
-		response.UnprocessableEntity(c, "Only bandit experiments can be held for winner review")
+		response.Conflict(c, "Only bandit experiments can be held for winner review")
 		return
 	}
 	if experiment.Status != "running" && experiment.Status != "paused" {
-		response.UnprocessableEntity(c, "Only running or paused experiments can be held for winner review")
+		response.Conflict(c, "Only running or paused experiments can be held for winner review")
 		return
 	}
 	if !adminExperimentHasConfirmableWinnerRecommendation(experiment) {
-		response.UnprocessableEntity(c, "Experiment does not have a confirmable winner recommendation")
+		response.Conflict(c, "Experiment does not have a confirmable winner recommendation")
 		return
 	}
 
@@ -1712,7 +1742,7 @@ func (h *AdminHandler) HoldAdminExperimentForReview(c *gin.Context) {
 		case errors.Is(err, service.ErrExperimentNotFound):
 			response.NotFound(c, "Experiment not found")
 		case errors.Is(err, service.ErrInvalidStatusTransition):
-			response.UnprocessableEntity(c, err.Error())
+			response.Conflict(c, err.Error())
 		default:
 			response.InternalError(c, "Failed to hold experiment for review")
 		}
@@ -1748,10 +1778,6 @@ func (h *AdminHandler) LockAdminExperiment(c *gin.Context) {
 		}
 	}
 	req = normalizeLockAdminExperimentRequest(req)
-	if req.LockedUntil != nil && !req.LockedUntil.After(time.Now().UTC()) {
-		response.UnprocessableEntity(c, "locked_until must be in the future")
-		return
-	}
 
 	var adminID *uuid.UUID
 	if value, ok := c.Get("admin_id"); ok {
@@ -1866,7 +1892,7 @@ func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus st
 		case errors.Is(err, service.ErrExperimentNotFound):
 			response.NotFound(c, "Experiment not found")
 		case errors.Is(err, service.ErrInvalidStatusTransition):
-			response.UnprocessableEntity(c, err.Error())
+			response.Conflict(c, err.Error())
 		default:
 			response.InternalError(c, "Failed to update experiment status")
 		}
