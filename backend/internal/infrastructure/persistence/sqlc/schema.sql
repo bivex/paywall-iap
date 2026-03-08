@@ -89,3 +89,20 @@ CREATE TABLE grace_periods (
 CREATE INDEX idx_grace_periods_active
     ON grace_periods(user_id, status)
     WHERE status = 'active';
+
+CREATE TABLE automation_job_run_log (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    job_name                TEXT NOT NULL,
+    source                  TEXT NOT NULL,
+    idempotency_key         TEXT NOT NULL,
+    status                  TEXT NOT NULL CHECK (status IN ('running', 'completed', 'failed')),
+    payload                 JSONB,
+    details                 JSONB,
+    window_started_at       TIMESTAMPTZ NOT NULL,
+    window_duration_seconds INTEGER NOT NULL CHECK (window_duration_seconds > 0),
+    started_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    finished_at             TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX idx_automation_job_run_log_idempotency
+    ON automation_job_run_log(idempotency_key);

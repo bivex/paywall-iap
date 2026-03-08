@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -235,6 +236,58 @@ func TestGetObjectiveConfig_GinWrappedRouteAcceptsValidExperimentID(t *testing.T
 	require.InDelta(t, 0.5, body.Weights["conversion"], 0.0001)
 	require.InDelta(t, 0.3, body.Weights["ltv"], 0.0001)
 	require.InDelta(t, 0.2, body.Weights["revenue"], 0.0001)
+}
+
+func TestProcessConversion_RejectsNullCurrency(t *testing.T) {
+	t.Helper()
+
+	handler := NewBanditAdvancedHandler(nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/conversions", strings.NewReader(`{"transaction_id":"e3e70682-c209-4cac-629f-6fbed82c07cd","user_id":"e3e70682-c209-4cac-629f-6fbed82c07cd","conversion_value":0,"currency":null}`))
+	res := httptest.NewRecorder()
+
+	handler.ProcessConversion(res, req)
+
+	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
+	require.JSONEq(t, `{"error":"Invalid request body"}`, res.Body.String())
+}
+
+func TestProcessConversion_RejectsNullConversionValue(t *testing.T) {
+	t.Helper()
+
+	handler := NewBanditAdvancedHandler(nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/conversions", strings.NewReader(`{"transaction_id":"e3e70682-c209-4cac-629f-6fbed82c07cd","user_id":"e3e70682-c209-4cac-629f-6fbed82c07cd","conversion_value":null,"currency":"USD"}`))
+	res := httptest.NewRecorder()
+
+	handler.ProcessConversion(res, req)
+
+	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
+	require.JSONEq(t, `{"error":"Invalid request body"}`, res.Body.String())
+}
+
+func TestConvertCurrency_RejectsNullCurrency(t *testing.T) {
+	t.Helper()
+
+	handler := NewBanditAdvancedHandler(nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/currency/convert", strings.NewReader(`{"amount":0,"currency":null}`))
+	res := httptest.NewRecorder()
+
+	handler.ConvertCurrency(res, req)
+
+	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
+	require.JSONEq(t, `{"error":"Invalid request body"}`, res.Body.String())
+}
+
+func TestConvertCurrency_RejectsNullAmount(t *testing.T) {
+	t.Helper()
+
+	handler := NewBanditAdvancedHandler(nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/currency/convert", strings.NewReader(`{"amount":null,"currency":"USD"}`))
+	res := httptest.NewRecorder()
+
+	handler.ConvertCurrency(res, req)
+
+	require.Equal(t, http.StatusBadRequest, res.Code, "body=%s", res.Body.String())
+	require.JSONEq(t, `{"error":"Invalid request body"}`, res.Body.String())
 }
 
 type assertAnError string

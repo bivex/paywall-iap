@@ -107,7 +107,7 @@ type RewardRequest struct {
 	ExperimentID string  `json:"experiment_id" binding:"required,uuid"`
 	ArmID        string  `json:"arm_id" binding:"required,uuid"`
 	UserID       string  `json:"user_id" binding:"required,uuid"`
-	Reward       float64 `json:"reward" binding:"required"`
+	Reward       *float64 `json:"reward" binding:"required"`
 	Currency     string  `json:"currency,omitempty"`
 }
 
@@ -153,11 +153,16 @@ func (h *BanditHandler) Reward(c *gin.Context) {
 	// using a currency conversion service
 	// reward = convertToUSD(req.Reward, req.Currency)
 
-	reward := req.Reward
+	reward := *req.Reward
 
 	// Update the bandit with the reward
 	err = h.banditService.UpdateReward(c.Request.Context(), experimentID, armID, reward)
 	if err != nil {
+		if errors.Is(err, service.ErrBanditArmNotFound) {
+			response.NotFound(c, "Arm not found")
+			return
+		}
+
 		response.InternalError(c, "Failed to record reward: "+err.Error())
 		return
 	}

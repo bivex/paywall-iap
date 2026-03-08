@@ -18,6 +18,9 @@ var ErrAssignmentNotFound = errors.New("assignment not found")
 // ErrExperimentArmsNotFound is returned when an experiment has no available arms.
 var ErrExperimentArmsNotFound = errors.New("experiment arms not found")
 
+// ErrBanditArmNotFound is returned when a reward references a non-existent arm.
+var ErrBanditArmNotFound = errors.New("bandit arm not found")
+
 // BanditRepository defines the interface for bandit data persistence
 type BanditRepository interface {
 	GetArms(ctx context.Context, experimentID uuid.UUID) ([]Arm, error)

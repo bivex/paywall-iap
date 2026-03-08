@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS automation_job_run_log;

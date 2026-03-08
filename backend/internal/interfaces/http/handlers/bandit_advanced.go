@@ -111,14 +111,9 @@ func (h *BanditAdvancedHandler) UpdateCurrencyRates(w http.ResponseWriter, r *ht
 
 // ConvertCurrency converts an amount between currencies
 func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.Request) {
-	if h.currencyService == nil {
-		http.Error(w, "Currency service not available", http.StatusServiceUnavailable)
-		return
-	}
-
 	var req struct {
-		Amount   float64 `json:"amount"`
-		Currency string  `json:"currency"`
+		Amount   *float64 `json:"amount"`
+		Currency string   `json:"currency"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -126,14 +121,24 @@ func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	converted, err := h.currencyService.ConvertToUSD(r.Context(), req.Amount, req.Currency)
+	if req.Amount == nil || strings.TrimSpace(req.Currency) == "" {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if h.currencyService == nil {
+		http.Error(w, "Currency service not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	converted, err := h.currencyService.ConvertToUSD(r.Context(), *req.Amount, req.Currency)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
-		"original_amount":   req.Amount,
+		"original_amount":   *req.Amount,
 		"original_currency": req.Currency,
 		"converted_amount":  converted,
 		"target_currency":   "USD",
@@ -293,7 +298,7 @@ func (h *BanditAdvancedHandler) ProcessConversion(w http.ResponseWriter, r *http
 	var req struct {
 		TransactionID   uuid.UUID `json:"transaction_id"`
 		UserID          uuid.UUID `json:"user_id"`
-		ConversionValue float64   `json:"conversion_value"`
+		ConversionValue *float64  `json:"conversion_value"`
 		Currency        string    `json:"currency"`
 	}
 
@@ -302,11 +307,16 @@ func (h *BanditAdvancedHandler) ProcessConversion(w http.ResponseWriter, r *http
 		return
 	}
 
+	if req.TransactionID == uuid.Nil || req.UserID == uuid.Nil || req.ConversionValue == nil || strings.TrimSpace(req.Currency) == "" {
+		respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
 	if err := h.engine.ProcessConversion(
 		r.Context(),
 		req.TransactionID,
 		req.UserID,
-		req.ConversionValue,
+		*req.ConversionValue,
 		req.Currency,
 	); err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())

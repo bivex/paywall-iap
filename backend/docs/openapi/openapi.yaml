@@ -1431,7 +1431,10 @@ components:
       required: [amount, currency]
       properties:
         amount: { type: number }
-        currency: { type: string }
+        currency:
+          type: string
+          minLength: 1
+          enum: [USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, INR, BRL, KRW]
     ConvertCurrencyResponse:
       type: object
       required: [original_amount, original_currency, converted_amount, target_currency]
@@ -1491,6 +1494,7 @@ components:
           enum: [conversion, ltv, revenue, hybrid]
         objective_weights:
           type: object
+          minProperties: 1
           additionalProperties:
             type: number
     ObjectiveConfigUpdateResponse:
@@ -1615,7 +1619,9 @@ components:
           type: string
           format: uuid
         conversion_value: { type: number }
-        currency: { type: string }
+        currency:
+          type: string
+          minLength: 1
     ProcessConversionResponse:
       type: object
       required: [message, transaction_id]

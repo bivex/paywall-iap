@@ -64,9 +64,11 @@ func main() {
 
 	// Initialize advanced bandit services for worker
 	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
+	automationJobRunRepo := repository.NewAutomationJobRunRepository(dbPool)
 	experimentAdminRepo := repository.NewExperimentAdminRepository(dbPool)
 	experimentAdminService := service.NewExperimentAdminService(experimentAdminRepo)
 	experimentReconciler := service.NewExperimentAutomationReconciler(experimentAdminRepo, experimentAdminService)
+	automationJobExecutor := service.NewAutomationJobExecutionService(automationJobRunRepo)
 	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
 	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
 	currencyService := service.NewCurrencyRateService(redisClient, logging.Logger)
@@ -101,9 +103,9 @@ func main() {
 	worker_tasks.RegisterHandlers(mux, taskHandlers)
 
 	// Register advanced bandit worker handlers
-	worker_tasks.RegisterCurrencyTasks(mux, currencyService, logging.Logger)
-	worker_tasks.RegisterBanditMaintenanceTasks(mux, advancedBanditEngine, logging.Logger)
-	worker_tasks.RegisterExperimentAutomationTasks(mux, experimentReconciler, logging.Logger)
+	worker_tasks.RegisterCurrencyTasks(mux, currencyService, automationJobExecutor, logging.Logger)
+	worker_tasks.RegisterBanditMaintenanceTasks(mux, advancedBanditEngine, automationJobExecutor, logging.Logger)
+	worker_tasks.RegisterExperimentAutomationTasks(mux, experimentReconciler, automationJobExecutor, logging.Logger)
 
 	// Start server in background
 	if err := server.Start(mux); err != nil {

@@ -3,6 +3,7 @@ package tasks
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
@@ -15,16 +16,27 @@ import (
 // =====================================================
 
 // RegisterCurrencyTasks registers currency-related task handlers
-func RegisterCurrencyTasks(mux *asynq.ServeMux, currencyService *service.CurrencyRateService, logger *zap.Logger) {
+func RegisterCurrencyTasks(mux *asynq.ServeMux, currencyService *service.CurrencyRateService, executor *service.AutomationJobExecutionService, logger *zap.Logger) {
 	mux.HandleFunc("currency:update", func(ctx context.Context, t *asynq.Task) error {
-		logger.Info("Processing currency rate update")
-
-		if err := currencyService.UpdateRates(ctx); err != nil {
+		executed, err := executor.ExecuteScheduled(ctx, service.ScheduledAutomationJobSpec{
+			JobName: "currency:update",
+			Source:  "asynq_scheduler",
+			Window:  30 * time.Minute,
+		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
+			logger.Info("Processing currency rate update")
+			if err := currencyService.UpdateRates(ctx); err != nil {
+				return nil, err
+			}
+			logger.Info("Currency rates updated successfully")
+			return map[string]any{"operation": "update_rates"}, nil
+		})
+		if err != nil {
 			logger.Error("Failed to update currency rates", zap.Error(err))
 			return err
 		}
-
-		logger.Info("Currency rates updated successfully")
+		if !executed {
+			logger.Info("Skipping duplicate currency rate update within scheduled window")
+		}
 		return nil
 	})
 }
@@ -49,22 +61,31 @@ func RegisterCurrencyScheduledTasks(scheduler *asynq.Scheduler) error {
 // =====================================================
 
 // RegisterBanditMaintenanceTasks registers bandit maintenance task handlers
-func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service.AdvancedBanditEngine, logger *zap.Logger) {
+func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service.AdvancedBanditEngine, executor *service.AutomationJobExecutionService, logger *zap.Logger) {
 	mux.HandleFunc("bandit:maintenance:full", func(ctx context.Context, t *asynq.Task) error {
-		logger.Info("Processing full bandit maintenance")
-
-		if err := advancedEngine.RunMaintenance(ctx); err != nil {
+		executed, err := executor.ExecuteScheduled(ctx, service.ScheduledAutomationJobSpec{
+			JobName: "bandit:maintenance:full",
+			Source:  "asynq_scheduler",
+			Window:  6 * time.Hour,
+		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
+			logger.Info("Processing full bandit maintenance")
+			if err := advancedEngine.RunMaintenance(ctx); err != nil {
+				return nil, err
+			}
+			logger.Info("Bandit maintenance completed")
+			return map[string]any{"maintenance": "full"}, nil
+		})
+		if err != nil {
 			logger.Error("Failed to run maintenance", zap.Error(err))
 			return err
 		}
-
-		logger.Info("Bandit maintenance completed")
+		if !executed {
+			logger.Info("Skipping duplicate full bandit maintenance within scheduled window")
+		}
 		return nil
 	})
 
 	mux.HandleFunc("bandit:maintenance:trim_windows", func(ctx context.Context, t *asynq.Task) error {
-		logger.Info("Processing window trimming")
-
 		// Parse batch size from payload
 		var payload struct {
 			BatchSize int `json:"batch_size"`
@@ -78,18 +99,29 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service
 			payload.BatchSize = 100
 		}
 
-		if err := advancedEngine.RunMaintenance(ctx); err != nil {
+		executed, err := executor.ExecuteScheduled(ctx, service.ScheduledAutomationJobSpec{
+			JobName: "bandit:maintenance:trim_windows",
+			Source:  "asynq_scheduler",
+			Window:  time.Hour,
+		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
+			logger.Info("Processing window trimming", zap.Int("batch_size", payload.BatchSize))
+			if err := advancedEngine.RunMaintenance(ctx); err != nil {
+				return nil, err
+			}
+			logger.Info("Window trimming completed")
+			return map[string]any{"maintenance": "trim_windows", "batch_size": payload.BatchSize}, nil
+		})
+		if err != nil {
 			logger.Error("Failed to trim windows", zap.Error(err))
 			return err
 		}
-
-		logger.Info("Window trimming completed")
+		if !executed {
+			logger.Info("Skipping duplicate window trimming within scheduled window")
+		}
 		return nil
 	})
 
 	mux.HandleFunc("bandit:maintenance:process_expired", func(ctx context.Context, t *asynq.Task) error {
-		logger.Info("Processing expired pending rewards")
-
 		// Parse batch size from payload
 		var payload struct {
 			BatchSize int `json:"batch_size"`
@@ -103,12 +135,25 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine *service
 			payload.BatchSize = 100
 		}
 
-		if err := advancedEngine.RunMaintenance(ctx); err != nil {
+		executed, err := executor.ExecuteScheduled(ctx, service.ScheduledAutomationJobSpec{
+			JobName: "bandit:maintenance:process_expired",
+			Source:  "asynq_scheduler",
+			Window:  15 * time.Minute,
+		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
+			logger.Info("Processing expired pending rewards", zap.Int("batch_size", payload.BatchSize))
+			if err := advancedEngine.RunMaintenance(ctx); err != nil {
+				return nil, err
+			}
+			logger.Info("Expired rewards processed")
+			return map[string]any{"maintenance": "process_expired", "batch_size": payload.BatchSize}, nil
+		})
+		if err != nil {
 			logger.Error("Failed to process expired rewards", zap.Error(err))
 			return err
 		}
-
-		logger.Info("Expired rewards processed")
+		if !executed {
+			logger.Info("Skipping duplicate expired reward processing within scheduled window")
+		}
 		return nil
 	})
 }

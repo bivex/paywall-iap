@@ -133,6 +133,16 @@ func (r *PostgresBanditRepository) GetArmStats(ctx context.Context, armID uuid.U
 	)
 
 	if err == pgx.ErrNoRows {
+		var armExists bool
+		existsQuery := `SELECT EXISTS(SELECT 1 FROM ab_test_arms WHERE id = $1)`
+		if existsErr := r.pool.QueryRow(ctx, existsQuery, armID).Scan(&armExists); existsErr != nil {
+			return nil, fmt.Errorf("failed to verify arm existence: %w", existsErr)
+		}
+
+		if !armExists {
+			return nil, service.ErrBanditArmNotFound
+		}
+
 		// Return default stats if not found
 		return &service.ArmStats{
 			ArmID:       armID,
