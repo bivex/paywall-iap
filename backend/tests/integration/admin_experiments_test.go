@@ -542,6 +542,61 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.Equal(t, confirmVariantArmID.String(), adminWinningArm)
 	})
 
+	t.Run("POST confirm-winner rejects experiments under active automation lock", func(t *testing.T) {
+		lockedExperimentID := uuid.New()
+		lockedControlArmID := uuid.New()
+		lockedVariantArmID := uuid.New()
+
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_tests (
+				id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
+			) VALUES (
+				$1, 'Locked confirm winner regression', 'manual override blocks confirmation', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
+				'{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":true,"lock_reason":"Operator hold"}'::jsonb
+			)
+		`, lockedExperimentID)
+		require.NoError(t, err)
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
+			VALUES
+				($1, $3, 'Control', 'Baseline', true, 1.0),
+				($2, $3, 'Variant Winner', 'Winner candidate', false, 1.0)
+		`, lockedControlArmID, lockedVariantArmID, lockedExperimentID)
+		require.NoError(t, err)
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_test_arm_stats (arm_id, alpha, beta, samples, conversions, revenue, avg_reward)
+			VALUES
+				($1, 5, 9, 12, 4, 40, 3.3333),
+				($2, 28, 4, 29, 27, 290, 10.0)
+		`, lockedControlArmID, lockedVariantArmID)
+		require.NoError(t, err)
+		defer func() {
+			_, cleanupErr := db.Exec(ctx, `DELETE FROM ab_tests WHERE id = $1`, lockedExperimentID)
+			require.NoError(t, cleanupErr)
+		}()
+
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+lockedExperimentID.String()+"/confirm-winner", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+
+		var status string
+		err = db.QueryRow(ctx, `SELECT status FROM ab_tests WHERE id = $1`, lockedExperimentID).Scan(&status)
+		require.NoError(t, err)
+		assert.Equal(t, "running", status)
+
+		var lifecycleRows int
+		err = db.QueryRow(ctx, `SELECT COUNT(*) FROM experiment_lifecycle_audit_log WHERE experiment_id = $1`, lockedExperimentID).Scan(&lifecycleRows)
+		require.NoError(t, err)
+		assert.Zero(t, lifecycleRows)
+
+		var adminRows int
+		err = db.QueryRow(ctx, `SELECT COUNT(*) FROM admin_audit_log WHERE admin_id = $1 AND details->>'experiment_id' = $2`, adminID, lockedExperimentID.String()).Scan(&adminRows)
+		require.NoError(t, err)
+		assert.Zero(t, adminRows)
+	})
+
 	t.Run("POST hold-for-review pauses experiment and enables manual override with audits", func(t *testing.T) {
 		holdExperimentID := uuid.New()
 		holdControlArmID := uuid.New()
@@ -613,6 +668,73 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			ORDER BY created_at DESC
 			LIMIT 1
 		`, adminID, holdExperimentID.String()).Scan(&adminAction, &adminLockReason)
+		require.NoError(t, err)
+		assert.Equal(t, "hold_experiment_for_review", adminAction)
+		assert.Equal(t, "Hold recommended winner for review", adminLockReason)
+	})
+
+	t.Run("POST hold-for-review keeps paused experiment paused and only updates review lock metadata", func(t *testing.T) {
+		pausedExperimentID := uuid.New()
+		pausedControlArmID := uuid.New()
+		pausedVariantArmID := uuid.New()
+
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_tests (
+				id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
+			) VALUES (
+				$1, 'Paused hold for review regression', 'lock metadata only path', 'paused', 'thompson_sampling', true, 20, 0.95, 0.97,
+				'{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false}'::jsonb
+			)
+		`, pausedExperimentID)
+		require.NoError(t, err)
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
+			VALUES
+				($1, $3, 'Control', 'Baseline', true, 1.0),
+				($2, $3, 'Variant Winner', 'Winner candidate', false, 1.0)
+		`, pausedControlArmID, pausedVariantArmID, pausedExperimentID)
+		require.NoError(t, err)
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_test_arm_stats (arm_id, alpha, beta, samples, conversions, revenue, avg_reward)
+			VALUES
+				($1, 5, 9, 12, 4, 40, 3.3333),
+				($2, 28, 4, 29, 27, 290, 10.0)
+		`, pausedControlArmID, pausedVariantArmID)
+		require.NoError(t, err)
+		defer func() {
+			_, cleanupErr := db.Exec(ctx, `DELETE FROM ab_tests WHERE id = $1`, pausedExperimentID)
+			require.NoError(t, cleanupErr)
+		}()
+
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+pausedExperimentID.String()+"/hold-for-review", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "paused", resp.Data.Status)
+		assert.True(t, resp.Data.AutomationPolicy.ManualOverride)
+		require.NotNil(t, resp.Data.AutomationPolicy.LockReason)
+		assert.Equal(t, "Hold recommended winner for review", *resp.Data.AutomationPolicy.LockReason)
+		assert.Nil(t, resp.Data.LatestLifecycleAudit)
+
+		var lifecycleRows int
+		err = db.QueryRow(ctx, `SELECT COUNT(*) FROM experiment_lifecycle_audit_log WHERE experiment_id = $1`, pausedExperimentID).Scan(&lifecycleRows)
+		require.NoError(t, err)
+		assert.Zero(t, lifecycleRows)
+
+		var adminAction string
+		var adminLockReason string
+		err = db.QueryRow(ctx, `
+			SELECT action, details->>'lock_reason'
+			FROM admin_audit_log
+			WHERE admin_id = $1 AND details->>'experiment_id' = $2
+			ORDER BY created_at DESC
+			LIMIT 1
+		`, adminID, pausedExperimentID.String()).Scan(&adminAction, &adminLockReason)
 		require.NoError(t, err)
 		assert.Equal(t, "hold_experiment_for_review", adminAction)
 		assert.Equal(t, "Hold recommended winner for review", adminLockReason)

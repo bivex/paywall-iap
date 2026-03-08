@@ -235,6 +235,39 @@ func TestExperimentAdminService(t *testing.T) {
 		assert.Equal(t, actorID, *repo.updatedPolicy.LockedBy)
 	})
 
+	t.Run("HoldExperimentForReview clears timed lock metadata before applying manual override", func(t *testing.T) {
+		actorID := uuid.New()
+		lockedUntil := time.Date(2026, 3, 10, 8, 0, 0, 0, time.UTC)
+		oldReason := "Existing timed freeze"
+		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "running", AutomationPolicy: ExperimentAutomationPolicy{
+			Enabled:        true,
+			LockedUntil:    &lockedUntil,
+			LockReason:     &oldReason,
+			ManualOverride: false,
+		}}}
+		svc := NewExperimentAdminService(repo)
+
+		err := svc.HoldExperimentForReview(ctx, experimentID, ExperimentLockInput{LockedBy: &actorID, LockReason: "Hold recommended winner for review"}, nil)
+
+		require.NoError(t, err)
+		require.NotNil(t, repo.updatedPolicy)
+		assert.Nil(t, repo.updatedPolicy.LockedUntil)
+		assert.True(t, repo.updatedPolicy.ManualOverride)
+		require.NotNil(t, repo.updatedPolicy.LockReason)
+		assert.Equal(t, "Hold recommended winner for review", *repo.updatedPolicy.LockReason)
+	})
+
+	t.Run("HoldExperimentForReview rejects completed experiment", func(t *testing.T) {
+		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "completed", AutomationPolicy: DefaultExperimentAutomationPolicy()}}
+		svc := NewExperimentAdminService(repo)
+
+		err := svc.HoldExperimentForReview(ctx, experimentID, ExperimentLockInput{}, nil)
+
+		require.ErrorIs(t, err, ErrInvalidStatusTransition)
+		assert.Nil(t, repo.updatedPolicy)
+		assert.Empty(t, repo.updatedStatus)
+	})
+
 	t.Run("TransitionExperimentStatusWithAudit forwards audit metadata", func(t *testing.T) {
 		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "draft"}}
 		svc := NewExperimentAdminService(repo)
