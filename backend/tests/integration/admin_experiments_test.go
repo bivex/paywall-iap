@@ -819,6 +819,8 @@ func TestAdminExperimentsHandler(t *testing.T) {
 
 	t.Run("GET tolerates missing optional experiment audit tables", func(t *testing.T) {
 		_, err := db.Exec(ctx, `
+			ALTER TABLE ab_tests DROP COLUMN automation_policy;
+			ALTER TABLE ab_test_arms DROP COLUMN pricing_tier_id;
 			DROP TABLE experiment_winner_recommendation_log;
 			DROP TABLE experiment_lifecycle_audit_log;
 		`)
