@@ -21,6 +21,6 @@ func TestServeYAML(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, recorder.Code)
 	require.Contains(t, recorder.Header().Get("Content-Type"), "application/yaml")
-	require.Contains(t, recorder.Body.String(), "openapi: 3.0.3")
+	require.Contains(t, recorder.Body.String(), "openapi: 3.1.0")
 	require.Contains(t, recorder.Body.String(), "/v1/auth/register")
 }

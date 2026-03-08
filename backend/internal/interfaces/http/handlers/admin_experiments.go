@@ -16,7 +16,10 @@ import (
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
-const adminExperimentHoldForReviewReason = "Hold recommended winner for review"
+const (
+	adminExperimentHoldForReviewReason = "Hold recommended winner for review"
+	adminExperimentMaxMinSampleSize    = 2147483647
+)
 
 type AdminExperimentArm struct {
 	ID            uuid.UUID  `json:"id"`
@@ -587,6 +590,9 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	if req.MinSampleSize <= 0 {
 		return "Minimum sample size must be greater than zero"
 	}
+	if req.MinSampleSize > adminExperimentMaxMinSampleSize {
+		return "Minimum sample size must be less than or equal to 2147483647"
+	}
 	if req.ConfidenceThresholdPercent <= 0 || req.ConfidenceThresholdPercent > 100 {
 		return "Confidence threshold must be between 0 and 100"
 	}
@@ -627,6 +633,9 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 	}
 	if req.MinSampleSize <= 0 {
 		return "Minimum sample size must be greater than zero"
+	}
+	if req.MinSampleSize > adminExperimentMaxMinSampleSize {
+		return "Minimum sample size must be less than or equal to 2147483647"
 	}
 	if req.ConfidenceThresholdPercent <= 0 || req.ConfidenceThresholdPercent > 100 {
 		return "Confidence threshold must be between 0 and 100"

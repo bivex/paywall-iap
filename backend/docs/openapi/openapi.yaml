@@ -1,4 +1,5 @@
-openapi: 3.0.3
+openapi: 3.1.0
+jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Paywall IAP API
   version: 1.0.0
@@ -969,6 +970,48 @@ paths:
       responses:
         '200':
           description: Experiment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/experiments/{id}/confirm-winner:
+    post:
+      tags: [admin]
+      summary: Confirm recommended experiment winner
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Experiment completed using the current winner recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminExperimentEnvelope'
+        '400': { $ref: '#/components/responses/Error400' }
+        '401': { $ref: '#/components/responses/Error401' }
+        '403': { $ref: '#/components/responses/Error403' }
+        '404': { $ref: '#/components/responses/Error404' }
+        '422': { $ref: '#/components/responses/Error422' }
+        '500': { $ref: '#/components/responses/Error500' }
+  /v1/admin/experiments/{id}/hold-for-review:
+    post:
+      tags: [admin]
+      summary: Pause experiment and hold winner recommendation for review
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExperimentId'
+      responses:
+        '200':
+          description: Experiment updated and held for manual review
           content:
             application/json:
               schema:
@@ -2591,6 +2634,65 @@ components:
         complete_on_sample_size: { type: boolean }
         complete_on_confidence: { type: boolean }
         manual_override: { type: boolean }
+    AutomationPolicyInput:
+      type: object
+      properties:
+        enabled:
+          oneOf:
+            - type: boolean
+            - type: 'null'
+        auto_start:
+          oneOf:
+            - type: boolean
+            - type: 'null'
+        auto_complete:
+          oneOf:
+            - type: boolean
+            - type: 'null'
+        complete_on_end_time:
+          oneOf:
+            - type: boolean
+            - type: 'null'
+        complete_on_sample_size:
+          oneOf:
+            - type: boolean
+            - type: 'null'
+        complete_on_confidence:
+          oneOf:
+            - type: boolean
+            - type: 'null'
+        manual_override:
+          oneOf:
+            - type: boolean
+            - type: 'null'
+        locked_until:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        locked_by:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        lock_reason:
+          oneOf:
+            - type: string
+            - type: 'null'
+    CreateAdminExperimentControlArmRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateAdminExperimentArmRequest'
+        - type: object
+          properties:
+            is_control:
+              const: true
+    CreateAdminExperimentVariantArmRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateAdminExperimentArmRequest'
+        - type: object
+          properties:
+            is_control:
+              const: false
     AdminExperimentArm:
       type: object
       required: [id, name, description, is_control, traffic_weight, samples, conversions, revenue, avg_reward]
@@ -2664,6 +2766,7 @@ components:
           type: number
           minimum: 0
           exclusiveMinimum: true
+          maximum: 9.99
     CreateAdminExperimentRequest:
       type: object
       required: [name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent, arms]
@@ -2688,7 +2791,9 @@ components:
         is_bandit: { type: boolean }
         min_sample_size:
           type: integer
+          format: int32
           minimum: 1
+          maximum: 2147483647
         confidence_threshold_percent:
           type: number
           minimum: 0
@@ -2703,12 +2808,23 @@ components:
           format: date-time
           nullable: true
         automation_policy:
-          $ref: '#/components/schemas/AutomationPolicy'
+          oneOf:
+            - $ref: '#/components/schemas/AutomationPolicyInput'
+            - type: 'null'
         arms:
-          type: array
-          minItems: 2
-          items:
-            $ref: '#/components/schemas/CreateAdminExperimentArmRequest'
+          oneOf:
+            - type: array
+              minItems: 2
+              maxItems: 2
+              prefixItems:
+                - $ref: '#/components/schemas/CreateAdminExperimentControlArmRequest'
+                - $ref: '#/components/schemas/CreateAdminExperimentVariantArmRequest'
+            - type: array
+              minItems: 2
+              maxItems: 2
+              prefixItems:
+                - $ref: '#/components/schemas/CreateAdminExperimentVariantArmRequest'
+                - $ref: '#/components/schemas/CreateAdminExperimentControlArmRequest'
     UpdateAdminExperimentRequest:
       type: object
       required: [name, description, algorithm_type, is_bandit, min_sample_size, confidence_threshold_percent]
@@ -2730,7 +2846,9 @@ components:
         is_bandit: { type: boolean }
         min_sample_size:
           type: integer
+          format: int32
           minimum: 1
+          maximum: 2147483647
         confidence_threshold_percent:
           type: number
           minimum: 0
@@ -2745,7 +2863,9 @@ components:
           format: date-time
           nullable: true
         automation_policy:
-          $ref: '#/components/schemas/AutomationPolicy'
+          oneOf:
+            - $ref: '#/components/schemas/AutomationPolicyInput'
+            - type: 'null'
     PricingTier:
       type: object
       required: [id, name, description, currency, features, is_active, created_at, updated_at]

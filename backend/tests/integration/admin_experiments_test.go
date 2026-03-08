@@ -295,6 +295,34 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		draftExperiment = resp.Data
 	})
 
+	t.Run("POST rejects min_sample_size values above int32", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Oversized sample size",
+			"description":"Should fail before insert",
+			"status":"draft",
+			"algorithm_type":"ucb",
+			"is_bandit":true,
+			"min_sample_size":2147483648,
+			"confidence_threshold_percent":95,
+			"arms":[
+				{"name":"Control","description":"Baseline","is_control":true,"traffic_weight":1},
+				{"name":"Variant","description":"Candidate","is_control":false,"traffic_weight":1}
+			]
+		}`)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Minimum sample size must be less than or equal to 2147483647")
+
+		var experimentCount int
+		err := db.QueryRow(ctx, `SELECT COUNT(*) FROM ab_tests WHERE name = 'Oversized sample size'`).Scan(&experimentCount)
+		require.NoError(t, err)
+		assert.Zero(t, experimentCount)
+	})
+
 	t.Run("GET returns created experiment", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
 		w := httptest.NewRecorder()
@@ -784,6 +812,29 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	})
+
+	t.Run("PUT rejects min_sample_size values above int32", func(t *testing.T) {
+		body := []byte(`{
+			"name":"Draft onboarding test",
+			"description":"Prepare a staged rollout",
+			"algorithm_type":"thompson_sampling",
+			"is_bandit":true,
+			"min_sample_size":2147483648,
+			"confidence_threshold_percent":90
+		}`)
+		req := httptest.NewRequest(http.MethodPut, "/v1/admin/experiments/"+draftExperiment.ID.String(), bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+		assert.Contains(t, w.Body.String(), "Minimum sample size must be less than or equal to 2147483647")
+
+		var minSampleSize int
+		err := db.QueryRow(ctx, `SELECT min_sample_size FROM ab_tests WHERE id = $1`, draftExperiment.ID).Scan(&minSampleSize)
+		require.NoError(t, err)
+		assert.Equal(t, draftExperiment.MinSampleSize, minSampleSize)
 	})
 
 	t.Run("PUT updates a draft experiment metadata", func(t *testing.T) {
