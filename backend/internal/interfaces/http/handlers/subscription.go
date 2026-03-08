@@ -86,7 +86,6 @@ func (h *SubscriptionHandler) CheckAccess(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Security Bearer
-// @Param request body command.CancelSubscriptionRequest true "Cancel request"
 // @Success 204
 // @Failure 401 {object} response.ErrorResponse
 // @Failure 404 {object} response.ErrorResponse

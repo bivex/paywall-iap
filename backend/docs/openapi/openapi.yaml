@@ -699,12 +699,6 @@ paths:
       summary: Cancel current subscription
       security:
         - BearerAuth: []
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CancelSubscriptionRequest'
       responses:
         '204':
           description: Subscription canceled
