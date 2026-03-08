@@ -10,9 +10,81 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
 	"github.com/bivex/paywall-iap/tests/testutil"
 )
+
+func TestPostgresBanditRepository_CreateAssignmentPersistsImmutableEvent(t *testing.T) {
+	ctx := context.Background()
+	db, cleanup, err := testutil.SetupTestDB(ctx)
+	require.NoError(t, err)
+	defer cleanup()
+
+	_, err = db.Exec(ctx, `
+		CREATE EXTENSION IF NOT EXISTS pgcrypto;
+		CREATE TABLE ab_tests (id UUID PRIMARY KEY, name TEXT NOT NULL);
+		CREATE TABLE ab_test_arms (id UUID PRIMARY KEY, experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE, name TEXT NOT NULL);
+		CREATE TABLE ab_test_assignments (
+			id UUID PRIMARY KEY,
+			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+			user_id UUID NOT NULL,
+			arm_id UUID NOT NULL REFERENCES ab_test_arms(id) ON DELETE CASCADE,
+			assigned_at TIMESTAMPTZ NOT NULL,
+			expires_at TIMESTAMPTZ NOT NULL,
+			CONSTRAINT unique_assignment UNIQUE (experiment_id, user_id)
+		);
+		CREATE TABLE bandit_assignment_events (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			assignment_id UUID NOT NULL REFERENCES ab_test_assignments(id) ON DELETE CASCADE,
+			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+			user_id UUID NOT NULL,
+			arm_id UUID NOT NULL REFERENCES ab_test_arms(id) ON DELETE CASCADE,
+			event_type TEXT NOT NULL,
+			metadata JSONB,
+			occurred_at TIMESTAMPTZ NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
+	`)
+	require.NoError(t, err)
+
+	experimentID := uuid.New()
+	armID := uuid.New()
+	userID := uuid.New()
+	assignmentID := uuid.New()
+	assignedAt := time.Date(2026, 3, 8, 18, 0, 0, 0, time.UTC)
+	assignment := &service.Assignment{
+		ID:           assignmentID,
+		ExperimentID: experimentID,
+		UserID:       userID,
+		ArmID:        armID,
+		AssignedAt:   assignedAt,
+		ExpiresAt:    assignedAt.Add(24 * time.Hour),
+	}
+
+	_, err = db.Exec(ctx, `INSERT INTO ab_tests (id, name) VALUES ($1, 'Bandit assignment test')`, experimentID)
+	require.NoError(t, err)
+	_, err = db.Exec(ctx, `INSERT INTO ab_test_arms (id, experiment_id, name) VALUES ($1, $2, 'Variant A')`, armID, experimentID)
+	require.NoError(t, err)
+
+	repo := repository.NewPostgresBanditRepository(db, zap.NewNop())
+	err = repo.CreateAssignment(ctx, assignment)
+	require.NoError(t, err)
+
+	var storedAssignmentID uuid.UUID
+	var storedArmID uuid.UUID
+	require.NoError(t, db.QueryRow(ctx, `SELECT id, arm_id FROM ab_test_assignments WHERE experiment_id = $1 AND user_id = $2`, experimentID, userID).Scan(&storedAssignmentID, &storedArmID))
+	assert.Equal(t, assignmentID, storedAssignmentID)
+	assert.Equal(t, armID, storedArmID)
+
+	var eventAssignmentID uuid.UUID
+	var eventType string
+	var occurredAt time.Time
+	require.NoError(t, db.QueryRow(ctx, `SELECT assignment_id, event_type, occurred_at FROM bandit_assignment_events WHERE assignment_id = $1`, assignmentID).Scan(&eventAssignmentID, &eventType, &occurredAt))
+	assert.Equal(t, assignmentID, eventAssignmentID)
+	assert.Equal(t, string(service.AssignmentEventTypeAssigned), eventType)
+	assert.Equal(t, assignedAt, occurredAt.UTC())
+}
 
 func TestPostgresBanditRepository_ProcessPendingConversionPersistsImmutableEvent(t *testing.T) {
 	ctx := context.Background()

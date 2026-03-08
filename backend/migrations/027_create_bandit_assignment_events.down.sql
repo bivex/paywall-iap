@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS bandit_assignment_events;

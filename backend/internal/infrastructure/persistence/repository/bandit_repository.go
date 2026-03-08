@@ -205,28 +205,61 @@ func (r *PostgresBanditRepository) UpdateArmStats(ctx context.Context, stats *se
 
 // CreateAssignment creates a new user assignment
 func (r *PostgresBanditRepository) CreateAssignment(ctx context.Context, assignment *service.Assignment) error {
-	query := `
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to begin assignment transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	assignedAt := normalizeOccurredAt(assignment.AssignedAt)
+	var assignmentID uuid.UUID
+	err = tx.QueryRow(ctx, `
 		INSERT INTO ab_test_assignments (id, experiment_id, user_id, arm_id, assigned_at, expires_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		ON CONFLICT (experiment_id, user_id) WHERE expires_at > NOW()
+		ON CONFLICT (experiment_id, user_id)
 		DO UPDATE SET
-			arm_id = $4,
-			assigned_at = $5,
-			expires_at = $6
-	`
-
-	_, err := r.pool.Exec(ctx, query,
+			arm_id = EXCLUDED.arm_id,
+			assigned_at = EXCLUDED.assigned_at,
+			expires_at = EXCLUDED.expires_at
+		RETURNING id
+	`,
 		assignment.ID,
 		assignment.ExperimentID,
 		assignment.UserID,
 		assignment.ArmID,
-		assignment.AssignedAt,
+		assignedAt,
 		assignment.ExpiresAt,
-	)
-
+	).Scan(&assignmentID)
 	if err != nil {
 		return fmt.Errorf("failed to create assignment: %w", err)
 	}
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO bandit_assignment_events (
+			assignment_id,
+			experiment_id,
+			user_id,
+			arm_id,
+			event_type,
+			occurred_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`,
+		assignmentID,
+		assignment.ExperimentID,
+		assignment.UserID,
+		assignment.ArmID,
+		service.AssignmentEventTypeAssigned,
+		assignedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to append assignment event: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit assignment transaction: %w", err)
+	}
+	assignment.ID = assignmentID
 
 	r.logger.Debug("Created assignment",
 		zap.String("experiment_id", assignment.ExperimentID.String()),
@@ -260,7 +293,7 @@ func (r *PostgresBanditRepository) GetActiveAssignment(ctx context.Context, expe
 	)
 
 	if err == pgx.ErrNoRows {
-		return nil, fmt.Errorf("no active assignment found")
+		return nil, service.ErrAssignmentNotFound
 	}
 
 	if err != nil {

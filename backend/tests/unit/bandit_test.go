@@ -187,6 +187,12 @@ func TestSelectArm(t *testing.T) {
 		repo.On("GetArmStats", ctx, arm1ID).Return(stats1, nil)
 		repo.On("GetArmStats", ctx, arm2ID).Return(stats2, nil)
 		repo.On("GetArmStats", ctx, arm3ID).Return(stats3, nil)
+		repo.On("CreateAssignment", ctx, mock.MatchedBy(func(assignment *service.Assignment) bool {
+			return assignment.ExperimentID == experimentID &&
+				assignment.UserID == userID &&
+				containsUUID([]uuid.UUID{arm1ID, arm2ID, arm3ID}, assignment.ArmID) &&
+				assignment.ExpiresAt.After(assignment.AssignedAt)
+		})).Return(nil)
 
 		armID, err := bandit.SelectArm(ctx, experimentID, userID)
 
@@ -206,6 +212,12 @@ func TestSelectArm(t *testing.T) {
 		repo.On("GetActiveAssignment", ctx, experimentID, userID).Return(nil, service.ErrAssignmentNotFound)
 		repo.On("GetArms", ctx, experimentID).Return(arms, nil)
 		repo.On("GetArmStats", ctx, arm1ID).Return(&service.ArmStats{ArmID: arm1ID, Alpha: 1, Beta: 1}, nil)
+		repo.On("CreateAssignment", ctx, mock.MatchedBy(func(assignment *service.Assignment) bool {
+			return assignment.ExperimentID == experimentID &&
+				assignment.UserID == userID &&
+				assignment.ArmID == arm1ID &&
+				assignment.ExpiresAt.After(assignment.AssignedAt)
+		})).Return(nil)
 
 		selectedArmID, err := bandit.SelectArm(ctx, experimentID, userID)
 
@@ -413,6 +425,12 @@ func TestStickyAssignment(t *testing.T) {
 		repo.On("GetActiveAssignment", ctx, experimentID, userID).Return(nil, service.ErrAssignmentNotFound)
 		repo.On("GetArms", ctx, experimentID).Return(arms, nil)
 		repo.On("GetArmStats", ctx, armID).Return(&service.ArmStats{ArmID: armID, Alpha: 1, Beta: 1}, nil)
+		repo.On("CreateAssignment", ctx, mock.MatchedBy(func(assignment *service.Assignment) bool {
+			return assignment.ExperimentID == experimentID &&
+				assignment.UserID == userID &&
+				assignment.ArmID == armID &&
+				assignment.ExpiresAt.After(assignment.AssignedAt)
+		})).Return(nil)
 
 		// First call
 		firstArmID, err := bandit.SelectArm(ctx, experimentID, userID)
@@ -439,6 +457,15 @@ func TestStickyAssignment(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, firstArmID, secondArmID)
 	})
+}
+
+func containsUUID(ids []uuid.UUID, target uuid.UUID) bool {
+	for _, id := range ids {
+		if id == target {
+			return true
+		}
+	}
+	return false
 }
 
 // TestConfidenceCalculation tests win probability calculation

@@ -843,6 +843,22 @@ CREATE UNIQUE INDEX idx_bandit_conversion_events_transaction_delayed
     ON bandit_conversion_events(transaction_id)
     WHERE transaction_id IS NOT NULL AND event_type = 'delayed_conversion';
 
+CREATE TABLE bandit_assignment_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID NOT NULL REFERENCES ab_test_assignments(id) ON DELETE CASCADE,
+    experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL,
+    arm_id UUID NOT NULL REFERENCES ab_test_arms(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL CHECK (event_type IN ('assigned')),
+    metadata JSONB,
+    occurred_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_bandit_assignment_events_experiment ON bandit_assignment_events(experiment_id, occurred_at DESC);
+CREATE INDEX idx_bandit_assignment_events_user ON bandit_assignment_events(user_id, occurred_at DESC);
+CREATE INDEX idx_bandit_assignment_events_assignment ON bandit_assignment_events(assignment_id, occurred_at DESC);
+
 -- =====================================================
 -- Section 6: Multi-Objective Hybrid System
 -- =====================================================
@@ -907,6 +923,7 @@ COMMENT ON TABLE bandit_pending_rewards IS 'Pending conversions for delayed feed
 COMMENT ON TABLE bandit_conversion_links IS 'Links pending rewards to actual transactions';
 COMMENT ON TABLE experiment_automation_decision_log IS 'Append-only log of automation decisions applied by system reconciler flows';
 COMMENT ON TABLE bandit_conversion_events IS 'Append-only reward and conversion event log for direct, delayed, and expired bandit outcomes';
+COMMENT ON TABLE bandit_assignment_events IS 'Append-only assignment history for bandit arm selections';
 COMMENT ON TABLE bandit_arm_objective_stats IS 'Per-objective statistics for multi-objective optimization';
 
 COMMENT ON COLUMN ab_tests.window_type IS 'Type of windowing: events, time, or none';

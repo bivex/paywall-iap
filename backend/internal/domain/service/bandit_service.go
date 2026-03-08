@@ -76,6 +76,12 @@ type Assignment struct {
 	ExpiresAt    time.Time
 }
 
+type AssignmentEventType string
+
+const (
+	AssignmentEventTypeAssigned AssignmentEventType = "assigned"
+)
+
 // =====================================================
 // Advanced Bandit Plugin Interfaces
 // =====================================================
@@ -278,6 +284,19 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 	if bestArm == nil {
 		// Fallback: select random arm
 		bestArm = &arms[b.rng.Intn(len(arms))]
+	}
+
+	assignedAt := time.Now().UTC()
+	assignment := &Assignment{
+		ID:           uuid.New(),
+		ExperimentID: experimentID,
+		UserID:       userID,
+		ArmID:        bestArm.ID,
+		AssignedAt:   assignedAt,
+		ExpiresAt:    assignedAt.Add(24 * time.Hour),
+	}
+	if err := b.repo.CreateAssignment(ctx, assignment); err != nil {
+		return uuid.Nil, fmt.Errorf("failed to persist assignment: %w", err)
 	}
 
 	// Create sticky assignment in cache
