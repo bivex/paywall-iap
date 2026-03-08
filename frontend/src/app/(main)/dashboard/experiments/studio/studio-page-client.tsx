@@ -158,6 +158,7 @@ export function StudioPageClient({
 }) {
   const hasInitialPayload = initialExperiments !== undefined;
   const t = useTranslations("experimentStudio");
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
   const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
   const [snapshot, setSnapshot] = useState<ExperimentStudioSnapshot | null>(initialSnapshot ?? null);
@@ -168,6 +169,10 @@ export function StudioPageClient({
   const [isPending, startTransition] = useTransition();
   const [pendingLifecycleAction, setPendingLifecycleAction] = useState<"pause" | "resume" | "complete" | null>(null);
   const [pendingSave, setPendingSave] = useState(false);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!isBootstrapping) return;
@@ -514,7 +519,7 @@ export function StudioPageClient({
                           <p className="font-medium text-xs">{t("editor.startAt")}</p>
                           <Input
                             type="datetime-local"
-                            value={draftMetadata.start_at}
+                            value={hasHydrated ? draftMetadata.start_at : ""}
                             onChange={(event) =>
                               setDraftMetadata((current) =>
                                 current ? { ...current, start_at: event.target.value } : current,
@@ -527,7 +532,7 @@ export function StudioPageClient({
                           <p className="font-medium text-xs">{t("editor.endAt")}</p>
                           <Input
                             type="datetime-local"
-                            value={draftMetadata.end_at}
+                            value={hasHydrated ? draftMetadata.end_at : ""}
                             onChange={(event) =>
                               setDraftMetadata((current) =>
                                 current ? { ...current, end_at: event.target.value } : current,
@@ -579,10 +584,19 @@ export function StudioPageClient({
                   <CardContent className="space-y-3">
                     <div className="grid gap-3 md:grid-cols-2">
                       {[
-                        { label: t("lifecycle.created"), value: formatDate(selectedExperiment.created_at) },
-                        { label: t("lifecycle.updated"), value: formatDate(selectedExperiment.updated_at) },
-                        { label: t("lifecycle.start"), value: formatDate(selectedExperiment.start_at) },
-                        { label: t("lifecycle.end"), value: formatDate(selectedExperiment.end_at) },
+                        {
+                          label: t("lifecycle.created"),
+                          value: hasHydrated ? formatDate(selectedExperiment.created_at) : "—",
+                        },
+                        {
+                          label: t("lifecycle.updated"),
+                          value: hasHydrated ? formatDate(selectedExperiment.updated_at) : "—",
+                        },
+                        {
+                          label: t("lifecycle.start"),
+                          value: hasHydrated ? formatDate(selectedExperiment.start_at) : "—",
+                        },
+                        { label: t("lifecycle.end"), value: hasHydrated ? formatDate(selectedExperiment.end_at) : "—" },
                       ].map((item) => (
                         <div key={item.label} className="rounded-md border p-4">
                           <p className="font-medium text-sm">{item.label}</p>

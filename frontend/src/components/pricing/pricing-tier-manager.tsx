@@ -7,7 +7,7 @@
  * https://github.com/bivex
  *
  * Created: 2026-03-08 09:10
- * Last Updated: 2026-03-08 09:10
+ * Last Updated: 2026-03-08 09:17
  *
  * Licensed under the MIT License.
  * Commercial licensing available upon request.
@@ -153,6 +153,7 @@ export function PricingTierManager({
 }) {
   const t = useTranslations("pricing");
   const router = useRouter();
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [tiers, setTiers] = useState(initialTiers);
   const [editingTierId, setEditingTierId] = useState<string | null>(initialTiers[0]?.id ?? null);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -174,6 +175,10 @@ export function PricingTierManager({
     },
     [form],
   );
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
 
   useEffect(() => {
     setTiers(initialTiers);
@@ -350,7 +355,9 @@ export function PricingTierManager({
                         {tier.is_active ? t("status.active") : t("status.inactive")}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{formatDate(tier.updated_at)}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">
+                      {hasHydrated ? formatDate(tier.updated_at) : "—"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => selectTier(tier)}>
