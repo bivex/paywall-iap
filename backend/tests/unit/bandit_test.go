@@ -80,6 +80,11 @@ func (m *MockBanditRepository) SetUserContext(ctx context.Context, uctx *service
 	return args.Error(0)
 }
 
+func (m *MockBanditRepository) AppendConversionEvent(ctx context.Context, event *service.ConversionEvent) error {
+	args := m.Called(ctx, event)
+	return args.Error(0)
+}
+
 // MockBanditCache is a mock for BanditCache
 type MockBanditCache struct {
 	mock.Mock
@@ -307,6 +312,43 @@ func TestUpdateReward(t *testing.T) {
 		cachedStats, err := cache.GetArmStats(ctx, cacheKey)
 		assert.NoError(t, err)
 		assert.NotNil(t, cachedStats)
+	})
+
+	t.Run("appends conversion event when reward metadata is provided", func(t *testing.T) {
+		userID := uuid.New()
+		initialStats := &service.ArmStats{
+			ArmID:       armID,
+			Alpha:       2.0,
+			Beta:        1.0,
+			Samples:     3,
+			Conversions: 2,
+			Revenue:     8.0,
+		}
+
+		repo = new(MockBanditRepository)
+		cache = NewMockBanditCache()
+		bandit = service.NewThompsonSamplingBandit(repo, cache, logger)
+
+		repo.On("GetArmStats", ctx, armID).Return(initialStats, nil)
+		repo.On("UpdateArmStats", ctx, mock.Anything).Return(nil)
+		repo.On("AppendConversionEvent", ctx, mock.MatchedBy(func(event *service.ConversionEvent) bool {
+			return event.EventType == service.ConversionEventTypeDirectReward &&
+				event.UserID != nil && *event.UserID == userID &&
+				event.OriginalCurrency == "USD" &&
+				event.NormalizedRewardValue == 9.99
+		})).Return(nil)
+
+		err := bandit.UpdateRewardWithEvent(ctx, experimentID, armID, 9.99, &service.ConversionEvent{
+			UserID:                &userID,
+			EventType:             service.ConversionEventTypeDirectReward,
+			OriginalRewardValue:   9.99,
+			OriginalCurrency:      "USD",
+			NormalizedRewardValue: 9.99,
+			NormalizedCurrency:    "USD",
+		})
+
+		assert.NoError(t, err)
+		repo.AssertExpectations(t)
 	})
 }
 

@@ -163,6 +163,40 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatusWithAudit(ctx context.
 		if err != nil {
 			return fmt.Errorf("failed to insert experiment lifecycle audit log: %w", err)
 		}
+
+		if audit.ActorType == "system" && audit.Source == "experiment_automation_reconciler" {
+			var reason *string
+			if audit.Details != nil {
+				if value, ok := audit.Details["reason"].(string); ok && value != "" {
+					reason = &value
+				}
+			}
+
+			_, err = tx.Exec(ctx, `
+					INSERT INTO experiment_automation_decision_log (
+						experiment_id,
+						source,
+						decision_type,
+						reason,
+						from_status,
+						to_status,
+						idempotency_key,
+						details
+					)
+					VALUES ($1, $2, 'status_transition', $3, $4, $5, $6, $7)
+					ON CONFLICT (idempotency_key) DO NOTHING`,
+				experimentID,
+				audit.Source,
+				reason,
+				currentStatus,
+				nextStatus,
+				audit.IdempotencyKey,
+				detailsJSON,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to insert experiment automation decision log: %w", err)
+			}
+		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {

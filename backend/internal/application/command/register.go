@@ -45,6 +45,16 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 		return nil, fmt.Errorf("%w: user already exists", domainErrors.ErrUserAlreadyExists)
 	}
 
+	if strings.TrimSpace(req.Email) != "" {
+		userByEmail, err := c.userRepo.GetByEmail(ctx, req.Email)
+		if err == nil && userByEmail != nil {
+			return nil, fmt.Errorf("%w: user already exists", domainErrors.ErrUserAlreadyExists)
+		}
+		if err != nil && !strings.Contains(err.Error(), domainErrors.ErrUserNotFound.Error()) {
+			return nil, fmt.Errorf("failed to check user email: %w", err)
+		}
+	}
+
 	// Create user entity
 	user := entity.NewUser(
 		req.PlatformUserID,
@@ -56,6 +66,9 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 
 	// Save user
 	if err := c.userRepo.Create(ctx, user); err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "duplicate key value") {
+			return nil, fmt.Errorf("%w: user already exists", domainErrors.ErrUserAlreadyExists)
+		}
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 

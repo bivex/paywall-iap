@@ -228,17 +228,21 @@ paths:
       tags: [bandit]
       summary: Get experiment statistics
       parameters:
-        - name: experiment_id
+        - name: statistics_query
           in: query
           required: true
+          style: form
+          explode: true
           schema:
-            type: string
-            format: uuid
-        - name: win_probs
-          in: query
-          required: false
-          schema:
-            type: boolean
+            type: object
+            required: [experiment_id]
+            additionalProperties: false
+            properties:
+              experiment_id:
+                type: string
+                format: uuid
+              win_probs:
+                type: boolean
       responses:
         '200':
           description: Statistics fetched
@@ -481,6 +485,7 @@ paths:
             type: integer
             format: int64
             minimum: 1
+            maximum: 9223372036854775807
       responses:
         '200':
           description: Window events exported
@@ -1721,6 +1726,7 @@ components:
     VerifyIAPRequest:
       type: object
       required: [platform, receipt_data, product_id]
+      additionalProperties: false
       properties:
         platform:
           type: string
@@ -1728,9 +1734,12 @@ components:
         receipt_data:
           type: string
           minLength: 1
+          maxLength: 65536
         product_id:
           type: string
-          minLength: 1
+          minLength: 3
+          maxLength: 200
+          pattern: '^.+\..+$'
         transaction_id: { type: string }
     VerifyIAPResponse:
       type: object

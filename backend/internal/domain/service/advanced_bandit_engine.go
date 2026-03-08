@@ -278,6 +278,7 @@ func (e *AdvancedBanditEngine) RecordReward(
 	// Convert currency if enabled
 	finalReward := reward
 	finalCurrency := currency
+	recordedAt := time.Now().UTC()
 
 	if currency != "" && currency != "USD" && e.currencyService != nil && e.enableCurrency {
 		config, err := e.getExperimentConfig(ctx, experimentID)
@@ -293,7 +294,20 @@ func (e *AdvancedBanditEngine) RecordReward(
 	}
 
 	// Record with base bandit
-	if err := e.base.UpdateReward(ctx, experimentID, armID, finalReward); err != nil {
+	if err := e.base.UpdateRewardWithEvent(ctx, experimentID, armID, finalReward, &ConversionEvent{
+		ExperimentID:          experimentID,
+		ArmID:                 armID,
+		UserID:                &userID,
+		EventType:             ConversionEventTypeDirectReward,
+		OriginalRewardValue:   reward,
+		OriginalCurrency:      currency,
+		NormalizedRewardValue: finalReward,
+		NormalizedCurrency:    finalCurrency,
+		Metadata: map[string]interface{}{
+			"source": "advanced_bandit_engine",
+		},
+		OccurredAt: recordedAt,
+	}); err != nil {
 		return fmt.Errorf("failed to update base reward: %w", err)
 	}
 
@@ -311,7 +325,7 @@ func (e *AdvancedBanditEngine) RecordReward(
 			ArmID:       armID,
 			RewardValue: finalReward,
 			Currency:    finalCurrency,
-			Timestamp:   time.Now(),
+			Timestamp:   recordedAt,
 		}
 		if err := windowStrategy.RecordEvent(ctx, armID, event); err != nil {
 			e.logger.Warn("Failed to record window event", zap.Error(err))
@@ -363,6 +377,7 @@ func (e *AdvancedBanditEngine) ProcessConversion(
 	// Process through delayed strategy
 	if err := delayedStrategy.ProcessConversion(
 		ctx, transactionID, userID, conversionValue, currency,
+		e.base,
 	); err != nil {
 		return err
 	}

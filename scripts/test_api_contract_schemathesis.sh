@@ -17,6 +17,8 @@ SCHEMATHESIS_PHASES="${SCHEMATHESIS_PHASES:-examples,coverage,fuzzing}"
 SKIP_HEALTHCHECK="${SKIP_HEALTHCHECK:-0}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@paywall.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin12345}"
+APPLE_MOCK_BASE="${APPLE_MOCK_BASE:-http://localhost:9090}"
+IAP_PRODUCT_ID="${IAP_PRODUCT_ID:-com.example.unlimited.1mo}"
 
 if [[ -z "$SCHEMA_URL" && -z "$SCHEMA_PATH" ]]; then
   SCHEMA_URL="$API_BASE/openapi.yaml"
@@ -149,6 +151,45 @@ PY
   fi
 }
 
+seed_user_subscription_via_iap() {
+  command -v curl >/dev/null 2>&1 || return 1
+  command -v python3 >/dev/null 2>&1 || return 1
+  [[ -n "$SCHEMATHESIS_USER_AUTH_TOKEN" ]] || return 1
+
+  local mock_response receipt_token verify_body verify_status
+  mock_response="$(curl -sS -X POST "$APPLE_MOCK_BASE/subs" -H 'Content-Type: application/json' -d "{\"productId\":\"$IAP_PRODUCT_ID\"}" || true)"
+  receipt_token="$(RESPONSE_JSON="$mock_response" python3 - <<'PY'
+import json, os
+raw = os.environ.get('RESPONSE_JSON', '')
+try:
+    payload = json.loads(raw)
+except Exception:
+    print('')
+    raise SystemExit(0)
+print(payload.get('receiptToken', ''))
+PY
+)"
+
+  if [[ -z "$receipt_token" ]]; then
+    say "Could not create a valid Apple mock receipt token automatically"
+    return 1
+  fi
+
+  verify_body=$(printf '{"platform":"ios","receipt_data":"%s","product_id":"%s","transaction_id":""}' "$receipt_token" "$IAP_PRODUCT_ID")
+  verify_status="$(curl -sS -o /tmp/schemathesis-verify-iap.json -w '%{http_code}' -X POST "$API_BASE/v1/verify/iap" \
+    -H "Authorization: Bearer $SCHEMATHESIS_USER_AUTH_TOKEN" \
+    -H 'Content-Type: application/json' \
+    -d "$verify_body" || true)"
+
+  if [[ "$verify_status" == "200" || "$verify_status" == "409" ]]; then
+    say "Seeded a valid user subscription via /v1/verify/iap"
+    return 0
+  fi
+
+  say "Could not seed subscription via /v1/verify/iap (status=$verify_status)"
+  return 1
+}
+
 should_split_runs() {
   if [[ -n "$EXPLICIT_SCHEMATHESIS_AUTH_TOKEN" || -n "$EXPLICIT_SCHEMATHESIS_HEADER" ]]; then
     return 1
@@ -217,6 +258,11 @@ main() {
   if should_split_runs "$@"; then
     try_fetch_user_token
 
+    local user_suite_seeded=0
+    if seed_user_subscription_via_iap; then
+      user_suite_seeded=1
+    fi
+
     run_schemathesis "public endpoints" "" \
       --exclude-tag admin \
       --exclude-tag admin-auth \
@@ -229,10 +275,16 @@ main() {
       --include-tag admin-auth \
       "$@"
 
-    run_schemathesis "user-protected endpoints" "$SCHEMATHESIS_USER_AUTH_TOKEN" \
-      --include-tag subscription \
-      --include-tag iap \
-      "$@"
+    if [[ "$user_suite_seeded" == "1" ]]; then
+      run_schemathesis "user-protected endpoints" "$SCHEMATHESIS_USER_AUTH_TOKEN" \
+        --include-tag subscription \
+        "$@"
+    else
+      run_schemathesis "user-protected endpoints" "$SCHEMATHESIS_USER_AUTH_TOKEN" \
+        --include-tag subscription \
+        --include-tag iap \
+        "$@"
+    fi
 
     return 0
   fi

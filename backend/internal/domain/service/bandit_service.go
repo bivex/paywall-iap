@@ -122,6 +122,33 @@ type RewardEvent struct {
 	Metadata        map[string]interface{}
 }
 
+type ConversionEventType string
+
+const (
+	ConversionEventTypeDirectReward         ConversionEventType = "direct_reward"
+	ConversionEventTypeDelayedConversion    ConversionEventType = "delayed_conversion"
+	ConversionEventTypeExpiredPendingReward ConversionEventType = "expired_pending_reward"
+)
+
+type ConversionEvent struct {
+	ExperimentID          uuid.UUID
+	ArmID                 uuid.UUID
+	UserID                *uuid.UUID
+	PendingRewardID       *uuid.UUID
+	TransactionID         *uuid.UUID
+	EventType             ConversionEventType
+	OriginalRewardValue   float64
+	OriginalCurrency      string
+	NormalizedRewardValue float64
+	NormalizedCurrency    string
+	Metadata              map[string]interface{}
+	OccurredAt            time.Time
+}
+
+type conversionEventAppender interface {
+	AppendConversionEvent(ctx context.Context, event *ConversionEvent) error
+}
+
 // ObjectiveType defines the optimization objective
 type ObjectiveType string
 
@@ -266,6 +293,15 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 // reward > 0 counts as a conversion (alpha increment)
 // reward <= 0 counts as a non-conversion (beta increment)
 func (b *ThompsonSamplingBandit) UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error {
+	return b.UpdateRewardWithEvent(ctx, experimentID, armID, reward, nil)
+}
+
+func (b *ThompsonSamplingBandit) UpdateRewardWithEvent(
+	ctx context.Context,
+	experimentID, armID uuid.UUID,
+	reward float64,
+	event *ConversionEvent,
+) error {
 	// Get current stats
 	stats, err := b.repo.GetArmStats(ctx, armID)
 	if err != nil {
@@ -293,6 +329,37 @@ func (b *ThompsonSamplingBandit) UpdateReward(ctx context.Context, experimentID,
 	// Save to database
 	if err := b.repo.UpdateArmStats(ctx, stats); err != nil {
 		return fmt.Errorf("failed to update arm stats: %w", err)
+	}
+
+	if event != nil {
+		if appender, ok := b.repo.(conversionEventAppender); ok {
+			normalizedEvent := *event
+			if normalizedEvent.ExperimentID == uuid.Nil {
+				normalizedEvent.ExperimentID = experimentID
+			}
+			if normalizedEvent.ArmID == uuid.Nil {
+				normalizedEvent.ArmID = armID
+			}
+			if normalizedEvent.EventType == "" {
+				normalizedEvent.EventType = ConversionEventTypeDirectReward
+			}
+			if normalizedEvent.OccurredAt.IsZero() {
+				normalizedEvent.OccurredAt = time.Now().UTC()
+			}
+			if normalizedEvent.NormalizedRewardValue == 0 {
+				normalizedEvent.NormalizedRewardValue = reward
+			}
+			if normalizedEvent.OriginalRewardValue == 0 {
+				normalizedEvent.OriginalRewardValue = reward
+			}
+			if normalizedEvent.NormalizedCurrency == "" {
+				normalizedEvent.NormalizedCurrency = normalizedEvent.OriginalCurrency
+			}
+
+			if err := appender.AppendConversionEvent(ctx, &normalizedEvent); err != nil {
+				return fmt.Errorf("failed to append conversion event: %w", err)
+			}
+		}
 	}
 
 	// Update cache

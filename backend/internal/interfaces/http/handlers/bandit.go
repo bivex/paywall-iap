@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -22,6 +23,7 @@ type BanditHandler struct {
 type BanditService interface {
 	SelectArm(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, error)
 	UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error
+	UpdateRewardWithEvent(ctx context.Context, experimentID, armID uuid.UUID, reward float64, event *service.ConversionEvent) error
 	GetArmStatistics(ctx context.Context, experimentID uuid.UUID) (map[uuid.UUID]*service.ArmStats, error)
 	CalculateWinProbability(ctx context.Context, experimentID uuid.UUID, simulations int) (map[uuid.UUID]float64, error)
 }
@@ -150,6 +152,12 @@ func (h *BanditHandler) Reward(c *gin.Context) {
 		return
 	}
 
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		response.BadRequest(c, "Invalid user ID")
+		return
+	}
+
 	// For revenue rewards, you'd typically convert to USD here
 	// using a currency conversion service
 	// reward = convertToUSD(req.Reward, req.Currency)
@@ -157,7 +165,20 @@ func (h *BanditHandler) Reward(c *gin.Context) {
 	reward := *req.Reward
 
 	// Update the bandit with the reward
-	err = h.banditService.UpdateReward(c.Request.Context(), experimentID, armID, reward)
+	err = h.banditService.UpdateRewardWithEvent(c.Request.Context(), experimentID, armID, reward, &service.ConversionEvent{
+		ExperimentID:          experimentID,
+		ArmID:                 armID,
+		UserID:                &userID,
+		EventType:             service.ConversionEventTypeDirectReward,
+		OriginalRewardValue:   reward,
+		OriginalCurrency:      req.Currency,
+		NormalizedRewardValue: reward,
+		NormalizedCurrency:    req.Currency,
+		Metadata: map[string]interface{}{
+			"source": "bandit_reward_api",
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	if err != nil {
 		if errors.Is(err, service.ErrBanditArmNotFound) {
 			response.NotFound(c, "Arm not found")

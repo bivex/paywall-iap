@@ -90,7 +90,7 @@
 |---|---|---|
 | 1 | True builder workflow для `Experiment Studio` | это самый заметный truthful UX gap: metadata и lifecycle уже есть, но Studio всё ещё не собирает experiment как полноценный draft/builder workflow |
 | 2 | Persisted pricing tier ↔ arm linkage model | без этого tiers и arms остаются рядом, но не становятся одной доменной моделью; это блокирует честный experiment builder и rollout story |
-| 3 | Immutable decisions / conversions log | maintenance foundation и repair/self-heal уже стали гораздо честнее, а следующий сильный backend шаг — перестать опираться только на агрегаты и добавить доверенную immutable историю событий/решений |
+| 3 | Winner recommendation policy | immutable automation/conversion log уже появился как backend foundation; теперь следующий сильный шаг — безопасный recommendation layer до любого auto-rollout |
 
 ## Concrete implementation checklist by file/path (top 3)
 
@@ -134,7 +134,7 @@
 | Единый command/service layer для lifecycle | сейчас lifecycle в основном живёт в HTTP handler-логике | вынести transitions в domain/service слой, чтобы и manual UI actions, и cron/worker automation использовали один и тот же код с одинаковой валидацией переходов |
 | Persisted automation policy | сейчас у эксперимента есть status/algorithm/sample/confidence, но нет явной модели automation rules | нужна явная конфигурация: auto-start, auto-stop by end date, auto-complete by sample size/confidence, safety thresholds, manual override flags |
 | Очередь/джобы для bandit maintenance | scheduled maintenance в `backend/internal/worker/tasks/currency_asynq.go` проходит через persisted idempotency contract, а `RunMaintenance`/targeted jobs теперь реально делают `process_expired_rewards`, `trim_windows`, `cleanup_old_context_data`, `sync_objective_stats` и expired assignment cleanup через repository-backed paths | дальше развивать maintenance уже как richer decision/runtime layer (например, win-probability / recommendation jobs), а не возвращаться к placeholder-логике |
-| Immutable event / conversion log | assignments и агрегаты уже есть, но в `bandit_repository.go` у `SaveConversion` прямо стоит TODO про отдельную conversions table | для доверенной автоматики нужна нормальная event history таблица (assignments, impressions, conversions, revenue, delayed feedback resolution), чтобы решения не опирались только на агрегаты |
+| Immutable event / conversion log | теперь есть append-only `experiment_automation_decision_log` и `bandit_conversion_events`, direct reward / delayed conversion / expired pending reward уже пишутся в immutable history, а delayed conversion path стал реально обновлять arm stats | дальше расширять event trail до assignments / impressions и richer recommendation events, чтобы автоматика опиралась не только на агрегаты |
 | Idempotent job execution | scheduler-backed automation и maintenance jobs теперь используют persisted execution log с window-based idempotency key, claim/skip semantics и retry-after-failure | дальше развивать это как единый contract для новых scheduled paths, а не возвращаться к best-effort execution |
 | Audit trail для auto-actions | для experiment lifecycle automation уже есть отдельный audit layer: source/reason/transition/time, latest audit в summary payloads и full history endpoint/UI | при расширении автоматики сохранять тот же уровень прозрачности для новых decision paths, а не откатываться к «silent background changes» |
 | Reconciliation / repair jobs | есть explicit admin repair path и scheduled background repair reconciler на `asynq` с window-idempotent execution log; вместе с maintenance layer они уже делают assignment snapshot, создают missing `ab_test_arm_stats`, пересчитывают `winner_confidence`, синхронизируют `objective stats`, обрабатывают expired pending rewards и чистят stale context/expired assignments | coverage derived state всё ещё не полная: за пределами текущего repair/maintenance scope остаются другие derived surfaces и richer recommendation/decision paths |
@@ -148,11 +148,11 @@
 
 Если делать не «всё сразу», а минимальный полезный следующий backend-срез, то приоритет теперь выглядит так:
 
-1. **Добавить immutable conversions / decisions log** для доверенного auto-complete / auto-winner flow.
-2. **Ввести winner recommendation policy** до любого auto-rollout / auto-promote слоя.
-3. **Расширить repair/self-heal coverage** на оставшиеся derived surfaces вне текущего repair/maintenance scope.
-4. **Добить persisted arm CRUD + validation** для truthful experiment builder workflow.
-5. **Ввести persisted pricing tier ↔ arm linkage model** для реального pricing-experiment orchestration.
+1. **Ввести winner recommendation policy** до любого auto-rollout / auto-promote слоя.
+2. **Расширить repair/self-heal coverage** на оставшиеся derived surfaces вне текущего repair/maintenance scope.
+3. **Добить persisted arm CRUD + validation** для truthful experiment builder workflow.
+4. **Ввести persisted pricing tier ↔ arm linkage model** для реального pricing-experiment orchestration.
+5. **Расширить immutable event trail** до assignments / impressions / richer decision events.
 
 Без этих пяти вещей автоматика останется либо UI-имитацией, либо набором хрупких cron-скриптов поверх уже существующих ручных endpoints.
 
@@ -193,7 +193,7 @@
 | Направление | Что сделать |
 |---|---|
 | Real maintenance jobs | ✅ уже repository-backed: `process_expired_rewards`, `trim_windows`, `cleanup_old_context_data`, `sync_objective_stats`, expired assignment cleanup, structured maintenance summary + idempotent scheduler execution |
-| Immutable decisions/conversions log | добавить полноценную историю assign/impression/conversion/reward-resolution событий |
+| Immutable decisions/conversions log | 🟡 уже есть append-only история automation decisions и reward-resolution событий; дальше расширять до assignment/impression trail |
 | Winner recommendation policy | сначала ввести auto-recommend winner, а не мгновенный auto-rollout |
 | Safe rollout controls | только после накопления audit log и policy guards — вводить auto-promote / auto-reweight / auto-stop loser flows |
 | Pricing/arm linkage | если bandit/Studio должны автоматически работать с pricing tiers, сначала ввести persisted arm↔tier linkage model |
@@ -231,7 +231,7 @@
 | Stage 2 | Admin-visible reason codes для auto-transitions | P2 | ✅ Done | admin payload/UI показывает, каким rule и по какой причине система перевела experiment в новый status |
 | Stage 2 | Full lifecycle audit history UI/API surface | P2 | ✅ Done | admin API и Studio UI отдают полный newest-first lifecycle audit trail по experiment без mock-данных |
 | Stage 3 | Repository-backed bandit maintenance jobs | P1 | ✅ Done | scheduler wiring и idempotent execution уже есть, а maintenance layer теперь реально закрывает expired rewards, currency refresh, `trim_windows`, context cleanup, objective stats sync и expired assignment cleanup через repository-backed paths |
-| Stage 3 | Immutable conversions / decisions log | P1 | ⚪ Not started | trustworthy automation требует отдельной immutable history для assign/impression/conversion/reward-resolution и decision events |
+| Stage 3 | Immutable conversions / decisions log | P1 | 🟡 Partial | появились append-only `experiment_automation_decision_log` и `bandit_conversion_events`, direct reward / delayed conversion / expired pending reward теперь пишутся в immutable history, а delayed conversion path стал truthful; но полного assignment/impression trail и richer recommendation events пока нет |
 | Stage 3 | Winner recommendation policy | P2 | ⚪ Not started | система должна сначала уметь безопасно рекомендовать winner/operator action без мгновенного auto-rollout |
 | Stage 3 | Safe auto-rollout controls | P2 | ⚪ Not started | после recommendation layer нужны guarded auto-promote / auto-reweight flows с явными safety controls |
 | Stage 3 | Persisted pricing tier ↔ arm linkage model | P1 | ⚪ Not started | pricing tiers должны стать реальной частью experiment/bandit domain модели, а не только соседним CRUD UI |

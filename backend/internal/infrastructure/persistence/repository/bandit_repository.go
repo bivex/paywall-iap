@@ -272,18 +272,222 @@ func (r *PostgresBanditRepository) GetActiveAssignment(ctx context.Context, expe
 
 // SaveConversion records a conversion event for an arm
 func (r *PostgresBanditRepository) SaveConversion(ctx context.Context, experimentID, armID, userID uuid.UUID, amount float64) error {
-	// This would typically insert into a conversions table for analytics
-	// For now, conversions are tracked via UpdateArmStats
-	// TODO: Create ab_test_conversions table if detailed tracking is needed
+	return r.AppendConversionEvent(ctx, &service.ConversionEvent{
+		ExperimentID:          experimentID,
+		ArmID:                 armID,
+		UserID:                &userID,
+		EventType:             service.ConversionEventTypeDirectReward,
+		OriginalRewardValue:   amount,
+		NormalizedRewardValue: amount,
+		OccurredAt:            time.Now().UTC(),
+	})
+}
 
-	r.logger.Debug("Conversion saved",
-		zap.String("experiment_id", experimentID.String()),
-		zap.String("arm_id", armID.String()),
-		zap.String("user_id", userID.String()),
-		zap.Float64("amount", amount),
+func (r *PostgresBanditRepository) AppendConversionEvent(ctx context.Context, event *service.ConversionEvent) error {
+	var metadataJSON []byte
+	var err error
+	if event.Metadata != nil {
+		metadataJSON, err = json.Marshal(event.Metadata)
+		if err != nil {
+			return fmt.Errorf("failed to marshal conversion event metadata: %w", err)
+		}
+	}
+
+	_, err = r.pool.Exec(ctx, `
+		INSERT INTO bandit_conversion_events (
+			experiment_id,
+			arm_id,
+			user_id,
+			pending_reward_id,
+			transaction_id,
+			event_type,
+			original_reward_value,
+			original_currency,
+			normalized_reward_value,
+			normalized_currency,
+			metadata,
+			occurred_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), $9, NULLIF($10, ''), $11, $12)
+	`,
+		event.ExperimentID,
+		event.ArmID,
+		nullableUUID(event.UserID),
+		nullableUUID(event.PendingRewardID),
+		nullableUUID(event.TransactionID),
+		event.EventType,
+		event.OriginalRewardValue,
+		event.OriginalCurrency,
+		event.NormalizedRewardValue,
+		event.NormalizedCurrency,
+		metadataJSON,
+		normalizeOccurredAt(event.OccurredAt),
 	)
+	if err != nil {
+		return fmt.Errorf("failed to append conversion event: %w", err)
+	}
 
 	return nil
+}
+
+func (r *PostgresBanditRepository) ProcessPendingConversion(ctx context.Context, transactionID, userID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) (*service.PendingReward, bool, error) {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to begin pending conversion transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	matchedPending := &service.PendingReward{}
+	err = scanPendingReward(tx.QueryRow(ctx, `
+		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
+		       conversion_value, conversion_currency, converted_at, processed_at
+		FROM bandit_pending_rewards
+		WHERE user_id = $1
+		  AND converted = FALSE
+		  AND processed_at IS NULL
+		  AND expires_at > $2
+		ORDER BY assigned_at DESC
+		LIMIT 1
+		FOR UPDATE
+	`, userID, processedAt), matchedPending)
+	if err == pgx.ErrNoRows {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to load pending reward for conversion: %w", err)
+	}
+
+	inserted, err := r.insertConversionEventTx(ctx, tx, &service.ConversionEvent{
+		ExperimentID:          matchedPending.ExperimentID,
+		ArmID:                 matchedPending.ArmID,
+		UserID:                &matchedPending.UserID,
+		PendingRewardID:       &matchedPending.ID,
+		TransactionID:         &transactionID,
+		EventType:             service.ConversionEventTypeDelayedConversion,
+		OriginalRewardValue:   conversionValue,
+		OriginalCurrency:      currency,
+		NormalizedRewardValue: conversionValue,
+		NormalizedCurrency:    currency,
+		Metadata: map[string]interface{}{
+			"source": "postgres_bandit_repository",
+		},
+		OccurredAt: processedAt,
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	if !inserted {
+		if err := tx.Commit(ctx); err != nil {
+			return nil, false, fmt.Errorf("failed to commit duplicate pending conversion transaction: %w", err)
+		}
+		return matchedPending, false, nil
+	}
+
+	if err := r.applyRewardToArmTx(ctx, tx, matchedPending.ArmID, conversionValue); err != nil {
+		return nil, false, err
+	}
+
+	_, err = tx.Exec(ctx, `
+		UPDATE bandit_pending_rewards
+		SET converted = TRUE,
+		    conversion_value = $2,
+		    conversion_currency = NULLIF($3, ''),
+		    converted_at = $4,
+		    processed_at = $4
+		WHERE id = $1
+	`, matchedPending.ID, conversionValue, currency, processedAt)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to update pending reward conversion state: %w", err)
+	}
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO bandit_conversion_links (pending_id, transaction_id, linked_at)
+		VALUES ($1, $2, $3)
+		ON CONFLICT DO NOTHING
+	`, matchedPending.ID, transactionID, processedAt)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to create conversion link: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, false, fmt.Errorf("failed to commit pending conversion transaction: %w", err)
+	}
+
+	convertedAt := processedAt
+	matchedPending.Converted = true
+	matchedPending.ConversionValue = conversionValue
+	matchedPending.ConversionCurrency = currency
+	matchedPending.ConvertedAt = &convertedAt
+	matchedPending.ProcessedAt = &convertedAt
+	return matchedPending, true, nil
+}
+
+func (r *PostgresBanditRepository) ProcessExpiredPendingReward(ctx context.Context, pendingID uuid.UUID, processedAt time.Time) (bool, error) {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return false, fmt.Errorf("failed to begin expired pending reward transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	pending := &service.PendingReward{}
+	err = scanPendingReward(tx.QueryRow(ctx, `
+		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
+		       conversion_value, conversion_currency, converted_at, processed_at
+		FROM bandit_pending_rewards
+		WHERE id = $1
+		  AND converted = FALSE
+		  AND processed_at IS NULL
+		  AND expires_at <= $2
+		FOR UPDATE
+	`, pendingID, processedAt), pending)
+	if err == pgx.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to load expired pending reward: %w", err)
+	}
+
+	inserted, err := r.insertConversionEventTx(ctx, tx, &service.ConversionEvent{
+		ExperimentID:          pending.ExperimentID,
+		ArmID:                 pending.ArmID,
+		UserID:                &pending.UserID,
+		PendingRewardID:       &pending.ID,
+		EventType:             service.ConversionEventTypeExpiredPendingReward,
+		OriginalRewardValue:   0,
+		NormalizedRewardValue: 0,
+		Metadata: map[string]interface{}{
+			"source": "postgres_bandit_repository",
+		},
+		OccurredAt: processedAt,
+	})
+	if err != nil {
+		return false, err
+	}
+	if !inserted {
+		if err := tx.Commit(ctx); err != nil {
+			return false, fmt.Errorf("failed to commit duplicate expired pending reward transaction: %w", err)
+		}
+		return false, nil
+	}
+
+	if err := r.applyRewardToArmTx(ctx, tx, pending.ArmID, 0); err != nil {
+		return false, err
+	}
+
+	_, err = tx.Exec(ctx, `
+		UPDATE bandit_pending_rewards
+		SET processed_at = $2
+		WHERE id = $1
+	`, pending.ID, processedAt)
+	if err != nil {
+		return false, fmt.Errorf("failed to mark expired pending reward processed: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return false, fmt.Errorf("failed to commit expired pending reward transaction: %w", err)
+	}
+
+	return true, nil
 }
 
 // GetAssignmentHistory retrieves historical assignments for a user
@@ -1013,6 +1217,131 @@ func (r *PostgresBanditRepository) LinkConversion(ctx context.Context, link *ser
 	}
 
 	return nil
+}
+
+func (r *PostgresBanditRepository) applyRewardToArmTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID, reward float64) error {
+	stats, err := r.loadArmStatsTx(ctx, tx, armID)
+	if err != nil {
+		return err
+	}
+
+	if reward > 0 {
+		stats.Alpha += 1.0
+		stats.Conversions++
+		stats.Revenue += reward
+	} else {
+		stats.Beta += 1.0
+	}
+	stats.Samples++
+	if stats.Samples > 0 {
+		stats.AvgReward = stats.Revenue / float64(stats.Samples)
+	}
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO ab_test_arm_stats (arm_id, alpha, beta, samples, conversions, revenue, avg_reward)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (arm_id)
+		DO UPDATE SET
+			alpha = EXCLUDED.alpha,
+			beta = EXCLUDED.beta,
+			samples = EXCLUDED.samples,
+			conversions = EXCLUDED.conversions,
+			revenue = EXCLUDED.revenue,
+			avg_reward = EXCLUDED.avg_reward,
+			updated_at = NOW()
+	`, stats.ArmID, stats.Alpha, stats.Beta, stats.Samples, stats.Conversions, stats.Revenue, stats.AvgReward)
+	if err != nil {
+		return fmt.Errorf("failed to persist transactional arm stats: %w", err)
+	}
+
+	return nil
+}
+
+func (r *PostgresBanditRepository) loadArmStatsTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID) (*service.ArmStats, error) {
+	stats := &service.ArmStats{}
+	err := tx.QueryRow(ctx, `
+		SELECT arm_id, alpha, beta, samples, conversions, revenue, avg_reward, updated_at
+		FROM ab_test_arm_stats
+		WHERE arm_id = $1
+		FOR UPDATE
+	`, armID).Scan(
+		&stats.ArmID,
+		&stats.Alpha,
+		&stats.Beta,
+		&stats.Samples,
+		&stats.Conversions,
+		&stats.Revenue,
+		&stats.AvgReward,
+		&stats.UpdatedAt,
+	)
+	if err == pgx.ErrNoRows {
+		return &service.ArmStats{ArmID: armID, Alpha: 1.0, Beta: 1.0}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to load arm stats for update: %w", err)
+	}
+	return stats, nil
+}
+
+func (r *PostgresBanditRepository) insertConversionEventTx(ctx context.Context, tx pgx.Tx, event *service.ConversionEvent) (bool, error) {
+	var metadataJSON []byte
+	var err error
+	if event.Metadata != nil {
+		metadataJSON, err = json.Marshal(event.Metadata)
+		if err != nil {
+			return false, fmt.Errorf("failed to marshal conversion event metadata: %w", err)
+		}
+	}
+
+	result, err := tx.Exec(ctx, `
+		INSERT INTO bandit_conversion_events (
+			experiment_id,
+			arm_id,
+			user_id,
+			pending_reward_id,
+			transaction_id,
+			event_type,
+			original_reward_value,
+			original_currency,
+			normalized_reward_value,
+			normalized_currency,
+			metadata,
+			occurred_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, NULLIF($8, ''), $9, NULLIF($10, ''), $11, $12)
+		ON CONFLICT DO NOTHING
+	`,
+		event.ExperimentID,
+		event.ArmID,
+		nullableUUID(event.UserID),
+		nullableUUID(event.PendingRewardID),
+		nullableUUID(event.TransactionID),
+		event.EventType,
+		event.OriginalRewardValue,
+		event.OriginalCurrency,
+		event.NormalizedRewardValue,
+		event.NormalizedCurrency,
+		metadataJSON,
+		normalizeOccurredAt(event.OccurredAt),
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to insert conversion event: %w", err)
+	}
+	return result.RowsAffected() > 0, nil
+}
+
+func nullableUUID(id *uuid.UUID) interface{} {
+	if id == nil || *id == uuid.Nil {
+		return nil
+	}
+	return *id
+}
+
+func normalizeOccurredAt(occurredAt time.Time) time.Time {
+	if occurredAt.IsZero() {
+		return time.Now().UTC()
+	}
+	return occurredAt.UTC()
 }
 
 // GetByTransactionID retrieves conversion links by transaction ID

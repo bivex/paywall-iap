@@ -12,26 +12,26 @@ import (
 // DelayedRewardStrategy handles delayed feedback for conversions
 // that happen after the initial arm selection
 type DelayedRewardStrategy struct {
-	repo         BanditRepository
-	cache        BanditCache
-	logger       *zap.Logger
-	defaultTTL   time.Duration // How long to wait for conversions
-	maxTTL       time.Duration // Maximum time to track pending rewards
+	repo       BanditRepository
+	cache      BanditCache
+	logger     *zap.Logger
+	defaultTTL time.Duration // How long to wait for conversions
+	maxTTL     time.Duration // Maximum time to track pending rewards
 }
 
 // PendingReward represents a pending conversion reward
 type PendingReward struct {
-	ID              uuid.UUID
-	ExperimentID    uuid.UUID
-	ArmID           uuid.UUID
-	UserID          uuid.UUID
-	AssignedAt      time.Time
-	ExpiresAt       time.Time
-	Converted       bool
-	ConversionValue float64
+	ID                 uuid.UUID
+	ExperimentID       uuid.UUID
+	ArmID              uuid.UUID
+	UserID             uuid.UUID
+	AssignedAt         time.Time
+	ExpiresAt          time.Time
+	Converted          bool
+	ConversionValue    float64
 	ConversionCurrency string
-	ConvertedAt     *time.Time
-	ProcessedAt     *time.Time
+	ConvertedAt        *time.Time
+	ProcessedAt        *time.Time
 }
 
 // ConversionLink links a pending reward to an actual transaction
@@ -50,6 +50,14 @@ type DelayedRewardRepository interface {
 	UpdatePendingReward(ctx context.Context, reward *PendingReward) error
 	LinkConversion(ctx context.Context, link *ConversionLink) error
 	GetByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]*ConversionLink, error)
+}
+
+type DelayedConversionProcessor interface {
+	ProcessPendingConversion(ctx context.Context, transactionID, userID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) (*PendingReward, bool, error)
+}
+
+type ExpiredPendingRewardProcessor interface {
+	ProcessExpiredPendingReward(ctx context.Context, pendingID uuid.UUID, processedAt time.Time) (bool, error)
 }
 
 // NewDelayedRewardStrategy creates a new delayed reward strategy
@@ -118,10 +126,40 @@ func (s *DelayedRewardStrategy) ProcessConversion(
 	userID uuid.UUID,
 	conversionValue float64,
 	currency string,
+	baseBandit *ThompsonSamplingBandit,
 ) error {
 	delayedRepo, ok := s.repo.(DelayedRewardRepository)
 	if !ok {
 		return fmt.Errorf("repository does not support delayed rewards")
+	}
+	now := time.Now().UTC()
+
+	if processor, ok := s.repo.(DelayedConversionProcessor); ok {
+		matchedPending, processed, err := processor.ProcessPendingConversion(ctx, transactionID, userID, conversionValue, currency, now)
+		if err != nil {
+			return fmt.Errorf("failed to process pending conversion: %w", err)
+		}
+		if !processed || matchedPending == nil {
+			s.logger.Info("No matching pending reward found for conversion",
+				zap.String("transaction_id", transactionID.String()),
+				zap.String("user_id", userID.String()),
+			)
+			return nil
+		}
+
+		cacheKey := s.getPendingCacheKey(matchedPending.ID)
+		if err := s.invalidatePendingCache(ctx, cacheKey); err != nil {
+			s.logger.Warn("Failed to invalidate cache", zap.Error(err))
+		}
+
+		s.logger.Info("Conversion processed and linked to pending reward",
+			zap.String("pending_id", matchedPending.ID.String()),
+			zap.String("transaction_id", transactionID.String()),
+			zap.String("arm_id", matchedPending.ArmID.String()),
+			zap.Float64("value", conversionValue),
+			zap.String("currency", currency),
+		)
+		return nil
 	}
 
 	// Find pending rewards for this user
@@ -132,7 +170,6 @@ func (s *DelayedRewardStrategy) ProcessConversion(
 	}
 
 	var matchedPending *PendingReward
-	now := time.Now()
 
 	// Find the most recent unexpired pending reward
 	for _, pending := range pendingRewards {
@@ -149,6 +186,25 @@ func (s *DelayedRewardStrategy) ProcessConversion(
 			zap.String("user_id", userID.String()),
 		)
 		return nil // Not an error, just no match
+	}
+
+	if err := baseBandit.UpdateRewardWithEvent(ctx, matchedPending.ExperimentID, matchedPending.ArmID, conversionValue, &ConversionEvent{
+		ExperimentID:          matchedPending.ExperimentID,
+		ArmID:                 matchedPending.ArmID,
+		UserID:                &matchedPending.UserID,
+		PendingRewardID:       &matchedPending.ID,
+		TransactionID:         &transactionID,
+		EventType:             ConversionEventTypeDelayedConversion,
+		OriginalRewardValue:   conversionValue,
+		OriginalCurrency:      currency,
+		NormalizedRewardValue: conversionValue,
+		NormalizedCurrency:    currency,
+		Metadata: map[string]interface{}{
+			"source": "delayed_reward_strategy_fallback",
+		},
+		OccurredAt: now,
+	}); err != nil {
+		return fmt.Errorf("failed to apply delayed reward: %w", err)
 	}
 
 	// Mark as converted
@@ -214,8 +270,42 @@ func (s *DelayedRewardStrategy) ProcessExpiredRewards(
 			continue // Already processed
 		}
 
+		now := time.Now().UTC()
+		if processor, ok := s.repo.(ExpiredPendingRewardProcessor); ok {
+			applied, err := processor.ProcessExpiredPendingReward(ctx, pending.ID, now)
+			if err != nil {
+				s.logger.Error("Failed to record expired reward",
+					zap.String("pending_id", pending.ID.String()),
+					zap.Error(err),
+				)
+				continue
+			}
+			if !applied {
+				continue
+			}
+
+			cacheKey := s.getPendingCacheKey(pending.ID)
+			if err := s.invalidatePendingCache(ctx, cacheKey); err != nil {
+				s.logger.Warn("Failed to invalidate cache", zap.Error(err))
+			}
+			processed++
+			continue
+		}
+
 		// Record as non-conversion (reward = 0)
-		if err := baseBandit.UpdateReward(ctx, pending.ExperimentID, pending.ArmID, 0); err != nil {
+		if err := baseBandit.UpdateRewardWithEvent(ctx, pending.ExperimentID, pending.ArmID, 0, &ConversionEvent{
+			ExperimentID:          pending.ExperimentID,
+			ArmID:                 pending.ArmID,
+			UserID:                &pending.UserID,
+			PendingRewardID:       &pending.ID,
+			EventType:             ConversionEventTypeExpiredPendingReward,
+			OriginalRewardValue:   0,
+			NormalizedRewardValue: 0,
+			Metadata: map[string]interface{}{
+				"source": "delayed_reward_strategy_fallback",
+			},
+			OccurredAt: now,
+		}); err != nil {
 			s.logger.Error("Failed to record expired reward",
 				zap.String("pending_id", pending.ID.String()),
 				zap.Error(err),
@@ -224,7 +314,6 @@ func (s *DelayedRewardStrategy) ProcessExpiredRewards(
 		}
 
 		// Mark as processed
-		now := time.Now()
 		pending.ProcessedAt = &now
 		if err := delayedRepo.UpdatePendingReward(ctx, pending); err != nil {
 			s.logger.Error("Failed to update expired pending reward",

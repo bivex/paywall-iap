@@ -15,7 +15,8 @@ import (
 )
 
 type banditServiceStub struct {
-	updateRewardFunc func(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error
+	updateRewardFunc          func(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error
+	updateRewardWithEventFunc func(ctx context.Context, experimentID, armID uuid.UUID, reward float64, event *service.ConversionEvent) error
 }
 
 func (s banditServiceStub) SelectArm(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, error) {
@@ -23,6 +24,16 @@ func (s banditServiceStub) SelectArm(ctx context.Context, experimentID, userID u
 }
 
 func (s banditServiceStub) UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error {
+	if s.updateRewardFunc != nil {
+		return s.updateRewardFunc(ctx, experimentID, armID, reward)
+	}
+	return nil
+}
+
+func (s banditServiceStub) UpdateRewardWithEvent(ctx context.Context, experimentID, armID uuid.UUID, reward float64, event *service.ConversionEvent) error {
+	if s.updateRewardWithEventFunc != nil {
+		return s.updateRewardWithEventFunc(ctx, experimentID, armID, reward, event)
+	}
 	if s.updateRewardFunc != nil {
 		return s.updateRewardFunc(ctx, experimentID, armID, reward)
 	}

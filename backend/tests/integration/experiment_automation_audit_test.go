@@ -45,6 +45,22 @@ func TestExperimentStatusAuditIdempotency(t *testing.T) {
 
 		CREATE UNIQUE INDEX idx_experiment_lifecycle_audit_log_idempotency
 			ON experiment_lifecycle_audit_log(idempotency_key);
+
+		CREATE TABLE experiment_automation_decision_log (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+			source TEXT NOT NULL,
+			decision_type TEXT NOT NULL,
+			reason TEXT,
+			from_status TEXT NOT NULL,
+			to_status TEXT NOT NULL,
+			idempotency_key TEXT,
+			details JSONB,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
+
+		CREATE UNIQUE INDEX idx_experiment_automation_decision_log_idempotency
+			ON experiment_automation_decision_log(idempotency_key);
 	`)
 	require.NoError(t, err)
 
@@ -74,4 +90,12 @@ func TestExperimentStatusAuditIdempotency(t *testing.T) {
 	var auditCount int
 	require.NoError(t, db.QueryRow(ctx, `SELECT COUNT(*) FROM experiment_lifecycle_audit_log WHERE idempotency_key = $1`, auditKey).Scan(&auditCount))
 	assert.Equal(t, 1, auditCount)
+
+	var decisionCount int
+	require.NoError(t, db.QueryRow(ctx, `SELECT COUNT(*) FROM experiment_automation_decision_log WHERE idempotency_key = $1`, auditKey).Scan(&decisionCount))
+	assert.Equal(t, 1, decisionCount)
+
+	var reason string
+	require.NoError(t, db.QueryRow(ctx, `SELECT reason FROM experiment_automation_decision_log WHERE idempotency_key = $1`, auditKey).Scan(&reason))
+	assert.Equal(t, "auto_start", reason)
 }
