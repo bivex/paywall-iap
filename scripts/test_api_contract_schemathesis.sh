@@ -233,6 +233,10 @@ should_apply_admin_experiment_negative_rejection_workarounds() {
   local args_joined
   args_joined=" $* "
 
+  if [[ "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA "* ]]; then
+    return 1
+  fi
+
   if [[ "$args_joined" == *" --exclude-path "*lifecycle-audit* || "$args_joined" == *" --exclude-path-regex "*lifecycle-audit* ]]; then
     return 1
   fi
@@ -242,6 +246,29 @@ should_apply_admin_experiment_negative_rejection_workarounds() {
   fi
 
   if [[ "$args_joined" == *"/v1/admin/experiments"* || "$args_joined" == *"lifecycle-audit"* ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
+should_apply_bandit_pending_warning_workaround() {
+  local args_joined
+  args_joined=" $* "
+
+  if [[ "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA "* ]]; then
+    return 1
+  fi
+
+  if [[ "$args_joined" == *" --exclude-path /v1/bandit/pending/{id}"* || "$args_joined" == *" --exclude-path-regex "*"/v1/bandit/pending"* ]]; then
+    return 1
+  fi
+
+  if [[ "$args_joined" != *" --include-path "* && "$args_joined" != *" --include-path-regex "* && "$args_joined" != *" --exclude-path "* && "$args_joined" != *" --exclude-path-regex "* ]]; then
+    return 0
+  fi
+
+  if [[ "$args_joined" == *"/v1/bandit/pending"* ]]; then
     return 0
   fi
 
@@ -267,7 +294,7 @@ should_split_stateful_admin_experiment_action_runs() {
   local args_joined
   args_joined=" $* "
 
-  if [[ "$args_joined" != *"/v1/admin/experiments"* ]]; then
+  if [[ "$args_joined" == *" --warnings $SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA "* ]]; then
     return 1
   fi
 
@@ -404,9 +431,29 @@ run_schemathesis_with_stateful_admin_experiment_action_splits() {
     say "Running isolated stateful action via harness subprocess ($(basename "$action_path"))"
     bash "$0" \
       --warnings "$SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA" \
-      --include-path "$action_path" \
-      "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+      --include-path "$action_path"
   done
+}
+
+run_schemathesis_with_bandit_pending_warning_workaround() {
+  local label="$1"
+  local bearer_token="$2"
+  shift 2
+
+  local pending_path='/v1/bandit/pending/{id}'
+
+  collect_non_path_filter_args "$@"
+
+  say "Applying bandit pending Schemathesis workaround (isolate example-backed path and suppress false-positive missing_test_data warning)"
+
+  run_schemathesis "$label (excluding bandit pending warning outlier)" "$bearer_token" \
+    --exclude-path "$pending_path" \
+    "$@"
+
+  bash "$0" \
+    --warnings "$SCHEMATHESIS_WARNINGS_WITHOUT_MISSING_TEST_DATA" \
+    --include-path "$pending_path" \
+    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
 }
 
 main() {
@@ -438,12 +485,21 @@ main() {
       user_suite_seeded=1
     fi
 
-    run_schemathesis "public endpoints" "" \
-      --exclude-tag admin \
-      --exclude-tag admin-auth \
-      --exclude-tag subscription \
-      --exclude-tag iap \
-      "$@"
+    if should_apply_bandit_pending_warning_workaround "$@"; then
+      run_schemathesis_with_bandit_pending_warning_workaround "public endpoints" "" \
+        --exclude-tag admin \
+        --exclude-tag admin-auth \
+        --exclude-tag subscription \
+        --exclude-tag iap \
+        "$@"
+    else
+      run_schemathesis "public endpoints" "" \
+        --exclude-tag admin \
+        --exclude-tag admin-auth \
+        --exclude-tag subscription \
+        --exclude-tag iap \
+        "$@"
+    fi
 
     if should_reseed_admin_experiment_fixtures "$@"; then
       reseed_admin_experiment_contract_fixtures
@@ -487,7 +543,9 @@ main() {
     reseed_admin_experiment_contract_fixtures
   fi
 
-  if should_apply_admin_experiment_negative_rejection_workarounds "$@"; then
+  if should_apply_bandit_pending_warning_workaround "$@"; then
+    run_schemathesis_with_bandit_pending_warning_workaround "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
+  elif should_apply_admin_experiment_negative_rejection_workarounds "$@"; then
     if should_split_stateful_admin_experiment_action_runs "$@"; then
       run_schemathesis_with_stateful_admin_experiment_action_splits "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
     else
