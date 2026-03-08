@@ -187,18 +187,10 @@ function WebPreview({
             const isSelected = plan.id === selectedPlanId;
 
             return (
-              <div
+              <button
                 key={plan.id}
-                className="rounded-3xl border p-5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md"
+                className="hover:-translate-y-0.5 rounded-3xl border p-5 text-left shadow-sm transition-all duration-150 hover:shadow-md"
                 onClick={() => onSelectPlan(plan.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onSelectPlan(plan.id);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
                 style={{
                   backgroundColor: paywall.theme.surfaceColor,
                   borderColor: isSelected || plan.highlight ? paywall.theme.accentColor : borderColor,
@@ -210,6 +202,7 @@ function WebPreview({
                       : undefined,
                   transform: isSelected ? "translateY(-2px)" : undefined,
                 }}
+                type="button"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -245,14 +238,13 @@ function WebPreview({
                     {plan.period}
                   </span>
                 </div>
-                <button
-                  className="mt-6 w-full rounded-xl px-4 py-3 font-semibold text-sm"
+                <div
+                  className="mt-6 w-full rounded-xl px-4 py-3 text-center font-semibold text-sm"
                   style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
-                  type="button"
                 >
                   {paywall.cta.primaryLabel}
-                </button>
-              </div>
+                </div>
+              </button>
             );
           })}
         </div>
@@ -335,18 +327,10 @@ function MobilePreview({
             const isSelected = plan.id === selectedPlanId;
 
             return (
-              <div
+              <button
                 key={plan.id}
-                className="rounded-3xl border p-4 transition-all duration-150"
+                className="rounded-3xl border p-4 text-left transition-all duration-150"
                 onClick={() => onSelectPlan(plan.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onSelectPlan(plan.id);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
                 style={{
                   backgroundColor: paywall.theme.surfaceColor,
                   borderColor: isSelected || plan.highlight ? paywall.theme.accentColor : borderColor,
@@ -355,6 +339,7 @@ function MobilePreview({
                     : undefined,
                   transform: isSelected ? "translateY(-2px)" : undefined,
                 }}
+                type="button"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -390,14 +375,13 @@ function MobilePreview({
                     {plan.period}
                   </span>
                 </div>
-                <button
-                  className="mt-4 w-full rounded-2xl px-4 py-3 font-semibold text-sm"
+                <div
+                  className="mt-4 w-full rounded-2xl px-4 py-3 text-center font-semibold text-sm"
                   style={{ backgroundColor: paywall.theme.accentColor, color: accentText }}
-                  type="button"
                 >
                   {paywall.cta.primaryLabel}
-                </button>
-              </div>
+                </div>
+              </button>
             );
           })}
         </div>

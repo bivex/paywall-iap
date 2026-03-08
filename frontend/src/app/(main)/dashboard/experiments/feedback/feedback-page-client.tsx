@@ -21,9 +21,9 @@ import type {
   DelayedConversionResult,
   DelayedEndpointProbe,
   DelayedFeedbackDashboardData,
+  DelayedFeedbackSnapshot,
   DelayedPendingReward,
   DelayedPendingRewardsByUser,
-  DelayedFeedbackSnapshot,
 } from "@/lib/delayed-feedback";
 import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
 
@@ -302,10 +302,9 @@ export function DelayedFeedbackPageClient({
 
     setIsLookingUpUserPending(true);
     try {
-      const res = await fetch(
-        `/api/admin/delayed-feedback/users/${encodeURIComponent(pendingUserId.trim())}/pending`,
-        { cache: "no-store" },
-      );
+      const res = await fetch(`/api/admin/delayed-feedback/users/${encodeURIComponent(pendingUserId.trim())}/pending`, {
+        cache: "no-store",
+      });
       const body = await res.json().catch(() => ({}));
       const result: UserPendingLookupResult = {
         ok: res.ok,
@@ -710,7 +709,9 @@ export function DelayedFeedbackPageClient({
                 {userPendingLookup ? (
                   <div className="rounded-md border p-3 text-sm">
                     <p className="font-medium">{t("lookup.httpStatus", { status: userPendingLookup.status })}</p>
-                    <p className={`mt-1 text-xs ${userPendingLookup.ok ? "text-muted-foreground" : "text-destructive"}`}>
+                    <p
+                      className={`mt-1 text-xs ${userPendingLookup.ok ? "text-muted-foreground" : "text-destructive"}`}
+                    >
                       {userPendingLookup.message}
                     </p>
 
