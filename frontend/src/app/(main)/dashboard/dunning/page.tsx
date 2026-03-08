@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { getRevenueOps } from "@/actions/revenue-ops";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 import {
   DunningQueueCard,
@@ -13,10 +14,24 @@ import {
   sortDunningRows,
 } from "../revenue-ops/_components/dunning-queue-card";
 
-export default async function DunningPage({ searchParams }: { searchParams: Promise<{ dunning_sort?: string }> }) {
+const DUNNING_STATUSES = ["all", "pending", "in_progress", "recovered", "failed"] as const;
+
+type DunningStatusFilter = (typeof DUNNING_STATUSES)[number];
+
+function isDunningStatusFilter(value?: string): value is DunningStatusFilter {
+  return Boolean(value && DUNNING_STATUSES.includes(value as DunningStatusFilter));
+}
+
+export default async function DunningPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dunning_sort?: string; q?: string; status?: string }>;
+}) {
   const sp = await searchParams;
   const t = await getTranslations("dunning");
   const dunningSort = sp.dunning_sort ?? "date_desc";
+  const query = sp.q?.trim() ?? "";
+  const statusFilter = isDunningStatusFilter(sp.status) ? sp.status : "all";
   const report = await getRevenueOps(1);
 
   if (!report) {
@@ -30,9 +45,26 @@ export default async function DunningPage({ searchParams }: { searchParams: Prom
 
   const { dunning } = report;
   const activeDunning = getActiveDunningCount(dunning.stats);
-  const sortedDunning = sortDunningRows(dunning.queue, dunningSort);
-  const buildDunningSortUrl = (sort: string) =>
-    sort === "date_desc" ? "/dashboard/dunning" : `/dashboard/dunning?dunning_sort=${sort}`;
+  const filteredDunning = dunning.queue.filter((row) => {
+    const matchesStatus = statusFilter === "all" || row.status === statusFilter;
+    const haystack = `${row.email} ${row.user_id} ${row.plan_type}`.toLowerCase();
+    const matchesQuery = query.length === 0 || haystack.includes(query.toLowerCase());
+    return matchesStatus && matchesQuery;
+  });
+  const sortedDunning = sortDunningRows(filteredDunning, dunningSort);
+  const hasFilters = query.length > 0 || statusFilter !== "all";
+
+  const buildDunningUrl = (params: { sort?: string; q?: string; status?: DunningStatusFilter }) => {
+    const qs = new URLSearchParams();
+    if (params.q) qs.set("q", params.q);
+    if (params.status && params.status !== "all") qs.set("status", params.status);
+    if (params.sort && params.sort !== "date_desc") qs.set("dunning_sort", params.sort);
+    const str = qs.toString();
+    return str ? `/dashboard/dunning?${str}` : "/dashboard/dunning";
+  };
+
+  const buildDunningSortUrl = (sort: string) => buildDunningUrl({ sort, q: query, status: statusFilter });
+  const resetFiltersUrl = buildDunningUrl({ sort: dunningSort });
 
   return (
     <div className="flex flex-col gap-6">
@@ -104,6 +136,42 @@ export default async function DunningPage({ searchParams }: { searchParams: Prom
         })}
       </div>
 
+      <Card className="py-4">
+        <CardContent className="px-4 py-0">
+          <form className="flex flex-col gap-3 sm:flex-row sm:items-center" method="get">
+            {dunningSort !== "date_desc" && <input type="hidden" name="dunning_sort" value={dunningSort} />}
+            <div className="flex-1">
+              <Input
+                aria-label={t("filters.searchPlaceholder")}
+                defaultValue={query}
+                name="q"
+                placeholder={t("filters.searchPlaceholder")}
+              />
+            </div>
+            <select
+              aria-label={t("filters.statusPlaceholder")}
+              className="h-9 min-w-48 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+              defaultValue={statusFilter}
+              name="status"
+            >
+              <option value="all">{t("filters.statusAll")}</option>
+              <option value="pending">{t("filters.statusPending")}</option>
+              <option value="in_progress">{t("filters.statusInProgress")}</option>
+              <option value="recovered">{t("filters.statusRecovered")}</option>
+              <option value="failed">{t("filters.statusFailed")}</option>
+            </select>
+            <div className="flex gap-2">
+              <Button type="submit">{t("actions.applyFilters")}</Button>
+              {hasFilters && (
+                <Button variant="outline" asChild>
+                  <Link href={resetFiltersUrl}>{t("actions.resetFilters")}</Link>
+                </Button>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
       <DunningQueueCard
         rows={sortedDunning}
         stats={dunning.stats}
@@ -122,7 +190,7 @@ export default async function DunningPage({ searchParams }: { searchParams: Prom
           nextRetry: t("queue.table.nextRetry"),
           lastAttempt: t("queue.table.lastAttempt"),
           actions: t("queue.table.actions"),
-          empty: t("queue.empty"),
+          empty: hasFilters ? t("queue.emptyFiltered") : t("queue.empty"),
           viewUser: t("queue.viewUser"),
         }}
       />

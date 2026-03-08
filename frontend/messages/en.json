@@ -145,7 +145,18 @@
       "active": "dunning active"
     },
     "actions": {
-      "openRevenueOps": "Open Revenue Ops"
+      "openRevenueOps": "Open Revenue Ops",
+      "applyFilters": "Apply filters",
+      "resetFilters": "Reset"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by email, user ID, or plan...",
+      "statusPlaceholder": "Status",
+      "statusAll": "All statuses",
+      "statusPending": "Pending",
+      "statusInProgress": "In Progress",
+      "statusRecovered": "Recovered",
+      "statusFailed": "Failed"
     },
     "states": {
       "loadFailed": "Failed to load — make sure you are logged in."
@@ -164,6 +175,7 @@
       "recovered": "Recovered",
       "failed": "Failed",
       "empty": "No active dunning — all subscriptions are healthy.",
+      "emptyFiltered": "No dunning rows match the current filters.",
       "viewUser": "View User",
       "table": {
         "user": "User",

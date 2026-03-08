@@ -145,7 +145,18 @@
       "active": "активно в dunning"
     },
     "actions": {
-      "openRevenueOps": "Открыть Revenue Ops"
+      "openRevenueOps": "Открыть Revenue Ops",
+      "applyFilters": "Применить фильтры",
+      "resetFilters": "Сбросить"
+    },
+    "filters": {
+      "searchPlaceholder": "Поиск по email, user ID или тарифу...",
+      "statusPlaceholder": "Статус",
+      "statusAll": "Все статусы",
+      "statusPending": "Ожидают",
+      "statusInProgress": "В процессе",
+      "statusRecovered": "Восстановлены",
+      "statusFailed": "Неуспешны"
     },
     "states": {
       "loadFailed": "Не удалось загрузить данные — проверьте, что вы авторизованы."
@@ -164,6 +175,7 @@
       "recovered": "Восстановлены",
       "failed": "Неуспешны",
       "empty": "Активных dunning-кейсов нет — все подписки в порядке.",
+      "emptyFiltered": "Нет dunning-записей, подходящих под текущие фильтры.",
       "viewUser": "Профиль пользователя",
       "table": {
         "user": "Пользователь",
