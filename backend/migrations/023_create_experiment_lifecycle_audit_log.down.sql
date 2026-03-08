@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS experiment_lifecycle_audit_log;

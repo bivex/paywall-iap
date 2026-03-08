@@ -20,19 +20,24 @@ func (s *stubExperimentAutomationRepository) ListExperimentAutomationStates(cont
 }
 
 type stubExperimentStatusTransitioner struct {
-	transitions map[uuid.UUID]string
+	transitions map[uuid.UUID]transitionCall
 	err         error
 }
 
-func (s *stubExperimentStatusTransitioner) TransitionExperimentStatus(_ context.Context, experimentID uuid.UUID, nextStatus string) error {
+type transitionCall struct {
+	Status string
+	Audit  *ExperimentStatusTransitionAudit
+}
+
+func (s *stubExperimentStatusTransitioner) TransitionExperimentStatusWithAudit(_ context.Context, experimentID uuid.UUID, nextStatus string, audit *ExperimentStatusTransitionAudit) error {
 	if s.err != nil {
 		return s.err
 	}
 	if s.transitions == nil {
-		s.transitions = make(map[uuid.UUID]string)
+		s.transitions = make(map[uuid.UUID]transitionCall)
 	}
 	if _, exists := s.transitions[experimentID]; !exists {
-		s.transitions[experimentID] = nextStatus
+		s.transitions[experimentID] = transitionCall{Status: nextStatus, Audit: audit}
 	}
 	return nil
 }
@@ -57,7 +62,9 @@ func TestExperimentAutomationReconciler(t *testing.T) {
 		result, err := reconciler.Reconcile(ctx)
 
 		require.NoError(t, err)
-		assert.Equal(t, "running", transitions.transitions[experimentID])
+		assert.Equal(t, "running", transitions.transitions[experimentID].Status)
+		require.NotNil(t, transitions.transitions[experimentID].Audit)
+		assert.Equal(t, "experiment_automation_reconciler", transitions.transitions[experimentID].Audit.Source)
 		assert.Equal(t, []uuid.UUID{experimentID}, result.Started)
 		assert.Empty(t, result.Completed)
 	})
@@ -78,7 +85,7 @@ func TestExperimentAutomationReconciler(t *testing.T) {
 		result, err := reconciler.Reconcile(ctx)
 
 		require.NoError(t, err)
-		assert.Equal(t, "completed", transitions.transitions[experimentID])
+		assert.Equal(t, "completed", transitions.transitions[experimentID].Status)
 		assert.Equal(t, []uuid.UUID{experimentID}, result.Completed)
 	})
 
@@ -111,8 +118,8 @@ func TestExperimentAutomationReconciler(t *testing.T) {
 		result, err := reconciler.Reconcile(ctx)
 
 		require.NoError(t, err)
-		assert.Equal(t, "completed", transitions.transitions[samplesID])
-		assert.Equal(t, "completed", transitions.transitions[confidenceID])
+		assert.Equal(t, "completed", transitions.transitions[samplesID].Status)
+		assert.Equal(t, "completed", transitions.transitions[confidenceID].Status)
 		assert.ElementsMatch(t, []uuid.UUID{samplesID, confidenceID}, result.Completed)
 	})
 

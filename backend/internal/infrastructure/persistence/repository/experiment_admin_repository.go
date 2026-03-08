@@ -81,7 +81,17 @@ func (r *ExperimentAdminRepository) UpdateExperimentDraft(ctx context.Context, e
 }
 
 func (r *ExperimentAdminRepository) UpdateExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string, startAt, endAt *time.Time) error {
-	_, err := r.pool.Exec(ctx, `
+	return r.UpdateExperimentStatusWithAudit(ctx, experimentID, "", nextStatus, startAt, endAt, nil)
+}
+
+func (r *ExperimentAdminRepository) UpdateExperimentStatusWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, audit *service.ExperimentStatusTransitionAudit) error {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to begin experiment status transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
 		UPDATE ab_tests
 		SET status = $2,
 		    start_at = $3,
@@ -95,6 +105,39 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatus(ctx context.Context, 
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update experiment status: %w", err)
+	}
+
+	if audit != nil {
+		var detailsJSON []byte
+		if audit.Details != nil {
+			detailsJSON, err = json.Marshal(audit.Details)
+			if err != nil {
+				return fmt.Errorf("failed to marshal experiment status audit details: %w", err)
+			}
+		}
+
+		_, err = tx.Exec(ctx, `
+			INSERT INTO experiment_lifecycle_audit_log (
+				experiment_id, actor_type, actor_id, source, action, from_status, to_status, idempotency_key, details
+			)
+			VALUES ($1, $2, $3, $4, 'status_transition', $5, $6, $7, $8)
+			ON CONFLICT (idempotency_key) DO NOTHING`,
+			experimentID,
+			audit.ActorType,
+			audit.ActorID,
+			audit.Source,
+			currentStatus,
+			nextStatus,
+			audit.IdempotencyKey,
+			detailsJSON,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert experiment lifecycle audit log: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit experiment status transaction: %w", err)
 	}
 	return nil
 }

@@ -17,6 +17,7 @@ type stubExperimentMutationRepository struct {
 	updatedStatus      string
 	updatedStatusStart *time.Time
 	updatedStatusEnd   *time.Time
+	updatedStatusAudit *ExperimentStatusTransitionAudit
 }
 
 func (s *stubExperimentMutationRepository) GetExperimentMutationState(context.Context, uuid.UUID) (*ExperimentMutationState, error) {
@@ -35,6 +36,14 @@ func (s *stubExperimentMutationRepository) UpdateExperimentStatus(_ context.Cont
 	s.updatedStatus = nextStatus
 	s.updatedStatusStart = startAt
 	s.updatedStatusEnd = endAt
+	return nil
+}
+
+func (s *stubExperimentMutationRepository) UpdateExperimentStatusWithAudit(_ context.Context, _ uuid.UUID, _ string, nextStatus string, startAt, endAt *time.Time, audit *ExperimentStatusTransitionAudit) error {
+	s.updatedStatus = nextStatus
+	s.updatedStatusStart = startAt
+	s.updatedStatusEnd = endAt
+	s.updatedStatusAudit = audit
 	return nil
 }
 
@@ -117,6 +126,26 @@ func TestExperimentAdminService(t *testing.T) {
 		err := svc.TransitionExperimentStatus(ctx, experimentID, "running")
 
 		require.ErrorIs(t, err, ErrExperimentNotFound)
+	})
+
+	t.Run("TransitionExperimentStatusWithAudit forwards audit metadata", func(t *testing.T) {
+		repo := &stubExperimentMutationRepository{state: &ExperimentMutationState{ID: experimentID, Status: "draft"}}
+		svc := NewExperimentAdminService(repo)
+		auditKey := "experiment:transition:test"
+
+		err := svc.TransitionExperimentStatusWithAudit(ctx, experimentID, "running", &ExperimentStatusTransitionAudit{
+			ActorType:      "system",
+			Source:         "experiment_automation_reconciler",
+			IdempotencyKey: &auditKey,
+			Details:        map[string]interface{}{"reason": "auto_start"},
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, repo.updatedStatusAudit)
+		assert.Equal(t, "system", repo.updatedStatusAudit.ActorType)
+		assert.Equal(t, "experiment_automation_reconciler", repo.updatedStatusAudit.Source)
+		require.NotNil(t, repo.updatedStatusAudit.IdempotencyKey)
+		assert.Equal(t, auditKey, *repo.updatedStatusAudit.IdempotencyKey)
 	})
 
 	t.Run("NormalizeExperimentAutomationPolicy applies defaults and preserves explicit flags", func(t *testing.T) {

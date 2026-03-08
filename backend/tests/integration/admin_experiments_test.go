@@ -88,7 +88,20 @@ func TestAdminExperimentsHandler(t *testing.T) {
 			arm_id UUID NOT NULL REFERENCES ab_test_arms(id) ON DELETE CASCADE,
 			assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '24 hours')
-		);`)
+			);
+			CREATE TABLE experiment_lifecycle_audit_log (
+				id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+				experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
+				actor_type TEXT NOT NULL,
+				actor_id UUID,
+				source TEXT NOT NULL,
+				action TEXT NOT NULL,
+				from_status TEXT NOT NULL,
+				to_status TEXT NOT NULL,
+				idempotency_key TEXT,
+				details JSONB,
+				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+			);`)
 	require.NoError(t, err)
 
 	adminID := uuid.New()
@@ -235,6 +248,40 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		require.Len(t, resp.Data, 2)
 		assert.Equal(t, "Draft onboarding test", resp.Data[0].Name)
 		assert.Len(t, resp.Data[0].Arms, 2)
+	})
+
+	t.Run("GET returns latest lifecycle audit reason when present", func(t *testing.T) {
+		_, err := db.Exec(ctx, `
+			INSERT INTO experiment_lifecycle_audit_log (
+				experiment_id, actor_type, source, action, from_status, to_status, idempotency_key, details
+			) VALUES ($1, 'system', 'experiment_automation_reconciler', 'status_transition', 'draft', 'running', $2, '{"reason":"auto_start"}'::jsonb)
+		`, draftExperiment.ID, "experiment:"+draftExperiment.ID.String()+":running")
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodGet, "/v1/admin/experiments", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data []handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+
+		var found bool
+		for _, experiment := range resp.Data {
+			if experiment.ID != draftExperiment.ID {
+				continue
+			}
+			found = true
+			require.NotNil(t, experiment.LatestLifecycleAudit)
+			assert.Equal(t, "system", experiment.LatestLifecycleAudit.ActorType)
+			assert.Equal(t, "experiment_automation_reconciler", experiment.LatestLifecycleAudit.Source)
+			assert.Equal(t, "draft", experiment.LatestLifecycleAudit.FromStatus)
+			assert.Equal(t, "running", experiment.LatestLifecycleAudit.ToStatus)
+			assert.Equal(t, "auto_start", experiment.LatestLifecycleAudit.Details["reason"])
+		}
+		assert.True(t, found)
 	})
 
 	t.Run("PUT rejects invalid draft metadata payload", func(t *testing.T) {

@@ -62,3 +62,4 @@ backend/worker
 
 backend/api
 tests/load/results/
+backend/.hypothesis/

@@ -25,7 +25,7 @@ type ExperimentAutomationRepository interface {
 }
 
 type ExperimentStatusTransitioner interface {
-	TransitionExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string) error
+	TransitionExperimentStatusWithAudit(ctx context.Context, experimentID uuid.UUID, nextStatus string, audit *ExperimentStatusTransitionAudit) error
 }
 
 type ExperimentAutomationRunResult struct {
@@ -57,17 +57,27 @@ func (r *ExperimentAutomationReconciler) Reconcile(ctx context.Context) (Experim
 	now := r.now()
 	result := ExperimentAutomationRunResult{}
 	for _, state := range states {
-		nextStatus := r.nextStatus(state, now)
-		if nextStatus == "" {
+		decision := r.nextDecision(state, now)
+		if decision.NextStatus == "" {
 			result.Skipped++
 			continue
 		}
 
-		if err := r.transitions.TransitionExperimentStatus(ctx, state.ID, nextStatus); err != nil {
-			return result, fmt.Errorf("failed to transition experiment %s to %s: %w", state.ID, nextStatus, err)
+		auditKey := fmt.Sprintf("experiment:%s:%s", state.ID, decision.NextStatus)
+		audit := &ExperimentStatusTransitionAudit{
+			ActorType:      "system",
+			Source:         "experiment_automation_reconciler",
+			IdempotencyKey: &auditKey,
+			Details: map[string]interface{}{
+				"reason": decision.Reason,
+			},
 		}
 
-		switch nextStatus {
+		if err := r.transitions.TransitionExperimentStatusWithAudit(ctx, state.ID, decision.NextStatus, audit); err != nil {
+			return result, fmt.Errorf("failed to transition experiment %s to %s: %w", state.ID, decision.NextStatus, err)
+		}
+
+		switch decision.NextStatus {
 		case "running":
 			result.Started = append(result.Started, state.ID)
 		case "completed":
@@ -78,34 +88,41 @@ func (r *ExperimentAutomationReconciler) Reconcile(ctx context.Context) (Experim
 	return result, nil
 }
 
-func (r *ExperimentAutomationReconciler) nextStatus(state ExperimentAutomationState, now time.Time) string {
+type experimentAutomationDecision struct {
+	NextStatus string
+	Reason     string
+}
+
+func (r *ExperimentAutomationReconciler) nextDecision(state ExperimentAutomationState, now time.Time) experimentAutomationDecision {
 	if !state.AutomationPolicy.Enabled || state.AutomationPolicy.ManualOverride {
-		return ""
+		return experimentAutomationDecision{}
 	}
 
 	switch state.Status {
 	case "draft":
 		if state.AutomationPolicy.AutoStart && state.StartAt != nil && !state.StartAt.After(now) {
-			return "running"
+			return experimentAutomationDecision{NextStatus: "running", Reason: "auto_start"}
 		}
 	case "running":
-		if state.AutomationPolicy.AutoComplete && shouldAutoCompleteExperiment(state, now) {
-			return "completed"
+		if state.AutomationPolicy.AutoComplete {
+			if reason := autoCompleteReason(state, now); reason != "" {
+				return experimentAutomationDecision{NextStatus: "completed", Reason: reason}
+			}
 		}
 	}
 
-	return ""
+	return experimentAutomationDecision{}
 }
 
-func shouldAutoCompleteExperiment(state ExperimentAutomationState, now time.Time) bool {
+func autoCompleteReason(state ExperimentAutomationState, now time.Time) string {
 	if state.AutomationPolicy.CompleteOnEndTime && state.EndAt != nil && !state.EndAt.After(now) {
-		return true
+		return "auto_complete_end_time"
 	}
 	if state.AutomationPolicy.CompleteOnSampleSize && state.TotalSamples >= state.MinSampleSize {
-		return true
+		return "auto_complete_sample_size"
 	}
 	if state.AutomationPolicy.CompleteOnConfidence && state.WinnerConfidence != nil && *state.WinnerConfidence >= state.ConfidenceThreshold {
-		return true
+		return "auto_complete_confidence"
 	}
-	return false
+	return ""
 }

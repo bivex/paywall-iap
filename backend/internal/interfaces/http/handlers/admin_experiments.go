@@ -40,6 +40,7 @@ type AdminExperiment struct {
 	StartAt                    *time.Time                         `json:"start_at"`
 	EndAt                      *time.Time                         `json:"end_at"`
 	AutomationPolicy           service.ExperimentAutomationPolicy `json:"automation_policy"`
+	LatestLifecycleAudit       *AdminExperimentLifecycleAudit     `json:"latest_lifecycle_audit,omitempty"`
 	CreatedAt                  time.Time                          `json:"created_at"`
 	UpdatedAt                  time.Time                          `json:"updated_at"`
 	ArmCount                   int                                `json:"arm_count"`
@@ -49,6 +50,17 @@ type AdminExperiment struct {
 	TotalConversions           int                                `json:"total_conversions"`
 	TotalRevenue               float64                            `json:"total_revenue"`
 	Arms                       []AdminExperimentArm               `json:"arms"`
+}
+
+type AdminExperimentLifecycleAudit struct {
+	ActorType      string                 `json:"actor_type"`
+	Source         string                 `json:"source"`
+	Action         string                 `json:"action"`
+	FromStatus     string                 `json:"from_status"`
+	ToStatus       string                 `json:"to_status"`
+	IdempotencyKey *string                `json:"idempotency_key,omitempty"`
+	Details        map[string]interface{} `json:"details,omitempty"`
+	CreatedAt      time.Time              `json:"created_at"`
 }
 
 type createAdminExperimentArmRequest struct {
@@ -97,6 +109,14 @@ const adminExperimentSelectBase = `
 		       e.start_at,
 		       e.end_at,
 		       e.automation_policy,
+		       latest_lifecycle.actor_type,
+		       latest_lifecycle.source,
+		       latest_lifecycle.action,
+		       latest_lifecycle.from_status,
+		       latest_lifecycle.to_status,
+		       latest_lifecycle.idempotency_key,
+		       latest_lifecycle.details,
+		       latest_lifecycle.created_at,
 		       e.created_at,
 		       e.updated_at,
 		       (SELECT COUNT(*)::int FROM ab_test_arms a WHERE a.experiment_id = e.id) AS arm_count,`
@@ -107,7 +127,14 @@ const adminExperimentSelectStatsOnly = `
 		       COALESCE((SELECT SUM(s.samples)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_samples,
 		       COALESCE((SELECT SUM(s.conversions)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_conversions,
 		       COALESCE((SELECT SUM(s.revenue)::double precision FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_revenue
-		FROM ab_tests e`
+		FROM ab_tests e
+		LEFT JOIN LATERAL (
+			SELECT actor_type, source, action, from_status, to_status, idempotency_key, details, created_at
+			FROM experiment_lifecycle_audit_log l
+			WHERE l.experiment_id = e.id
+			ORDER BY l.created_at DESC
+			LIMIT 1
+		) latest_lifecycle ON true`
 
 const adminExperimentSelectWithAssignments = `
 		       (SELECT COUNT(*)::int FROM ab_test_assignments ass WHERE ass.experiment_id = e.id) AS total_assignments,
@@ -115,7 +142,14 @@ const adminExperimentSelectWithAssignments = `
 		       COALESCE((SELECT SUM(s.samples)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_samples,
 		       COALESCE((SELECT SUM(s.conversions)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_conversions,
 		       COALESCE((SELECT SUM(s.revenue)::double precision FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_revenue
-		FROM ab_tests e`
+		FROM ab_tests e
+		LEFT JOIN LATERAL (
+			SELECT actor_type, source, action, from_status, to_status, idempotency_key, details, created_at
+			FROM experiment_lifecycle_audit_log l
+			WHERE l.experiment_id = e.id
+			ORDER BY l.created_at DESC
+			LIMIT 1
+		) latest_lifecycle ON true`
 
 func normalizeCreateAdminExperimentRequest(req createAdminExperimentRequest) createAdminExperimentRequest {
 	req.Name = strings.TrimSpace(req.Name)
@@ -217,6 +251,14 @@ func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExp
 	var startAt sql.NullTime
 	var endAt sql.NullTime
 	var automationPolicyJSON []byte
+	var latestActorType sql.NullString
+	var latestSource sql.NullString
+	var latestAction sql.NullString
+	var latestFromStatus sql.NullString
+	var latestToStatus sql.NullString
+	var latestIdempotencyKey sql.NullString
+	var latestDetailsJSON []byte
+	var latestCreatedAt sql.NullTime
 	var confidenceThreshold float64
 
 	err := scanner.Scan(
@@ -232,6 +274,14 @@ func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExp
 		&startAt,
 		&endAt,
 		&automationPolicyJSON,
+		&latestActorType,
+		&latestSource,
+		&latestAction,
+		&latestFromStatus,
+		&latestToStatus,
+		&latestIdempotencyKey,
+		&latestDetailsJSON,
+		&latestCreatedAt,
 		&experiment.CreatedAt,
 		&experiment.UpdatedAt,
 		&experiment.ArmCount,
@@ -271,6 +321,26 @@ func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExp
 			return AdminExperiment{}, err
 		}
 		experiment.AutomationPolicy = service.NormalizeExperimentAutomationPolicy(&policy)
+	}
+	if latestCreatedAt.Valid {
+		audit := &AdminExperimentLifecycleAudit{
+			ActorType:  latestActorType.String,
+			Source:     latestSource.String,
+			Action:     latestAction.String,
+			FromStatus: latestFromStatus.String,
+			ToStatus:   latestToStatus.String,
+			CreatedAt:  latestCreatedAt.Time,
+		}
+		if latestIdempotencyKey.Valid {
+			value := latestIdempotencyKey.String
+			audit.IdempotencyKey = &value
+		}
+		if len(latestDetailsJSON) > 0 {
+			if err := json.Unmarshal(latestDetailsJSON, &audit.Details); err != nil {
+				return AdminExperiment{}, err
+			}
+		}
+		experiment.LatestLifecycleAudit = audit
 	}
 
 	return experiment, nil
@@ -582,7 +652,20 @@ func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus st
 		return
 	}
 
-	err = h.experimentAdminService.TransitionExperimentStatus(c.Request.Context(), experimentID, nextStatus)
+	var audit *service.ExperimentStatusTransitionAudit
+	adminID, _ := c.Get("admin_id")
+	if aid, ok := adminID.(uuid.UUID); ok {
+		audit = &service.ExperimentStatusTransitionAudit{
+			ActorType: "admin",
+			ActorID:   &aid,
+			Source:    "admin_experiments_api",
+			Details: map[string]interface{}{
+				"reason": "manual_" + nextStatus,
+			},
+		}
+	}
+
+	err = h.experimentAdminService.TransitionExperimentStatusWithAudit(c.Request.Context(), experimentID, nextStatus, audit)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrExperimentNotFound):
