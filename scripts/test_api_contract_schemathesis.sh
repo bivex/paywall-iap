@@ -262,6 +262,25 @@ should_reseed_admin_experiment_fixtures() {
   return 1
 }
 
+should_split_stateful_admin_experiment_action_runs() {
+  local args_joined
+  args_joined=" $* "
+
+  if [[ "$args_joined" != *"/v1/admin/experiments"* ]]; then
+    return 1
+  fi
+
+  if [[ "$args_joined" != *" --include-path "* && "$args_joined" != *" --include-path-regex "* && "$args_joined" != *" --exclude-path "* && "$args_joined" != *" --exclude-path-regex "* ]]; then
+    return 0
+  fi
+
+  if [[ "$args_joined" == *" --include-path-regex "*"/v1/admin/experiments"* ]]; then
+    return 0
+  fi
+
+  return 1
+}
+
 reseed_admin_experiment_contract_fixtures() {
   say "Re-seeding deterministic admin experiment fixtures"
   run_sql_file "$SCRIPT_DIR/seed_experiment_test_data.sql"
@@ -341,6 +360,53 @@ run_schemathesis_with_admin_experiment_negative_rejection_workarounds() {
     "${FILTERED_SCHEMATHESIS_ARGS[@]}"
 }
 
+run_schemathesis_with_stateful_admin_experiment_action_splits() {
+  local label="$1"
+  local bearer_token="$2"
+  shift 2
+
+  local lifecycle_audit_path='/v1/admin/experiments/{id}/lifecycle-audit'
+  local update_experiment_path='/v1/admin/experiments/{id}'
+  local -a stateful_action_paths=(
+    '/v1/admin/experiments/{id}/pause'
+    '/v1/admin/experiments/{id}/resume'
+    '/v1/admin/experiments/{id}/confirm-winner'
+    '/v1/admin/experiments/{id}/hold-for-review'
+  )
+  local action_path
+
+  collect_non_path_filter_args "$@"
+
+  say "Applying admin experiment Schemathesis workarounds (split stateful actions into isolated reseeded runs)"
+
+  run_schemathesis "$label (excluding endpoint-specific false-positives and isolated stateful actions)" "$bearer_token" \
+    --exclude-path "$update_experiment_path" \
+    --exclude-path "$lifecycle_audit_path" \
+    --exclude-path '/v1/admin/experiments/{id}/pause' \
+    --exclude-path '/v1/admin/experiments/{id}/resume' \
+    --exclude-path '/v1/admin/experiments/{id}/confirm-winner' \
+    --exclude-path '/v1/admin/experiments/{id}/hold-for-review' \
+    "$@"
+
+  run_schemathesis "$label (experiment update without negative_data_rejection)" "$bearer_token" \
+    --include-path "$update_experiment_path" \
+    --exclude-checks negative_data_rejection \
+    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+
+  run_schemathesis "$label (lifecycle-audit without negative_data_rejection)" "$bearer_token" \
+    --include-path "$lifecycle_audit_path" \
+    --exclude-checks negative_data_rejection \
+    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+
+  for action_path in "${stateful_action_paths[@]}"; do
+    reseed_admin_experiment_contract_fixtures
+    say "Running isolated stateful action via harness subprocess ($(basename "$action_path"))"
+    bash "$0" \
+      --include-path "$action_path" \
+      "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+  done
+}
+
 main() {
   local schema_target
 
@@ -382,9 +448,15 @@ main() {
     fi
 
     if should_apply_admin_experiment_negative_rejection_workarounds "$@"; then
-      run_schemathesis_with_admin_experiment_negative_rejection_workarounds "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
-        --include-tag admin \
-        "$@"
+      if should_split_stateful_admin_experiment_action_runs "$@"; then
+        run_schemathesis_with_stateful_admin_experiment_action_splits "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
+          --include-tag admin \
+          "$@"
+      else
+        run_schemathesis_with_admin_experiment_negative_rejection_workarounds "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
+          --include-tag admin \
+          "$@"
+      fi
     else
       run_schemathesis "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
         --include-tag admin \
@@ -414,7 +486,11 @@ main() {
   fi
 
   if should_apply_admin_experiment_negative_rejection_workarounds "$@"; then
-    run_schemathesis_with_admin_experiment_negative_rejection_workarounds "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
+    if should_split_stateful_admin_experiment_action_runs "$@"; then
+      run_schemathesis_with_stateful_admin_experiment_action_splits "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
+    else
+      run_schemathesis_with_admin_experiment_negative_rejection_workarounds "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
+    fi
   else
     run_schemathesis "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
   fi
