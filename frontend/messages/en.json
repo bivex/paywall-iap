@@ -271,6 +271,8 @@
     "actions": {
       "openExperiments": "Open A/B Tests",
       "openBandit": "Open Bandit Model",
+      "save": "Save draft",
+      "reset": "Reset",
       "start": "Start",
       "pause": "Pause",
       "resume": "Resume",
@@ -351,12 +353,28 @@
       "title": "Operational Notes",
       "description": "Studio explains what is actually wired today and where to perform supported actions.",
       "builderTitle": "Experiment creation/editing",
-      "builderBody": "Use A/B Tests to create and edit persisted experiments. Studio now supports lifecycle controls, but it is still not pretending to be a full visual draft editor.",
+      "builderBody": "Use A/B Tests to create experiments and edit arm plans. Studio now supports draft metadata edits and lifecycle controls, but it is still not pretending to be a full visual builder.",
       "banditTitle": "Bandit monitoring",
       "banditBody": "Use Bandit Model for dedicated bandit telemetry. Studio surfaces only the minimum runtime status needed for orchestration.",
       "advancedTitle": "Advanced endpoints",
       "advancedBody": "Objective scoring and sliding-window routes are shown exactly as they behave in the current runtime, including failures or placeholder responses.",
-      "readOnly": "Lifecycle state changes are supported here now, but experiment editing still belongs in A/B Tests."
+      "readOnly": "Draft metadata can now be updated here, but arm editing and broader experiment design still belong in A/B Tests."
+    },
+    "editor": {
+      "title": "Draft metadata",
+      "description": "Update the persisted draft fields that already exist in ab_tests. Arm editing still stays in A/B Tests.",
+      "lockedDescription": "Only persisted draft experiments can be edited here.",
+      "lockedBody": "Start, pause, and complete continue to work here for lifecycle control, but metadata editing is intentionally limited to drafts.",
+      "name": "Experiment Name",
+      "namePlaceholder": "Homepage pricing emphasis",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "What are you testing and why?",
+      "algorithm": "Algorithm",
+      "minSampleSize": "Minimum Sample Size",
+      "confidenceThreshold": "Confidence Threshold (%)",
+      "startAt": "Start At",
+      "endAt": "End At",
+      "isBandit": "Enable bandit optimization"
     },
     "states": {
       "loading": "Loading experiment studio…",
@@ -366,8 +384,11 @@
     },
     "feedback": {
       "loadFailed": "Failed to refresh studio data.",
+      "saving": "Saving...",
+      "saved": "Draft experiment updated.",
       "statusUpdating": "Updating...",
       "statusUpdated": "Experiment status updated.",
+      "saveFailed": "Failed to update draft experiment.",
       "statusFailed": "Failed to update experiment status."
     }
   },
@@ -882,6 +903,22 @@
       "validation": "Schema status",
       "plans": "Plans",
       "features": "Features"
+    },
+    "pricingTiers": {
+      "title": "Pricing tiers from database",
+      "description": "Pick an existing pricing tier from the admin DB and inject its prices and features into the current paywall schema.",
+      "placeholder": "Select a pricing tier",
+      "apply": "Apply tier to paywall",
+      "loadFailedTitle": "Pricing tiers could not be loaded",
+      "loadFailedDescription": "The creator still works with manual JSON, but database-backed tier selection is currently unavailable.",
+      "empty": "No pricing tiers found in the database yet.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "noPrices": "This pricing tier has no monthly or annual price configured.",
+      "noFeatures": "No features saved on this tier.",
+      "noDescription": "No description provided for this tier."
     },
     "status": {
       "valid": "Valid",

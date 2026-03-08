@@ -271,6 +271,8 @@
     "actions": {
       "openExperiments": "Открыть A/B Tests",
       "openBandit": "Открыть Bandit Model",
+      "save": "Сохранить черновик",
+      "reset": "Сбросить",
       "start": "Запустить",
       "pause": "Пауза",
       "resume": "Продолжить",
@@ -351,12 +353,28 @@
       "title": "Операционные заметки",
       "description": "Studio объясняет, что реально подключено сегодня и где выполнять поддерживаемые действия.",
       "builderTitle": "Создание/редактирование эксперимента",
-      "builderBody": "Используйте A/B Tests для создания и редактирования persisted experiments. Studio теперь поддерживает lifecycle controls, но всё ещё не притворяется полноценным visual draft editor'ом.",
+      "builderBody": "Используйте A/B Tests для создания экспериментов и редактирования планов веток. Studio теперь поддерживает правку метаданных черновика и lifecycle controls, но всё ещё не притворяется полноценным visual builder'ом.",
       "banditTitle": "Bandit monitoring",
       "banditBody": "Используйте Bandit Model для отдельного bandit telemetry. Studio показывает только минимальный runtime status, нужный для orchestration.",
       "advancedTitle": "Advanced endpoints",
       "advancedBody": "Objective scoring и sliding-window routes показываются ровно так, как они ведут себя в текущем runtime, включая ошибки или placeholder responses.",
-      "readOnly": "Менять lifecycle state здесь уже можно, но редактирование эксперимента по-прежнему должно происходить в A/B Tests."
+      "readOnly": "Метаданные черновика теперь можно обновлять здесь, но редактирование веток и более широкий дизайн эксперимента по-прежнему должны происходить в A/B Tests."
+    },
+    "editor": {
+      "title": "Метаданные черновика",
+      "description": "Обновляйте сохранённые поля черновика, которые уже реально существуют в ab_tests. Редактирование веток по-прежнему остаётся в A/B Tests.",
+      "lockedDescription": "Здесь можно редактировать только сохранённые эксперименты в статусе черновика.",
+      "lockedBody": "Управление lifecycle по-прежнему работает здесь, но редактирование метаданных намеренно ограничено только черновиками.",
+      "name": "Название эксперимента",
+      "namePlaceholder": "Акцент на годовой подписке на главной",
+      "descriptionLabel": "Описание",
+      "descriptionPlaceholder": "Что именно вы тестируете и зачем?",
+      "algorithm": "Алгоритм",
+      "minSampleSize": "Минимальный размер выборки",
+      "confidenceThreshold": "Порог уверенности (%)",
+      "startAt": "Старт",
+      "endAt": "Окончание",
+      "isBandit": "Включить bandit-оптимизацию"
     },
     "states": {
       "loading": "Загрузка experiment studio…",
@@ -366,8 +384,11 @@
     },
     "feedback": {
       "loadFailed": "Не удалось обновить studio data.",
+      "saving": "Сохранение...",
+      "saved": "Черновик эксперимента обновлён.",
       "statusUpdating": "Обновление...",
       "statusUpdated": "Статус эксперимента обновлён.",
+      "saveFailed": "Не удалось обновить черновик эксперимента.",
       "statusFailed": "Не удалось обновить статус эксперимента."
     }
   },
@@ -882,6 +903,22 @@
       "validation": "Статус схемы",
       "plans": "Планы",
       "features": "Фичи"
+    },
+    "pricingTiers": {
+      "title": "Тарифы из базы данных",
+      "description": "Выберите существующий pricing tier из admin DB и подставьте его цены и фичи в текущую paywall schema.",
+      "placeholder": "Выберите тариф",
+      "apply": "Подставить тариф в paywall",
+      "loadFailedTitle": "Не удалось загрузить тарифы",
+      "loadFailedDescription": "Конструктор продолжает работать с ручным JSON, но выбор тарифов из базы сейчас недоступен.",
+      "empty": "В базе пока нет сохранённых тарифов.",
+      "active": "Активен",
+      "inactive": "Неактивен",
+      "monthly": "Месяц",
+      "annual": "Год",
+      "noPrices": "У этого тарифа не настроены monthly или annual цены.",
+      "noFeatures": "У этого тарифа не сохранены фичи.",
+      "noDescription": "Для этого тарифа не указано описание."
     },
     "status": {
       "valid": "Валидна",

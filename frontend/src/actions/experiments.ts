@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import type { ExperimentInput, ExperimentSummary } from "@/lib/experiments";
+import type { ExperimentInput, ExperimentSummary, ExperimentUpdateInput } from "@/lib/experiments";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -56,6 +56,28 @@ export async function createExperimentAction(payload: ExperimentInput) {
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
     if (parsed.ok) revalidatePath("/dashboard/experiments");
+    return parsed;
+  } catch (error) {
+    return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;
+  }
+}
+
+export async function updateExperimentAction(id: string, payload: ExperimentUpdateInput) {
+  const token = await getAdminToken();
+  if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const parsed = await parseResponse<ExperimentSummary>(res);
+    if (parsed.ok) {
+      revalidatePath("/dashboard/experiments");
+      revalidatePath("/dashboard/experiments/studio");
+      revalidatePath("/dashboard/experiments/bandit");
+    }
     return parsed;
   } catch (error) {
     return { ok: false, error: String(error) } satisfies ActionResult<ExperimentSummary>;

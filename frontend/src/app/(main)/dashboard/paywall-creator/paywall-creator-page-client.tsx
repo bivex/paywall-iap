@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,7 +20,74 @@ import {
   parsePaywallDefinition,
   stringifyPaywallDefinition,
 } from "@/lib/paywall-schema";
+import type { PricingTier } from "@/lib/pricing-tiers";
 import { cn } from "@/lib/utils";
+
+function formatTierPrice(amount: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2)}`;
+  }
+}
+
+function getAnnualCaption(tier: PricingTier) {
+  if (tier.annual_price === null) {
+    return tier.description;
+  }
+  if (tier.monthly_price && tier.monthly_price > 0) {
+    const yearlyMonthly = tier.monthly_price * 12;
+    const savings = yearlyMonthly - tier.annual_price;
+    if (savings > 0) {
+      const savingsPercent = Math.round((savings / yearlyMonthly) * 100);
+      return `${savingsPercent}% savings vs monthly`;
+    }
+  }
+  return tier.description;
+}
+
+function buildPlansFromTier(tier: PricingTier): PaywallDefinition["plans"] {
+  const plans: PaywallDefinition["plans"] = [];
+
+  if (tier.monthly_price !== null) {
+    plans.push({
+      id: `${tier.id}-monthly`,
+      title: `${tier.name} Monthly`,
+      price: formatTierPrice(tier.monthly_price, tier.currency),
+      period: "/month",
+      caption: tier.description,
+      badge: "",
+      highlight: tier.annual_price === null,
+    });
+  }
+
+  if (tier.annual_price !== null) {
+    plans.push({
+      id: `${tier.id}-annual`,
+      title: `${tier.name} Annual`,
+      price: formatTierPrice(tier.annual_price, tier.currency),
+      period: "/year",
+      caption: getAnnualCaption(tier),
+      badge: tier.monthly_price !== null ? "Best value" : "",
+      highlight: true,
+    });
+  }
+
+  return plans;
+}
+
+function buildFeaturesFromTier(tier: PricingTier, baseFeatures: string[]) {
+  const tierFeatures = tier.features.map((feature) => feature.trim()).filter(Boolean);
+  if (tierFeatures.length >= 2) {
+    return tierFeatures.slice(0, 8);
+  }
+  return Array.from(new Set([...tierFeatures, ...baseFeatures])).slice(0, 8);
+}
 
 function normalizeHexColor(hex: string) {
   const clean = hex.replace("#", "");
@@ -262,11 +330,24 @@ function MobilePreview({ paywall }: { paywall: PaywallDefinition }) {
   );
 }
 
-export function PaywallCreatorPageClient() {
+export function PaywallCreatorPageClient({
+  initialTiers,
+  loadFailed,
+}: {
+  initialTiers: PricingTier[];
+  loadFailed: boolean;
+}) {
   const t = useTranslations("paywallCreator");
   const [schemaText, setSchemaText] = useState(() => stringifyPaywallDefinition(DEFAULT_PAYWALL_TEMPLATE));
   const parsed = useMemo(() => parsePaywallDefinition(schemaText), [schemaText]);
   const [previewConfig, setPreviewConfig] = useState(DEFAULT_PAYWALL_TEMPLATE);
+  const [selectedTierId, setSelectedTierId] = useState<string>(initialTiers[0]?.id ?? "");
+
+  const selectedTier = useMemo(
+    () => initialTiers.find((tier) => tier.id === selectedTierId) ?? null,
+    [initialTiers, selectedTierId],
+  );
+  const selectedTierPlans = useMemo(() => (selectedTier ? buildPlansFromTier(selectedTier) : []), [selectedTier]);
 
   useEffect(() => {
     if (parsed.success) {
@@ -288,6 +369,22 @@ export function PaywallCreatorPageClient() {
     } catch {
       // Ignore invalid JSON until the user fixes it.
     }
+  }
+
+  function applySelectedTier() {
+    if (!selectedTier || selectedTierPlans.length === 0) {
+      return;
+    }
+
+    const base = parsed.success ? parsed.data : previewConfig;
+    const nextPaywall: PaywallDefinition = {
+      ...base,
+      name: selectedTier.name,
+      features: buildFeaturesFromTier(selectedTier, base.features),
+      plans: selectedTierPlans,
+    };
+
+    setSchemaText(stringifyPaywallDefinition(nextPaywall));
   }
 
   const schemaFields = ["id", "name", "platform", "layout", "theme", "hero", "features[]", "plans[]", "cta", "footer"];
@@ -317,6 +414,91 @@ export function PaywallCreatorPageClient() {
         <SummaryCard label={t("summary.plans")} value={previewConfig.plans.length} />
         <SummaryCard label={t("summary.features")} value={previewConfig.features.length} />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">{t("pricingTiers.title")}</CardTitle>
+          <CardDescription>{t("pricingTiers.description")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {loadFailed ? (
+            <Alert variant="destructive">
+              <AlertTitle>{t("pricingTiers.loadFailedTitle")}</AlertTitle>
+              <AlertDescription>{t("pricingTiers.loadFailedDescription")}</AlertDescription>
+            </Alert>
+          ) : initialTiers.length === 0 ? (
+            <div className="rounded-xl border border-dashed p-6 text-muted-foreground text-sm">
+              {t("pricingTiers.empty")}
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <Select value={selectedTierId} onValueChange={setSelectedTierId}>
+                  <SelectTrigger className="w-full lg:w-[360px]">
+                    <SelectValue placeholder={t("pricingTiers.placeholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {initialTiers.map((tier) => (
+                      <SelectItem key={tier.id} value={tier.id}>
+                        {tier.name} · {tier.currency} ·{" "}
+                        {tier.is_active ? t("pricingTiers.active") : t("pricingTiers.inactive")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={applySelectedTier} disabled={!selectedTier || selectedTierPlans.length === 0}>
+                  {t("pricingTiers.apply")}
+                </Button>
+              </div>
+
+              {selectedTier ? (
+                <div className="grid gap-4 rounded-2xl border p-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-sm">{selectedTier.name}</p>
+                      <Badge variant={selectedTier.is_active ? "default" : "secondary"}>
+                        {selectedTier.is_active ? t("pricingTiers.active") : t("pricingTiers.inactive")}
+                      </Badge>
+                      <Badge variant="outline">{selectedTier.currency}</Badge>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      {selectedTier.description || t("pricingTiers.noDescription")}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTier.features.length > 0 ? (
+                        selectedTier.features.map((feature) => (
+                          <Badge key={feature} variant="outline">
+                            {feature}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground text-sm">{t("pricingTiers.noFeatures")}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 lg:flex-col lg:items-end">
+                    {selectedTier.monthly_price !== null ? (
+                      <Badge variant="secondary">
+                        {t("pricingTiers.monthly")}:{" "}
+                        {formatTierPrice(selectedTier.monthly_price, selectedTier.currency)}
+                      </Badge>
+                    ) : null}
+                    {selectedTier.annual_price !== null ? (
+                      <Badge variant="secondary">
+                        {t("pricingTiers.annual")}: {formatTierPrice(selectedTier.annual_price, selectedTier.currency)}
+                      </Badge>
+                    ) : null}
+                    {selectedTierPlans.length === 0 ? (
+                      <span className="text-destructive text-sm">{t("pricingTiers.noPrices")}</span>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
         <Card>

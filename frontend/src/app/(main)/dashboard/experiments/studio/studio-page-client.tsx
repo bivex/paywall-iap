@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 
 import Link from "next/link";
 
@@ -8,13 +8,21 @@ import { Activity, Brain, CalendarClock, FlaskConical, RefreshCw, Settings2 } fr
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { completeExperimentAction, pauseExperimentAction, resumeExperimentAction } from "@/actions/experiments";
+import {
+  completeExperimentAction,
+  pauseExperimentAction,
+  resumeExperimentAction,
+  updateExperimentAction,
+} from "@/actions/experiments";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import type {
   ExperimentStudioDashboardData,
   ExperimentStudioSnapshot,
@@ -87,6 +95,38 @@ function weightShare(arms: ExperimentSummary["arms"], trafficWeight: number) {
   return total > 0 ? trafficWeight / total : 0;
 }
 
+type DraftMetadataFormValues = {
+  name: string;
+  description: string;
+  algorithm_type: ExperimentAlgorithm;
+  is_bandit: boolean;
+  min_sample_size: string;
+  confidence_threshold_percent: string;
+  start_at: string;
+  end_at: string;
+};
+
+function toDateTimeLocalValue(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+function buildDraftMetadataForm(experiment: ExperimentSummary): DraftMetadataFormValues {
+  return {
+    name: experiment.name,
+    description: experiment.description,
+    algorithm_type: experiment.algorithm_type ?? "thompson_sampling",
+    is_bandit: experiment.is_bandit,
+    min_sample_size: experiment.min_sample_size.toString(),
+    confidence_threshold_percent: experiment.confidence_threshold_percent.toString(),
+    start_at: toDateTimeLocalValue(experiment.start_at),
+    end_at: toDateTimeLocalValue(experiment.end_at),
+  };
+}
+
 function leadingArm(snapshot: ExperimentStudioSnapshot | null) {
   const probabilities = snapshot?.banditSnapshot?.statistics?.win_probabilities;
   const experiment = snapshot?.experiment;
@@ -119,6 +159,7 @@ export function StudioPageClient({
   const [isBootstrapping, setIsBootstrapping] = useState(!hasInitialPayload);
   const [isPending, startTransition] = useTransition();
   const [pendingLifecycleAction, setPendingLifecycleAction] = useState<"pause" | "resume" | "complete" | null>(null);
+  const [pendingSave, setPendingSave] = useState(false);
 
   useEffect(() => {
     if (!isBootstrapping) return;
@@ -143,6 +184,27 @@ export function StudioPageClient({
     [experiments, selectedId, snapshot],
   );
   const currentLeadingArm = useMemo(() => leadingArm(snapshot), [snapshot]);
+  const draftMetadataBaseline = useMemo(
+    () => (selectedExperiment ? buildDraftMetadataForm(selectedExperiment) : null),
+    [selectedExperiment],
+  );
+  const [draftMetadata, setDraftMetadata] = useState<DraftMetadataFormValues | null>(draftMetadataBaseline);
+
+  useEffect(() => {
+    setDraftMetadata(draftMetadataBaseline);
+  }, [draftMetadataBaseline]);
+
+  const isDraftDirty =
+    draftMetadata !== null &&
+    draftMetadataBaseline !== null &&
+    JSON.stringify(draftMetadata) !== JSON.stringify(draftMetadataBaseline);
+
+  function syncExperiment(updatedExperiment: ExperimentSummary) {
+    setExperiments((current) => current.map((item) => (item.id === updatedExperiment.id ? updatedExperiment : item)));
+    setSnapshot((current) =>
+      current?.experiment.id === updatedExperiment.id ? { ...current, experiment: updatedExperiment } : current,
+    );
+  }
 
   const lifecycleActions: Array<{ key: "pause" | "resume" | "complete"; label: string }> =
     selectedExperiment?.status === "draft"
@@ -190,11 +252,35 @@ export function StudioPageClient({
       return;
     }
 
-    setExperiments((current) => current.map((item) => (item.id === result.data.id ? result.data : item)));
-    setSnapshot((current) =>
-      current?.experiment.id === result.data.id ? { ...current, experiment: result.data } : current,
-    );
+    syncExperiment(result.data);
     toast.success(t("feedback.statusUpdated"));
+    refreshSnapshot(result.data.id);
+  }
+
+  async function saveDraftMetadata(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedExperiment || selectedExperiment.status !== "draft" || !draftMetadata) return;
+
+    setPendingSave(true);
+    const result = await updateExperimentAction(selectedExperiment.id, {
+      name: draftMetadata.name.trim(),
+      description: draftMetadata.description.trim(),
+      algorithm_type: draftMetadata.algorithm_type,
+      is_bandit: draftMetadata.is_bandit,
+      min_sample_size: Number(draftMetadata.min_sample_size),
+      confidence_threshold_percent: Number(draftMetadata.confidence_threshold_percent),
+      start_at: draftMetadata.start_at ? new Date(draftMetadata.start_at).toISOString() : null,
+      end_at: draftMetadata.end_at ? new Date(draftMetadata.end_at).toISOString() : null,
+    });
+    setPendingSave(false);
+
+    if (!result.ok) {
+      toast.error(result.error ?? t("feedback.saveFailed"));
+      return;
+    }
+
+    syncExperiment(result.data);
+    toast.success(t("feedback.saved"));
     refreshSnapshot(result.data.id);
   }
 
@@ -325,6 +411,153 @@ export function StudioPageClient({
                   </Card>
                 ))}
               </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">{t("editor.title")}</CardTitle>
+                  <CardDescription>
+                    {selectedExperiment.status === "draft" ? t("editor.description") : t("editor.lockedDescription")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {selectedExperiment.status === "draft" && draftMetadata ? (
+                    <form className="space-y-4" onSubmit={(event) => void saveDraftMetadata(event)}>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-1">
+                          <p className="font-medium text-xs">{t("editor.name")}</p>
+                          <Input
+                            placeholder={t("editor.namePlaceholder")}
+                            value={draftMetadata.name}
+                            onChange={(event) =>
+                              setDraftMetadata((current) =>
+                                current ? { ...current, name: event.target.value } : current,
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="font-medium text-xs">{t("editor.algorithm")}</p>
+                          <Select
+                            value={draftMetadata.algorithm_type}
+                            onValueChange={(value) =>
+                              setDraftMetadata((current) =>
+                                current ? { ...current, algorithm_type: value as ExperimentAlgorithm } : current,
+                              )
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="thompson_sampling">Thompson Sampling</SelectItem>
+                              <SelectItem value="ucb">UCB</SelectItem>
+                              <SelectItem value="epsilon_greedy">Epsilon Greedy</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1 md:col-span-2">
+                          <p className="font-medium text-xs">{t("editor.descriptionLabel")}</p>
+                          <Textarea
+                            placeholder={t("editor.descriptionPlaceholder")}
+                            rows={3}
+                            value={draftMetadata.description}
+                            onChange={(event) =>
+                              setDraftMetadata((current) =>
+                                current ? { ...current, description: event.target.value } : current,
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="font-medium text-xs">{t("editor.minSampleSize")}</p>
+                          <Input
+                            inputMode="numeric"
+                            placeholder="100"
+                            value={draftMetadata.min_sample_size}
+                            onChange={(event) =>
+                              setDraftMetadata((current) =>
+                                current ? { ...current, min_sample_size: event.target.value } : current,
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="font-medium text-xs">{t("editor.confidenceThreshold")}</p>
+                          <Input
+                            inputMode="decimal"
+                            placeholder="95"
+                            value={draftMetadata.confidence_threshold_percent}
+                            onChange={(event) =>
+                              setDraftMetadata((current) =>
+                                current ? { ...current, confidence_threshold_percent: event.target.value } : current,
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="font-medium text-xs">{t("editor.startAt")}</p>
+                          <Input
+                            type="datetime-local"
+                            value={draftMetadata.start_at}
+                            onChange={(event) =>
+                              setDraftMetadata((current) =>
+                                current ? { ...current, start_at: event.target.value } : current,
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="font-medium text-xs">{t("editor.endAt")}</p>
+                          <Input
+                            type="datetime-local"
+                            value={draftMetadata.end_at}
+                            onChange={(event) =>
+                              setDraftMetadata((current) =>
+                                current ? { ...current, end_at: event.target.value } : current,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={draftMetadata.is_bandit}
+                          onCheckedChange={(checked) =>
+                            setDraftMetadata((current) => (current ? { ...current, is_bandit: checked } : current))
+                          }
+                        />
+                        <span className="text-sm">{t("editor.isBandit")}</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="submit" size="sm" disabled={pendingSave || isPending || !isDraftDirty}>
+                          {pendingSave ? t("feedback.saving") : t("actions.save")}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={pendingSave || !isDraftDirty}
+                          onClick={() => setDraftMetadata(draftMetadataBaseline)}
+                        >
+                          {t("actions.reset")}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="rounded-md border border-dashed p-4 text-muted-foreground text-sm">
+                      {t("editor.lockedBody")}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.1fr_1fr]">
                 <Card>

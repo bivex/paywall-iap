@@ -56,6 +56,17 @@ export interface ExperimentInput {
   arms: ExperimentArmInput[];
 }
 
+export interface ExperimentUpdateInput {
+  name: string;
+  description: string;
+  algorithm_type: ExperimentAlgorithm;
+  is_bandit: boolean;
+  min_sample_size: number;
+  confidence_threshold_percent: number;
+  start_at: string | null;
+  end_at: string | null;
+}
+
 export const EMPTY_EXPERIMENT_INPUT: ExperimentInput = {
   name: "",
   description: "",
