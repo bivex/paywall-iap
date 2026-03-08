@@ -9,7 +9,10 @@ API_BASE="${API_BASE%/}"
 SCHEMA_URL="${SCHEMA_URL:-}"
 SCHEMA_PATH="${SCHEMA_PATH:-}"
 SCHEMATHESIS_AUTH_TOKEN="${SCHEMATHESIS_AUTH_TOKEN:-}"
+SCHEMATHESIS_USER_AUTH_TOKEN="${SCHEMATHESIS_USER_AUTH_TOKEN:-}"
 SCHEMATHESIS_HEADER="${SCHEMATHESIS_HEADER:-}"
+EXPLICIT_SCHEMATHESIS_AUTH_TOKEN="$SCHEMATHESIS_AUTH_TOKEN"
+EXPLICIT_SCHEMATHESIS_HEADER="$SCHEMATHESIS_HEADER"
 SCHEMATHESIS_PHASES="${SCHEMATHESIS_PHASES:-examples,coverage,fuzzing}"
 SKIP_HEALTHCHECK="${SKIP_HEALTHCHECK:-0}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@paywall.local}"
@@ -111,9 +114,87 @@ PY
   fi
 }
 
+try_fetch_user_token() {
+  command -v curl >/dev/null 2>&1 || return 0
+  command -v python3 >/dev/null 2>&1 || return 0
+
+  local suffix register_payload response token
+  suffix="$(python3 - <<'PY'
+import uuid
+print(uuid.uuid4())
+PY
+)"
+  register_payload=$(printf '{"platform_user_id":"schemathesis-%s","device_id":"device-%s","platform":"ios","app_version":"1.0.0"}' "$suffix" "$suffix")
+  response="$(curl -sS -X POST "$API_BASE/v1/auth/register" -H 'Content-Type: application/json' -d "$register_payload" || true)"
+
+  token="$(RESPONSE_JSON="$response" python3 - <<'PY'
+import json, os
+raw = os.environ.get('RESPONSE_JSON', '')
+try:
+    payload = json.loads(raw)
+except Exception:
+    print('')
+    raise SystemExit(0)
+data = payload.get('data') or {}
+token = data.get('access_token') or payload.get('access_token') or ''
+print(token)
+PY
+)"
+
+  if [[ -n "$token" ]]; then
+    SCHEMATHESIS_USER_AUTH_TOKEN="$token"
+    say "Using user bearer token obtained via /v1/auth/register"
+  else
+    say "Could not obtain user bearer token automatically; user-protected endpoints will run without explicit user auth"
+  fi
+}
+
+should_split_runs() {
+  if [[ -n "$EXPLICIT_SCHEMATHESIS_AUTH_TOKEN" || -n "$EXPLICIT_SCHEMATHESIS_HEADER" ]]; then
+    return 1
+  fi
+
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      --include-*|--exclude-*|--include-by|--exclude-by)
+        return 1
+        ;;
+    esac
+  done
+
+  return 0
+}
+
+run_schemathesis() {
+  local label="$1"
+  local bearer_token="$2"
+  shift 2
+
+  local -a cmd
+  cmd=("${SCHEMATHESIS_CMD[@]}" run "$schema_target" "$SCHEMATHESIS_BASE_URL_FLAG" "$API_BASE")
+  cmd+=(--phases "$SCHEMATHESIS_PHASES")
+
+  if [[ -n "$bearer_token" ]]; then
+    cmd+=(--header "Authorization: Bearer $bearer_token")
+  fi
+
+  if [[ -n "$SCHEMATHESIS_HEADER" ]]; then
+    cmd+=(--header "$SCHEMATHESIS_HEADER")
+  fi
+
+  if (($# > 0)); then
+    cmd+=("$@")
+  fi
+
+  say "Running Schemathesis ($label)"
+  echo "  schema:   $schema_target"
+  echo "  api_base: $API_BASE"
+  "${cmd[@]}"
+}
+
 main() {
   local schema_target
-  local -a cmd
 
   detect_schemathesis_cmd
   detect_base_url_flag
@@ -133,26 +214,30 @@ main() {
     try_fetch_admin_token
   fi
 
-  say "Running Schemathesis"
-  echo "  schema:   $schema_target"
-  echo "  api_base: $API_BASE"
+  if should_split_runs "$@"; then
+    try_fetch_user_token
 
-  cmd=("${SCHEMATHESIS_CMD[@]}" run "$schema_target" "$SCHEMATHESIS_BASE_URL_FLAG" "$API_BASE")
-	cmd+=(--phases "$SCHEMATHESIS_PHASES")
+    run_schemathesis "public endpoints" "" \
+      --exclude-tag admin \
+      --exclude-tag admin-auth \
+      --exclude-tag subscription \
+      --exclude-tag iap \
+      "$@"
 
-  if [[ -n "$SCHEMATHESIS_AUTH_TOKEN" ]]; then
-    cmd+=(--header "Authorization: Bearer $SCHEMATHESIS_AUTH_TOKEN")
+    run_schemathesis "admin endpoints" "$SCHEMATHESIS_AUTH_TOKEN" \
+      --include-tag admin \
+      --include-tag admin-auth \
+      "$@"
+
+    run_schemathesis "user-protected endpoints" "$SCHEMATHESIS_USER_AUTH_TOKEN" \
+      --include-tag subscription \
+      --include-tag iap \
+      "$@"
+
+    return 0
   fi
 
-  if [[ -n "$SCHEMATHESIS_HEADER" ]]; then
-    cmd+=(--header "$SCHEMATHESIS_HEADER")
-  fi
-
-  if (($# > 0)); then
-    cmd+=("$@")
-  fi
-
-  "${cmd[@]}"
+  run_schemathesis "default" "$SCHEMATHESIS_AUTH_TOKEN" "$@"
 }
 
 main "$@"
