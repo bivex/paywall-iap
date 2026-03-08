@@ -77,7 +77,7 @@
 | Приоритет | Что добивать | Почему |
 |---|---|---|
 | P1 | Runtime-specific config UX для `Bandit Model` | draft config edit и recommendation surfacing уже есть, но не хватает более глубокого runtime workbench поверх metrics/probabilities/current history surfaces |
-| P2 | Safe auto-rollout controls | минимальный truthful policy layer уже есть: Studio умеет редактировать persisted `automation_policy` для live experiments с admin audit log и respect for `manual_override` / `locked_until`; дальше остаются explicit auto-promote / auto-reweight / richer rollout actions |
+| P2 | Safe auto-rollout controls | минимальный truthful policy layer уже есть, плюс explicit guarded `confirm winner` operator action на recommendation layer; дальше остаются explicit auto-promote / auto-reweight / richer rollout actions |
 | P2 | Winback management beyond launch/deactivate | launch и deactivate работают, но нет полноценного update/edit flow кампаний |
 | P2 | Sliding Window config/reset UX | trim и export уже есть, но экран не даёт полноценного runtime/config management |
 | P2 | Multi-Objective optimizer workbench | persisted config и score inspection есть, но это ещё не полный decision cockpit |
@@ -89,7 +89,7 @@
 | Порядок | Ticket | Почему сейчас |
 |---|---|---|
 | 1 | Runtime-specific config UX для `Bandit Model` | после закрытия overview edit и recommendation surfacing это остаётся самым заметным gap на experiment admin surfaces |
-| 2 | Safe auto-rollout controls | базовый persisted policy control layer уже surfaced, но explicit rollout actions и richer guard workflows ещё не добиты |
+| 2 | Safe auto-rollout controls | базовый persisted policy control layer и первый guarded operator action уже surfaced, но explicit rollout actions и richer guard workflows ещё не добиты |
 | 3 | Winback management beyond launch/deactivate | winback уже не mock, но без truthful update/edit flow страница всё ещё выглядит заметно менее зрелой, чем experiment surfaces |
 
 ## Concrete implementation checklist by file/path (top 3)
@@ -107,9 +107,9 @@
 
 | File/path | Checklist |
 |---|---|
-| `frontend/src/app/(main)/dashboard/experiments/bandit/bandit-page-client.tsx` | если добавлять rollout actions дальше, показывать их только как guarded/manual operator controls поверх уже выведенных recommendation guards |
-| `frontend/src/app/(main)/dashboard/experiments/studio/studio-page-client.tsx` | ✅ минимальный truthful persisted policy editor рядом с lifecycle/lock controls уже есть; не превращать следующий этап в silent auto-rollout surface |
-| `backend/internal/interfaces/http/handlers/admin_experiments.go` + related service layer | ✅ live update path для persisted `automation_policy` уже есть с admin audit log и respect for `manual_override` / `locked_until`; дальше вводить rollout/action endpoints только при явных guards |
+| `frontend/src/app/(main)/dashboard/experiments/bandit/bandit-page-client.tsx` | ✅ guarded `Confirm winner` operator action surfaced next to recommendation guidance; дальше не превращать страницу в silent auto-rollout surface |
+| `frontend/src/app/(main)/dashboard/experiments/studio/studio-page-client.tsx` | ✅ persisted policy editor и guarded `Confirm winner` action рядом с lifecycle/lock controls уже есть; дальше держать explicit/manual semantics |
+| `backend/internal/interfaces/http/handlers/admin_experiments.go` + related service layer | ✅ live update path для persisted `automation_policy` и explicit `confirm-winner` endpoint уже есть с admin/lifecycle audit log и respect for `manual_override` / `locked_until`; дальше вводить rollout/action endpoints только при явных guards |
 | `backend/tests/regression/*automation*` / `backend/tests/integration/*bandit*` | держать coverage guard semantics, auditability и explicit operator confirmation paths для следующих rollout-related actions |
 
 ### 3) Winback management beyond launch/deactivate
@@ -231,7 +231,7 @@
 | Stage 3 | Repository-backed bandit maintenance jobs | P1 | ✅ Done | scheduler wiring и idempotent execution уже есть, а maintenance layer теперь реально закрывает expired rewards, currency refresh, `trim_windows`, context cleanup, objective stats sync и expired assignment cleanup через repository-backed paths |
 | Stage 3 | Immutable conversions / decisions log | P1 | ✅ Done | append-only `experiment_automation_decision_log`, `bandit_conversion_events`, `bandit_assignment_events`, `bandit_impression_events` и `experiment_winner_recommendation_log` уже покрывают lifecycle/runtime/recommendation history, включая runtime selection rationale в assignment-event metadata |
 | Stage 3 | Winner recommendation policy | P2 | 🟡 Partial | recommendation layer уже считает candidate winner, пишет append-only audit trail/history и truthfully surfaced в `Bandit Model`/`Experiment Studio`; дальше нужны guarded action/policy controls поверх этого слоя |
-| Stage 3 | Safe auto-rollout controls | P2 | 🟡 Partial | persisted `automation_policy` теперь truthfully редактируется для live experiments через отдельный admin endpoint/UI с admin audit log и без обхода `manual_override` / `locked_until`; explicit auto-promote / auto-reweight flows всё ещё впереди |
+| Stage 3 | Safe auto-rollout controls | P2 | 🟡 Partial | persisted `automation_policy` truthfully редактируется для live experiments, а recommendation layer уже даёт guarded explicit `confirm winner` operator action с admin/lifecycle audit log и без обхода `manual_override` / `locked_until`; explicit auto-promote / auto-reweight flows всё ещё впереди |
 | Stage 3 | Persisted pricing tier ↔ arm linkage model | P1 | ✅ Done | `ab_test_arms` truthfully хранят `pricing_tier_id`, admin payload/read path возвращает linkage, draft update contract его сохраняет, а Studio builder уже использует это end-to-end |
 
 ### Что уже можно считать опорой, а не отдельными backlog-задачами

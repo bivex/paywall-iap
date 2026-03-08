@@ -504,14 +504,14 @@ func (h *AdminHandler) logConfirmExperimentWinnerAction(c *gin.Context, experime
 		return
 	}
 	details := map[string]interface{}{
-		"experiment_id":          experiment.ID.String(),
-		"status":                 experiment.Status,
-		"recommendation_reason":  experiment.WinnerRecommendation.Reason,
-		"recommended":            experiment.WinnerRecommendation.Recommended,
-		"observed_samples":       experiment.WinnerRecommendation.ObservedSamples,
-		"min_sample_size":        experiment.WinnerRecommendation.MinSampleSize,
-		"confidence_threshold":   experiment.WinnerRecommendation.ConfidenceThresholdPercent,
-		"recommendation_source":  experiment.WinnerRecommendation.Source,
+		"experiment_id":         experiment.ID.String(),
+		"status":                experiment.Status,
+		"recommendation_reason": experiment.WinnerRecommendation.Reason,
+		"recommended":           experiment.WinnerRecommendation.Recommended,
+		"observed_samples":      experiment.WinnerRecommendation.ObservedSamples,
+		"min_sample_size":       experiment.WinnerRecommendation.MinSampleSize,
+		"confidence_threshold":  experiment.WinnerRecommendation.ConfidenceThresholdPercent,
+		"recommendation_source": "admin_experiments_api",
 	}
 	if experiment.WinnerRecommendation.WinningArmID != nil {
 		details["winning_arm_id"] = experiment.WinnerRecommendation.WinningArmID.String()
@@ -1537,13 +1537,13 @@ func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
 	}
 
 	auditDetails := map[string]interface{}{
-		"recommended":          experiment.WinnerRecommendation.Recommended,
+		"recommended":           experiment.WinnerRecommendation.Recommended,
 		"recommendation_reason": experiment.WinnerRecommendation.Reason,
-		"winning_arm_id":       experiment.WinnerRecommendation.WinningArmID.String(),
-		"observed_samples":     experiment.WinnerRecommendation.ObservedSamples,
-		"min_sample_size":      experiment.WinnerRecommendation.MinSampleSize,
-		"confidence_threshold": experiment.WinnerRecommendation.ConfidenceThresholdPercent,
-		"recommendation_source": experiment.WinnerRecommendation.Source,
+		"winning_arm_id":        experiment.WinnerRecommendation.WinningArmID.String(),
+		"observed_samples":      experiment.WinnerRecommendation.ObservedSamples,
+		"min_sample_size":       experiment.WinnerRecommendation.MinSampleSize,
+		"confidence_threshold":  experiment.WinnerRecommendation.ConfidenceThresholdPercent,
+		"recommendation_source": "admin_experiments_api",
 	}
 	if experiment.WinnerRecommendation.WinningArmName != nil {
 		auditDetails["winning_arm_name"] = *experiment.WinnerRecommendation.WinningArmName

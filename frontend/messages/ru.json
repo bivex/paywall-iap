@@ -257,7 +257,8 @@
       "reasonAutoCompleteConfidence": "Автозавершение по confidence",
       "reasonManualPaused": "Ручная пауза",
       "reasonManualRunning": "Ручной старт/возобновление",
-      "reasonManualCompleted": "Ручное завершение"
+      "reasonManualCompleted": "Ручное завершение",
+      "reasonConfirmRecommendedWinner": "Завершено после подтверждения рекомендованного победителя"
     },
     "editor": {
       "title": "Редактирование draft-метаданных",
@@ -299,6 +300,7 @@
       "openExperiments": "Открыть A/B Tests",
       "openBandit": "Открыть Bandit Model",
       "save": "Сохранить черновик",
+      "confirmWinner": "Подтвердить победителя",
       "saveAutomation": "Сохранить automation policy",
       "reset": "Сбросить",
       "start": "Запустить",
@@ -398,7 +400,8 @@
       "reasonAutoCompleteConfidence": "Автозавершение по confidence",
       "reasonManualPaused": "Ручная пауза",
       "reasonManualRunning": "Ручной старт/возобновление",
-      "reasonManualCompleted": "Ручное завершение"
+      "reasonManualCompleted": "Ручное завершение",
+      "reasonConfirmRecommendedWinner": "Завершено после подтверждения рекомендованного победителя"
     },
     "capabilities": {
       "title": "Матрица runtime-возможностей",
@@ -522,7 +525,8 @@
         "locked": "Automation заблокирована, поэтому scheduler-driven changes остаются выключенными. Проверьте рекомендацию вручную и снимайте блокировку только если сознательно хотите вернуть automation.",
         "completed": "Эксперимент уже завершён. Используйте рекомендацию только как исторический контекст, а не как новую rollout-команду.",
         "review": "Recommendation data доступна, но Studio по-прежнему предполагает ручной review оператора перед любым lifecycle change."
-      }
+      },
+      "confirmWinnerHelp": "Это явно завершает эксперимент на основании текущего рекомендованного победителя и пишет решение в lifecycle/admin audit logs. Live traffic при этом не перераспределяется."
     },
     "notes": {
       "title": "Операционные заметки",
@@ -572,6 +576,9 @@
       "unlocking": "Снятие блокировки...",
       "unlocked": "Блокировка automation снята.",
       "unlockFailed": "Не удалось снять блокировку automation эксперимента.",
+      "confirmingWinner": "Подтверждение победителя...",
+      "winnerConfirmed": "Победитель подтверждён, эксперимент завершён.",
+      "winnerConfirmFailed": "Не удалось подтвердить рекомендованного победителя.",
       "savingAutomation": "Сохранение automation...",
       "automationSaved": "Automation policy обновлена.",
       "automationSaveFailed": "Не удалось обновить automation policy.",
@@ -590,6 +597,7 @@
       "openExperiments": "Открыть A/B Tests",
       "save": "Сохранить конфиг",
       "reset": "Сбросить",
+      "confirmWinner": "Подтвердить победителя",
       "start": "Запустить",
       "pause": "Пауза",
       "resume": "Продолжить",
@@ -685,7 +693,8 @@
         "locked": "Automation заблокирована, поэтому scheduler-driven changes остаются выключенными. Проверьте рекомендацию вручную и снимайте блокировку только если сознательно хотите вернуть automation.",
         "completed": "Эксперимент уже завершён. Используйте рекомендацию только как исторический контекст, а не как новую rollout-команду.",
         "review": "Recommendation data доступна, но эта страница по-прежнему предполагает ручной review оператора перед любым lifecycle change."
-      }
+      },
+      "confirmWinnerHelp": "Это явно завершает эксперимент на основании текущего рекомендованного победителя и пишет решение в lifecycle/admin audit logs. Live traffic при этом не перераспределяется."
     },
     "config": {
       "title": "Сохранённая конфигурация эксперимента",
@@ -711,6 +720,9 @@
       "saved": "Конфиг bandit-черновика обновлён.",
       "statusUpdating": "Обновление...",
       "statusUpdated": "Статус эксперимента обновлён.",
+      "confirmingWinner": "Подтверждение победителя...",
+      "winnerConfirmed": "Победитель подтверждён, эксперимент завершён.",
+      "winnerConfirmFailed": "Не удалось подтвердить рекомендованного победителя.",
       "saveFailed": "Не удалось обновить конфиг bandit-черновика.",
       "statusFailed": "Не удалось обновить статус эксперимента."
     }

@@ -618,7 +618,12 @@ export function BanditPageClient({
                             <Button
                               size="sm"
                               variant="outline"
-                              disabled={isPending || pendingSave || pendingLifecycleAction !== null || !canConfirmRecommendedWinner}
+                              disabled={
+                                isPending ||
+                                pendingSave ||
+                                pendingLifecycleAction !== null ||
+                                !canConfirmRecommendedWinner
+                              }
                               onClick={() => void confirmWinnerRecommendation()}
                             >
                               {pendingLifecycleAction === "confirmWinner"

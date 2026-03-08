@@ -1572,21 +1572,28 @@ export function StudioPageClient({
                             <p className="mt-1">
                               {t(`recommendation.${recommendationNextActionKey(selectedExperiment, schedulerLocked)}`)}
                             </p>
-                        {currentRecommendation?.recommended && currentRecommendation.winning_arm_id ? (
-                          <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={isPending || pendingLifecycleAction !== null || pendingSave || !canConfirmRecommendedWinner}
-                              onClick={() => void confirmWinnerRecommendation()}
-                            >
-                              {pendingLifecycleAction === "confirmWinner"
-                                ? t("feedback.confirmingWinner")
-                                : t("actions.confirmWinner")}
-                            </Button>
-                            <p className="text-[11px] text-muted-foreground">{t("recommendation.confirmWinnerHelp")}</p>
-                          </div>
-                        ) : null}
+                            {currentRecommendation?.recommended && currentRecommendation.winning_arm_id ? (
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={
+                                    isPending ||
+                                    pendingLifecycleAction !== null ||
+                                    pendingSave ||
+                                    !canConfirmRecommendedWinner
+                                  }
+                                  onClick={() => void confirmWinnerRecommendation()}
+                                >
+                                  {pendingLifecycleAction === "confirmWinner"
+                                    ? t("feedback.confirmingWinner")
+                                    : t("actions.confirmWinner")}
+                                </Button>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {t("recommendation.confirmWinnerHelp")}
+                                </p>
+                              </div>
+                            ) : null}
                           </div>
                         </>
                       ) : (

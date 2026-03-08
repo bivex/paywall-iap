@@ -257,7 +257,8 @@
       "reasonAutoCompleteConfidence": "Auto-complete by confidence",
       "reasonManualPaused": "Manual pause",
       "reasonManualRunning": "Manual resume/start",
-      "reasonManualCompleted": "Manual complete"
+      "reasonManualCompleted": "Manual complete",
+      "reasonConfirmRecommendedWinner": "Completed after confirming recommended winner"
     },
     "editor": {
       "title": "Edit draft metadata",
@@ -299,6 +300,7 @@
       "openExperiments": "Open A/B Tests",
       "openBandit": "Open Bandit Model",
       "save": "Save draft",
+      "confirmWinner": "Confirm winner",
       "saveAutomation": "Save automation policy",
       "reset": "Reset",
       "start": "Start",
@@ -398,7 +400,8 @@
       "reasonAutoCompleteConfidence": "Auto-complete by confidence",
       "reasonManualPaused": "Manual pause",
       "reasonManualRunning": "Manual resume/start",
-      "reasonManualCompleted": "Manual complete"
+      "reasonManualCompleted": "Manual complete",
+      "reasonConfirmRecommendedWinner": "Completed after confirming recommended winner"
     },
     "capabilities": {
       "title": "Runtime Capability Matrix",
@@ -522,7 +525,8 @@
         "locked": "Automation is locked, so scheduler-driven changes stay blocked. Review the recommendation manually and unlock only if you intentionally want automation to resume.",
         "completed": "This experiment is already completed. Treat the recommendation as historical context, not as a new rollout command.",
         "review": "Recommendation data is available, but Studio still expects manual operator review before any lifecycle change."
-      }
+      },
+      "confirmWinnerHelp": "This explicitly completes the experiment using the current recommended winner and records the decision in lifecycle/admin audit logs. It does not reweight live traffic."
     },
     "notes": {
       "title": "Operational Notes",
@@ -572,6 +576,9 @@
       "unlocking": "Unlocking...",
       "unlocked": "Automation lock cleared.",
       "unlockFailed": "Failed to unlock experiment automation.",
+      "confirmingWinner": "Confirming winner...",
+      "winnerConfirmed": "Winner confirmed and experiment completed.",
+      "winnerConfirmFailed": "Failed to confirm the recommended winner.",
       "savingAutomation": "Saving automation...",
       "automationSaved": "Automation policy updated.",
       "automationSaveFailed": "Failed to update automation policy.",
@@ -590,6 +597,7 @@
       "openExperiments": "Open A/B Tests",
       "save": "Save config",
       "reset": "Reset",
+      "confirmWinner": "Confirm winner",
       "start": "Start",
       "pause": "Pause",
       "resume": "Resume",
@@ -685,7 +693,8 @@
         "locked": "Automation is locked, so scheduler-driven changes stay blocked. Review the recommendation manually and unlock only if you intentionally want automation to resume.",
         "completed": "This experiment is already completed. Treat the recommendation as historical context, not as a new rollout command.",
         "review": "Recommendation data is available, but this page still expects manual operator review before any lifecycle change."
-      }
+      },
+      "confirmWinnerHelp": "This explicitly completes the experiment using the current recommended winner and records the decision in lifecycle/admin audit logs. It does not reweight live traffic."
     },
     "config": {
       "title": "Saved Experiment Config",
@@ -711,6 +720,9 @@
       "saved": "Bandit draft config updated.",
       "statusUpdating": "Updating...",
       "statusUpdated": "Experiment status updated.",
+      "confirmingWinner": "Confirming winner...",
+      "winnerConfirmed": "Winner confirmed and experiment completed.",
+      "winnerConfirmFailed": "Failed to confirm the recommended winner.",
       "saveFailed": "Failed to update bandit draft config.",
       "statusFailed": "Failed to update experiment status."
     }

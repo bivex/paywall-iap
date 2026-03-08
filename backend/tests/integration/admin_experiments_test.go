@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	service "github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/handlers"
 	"github.com/bivex/paywall-iap/tests/testutil"
@@ -133,6 +134,15 @@ func TestAdminExperimentsHandler(t *testing.T) {
 				details JSONB,
 				occurred_at TIMESTAMPTZ NOT NULL,
 				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+			);
+			CREATE TABLE admin_audit_log (
+				id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+				admin_id UUID NOT NULL REFERENCES users(id),
+				action TEXT NOT NULL,
+				target_type TEXT NOT NULL,
+				target_user_id UUID,
+				details JSONB,
+				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 			);`)
 	require.NoError(t, err)
 
@@ -175,7 +185,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		db,
 		nil,
 		nil,
-		nil,
+		service.NewAuditService(db),
 		nil,
 		nil,
 		nil,
@@ -188,6 +198,7 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	admin.POST("/experiments", handler.CreateAdminExperiment)
 	admin.PUT("/experiments/:id", handler.UpdateAdminExperiment)
 	admin.PUT("/experiments/:id/arms/pricing-tiers", handler.UpdateAdminExperimentArmPricingTiers)
+	admin.POST("/experiments/:id/confirm-winner", handler.ConfirmAdminExperimentWinner)
 	admin.GET("/experiments/:id/lifecycle-audit", handler.GetAdminExperimentLifecycleAuditHistory)
 	admin.GET("/experiments/:id/winner-recommendation-audit", handler.GetAdminExperimentWinnerRecommendationAuditHistory)
 	admin.POST("/experiments/:id/pause", handler.PauseAdminExperiment)
@@ -453,6 +464,81 @@ func TestAdminExperimentsHandler(t *testing.T) {
 		assert.True(t, resp.Data[0].Recommended)
 		require.NotNil(t, resp.Data[0].WinningArmID)
 		assert.Equal(t, runningExperiment.Arms[1].ID, *resp.Data[0].WinningArmID)
+	})
+
+	t.Run("POST confirm-winner completes recommended experiment and writes audits", func(t *testing.T) {
+		confirmExperimentID := uuid.New()
+		confirmControlArmID := uuid.New()
+		confirmVariantArmID := uuid.New()
+
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_tests (
+				id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
+			) VALUES (
+				$1, 'Confirm winner regression', 'recommended winner path', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
+				'{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false}'::jsonb
+			)
+		`, confirmExperimentID)
+		require.NoError(t, err)
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
+			VALUES
+				($1, $3, 'Control', 'Baseline', true, 1.0),
+				($2, $3, 'Variant Winner', 'Winner candidate', false, 1.0)
+		`, confirmControlArmID, confirmVariantArmID, confirmExperimentID)
+		require.NoError(t, err)
+		_, err = db.Exec(ctx, `
+			INSERT INTO ab_test_arm_stats (arm_id, alpha, beta, samples, conversions, revenue, avg_reward)
+			VALUES
+				($1, 5, 9, 12, 4, 40, 3.3333),
+				($2, 28, 4, 29, 27, 290, 10.0)
+		`, confirmControlArmID, confirmVariantArmID)
+		require.NoError(t, err)
+		defer func() {
+			_, cleanupErr := db.Exec(ctx, `DELETE FROM ab_tests WHERE id = $1`, confirmExperimentID)
+			require.NoError(t, cleanupErr)
+		}()
+
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+confirmExperimentID.String()+"/confirm-winner", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		var resp struct {
+			Data handlers.AdminExperiment `json:"data"`
+		}
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+		assert.Equal(t, "completed", resp.Data.Status)
+		require.NotNil(t, resp.Data.LatestLifecycleAudit)
+		assert.Equal(t, "completed", resp.Data.LatestLifecycleAudit.ToStatus)
+		assert.Equal(t, "confirm_recommended_winner", resp.Data.LatestLifecycleAudit.Details["reason"])
+		assert.Equal(t, "Variant Winner", resp.Data.LatestLifecycleAudit.Details["winning_arm_name"])
+
+		var lifecycleReason string
+		var lifecycleWinningArm string
+		err = db.QueryRow(ctx, `
+			SELECT details->>'reason', details->>'winning_arm_id'
+			FROM experiment_lifecycle_audit_log
+			WHERE experiment_id = $1
+			ORDER BY created_at DESC
+			LIMIT 1
+		`, confirmExperimentID).Scan(&lifecycleReason, &lifecycleWinningArm)
+		require.NoError(t, err)
+		assert.Equal(t, "confirm_recommended_winner", lifecycleReason)
+		assert.Equal(t, confirmVariantArmID.String(), lifecycleWinningArm)
+
+		var adminAction string
+		var adminWinningArm string
+		err = db.QueryRow(ctx, `
+			SELECT action, details->>'winning_arm_id'
+			FROM admin_audit_log
+			WHERE admin_id = $1 AND details->>'experiment_id' = $2
+			ORDER BY created_at DESC
+			LIMIT 1
+		`, adminID, confirmExperimentID.String()).Scan(&adminAction, &adminWinningArm)
+		require.NoError(t, err)
+		assert.Equal(t, "confirm_experiment_winner", adminAction)
+		assert.Equal(t, confirmVariantArmID.String(), adminWinningArm)
 	})
 
 	t.Run("GET lifecycle audit history returns newest-first entries", func(t *testing.T) {
