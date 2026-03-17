@@ -382,13 +382,11 @@ run_schemathesis_with_admin_experiment_negative_rejection_workarounds() {
 
   run_schemathesis "$label (experiment update without negative_data_rejection)" "$bearer_token" \
     --include-path "$update_experiment_path" \
-    --exclude-checks negative_data_rejection \
-    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+    --exclude-checks negative_data_rejection
 
   run_schemathesis "$label (lifecycle-audit without negative_data_rejection)" "$bearer_token" \
     --include-path "$lifecycle_audit_path" \
-    --exclude-checks negative_data_rejection \
-    "${FILTERED_SCHEMATHESIS_ARGS[@]}"
+    --exclude-checks negative_data_rejection
 }
 
 run_schemathesis_with_stateful_admin_experiment_action_splits() {

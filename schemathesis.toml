@@ -69,6 +69,11 @@ generation = { mode = "positive", max-examples = 1 }
 phases = { coverage = { enabled = false }, fuzzing = { enabled = false } }
 
 [[operations]]
+include-path = "/v1/admin/pricing-tiers"
+include-method = "POST"
+phases = { coverage = { enabled = false }, fuzzing = { enabled = false } }
+
+[[operations]]
 include-path = "/v1/subscription"
 include-method = "DELETE"
 phases = { coverage = { enabled = false }, fuzzing = { enabled = false } }
