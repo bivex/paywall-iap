@@ -48,6 +48,14 @@ func (m *MockWinbackOfferRepository) GetActiveByUserAndCampaign(ctx context.Cont
 	return args.Get(0).(*entity.WinbackOffer), args.Error(1)
 }
 
+func (m *MockWinbackOfferRepository) GetActiveByCampaignID(ctx context.Context, campaignID string) ([]*entity.WinbackOffer, error) {
+	args := m.Called(ctx, campaignID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*entity.WinbackOffer), args.Error(1)
+}
+
 func (m *MockWinbackOfferRepository) Update(ctx context.Context, offer *entity.WinbackOffer) error {
 	args := m.Called(ctx, offer)
 	return args.Error(0)
