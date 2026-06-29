@@ -170,13 +170,22 @@ docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
 # Recover known partial migration gaps from earlier broken runs.
 # If migration 015 was skipped after a dirty-state reset, the table can be missing
 # even though schema_migrations already advanced past version 15.
-HAS_ASSIGNMENTS=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
-  -tAc "SELECT to_regclass('public.ab_test_assignments') IS NOT NULL;" 2>/dev/null || echo "f")
-HAS_ASSIGNMENTS="${HAS_ASSIGNMENTS//[[:space:]]/}"
-if [[ "$HAS_ASSIGNMENTS" != "t" ]]; then
-  warn "ab_test_assignments is missing — applying migration 015 directly"
-  docker exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d iap_db \
-    < "$SCRIPT_DIR/backend/migrations/015_create_ab_test_assignments.up.sql"
+HAS_SCHEMA_MIGRATIONS=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+  -tAc "SELECT to_regclass('public.schema_migrations') IS NOT NULL;" 2>/dev/null || echo "f")
+HAS_SCHEMA_MIGRATIONS="${HAS_SCHEMA_MIGRATIONS//[[:space:]]/}"
+
+if [[ "$HAS_SCHEMA_MIGRATIONS" == "t" ]]; then
+  MIG_VERSION=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+    -tAc "SELECT version FROM schema_migrations LIMIT 1;" 2>/dev/null || echo "0")
+  MIG_VERSION="${MIG_VERSION//[[:space:]]/}"
+  HAS_ASSIGNMENTS=$(docker exec "$DB_CONTAINER" psql -U postgres -d iap_db \
+    -tAc "SELECT to_regclass('public.ab_test_assignments') IS NOT NULL;" 2>/dev/null || echo "f")
+  HAS_ASSIGNMENTS="${HAS_ASSIGNMENTS//[[:space:]]/}"
+  if [[ "$MIG_VERSION" -ge 15 && "$HAS_ASSIGNMENTS" != "t" ]]; then
+    warn "ab_test_assignments is missing but migrations are at version ${MIG_VERSION} — applying migration 015 directly"
+    docker exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U postgres -d iap_db \
+      < "$SCRIPT_DIR/backend/migrations/015_create_ab_test_assignments.up.sql"
+  fi
 fi
 
 info "Building migrator image..."
