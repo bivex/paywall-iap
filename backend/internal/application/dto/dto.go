@@ -109,6 +109,7 @@ type PricingTier struct {
 	Description  string   `json:"description"`
 	MonthlyPrice float64  `json:"monthly_price"`
 	AnnualPrice  float64  `json:"annual_price"`
+	LifetimePrice float64  `json:"lifetime_price"`
 	Currency     string   `json:"currency"`
 	Features     []string `json:"features"`
 	IsActive     bool     `json:"is_active"`

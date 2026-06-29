@@ -109,3 +109,10 @@ CREATE TABLE automation_job_run_log (
 
 CREATE UNIQUE INDEX idx_automation_job_run_log_idempotency
     ON automation_job_run_log(idempotency_key);
+
+CREATE TABLE admin_credentials (
+    user_id       UUID PRIMARY KEY REFERENCES users(id),
+    password_hash TEXT NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);

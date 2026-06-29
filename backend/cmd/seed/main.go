@@ -100,7 +100,10 @@ func main() {
 	}
 
 	// Upsert password hash
-	_, err = q.UpsertAdminCredential(ctx, user.ID, string(hash))
+	_, err = q.UpsertAdminCredential(ctx, generated.UpsertAdminCredentialParams{
+		UserID:       user.ID,
+		PasswordHash: string(hash),
+	})
 	if err != nil {
 		log.Fatalf("Failed to store admin credential: %v", err)
 	}

@@ -463,7 +463,8 @@ zap.String("subscriptionId", sn.SubscriptionID),
 )
 
 // Look up the subscription via provider_tx_id = purchaseToken.
-sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, sn.PurchaseToken)
+token := sn.PurchaseToken
+sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, &token)
 if err != nil {
 // Unknown token — likely a notification for a purchase we haven't seen yet
 // (race: webhook arrives before /verify/iap). Log and move on.
@@ -596,7 +597,8 @@ return nil
 }
 
 // Look up subscription by original_transaction_id (stored as provider_tx_id on first IAP verify)
-sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, originalTxID)
+txID := originalTxID
+sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, &txID)
 if err != nil {
 // Not found is non-fatal: notification may arrive before first receipt verify
 h.logger.Warn("apple s2s: subscription not found",

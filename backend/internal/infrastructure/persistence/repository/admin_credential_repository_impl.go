@@ -20,7 +20,10 @@ func NewAdminCredentialRepository(queries *generated.Queries) domainRepo.AdminCr
 }
 
 func (r *adminCredentialRepositoryImpl) SetPassword(ctx context.Context, userID uuid.UUID, passwordHash string) error {
-	_, err := r.queries.UpsertAdminCredential(ctx, userID, passwordHash)
+	_, err := r.queries.UpsertAdminCredential(ctx, generated.UpsertAdminCredentialParams{
+		UserID:       userID,
+		PasswordHash: passwordHash,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to set admin password: %w", err)
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
@@ -249,7 +250,10 @@ func (h *AdminHandler) ChangeAdminPassword(c *gin.Context) {
 		response.InternalError(c, "Failed to update password")
 		return
 	}
-	if _, err := h.queries.UpsertAdminCredential(ctx, adminID, string(hash)); err != nil {
+	if _, err := h.queries.UpsertAdminCredential(ctx, generated.UpsertAdminCredentialParams{
+		UserID:       adminID,
+		PasswordHash: string(hash),
+	}); err != nil {
 		response.InternalError(c, "Failed to update password")
 		return
 	}

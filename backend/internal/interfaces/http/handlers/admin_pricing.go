@@ -21,6 +21,7 @@ type PricingTier struct {
 	Description  string    `json:"description"`
 	MonthlyPrice *float64  `json:"monthly_price"`
 	AnnualPrice  *float64  `json:"annual_price"`
+	LifetimePrice *float64 `json:"lifetime_price"`
 	Currency     string    `json:"currency"`
 	Features     []string  `json:"features"`
 	IsActive     bool      `json:"is_active"`
@@ -33,6 +34,7 @@ type pricingTierUpsertRequest struct {
 	Description  string   `json:"description"`
 	MonthlyPrice *float64 `json:"monthly_price"`
 	AnnualPrice  *float64 `json:"annual_price"`
+	LifetimePrice *float64 `json:"lifetime_price"`
 	Currency     string   `json:"currency"`
 	Features     []string `json:"features"`
 	IsActive     bool     `json:"is_active"`
@@ -71,7 +73,7 @@ func validatePricingTierRequest(req pricingTierUpsertRequest) string {
 			return "Currency must be a 3-letter ISO code"
 		}
 	}
-	if req.MonthlyPrice == nil && req.AnnualPrice == nil {
+	if req.MonthlyPrice == nil && req.AnnualPrice == nil && req.LifetimePrice == nil {
 		return "At least one price is required"
 	}
 	if req.MonthlyPrice != nil && *req.MonthlyPrice <= 0 {
@@ -79,6 +81,9 @@ func validatePricingTierRequest(req pricingTierUpsertRequest) string {
 	}
 	if req.AnnualPrice != nil && *req.AnnualPrice <= 0 {
 		return "Annual price must be greater than zero"
+	}
+	if req.LifetimePrice != nil && *req.LifetimePrice <= 0 {
+		return "Lifetime price must be greater than zero"
 	}
 	return ""
 }
@@ -90,6 +95,7 @@ func scanPricingTier(scanner pricingTierScanner) (PricingTier, error) {
 		description string
 		monthly     sql.NullFloat64
 		annual      sql.NullFloat64
+		lifetime    sql.NullFloat64
 		currency    string
 		featuresRaw []byte
 		isActive    bool
@@ -103,6 +109,7 @@ func scanPricingTier(scanner pricingTierScanner) (PricingTier, error) {
 		&description,
 		&monthly,
 		&annual,
+		&lifetime,
 		&currency,
 		&featuresRaw,
 		&isActive,
@@ -137,6 +144,10 @@ func scanPricingTier(scanner pricingTierScanner) (PricingTier, error) {
 	if annual.Valid {
 		value := annual.Float64
 		tier.AnnualPrice = &value
+	}
+	if lifetime.Valid {
+		value := lifetime.Float64
+		tier.LifetimePrice = &value
 	}
 
 	return tier, nil
@@ -180,6 +191,9 @@ func (h *AdminHandler) logPricingTierAction(c *gin.Context, action string, tier 
 	if tier.AnnualPrice != nil {
 		details["annual_price"] = *tier.AnnualPrice
 	}
+	if tier.LifetimePrice != nil {
+		details["lifetime_price"] = *tier.LifetimePrice
+	}
 
 	_ = h.auditService.LogAction(c.Request.Context(), adminID, action, "pricing_tier", pricingTierTargetID(tier.ID), details)
 }
@@ -191,6 +205,7 @@ func (h *AdminHandler) ListPricingTiers(c *gin.Context) {
 		       COALESCE(description, ''),
 		       monthly_price::double precision,
 		       annual_price::double precision,
+		       lifetime_price::double precision,
 		       currency,
 		       COALESCE(features, '[]'::jsonb),
 		       is_active,
@@ -246,17 +261,19 @@ func (h *AdminHandler) CreatePricingTier(c *gin.Context) {
 			description,
 			monthly_price,
 			annual_price,
+			lifetime_price,
 			currency,
 			features,
 			is_active,
 			updated_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, now())
+		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, now())
 		RETURNING id,
 		          name,
 		          COALESCE(description, ''),
 		          monthly_price::double precision,
 		          annual_price::double precision,
+		          lifetime_price::double precision,
 		          currency,
 		          COALESCE(features, '[]'::jsonb),
 		          is_active,
@@ -266,6 +283,7 @@ func (h *AdminHandler) CreatePricingTier(c *gin.Context) {
 		req.Description,
 		req.MonthlyPrice,
 		req.AnnualPrice,
+		req.LifetimePrice,
 		req.Currency,
 		featuresJSON,
 		req.IsActive,
@@ -313,9 +331,10 @@ func (h *AdminHandler) UpdatePricingTier(c *gin.Context) {
 		    description = $3,
 		    monthly_price = $4,
 		    annual_price = $5,
-		    currency = $6,
-		    features = $7::jsonb,
-		    is_active = $8,
+		    lifetime_price = $6,
+		    currency = $7,
+		    features = $8::jsonb,
+		    is_active = $9,
 		    updated_at = now()
 		WHERE id = $1 AND deleted_at IS NULL
 		RETURNING id,
@@ -323,6 +342,7 @@ func (h *AdminHandler) UpdatePricingTier(c *gin.Context) {
 		          COALESCE(description, ''),
 		          monthly_price::double precision,
 		          annual_price::double precision,
+		          lifetime_price::double precision,
 		          currency,
 		          COALESCE(features, '[]'::jsonb),
 		          is_active,
@@ -333,6 +353,7 @@ func (h *AdminHandler) UpdatePricingTier(c *gin.Context) {
 		req.Description,
 		req.MonthlyPrice,
 		req.AnnualPrice,
+		req.LifetimePrice,
 		req.Currency,
 		featuresJSON,
 		req.IsActive,
@@ -379,6 +400,7 @@ func (h *AdminHandler) setPricingTierActive(c *gin.Context, isActive bool) {
 		          COALESCE(description, ''),
 		          monthly_price::double precision,
 		          annual_price::double precision,
+		          lifetime_price::double precision,
 		          currency,
 		          COALESCE(features, '[]'::jsonb),
 		          is_active,
