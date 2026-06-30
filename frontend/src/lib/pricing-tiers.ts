@@ -4,6 +4,7 @@ export interface PricingTier {
   description: string;
   monthly_price: number | null;
   annual_price: number | null;
+  lifetime_price: number | null;
   currency: string;
   features: string[];
   is_active: boolean;
@@ -16,6 +17,7 @@ export interface PricingTierInput {
   description: string;
   monthly_price: number | null;
   annual_price: number | null;
+  lifetime_price: number | null;
   currency: string;
   features: string[];
   is_active: boolean;
@@ -26,6 +28,7 @@ export const EMPTY_PRICING_TIER_INPUT: PricingTierInput = {
   description: "",
   monthly_price: null,
   annual_price: null,
+  lifetime_price: null,
   currency: "USD",
   features: [],
   is_active: true,
