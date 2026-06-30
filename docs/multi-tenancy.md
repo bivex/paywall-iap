@@ -40,31 +40,66 @@ game-2/  →  paywall-iap stack (port 8082, db: iap_db_game2)
 
 ---
 
-### ⚠️ Вариант 2 — Добавить `app_id` в схему
+### ✅ Вариант 2 — Добавить `app_id` в схему **[РЕАЛИЗОВАН]**
 
-Серьёзная миграция: затрагивает все 32 таблицы + все уникальные индексы
-+ всю бизнес-логику в Go + роутинг API (JWT должен содержать `app_id`).
+**Миграция:** [`033_add_multi_tenancy.up.sql`](../migrations/033_add_multi_tenancy.up.sql)  
+**Откат:** [`033_add_multi_tenancy.down.sql`](../migrations/033_add_multi_tenancy.down.sql)
 
-Примерный объём изменений:
+Добавлена таблица `apps` и колонка `app_id UUID NOT NULL` во все таблицы с
+пользовательскими данными. Существующие строки бэк-филлятся sentinel-приложением
+`com.mothsalt.legacy` — миграция безопасна на живой БД.
+
+#### Затронутые таблицы
+
+| Таблица | Изменение |
+|---|---|
+| `users` | `app_id` + переделан UNIQUE на `(app_id, platform_user_id)` и `(app_id, email)` |
+| `pricing_tiers` | `app_id` + UNIQUE на `(app_id, name)` |
+| `ab_tests` | `app_id` |
+| `webhook_events` | `app_id` + UNIQUE на `(app_id, provider, event_id)` |
+| `analytics_aggregates` | `app_id` + UNIQUE на `(app_id, metric_name, metric_date, dimensions)` |
+| `matomo_staged_events` | `app_id` |
+| `bandit_user_context` | `app_id` + PK переделан на `(app_id, user_id)` |
+
+#### Таблицы без app_id (глобальные / инфра)
+`admin_credentials`, `admin_audit_log`, `admin_settings`,
+`automation_job_run_log`, `currency_rates`,
+`experiment_lifecycle_audit_log`, `experiment_automation_decision_log`
+
+#### Сидированные приложения Mothsalt
+
 ```sql
--- В каждую ключевую таблицу:
-ALTER TABLE users         ADD COLUMN app_id UUID NOT NULL;
-ALTER TABLE subscriptions ADD COLUMN app_id UUID NOT NULL;
-ALTER TABLE pricing_tiers ADD COLUMN app_id UUID NOT NULL;
-ALTER TABLE ab_tests       ADD COLUMN app_id UUID NOT NULL;
-
--- Пересоздать уникальные индексы с учётом app_id:
-DROP INDEX idx_users_platform_user_id_unique;
-CREATE UNIQUE INDEX ON users(app_id, platform_user_id);
-
-DROP INDEX ON pricing_tiers(name);
-CREATE UNIQUE INDEX ON pricing_tiers(app_id, name);
+-- Автоматически вставляются миграцией:
+com.mothsalt.game1  →  iOS
+com.mothsalt.game2  →  iOS
+com.mothsalt.game3  →  iOS
+com.mothsalt.game4  →  Android
+com.mothsalt.game5  →  Android
 ```
 
-**Плюсы:** один инстанс на все приложения.  
-**Минусы:** очень большой рефакторинг, высокий риск регрессий.
+#### Применить миграцию
 
----
+```bash
+# Через Docker (рекомендуется)
+docker exec -i <db_container> psql -U postgres -d iap_db \
+  < backend/migrations/033_add_multi_tenancy.up.sql
+
+# Или через Go migrator
+cd backend && go run ./cmd/migrate up
+```
+
+**Плюсы:** один инстанс на все приложения, полная изоляция данных.  
+**Минусы:** Go-слой и роутинг JWT ещё требуют доработки (см. ниже).
+
+#### Что ещё нужно доделать в Go после миграции
+
+- [ ] `app_id` в JWT claims (`bundle_id` → lookup `apps.id`)
+- [ ] Middleware: извлекать `app_id` из JWT и прокидывать в `context`
+- [ ] Все репозитории: добавить `WHERE app_id = $1` к каждому запросу
+- [ ] Admin UI: фильтр по приложению на всех страницах
+- [ ] SDK (`PaywallBanditClient`): передавать `bundle_id` при регистрации
+
+
 
 ### 🔵 Вариант 3 — PostgreSQL schemas
 
