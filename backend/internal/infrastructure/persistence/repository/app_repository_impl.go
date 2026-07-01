@@ -39,7 +39,7 @@ func (r *appRepositoryImpl) GetByBundleID(ctx context.Context, bundleID string) 
 
 func (r *appRepositoryImpl) List(ctx context.Context) ([]*entity.App, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT`+appSelectColumns+`FROM apps WHERE is_active = true ORDER BY name`)
+		`SELECT`+appSelectColumns+`FROM apps ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list apps: %w", err)
 	}
@@ -77,4 +77,34 @@ func scanAppRow(rows pgx.Rows) (*entity.App, error) {
 		return nil, fmt.Errorf("failed to scan app row: %w", err)
 	}
 	return &a, nil
+}
+
+func (r *appRepositoryImpl) Create(ctx context.Context, name, bundleID, platform string) (*entity.App, error) {
+	row := r.pool.QueryRow(ctx, `
+		INSERT INTO apps (name, display_name, bundle_id, platform, is_active)
+		VALUES ($1, $1, $2, $3, true)
+		RETURNING`+appSelectColumns,
+		name, bundleID, platform)
+	return scanApp(row)
+}
+
+func (r *appRepositoryImpl) Update(ctx context.Context, app *entity.App) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE apps
+		SET name = $2, display_name = $3, bundle_id = $4, platform = $5, is_active = $6, updated_at = now()
+		WHERE id = $1`,
+		app.ID, app.Name, app.DisplayName, app.BundleID, app.Platform, app.IsActive)
+	if err != nil {
+		return fmt.Errorf("failed to update app: %w", err)
+	}
+	return nil
+}
+
+func (r *appRepositoryImpl) Delete(ctx context.Context, id uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE apps SET is_active = false, updated_at = now() WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete app: %w", err)
+	}
+	return nil
 }

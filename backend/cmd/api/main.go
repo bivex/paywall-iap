@@ -101,6 +101,7 @@ func dumpRoutesDependencies() *dependencies {
 		iapHandler:            (*app_handler.IAPHandler)(nil),
 		subscriptionHandler:   (*app_handler.SubscriptionHandler)(nil),
 		adminHandler:          (*app_handler.AdminHandler)(nil),
+		appsHandler:           (*app_handler.AppsHandler)(nil),
 		webhookHandler:        (*app_handler.WebhookHandler)(nil),
 		banditHandler:         (*app_handler.BanditHandler)(nil),
 		banditAdvancedHandler: (*app_handler.BanditAdvancedHandler)(nil),
@@ -207,6 +208,7 @@ type dependencies struct {
 	iapHandler            *app_handler.IAPHandler
 	subscriptionHandler   *app_handler.SubscriptionHandler
 	adminHandler          *app_handler.AdminHandler
+	appsHandler           *app_handler.AppsHandler
 	webhookHandler        *app_handler.WebhookHandler
 	banditHandler         *app_handler.BanditHandler
 	banditAdvancedHandler *app_handler.BanditAdvancedHandler
@@ -215,6 +217,8 @@ type dependencies struct {
 
 // initDependencies initializes all repositories, services, middleware, and handlers
 func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *redis.Client, asynqClient *asynq.Client) *dependencies {
+	appRepo := repository.NewAppRepository(dbPool)
+
 	// Initialize repositories
 	queries := generated.New(dbPool)
 	userRepo := repository.NewUserRepository(queries)
@@ -278,6 +282,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	checkAccessQuery := query.NewCheckAccessQuery(subscriptionRepo)
 
 	// Initialize handlers
+	appsHandler := app_handler.NewAppsHandler(appRepo)
 	authHandler := app_handler.NewAuthHandler(registerCmd, adminLoginCmd, jwtMiddleware)
 	iapHandler := app_handler.NewIAPHandler(verifyIAPCmd, jwtMiddleware, rateLimiter)
 	subscriptionHandler := app_handler.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelSubCmd, jwtMiddleware)
@@ -336,6 +341,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		iapHandler:            iapHandler,
 		subscriptionHandler:   subscriptionHandler,
 		adminHandler:          adminHandler,
+		appsHandler:           appsHandler,
 		webhookHandler:        webhookHandler,
 		banditHandler:         banditHandler,
 		banditAdvancedHandler: banditAdvancedHandler,
@@ -506,6 +512,13 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 		admin.POST("/settings/password", d.adminHandler.ChangeAdminPassword)
 		admin.POST("/webhooks/:id/replay", d.adminHandler.ReplayWebhook)
 		admin.GET("/health", d.adminHandler.GetHealth)
+
+		// Apps management
+		admin.GET("/apps", d.appsHandler.ListApps)
+		admin.GET("/apps/:id", d.appsHandler.GetApp)
+		admin.POST("/apps", d.appsHandler.CreateApp)
+		admin.PUT("/apps/:id", d.appsHandler.UpdateApp)
+		admin.DELETE("/apps/:id", d.appsHandler.DeleteApp)
 	}
 }
 
