@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Clock, XCircle, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, CheckCircle2, Clock, XCircle, AlertTriangle } from "lucide-react";
 import { getAnalyticsReport } from "@/actions/analytics";
+import { RetryError } from "@/components/retry-error";
+import { isFetchError } from "@/lib/server-fetch";
 import { KpiAreaChart } from "./_components/mrr-chart";
 import { PlatformBarChart } from "./_components/platform-bar-chart";
 import { RevenueDonutChart } from "./_components/revenue-donut-chart";
@@ -10,13 +12,8 @@ import { RevenueDonutChart } from "./_components/revenue-donut-chart";
 export default async function AnalyticsPage() {
   const report = await getAnalyticsReport();
 
-  if (!report) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
-        <AlertCircle className="h-8 w-8" />
-        <p className="text-sm">Failed to load analytics — make sure you are logged in.</p>
-      </div>
-    );
+  if (isFetchError(report)) {
+    return <RetryError message={report.message} />;
   }
 
   const { mrr, arr, ltv, total_revenue, churn_rate, new_subs_month, trend, by_platform, by_plan, status_counts } = report;

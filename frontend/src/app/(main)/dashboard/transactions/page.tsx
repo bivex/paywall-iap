@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  AlertCircle, CheckCircle, XCircle, RefreshCw,
+  CheckCircle, XCircle, RefreshCw,
   DollarSign, TrendingUp, TrendingDown,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import { getTransactions } from "@/actions/transactions";
 import type { TransactionsParams, TransactionSummary } from "@/actions/transactions";
+import { RetryError } from "@/components/retry-error";
+import { isFetchError } from "@/lib/server-fetch";
 import { formatSource } from "@/lib/subscriptions/format";
 import { TransactionsFilters } from "./_components/transactions-filters";
 import { CopyTxId } from "./_components/copy-tx-id";
@@ -122,13 +124,8 @@ export default async function TransactionsPage({ searchParams }: Props) {
 
   const data = await getTransactions(params);
 
-  if (!data) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
-        <AlertCircle className="h-8 w-8" />
-        <p className="text-sm">Failed to load — make sure you are logged in.</p>
-      </div>
-    );
+  if (isFetchError(data)) {
+    return <RetryError message={data.message} />;
   }
 
   const { transactions: rawTxs, summary, total, total_pages: totalPages } = data;

@@ -1,5 +1,6 @@
-import { AlertCircle } from "lucide-react";
 import { getWebhooks } from "@/actions/webhooks";
+import { RetryError } from "@/components/retry-error";
+import { isFetchError } from "@/lib/server-fetch";
 import type { WebhooksParams } from "@/actions/webhooks";
 import { WebhookEventsTable } from "./_components/webhook-events-table";
 
@@ -24,13 +25,8 @@ export default async function WebhooksPage({ searchParams }: Props) {
 
   const data = await getWebhooks(params);
 
-  if (!data) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
-        <AlertCircle className="h-8 w-8" />
-        <p className="text-sm">Failed to load — make sure you are logged in.</p>
-      </div>
-    );
+  if (isFetchError(data)) {
+    return <RetryError message={data.message} />;
   }
 
   return (

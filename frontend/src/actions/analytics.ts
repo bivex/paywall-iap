@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { serverFetch, type ServerFetchResult } from "@/lib/server-fetch";
 
 export interface TrendPoint {
   month: string;
@@ -39,20 +39,6 @@ export interface AnalyticsReport {
   };
 }
 
-export async function getAnalyticsReport(): Promise<AnalyticsReport | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_access_token")?.value;
-  if (!token) return null;
-
-  const base = process.env.BACKEND_URL ?? "http://api:8080";
-  try {
-    const res = await fetch(`${base}/v1/admin/analytics/report`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return res.json() as Promise<AnalyticsReport>;
-  } catch {
-    return null;
-  }
+export async function getAnalyticsReport(): Promise<ServerFetchResult<AnalyticsReport>> {
+  return serverFetch<AnalyticsReport>("/v1/admin/analytics/report");
 }

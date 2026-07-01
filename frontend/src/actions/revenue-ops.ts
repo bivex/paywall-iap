@@ -17,6 +17,8 @@
 
 import { cookies } from "next/headers";
 
+import { serverFetch, type ServerFetchResult } from "@/lib/server-fetch";
+
 export interface DunningRow {
   id: string;
   email: string;
@@ -81,25 +83,10 @@ export interface RevenueOpsReport {
   };
 }
 
-export async function getRevenueOps(whPage = 1): Promise<RevenueOpsReport | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_access_token")?.value;
-  if (!token) return null;
-
-  const base = process.env.BACKEND_URL ?? "http://api:8080";
-  try {
-    const res = await fetch(
-      `${base}/v1/admin/revenue-ops?wh_page=${whPage}&wh_page_size=20`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      }
-    );
-    if (!res.ok) return null;
-    return res.json() as Promise<RevenueOpsReport>;
-  } catch {
-    return null;
-  }
+export async function getRevenueOps(whPage = 1): Promise<ServerFetchResult<RevenueOpsReport>> {
+  return serverFetch<RevenueOpsReport>(
+    `/v1/admin/revenue-ops?wh_page=${whPage}&wh_page_size=20`,
+  );
 }
 
 export async function replayWebhook(webhookId: string): Promise<boolean> {

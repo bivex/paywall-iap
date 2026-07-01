@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import {
   Activity,
-  AlertCircle,
   AlertTriangle,
   CheckCircle2,
   ChevronLeft,
@@ -17,6 +16,8 @@ import {
 } from "lucide-react";
 
 import { getRevenueOps } from "@/actions/revenue-ops";
+import { RetryError } from "@/components/retry-error";
+import { isFetchError } from "@/lib/server-fetch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -166,13 +167,8 @@ export default async function RevenueOpsPage({
 
   const report = await getRevenueOps(whPage);
 
-  if (!report) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
-        <AlertCircle className="h-8 w-8" />
-        <p className="text-sm">Failed to load — make sure you are logged in.</p>
-      </div>
-    );
+  if (isFetchError(report)) {
+    return <RetryError message={report.message} />;
   }
 
   const { dunning, webhooks, matomo } = report;

@@ -1,8 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
-
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
+import { serverFetch, type ServerFetchResult } from "@/lib/server-fetch";
 
 export interface WebhookEvent {
   id: string;
@@ -39,11 +37,7 @@ export interface WebhooksParams {
   date_to?: string;
 }
 
-export async function getWebhooks(params: WebhooksParams = {}): Promise<WebhooksResponse | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_access_token")?.value;
-  if (!token) return null;
-
+export async function getWebhooks(params: WebhooksParams = {}): Promise<ServerFetchResult<WebhooksResponse>> {
   const qs = new URLSearchParams();
   if (params.page) qs.set("page", String(params.page));
   if (params.limit) qs.set("limit", String(params.limit));
@@ -53,14 +47,5 @@ export async function getWebhooks(params: WebhooksParams = {}): Promise<Webhooks
   if (params.date_from) qs.set("date_from", params.date_from);
   if (params.date_to) qs.set("date_to", params.date_to);
 
-  try {
-    const res = await fetch(`${BACKEND_URL}/v1/admin/webhooks?${qs.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as WebhooksResponse;
-  } catch {
-    return null;
-  }
+  return serverFetch<WebhooksResponse>(`/v1/admin/webhooks?${qs.toString()}`);
 }
