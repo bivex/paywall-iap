@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
 	"github.com/bivex/paywall-iap/internal/infrastructure/external/matomo"
 )
 
@@ -26,10 +27,11 @@ type CohortMetrics struct {
 
 // LTVService handles Lifetime Value calculations and predictions
 type LTVService struct {
-	matomoClient      *matomo.Client
-	cohortWorker      CohortWorker
-	subscriptionRepo  SubscriptionRepository
-	logger            *zap.Logger
+	matomoClient     *matomo.Client
+	cohortWorker     CohortWorker
+	subscriptionRepo SubscriptionRepository
+	transactionRepo  domainRepo.TransactionRepository
+	logger           *zap.Logger
 }
 
 // SubscriptionRepository defines the interface for subscription data access
@@ -53,12 +55,14 @@ func NewLTVService(
 	matomoClient *matomo.Client,
 	cohortWorker CohortWorker,
 	subscriptionRepo SubscriptionRepository,
+	transactionRepo domainRepo.TransactionRepository,
 	logger *zap.Logger,
 ) *LTVService {
 	return &LTVService{
 		matomoClient:     matomoClient,
 		cohortWorker:     cohortWorker,
 		subscriptionRepo: subscriptionRepo,
+		transactionRepo:  transactionRepo,
 		logger:           logger,
 	}
 }
@@ -370,24 +374,21 @@ func (s *LTVService) UpdateUserLTV(ctx context.Context, userID uuid.UUID, amount
 	return nil
 }
 
-// GetSegmentedLTV calculates LTV for user segments
+// GetSegmentedLTV calculates LTV for user segments based on real platform data
 func (s *LTVService) GetSegmentedLTV(ctx context.Context, segment string, period int) (map[string]float64, error) {
-	// TODO: Implement segmentation based on user attributes
-	// For now, return mock data
-
-	segments := map[string]float64{
-		"all_users":    29.99,
-		"ios_premium":  35.99,
-		"android_free": 9.99,
-		"new_users":    15.00,
-		"churned":      19.99,
+	rows, err := s.transactionRepo.GetSegmentedLTV(ctx, period)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get segmented LTV: %w", err)
 	}
 
-	if result, ok := segments[segment]; ok {
-		return map[string]float64{segment: result}, nil
+	if segment != "" && segment != "all" {
+		if val, ok := rows[segment]; ok {
+			return map[string]float64{segment: val}, nil
+		}
+		return map[string]float64{segment: 0}, nil
 	}
 
-	return segments, nil
+	return rows, nil
 }
 
 // PredictChurnRisk predicts the likelihood of a user churning

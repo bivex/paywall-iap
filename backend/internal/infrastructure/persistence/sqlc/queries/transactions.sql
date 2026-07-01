@@ -24,6 +24,19 @@ SELECT COALESCE(SUM(amount), 0) AS ltv
 FROM transactions
 WHERE app_id = $1 AND user_id = $2 AND status = 'success';
 
+-- name: GetTransactionsBySubscriptionID :many
+SELECT * FROM transactions
+WHERE subscription_id = $1
+ORDER BY created_at DESC;
+
+-- name: GetSegmentedLTVByPlatform :many
+SELECT u.platform, COALESCE(SUM(t.amount), 0) AS ltv
+FROM transactions t
+JOIN users u ON t.user_id = u.id
+WHERE t.status = 'success'
+  AND ($1::int = 0 OR t.created_at >= now() - ($1::int * interval '1 day'))
+GROUP BY u.platform;
+
 -- name: GetDailyRevenue :one
 SELECT COALESCE(SUM(amount), 0) AS revenue
 FROM transactions

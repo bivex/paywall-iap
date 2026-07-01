@@ -55,6 +55,7 @@ func (r *transactionRepositoryImpl) GetByID(ctx context.Context, id uuid.UUID) (
 
 func (r *transactionRepositoryImpl) GetByUserID(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*entity.Transaction, error) {
 	params := generated.GetTransactionsByUserIDParams{
+		AppID:  uuid.Nil, // caller should scope by app — best-effort without appID
 		UserID: userID,
 		Limit:  int32(limit),
 		Offset: int32(offset),
@@ -74,9 +75,42 @@ func (r *transactionRepositoryImpl) GetByUserID(ctx context.Context, userID uuid
 }
 
 func (r *transactionRepositoryImpl) GetBySubscriptionID(ctx context.Context, subscriptionID uuid.UUID) ([]*entity.Transaction, error) {
-	// For now, return empty array
-	// In full implementation, add query to GetTransactionsBySubscriptionID
-	return []*entity.Transaction{}, nil
+	rows, err := r.queries.GetTransactionsBySubscriptionID(ctx, subscriptionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get transactions by subscription: %w", err)
+	}
+
+	transactions := make([]*entity.Transaction, len(rows))
+	for i, row := range rows {
+		transactions[i] = r.mapToEntity(row)
+	}
+
+	return transactions, nil
+}
+
+func (r *transactionRepositoryImpl) GetSegmentedLTV(ctx context.Context, periodDays int) (map[string]float64, error) {
+	rows, err := r.queries.GetSegmentedLTVByPlatform(ctx, int32(periodDays))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get segmented LTV: %w", err)
+	}
+
+	result := make(map[string]float64, len(rows))
+	for _, row := range rows {
+		switch v := row.Ltv.(type) {
+		case float64:
+			result[row.Platform] = v
+		case float32:
+			result[row.Platform] = float64(v)
+		case int64:
+			result[row.Platform] = float64(v)
+		case int32:
+			result[row.Platform] = float64(v)
+		default:
+			result[row.Platform] = 0
+		}
+	}
+
+	return result, nil
 }
 
 func (r *transactionRepositoryImpl) CheckDuplicateReceipt(ctx context.Context, receiptHash string) (bool, error) {

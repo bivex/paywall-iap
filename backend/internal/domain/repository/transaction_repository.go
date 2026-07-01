@@ -23,4 +23,7 @@ type TransactionRepository interface {
 
 	// CheckDuplicateReceipt checks if a receipt has already been processed
 	CheckDuplicateReceipt(ctx context.Context, receiptHash string) (bool, error)
+
+	// GetSegmentedLTV returns LTV grouped by platform for the given period in days
+	GetSegmentedLTV(ctx context.Context, periodDays int) (map[string]float64, error)
 }
