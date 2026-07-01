@@ -26,4 +26,19 @@ type AppRepository interface {
 
 	// Delete soft-deletes (deactivates) an app.
 	Delete(ctx context.Context, id uuid.UUID) error
+
+	// GetSettings returns the JSONB settings for an app.
+	GetSettings(ctx context.Context, id uuid.UUID) (*entity.AppSettings, error)
+
+	// UpdateSettings replaces the JSONB settings for an app.
+	UpdateSettings(ctx context.Context, id uuid.UUID, s *entity.AppSettings) error
+
+	// GetCredentials returns all credential rows for an app (one per provider), decrypted.
+	GetCredentials(ctx context.Context, appID uuid.UUID) ([]*entity.AppCredentials, error)
+
+	// UpsertCredentials inserts or updates credentials for one provider, encrypting sensitive fields.
+	UpsertCredentials(ctx context.Context, creds *entity.AppCredentials) error
+
+	// DeleteCredentials removes credentials for a given provider.
+	DeleteCredentials(ctx context.Context, appID uuid.UUID, provider string) error
 }
