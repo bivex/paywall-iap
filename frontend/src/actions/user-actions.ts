@@ -8,6 +8,7 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 async function adminFetch(path: string, body: object) {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_access_token")?.value;
+  const appId = cookieStore.get("admin_app_id")?.value;
   if (!token) return { ok: false, error: "Unauthorized" };
 
   try {

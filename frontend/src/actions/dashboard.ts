@@ -59,6 +59,7 @@ export interface DashboardMetrics {
 export async function getDashboardMetrics(): Promise<DashboardMetrics | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_access_token")?.value;
+  const appId = cookieStore.get("admin_app_id")?.value;
   if (!token) return null;
 
   try {

@@ -92,6 +92,7 @@ export async function getRevenueOps(whPage = 1): Promise<ServerFetchResult<Reven
 export async function replayWebhook(webhookId: string): Promise<boolean> {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_access_token")?.value;
+  const appId = cookieStore.get("admin_app_id")?.value;
   if (!token) return false;
 
   const base = process.env.BACKEND_URL ?? "http://api:8080";

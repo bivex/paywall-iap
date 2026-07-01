@@ -96,13 +96,19 @@ export async function getTransactionDetail(id: string): Promise<TransactionDetai
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_access_token")?.value;
   if (!token) return null;
+  const appId = cookieStore.get("admin_app_id")?.value;
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/transactions/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+      },
       cache: "no-store",
     });
     if (!res.ok) return null;
-    return (await res.json()) as TransactionDetail;
+    const body = await res.json();
+    // backend may wrap in { data: ... }
+    return (body.data ?? body) as TransactionDetail;
   } catch {
     return null;
   }

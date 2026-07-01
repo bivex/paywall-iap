@@ -76,6 +76,7 @@ export interface SubscriptionDetail extends SubscriptionRow {
 export async function getSubscriptionDetail(id: string): Promise<SubscriptionDetail | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_access_token")?.value;
+  const appId = cookieStore.get("admin_app_id")?.value;
   if (!token) return null;
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/subscriptions/${id}`, {

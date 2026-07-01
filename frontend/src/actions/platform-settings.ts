@@ -16,6 +16,16 @@ async function getAdminToken(): Promise<string | undefined> {
   return cookieStore.get("admin_access_token")?.value;
 }
 
+async function getAdminHeaders(): Promise<Record<string, string>> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("admin_access_token")?.value;
+  const appId = cookieStore.get("admin_app_id")?.value;
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (appId) headers["X-App-ID"] = appId;
+  return headers;
+}
+
 async function parseResponse<T>(res: Response): Promise<{ ok: boolean; data?: T; error?: string }> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -36,7 +46,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/settings`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: await getAdminHeaders(),
       cache: "no-store",
     });
     const parsed = await parseResponse<PlatformSettings>(res);
@@ -53,7 +63,7 @@ export async function updatePlatformSettings(payload: PlatformSettings) {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/settings`, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { ...await getAdminHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<PlatformSettings>(res);
@@ -75,7 +85,7 @@ export async function changeAdminPasswordAction(input: {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/settings/password`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { ...await getAdminHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify({
         current_password: input.currentPassword,
         new_password: input.newPassword,

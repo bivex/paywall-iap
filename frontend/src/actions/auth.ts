@@ -92,6 +92,7 @@ export async function loginAction(
 export async function logoutAction(): Promise<{ redirectTo: string }> {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_access_token")?.value;
+  const appId = cookieStore.get("admin_app_id")?.value;
 
   if (token) {
     await fetch(`${BACKEND_URL}/v1/admin/auth/logout`, {
