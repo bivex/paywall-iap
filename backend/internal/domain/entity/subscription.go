@@ -73,6 +73,9 @@ func (s *Subscription) IsActive() bool {
 
 // IsExpired returns true if the subscription has expired
 func (s *Subscription) IsExpired() bool {
+	if s.Status == StatusGrace {
+		return false
+	}
 	return s.Status == StatusExpired || s.ExpiresAt.Before(time.Now())
 }
 

@@ -91,14 +91,20 @@ func (r *subscriptionRepositoryImpl) GetByUserID(ctx context.Context, userID uui
 }
 
 func (r *subscriptionRepositoryImpl) Update(ctx context.Context, sub *entity.Subscription) error {
-	params := generated.UpdateSubscriptionStatusParams{
+	// Update status
+	if _, err := r.queries.UpdateSubscriptionStatus(ctx, generated.UpdateSubscriptionStatusParams{
 		ID:     sub.ID,
 		Status: string(sub.Status),
+	}); err != nil {
+		return fmt.Errorf("failed to update subscription status: %w", err)
 	}
 
-	_, err := r.queries.UpdateSubscriptionStatus(ctx, params)
-	if err != nil {
-		return fmt.Errorf("failed to update subscription: %w", err)
+	// Update expiry
+	if _, err := r.queries.UpdateSubscriptionExpiry(ctx, generated.UpdateSubscriptionExpiryParams{
+		ID:        sub.ID,
+		ExpiresAt: sub.ExpiresAt,
+	}); err != nil {
+		return fmt.Errorf("failed to update subscription expiry: %w", err)
 	}
 
 	return nil

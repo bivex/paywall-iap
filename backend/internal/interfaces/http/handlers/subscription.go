@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/application/query"
+	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
@@ -98,7 +101,11 @@ func (h *SubscriptionHandler) CancelSubscription(c *gin.Context) {
 	}
 
 	if err := h.cancelCmd.Execute(c.Request.Context(), userID); err != nil {
-		response.NotFound(c, "No active subscription found")
+		if errors.Is(err, domainErrors.ErrSubscriptionNotActive) || errors.Is(err, domainErrors.ErrSubscriptionNotFound) {
+			response.NotFound(c, "No active subscription found")
+			return
+		}
+		response.InternalError(c, "Failed to cancel subscription")
 		return
 	}
 
