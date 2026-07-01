@@ -166,11 +166,12 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                     <TableHead>Currency</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Provider TX ID</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No transactions.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No transactions.</TableCell></TableRow>
                   ) : transactions.map((t) => (
                     <TableRow key={t.id}>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(t.date)}</TableCell>
@@ -178,6 +179,11 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                       <TableCell className="text-sm">{t.currency}</TableCell>
                       <TableCell><Badge className={txStatusMeta[t.status]?.className ?? ""}>{txStatusMeta[t.status]?.label ?? t.status}</Badge></TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{t.provider_tx_id ?? "—"}</TableCell>
+                      <TableCell>
+                        <Link href={`/dashboard/transactions?id=${t.id}`} className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">
+                          View
+                        </Link>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

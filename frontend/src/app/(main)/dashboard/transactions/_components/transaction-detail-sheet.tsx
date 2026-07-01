@@ -71,10 +71,11 @@ function SectionCard({ icon: Icon, title, children }: { icon: React.ElementType;
 interface Props {
   transactionId: string;
   trigger: React.ReactNode;
+  initialOpen?: boolean;
 }
 
-export function TransactionDetailSheet({ transactionId, trigger }: Props) {
-  const [open, setOpen] = useState(false);
+export function TransactionDetailSheet({ transactionId, trigger, initialOpen }: Props) {
+  const [open, setOpen] = useState(!!initialOpen);
   const [detail, setDetail] = useState<TransactionDetail | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -87,6 +88,17 @@ export function TransactionDetailSheet({ transactionId, trigger }: Props) {
       });
     }
   }
+
+  // Auto-fetch when initialOpen
+  React.useEffect(() => {
+    if (initialOpen && !detail) {
+      startTransition(async () => {
+        const data = await getTransactionDetail(transactionId);
+        setDetail(data);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

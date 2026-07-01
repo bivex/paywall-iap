@@ -17,6 +17,7 @@ import { formatSource } from "@/lib/subscriptions/format";
 import { TransactionsFilters } from "./_components/transactions-filters";
 import { CopyTxId } from "./_components/copy-tx-id";
 import { TxRow } from "./_components/tx-row";
+import { TransactionDetailSheet } from "./_components/transaction-detail-sheet";
 import { SortHeader } from "@/components/ui/sort-header";
 
 const PAGE_SIZE = 20;
@@ -164,6 +165,15 @@ export default async function TransactionsPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Auto-open sheet when ?id= is in URL (e.g. from user profile "View" link) */}
+      {sp.id && (
+        <TransactionDetailSheet
+          transactionId={sp.id}
+          initialOpen
+          trigger={<span className="hidden" />}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-1">Transaction Reconciliation</h1>
