@@ -294,7 +294,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 
 	// Initialize handlers
 	appsHandler := app_handler.NewAppsHandler(appRepo)
-	appSettingsHandler := app_handler.NewAppSettingsHandler(appRepo)
+	appSettingsHandler := app_handler.NewAppSettingsHandler(appRepo, credResolver)
 	authHandler := app_handler.NewAuthHandler(registerCmd, adminLoginCmd, jwtMiddleware)
 	iapHandler := app_handler.NewIAPHandler(verifyIAPCmd, jwtMiddleware, rateLimiter)
 	subscriptionHandler := app_handler.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelSubCmd, jwtMiddleware)

@@ -10,16 +10,18 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
+	iapext "github.com/bivex/paywall-iap/internal/infrastructure/external/iap"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
 // AppSettingsHandler handles /v1/admin/apps/:id/settings and /v1/admin/apps/:id/credentials
 type AppSettingsHandler struct {
-	appRepo domainRepo.AppRepository
+	appRepo  domainRepo.AppRepository
+	resolver *iapext.CredentialResolver
 }
 
-func NewAppSettingsHandler(appRepo domainRepo.AppRepository) *AppSettingsHandler {
-	return &AppSettingsHandler{appRepo: appRepo}
+func NewAppSettingsHandler(appRepo domainRepo.AppRepository, resolver *iapext.CredentialResolver) *AppSettingsHandler {
+	return &AppSettingsHandler{appRepo: appRepo, resolver: resolver}
 }
 
 // ── Settings ──────────────────────────────────────────────────────────────────
@@ -262,6 +264,11 @@ func (h *AppSettingsHandler) PutAppCredentials(c *gin.Context) {
 	if err := h.appRepo.UpsertCredentials(c.Request.Context(), creds); err != nil {
 		response.InternalError(c, "failed to save credentials")
 		return
+	}
+
+	// Invalidate credential cache so the next IAP verify picks up the new keys immediately.
+	if h.resolver != nil {
+		h.resolver.Invalidate(id, creds.Provider)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"credentials": toCredentialsDTO(creds)})
