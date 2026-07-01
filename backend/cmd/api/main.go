@@ -334,7 +334,8 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	winbackHandler := app_handler.NewWinbackHandler(acceptWinbackCmd, winbackService, jwtMiddleware)
 
 	analyticsCache := cache.NewAnalyticsCache(redisClient, logging.Logger)
-	ltvService := service.NewLTVService(nil, nil, service.NewLTVSubscriptionAdapter(subscriptionRepo), transactionRepo, logging.Logger)
+	ltvService := service.NewLTVService(nil, nil, service.NewLTVSubscriptionAdapter(subscriptionRepo), transactionRepo, logging.Logger).
+		WithUserRepo(userRepo)
 	analyticsExtHandler := app_handler.NewAnalyticsHandlersExtended(ltvService, analyticsCache, logging.Logger)
 
 	return &dependencies{

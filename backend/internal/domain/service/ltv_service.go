@@ -31,6 +31,7 @@ type LTVService struct {
 	cohortWorker     CohortWorker
 	subscriptionRepo SubscriptionRepository
 	transactionRepo  domainRepo.TransactionRepository
+	userRepo         domainRepo.UserRepository
 	logger           *zap.Logger
 }
 
@@ -65,6 +66,12 @@ func NewLTVService(
 		transactionRepo:  transactionRepo,
 		logger:           logger,
 	}
+}
+
+// WithUserRepo sets the user repository for LTV updates (optional, enables DB-backed UpdateUserLTV)
+func (s *LTVService) WithUserRepo(userRepo domainRepo.UserRepository) *LTVService {
+	s.userRepo = userRepo
+	return s
 }
 
 // LTVEstimates represents LTV predictions for different time horizons
@@ -361,16 +368,19 @@ type CohortLTV struct {
 
 // UpdateUserLTV updates LTV after a new purchase
 func (s *LTVService) UpdateUserLTV(ctx context.Context, userID uuid.UUID, amount float64) error {
-	// This would trigger a recalculation of LTV
-	// For now, we'll just log the event
 	s.logger.Debug("User LTV updated",
 		zap.String("user_id", userID.String()),
 		zap.Float64("amount", amount),
 	)
-
-	// TODO: Invalidate cached LTV for this user
-	// TODO: Trigger async LTV recalculation
-
+	if s.userRepo != nil {
+		if err := s.userRepo.IncrementLTV(ctx, userID, amount); err != nil {
+			s.logger.Warn("Failed to persist LTV increment",
+				zap.String("user_id", userID.String()),
+				zap.Float64("amount", amount),
+				zap.Error(err),
+			)
+		}
+	}
 	return nil
 }
 
