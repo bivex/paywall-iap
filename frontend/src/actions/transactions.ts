@@ -75,9 +75,12 @@ export interface TransactionDetail {
   provider_tx_id: string;
   receipt_hash: string;
   created_at: string;
+  app_id: string;
+  app_name: string;
   user: {
     id: string;
     email: string;
+    platform_user_id: string;
     ltv: number;
     created_at: string;
   };

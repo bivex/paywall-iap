@@ -1155,10 +1155,11 @@ func (h *AdminHandler) GetTransactionDetail(c *gin.Context) {
 	}
 
 	type UserSnap struct {
-		ID        string  `json:"id"`
-		Email     string  `json:"email"`
-		LTV       float64 `json:"ltv"`
-		CreatedAt string  `json:"created_at"`
+		ID             string  `json:"id"`
+		Email          string  `json:"email"`
+		PlatformUserID string  `json:"platform_user_id"`
+		LTV            float64 `json:"ltv"`
+		CreatedAt      string  `json:"created_at"`
 	}
 	type SubSnap struct {
 		ID        string `json:"id"`
@@ -1177,28 +1178,33 @@ func (h *AdminHandler) GetTransactionDetail(c *gin.Context) {
 		ProviderTxID string   `json:"provider_tx_id"`
 		ReceiptHash  string   `json:"receipt_hash"`
 		CreatedAt    string   `json:"created_at"`
+		AppID        string   `json:"app_id"`
+		AppName      string   `json:"app_name"`
 		User         UserSnap `json:"user"`
 		Subscription SubSnap  `json:"subscription"`
 	}
 
 	var d Detail
-	var uID, subID uuid.UUID
+	var uID, subID, appID uuid.UUID
 	var tCreatedAt, uCreatedAt, sExpiresAt, sCreatedAt time.Time
 
 	err = h.dbPool.QueryRow(ctx, `
 		SELECT
 		  t.id, t.amount, t.currency, t.status,
 		  COALESCE(t.provider_tx_id,''), COALESCE(t.receipt_hash,''), t.created_at,
-		  u.id, COALESCE(u.email,''), COALESCE(u.ltv,0), u.created_at,
+		  t.app_id, COALESCE(a.name,''),
+		  u.id, COALESCE(u.email,''), COALESCE(u.platform_user_id,''), COALESCE(u.ltv,0), u.created_at,
 		  s.id, s.status, s.source, s.platform, s.plan_type, s.expires_at, s.created_at
 		FROM transactions t
 		JOIN users u ON u.id = t.user_id
 		JOIN subscriptions s ON s.id = t.subscription_id
+		LEFT JOIN apps a ON a.id = t.app_id
 		WHERE t.id = $1
 	`, txID).Scan(
 		&txID, &d.Amount, &d.Currency, &d.Status,
 		&d.ProviderTxID, &d.ReceiptHash, &tCreatedAt,
-		&uID, &d.User.Email, &d.User.LTV, &uCreatedAt,
+		&appID, &d.AppName,
+		&uID, &d.User.Email, &d.User.PlatformUserID, &d.User.LTV, &uCreatedAt,
 		&subID, &d.Subscription.Status, &d.Subscription.Source,
 		&d.Subscription.Platform, &d.Subscription.PlanType,
 		&sExpiresAt, &sCreatedAt,
@@ -1209,6 +1215,7 @@ func (h *AdminHandler) GetTransactionDetail(c *gin.Context) {
 	}
 
 	d.ID = txID.String()
+	d.AppID = appID.String()
 	d.CreatedAt = tCreatedAt.Format(time.RFC3339)
 	d.User.ID = uID.String()
 	d.User.CreatedAt = uCreatedAt.Format(time.RFC3339)

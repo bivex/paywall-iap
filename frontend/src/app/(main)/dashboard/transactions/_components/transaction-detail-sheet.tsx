@@ -162,17 +162,23 @@ export function TransactionDetailSheet({ transactionId, trigger }: Props) {
               <SectionCard icon={User} title="User">
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <Field label="Email" value={detail.user.email || "—"} />
+                    <Field label="Email" value={detail.user.email || <span className="text-muted-foreground">—</span>} />
                     <Field label="LTV" value={
                       <span className="text-base font-bold tabular-nums">${detail.user.ltv.toFixed(2)}</span>
                     } />
                   </div>
+                  {detail.user.platform_user_id && (
+                    <Field label="Platform User ID" value={detail.user.platform_user_id} mono />
+                  )}
                   <Field label="User ID" value={
                     <span className="flex items-center">
                       {detail.user.id}
                       <CopyBtn text={detail.user.id} />
                     </span>
                   } mono />
+                  {(detail.app_name || detail.app_id) && (
+                    <Field label="App" value={detail.app_name || detail.app_id} mono={!detail.app_name} />
+                  )}
                   <Field label="Registered" value={fmt(detail.user.created_at)} />
                   <Button variant="outline" size="sm" asChild className="w-full mt-1">
                     <a href={`/dashboard/users/${detail.user.id}`}>
