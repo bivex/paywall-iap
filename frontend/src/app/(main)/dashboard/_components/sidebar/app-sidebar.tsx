@@ -18,6 +18,8 @@ import { APP_CONFIG } from "@/config/app-config";
 import { rootUser } from "@/data/users";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
 
+import { AppSelector } from "@/components/app-selector";
+
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 
@@ -84,6 +86,9 @@ export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sideb
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <div className="px-2 pb-1">
+          <AppSelector />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <NavMain />

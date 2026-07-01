@@ -62,6 +62,7 @@ export const sidebarItems: NavGroup[] = [
       { title: "Analytics Reports", url: "/dashboard/analytics", icon: TrendingUp },
       { title: "Matomo Analytics", url: "/dashboard/matomo", icon: ChartNoAxesCombined },
       { title: "Platform Settings", url: "/dashboard/settings", icon: Settings },
+      { title: "Apps", url: "/dashboard/apps", icon: Smartphone },
     ],
   },
   {
