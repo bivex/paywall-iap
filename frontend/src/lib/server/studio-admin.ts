@@ -215,9 +215,21 @@ export async function getStudioSnapshotFromCookies(experimentId: string, appId: 
 }
 
 export async function getStudioDashboardFromCookies(appId: string | null = null): Promise<ExperimentStudioDashboardData> {
+  const resolvedAppId = await getAppId(appId);
+  if (!resolvedAppId) {
+    // No app selected yet — return empty state, not a failure.
+    return {
+      experiments: [],
+      selectedExperimentId: null,
+      snapshot: null,
+      pricingTiers: [],
+      pricingLoadFailed: false,
+      loadFailed: false,
+    };
+  }
   const [experiments, pricingTiers] = await Promise.all([
-    getAdminExperimentsFromCookies(appId),
-    getPricingTiersFromCookies(appId),
+    getAdminExperimentsFromCookies(resolvedAppId),
+    getPricingTiersFromCookies(resolvedAppId),
   ]);
   if (!experiments) {
     return {

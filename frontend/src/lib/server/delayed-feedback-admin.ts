@@ -6,7 +6,7 @@ import type {
   DelayedFeedbackServiceHealth,
   DelayedFeedbackSnapshot,
 } from "@/lib/delayed-feedback";
-import { getBanditExperimentsFromCookies, getBanditSnapshotFromCookies } from "@/lib/server/bandit-admin";
+import { getBanditExperimentsFromCookies, getBanditSnapshotFromCookies, getAppId } from "@/lib/server/bandit-admin";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 const PROBE_UUID = "11111111-1111-1111-1111-111111111111";
@@ -124,7 +124,11 @@ export async function getDelayedFeedbackSnapshotFromCookies(
 }
 
 export async function getDelayedFeedbackDashboardFromCookies(appId: string | null = null): Promise<DelayedFeedbackDashboardData> {
-  const experiments = await getBanditExperimentsFromCookies(appId);
+  const resolvedAppId = await getAppId(appId);
+  if (!resolvedAppId) {
+    return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: false };
+  }
+  const experiments = await getBanditExperimentsFromCookies(resolvedAppId);
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
@@ -134,7 +138,7 @@ export async function getDelayedFeedbackDashboardFromCookies(appId: string | nul
     return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
   }
 
-  const snapshot = await getDelayedFeedbackSnapshotFromCookies(selected.id, appId);
+  const snapshot = await getDelayedFeedbackSnapshotFromCookies(selected.id, resolvedAppId);
   return {
     experiments,
     selectedExperimentId: selected.id,

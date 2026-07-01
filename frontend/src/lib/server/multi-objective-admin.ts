@@ -9,7 +9,7 @@ import type {
   ObjectiveScoresByArm,
   ObjectiveServiceHealth,
 } from "@/lib/multi-objective";
-import { getBanditExperimentsFromCookies, getBanditSnapshotFromCookies } from "@/lib/server/bandit-admin";
+import { getBanditExperimentsFromCookies, getBanditSnapshotFromCookies, getAppId } from "@/lib/server/bandit-admin";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -152,7 +152,11 @@ export async function getMultiObjectiveSnapshotFromCookies(
 }
 
 export async function getMultiObjectiveDashboardFromCookies(appId: string | null = null): Promise<MultiObjectiveDashboardData> {
-  const experiments = await getBanditExperimentsFromCookies(appId);
+  const resolvedAppId = await getAppId(appId);
+  if (!resolvedAppId) {
+    return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: false };
+  }
+  const experiments = await getBanditExperimentsFromCookies(resolvedAppId);
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
@@ -162,7 +166,7 @@ export async function getMultiObjectiveDashboardFromCookies(appId: string | null
     return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
   }
 
-  const snapshot = await getMultiObjectiveSnapshotFromCookies(selected.id, appId);
+  const snapshot = await getMultiObjectiveSnapshotFromCookies(selected.id, resolvedAppId);
   return {
     experiments,
     selectedExperimentId: selected.id,

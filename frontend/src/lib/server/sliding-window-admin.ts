@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getBanditExperimentsFromCookies, getBanditSnapshotFromCookies } from "@/lib/server/bandit-admin";
+import { getBanditExperimentsFromCookies, getBanditSnapshotFromCookies, getAppId } from "@/lib/server/bandit-admin";
 import type {
   SlidingWindowDashboardData,
   SlidingWindowEndpointProbe,
@@ -90,7 +90,11 @@ export async function getSlidingWindowSnapshotFromCookies(experimentId: string, 
 }
 
 export async function getSlidingWindowDashboardFromCookies(appId: string | null = null): Promise<SlidingWindowDashboardData> {
-  const experiments = await getBanditExperimentsFromCookies(appId);
+  const resolvedAppId = await getAppId(appId);
+  if (!resolvedAppId) {
+    return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: false };
+  }
+  const experiments = await getBanditExperimentsFromCookies(resolvedAppId);
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
@@ -100,7 +104,7 @@ export async function getSlidingWindowDashboardFromCookies(appId: string | null 
     return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
   }
 
-  const snapshot = await getSlidingWindowSnapshotFromCookies(selected.id, appId);
+  const snapshot = await getSlidingWindowSnapshotFromCookies(selected.id, resolvedAppId);
   return {
     experiments,
     selectedExperimentId: selected.id,

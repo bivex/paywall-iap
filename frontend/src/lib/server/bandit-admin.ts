@@ -18,6 +18,8 @@ async function getAppId(explicitAppId: string | null): Promise<string | null> {
   return cookieStore.get("admin_app_id")?.value ?? null;
 }
 
+export { getAppId };
+
 async function parseResponse<T>(res: Response): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -122,7 +124,11 @@ export async function getBanditSnapshotFromCookies(experimentId: string, appId: 
 }
 
 export async function getBanditDashboardFromCookies(appId: string | null = null) {
-  const experiments = await getBanditExperimentsFromCookies(appId);
+  const resolvedAppId = await getAppId(appId);
+  if (!resolvedAppId) {
+    return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: false };
+  }
+  const experiments = await getBanditExperimentsFromCookies(resolvedAppId);
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
