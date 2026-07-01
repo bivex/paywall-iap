@@ -10,12 +10,14 @@ import (
 
 // Config holds all application configuration
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	IAP      IAPConfig      `mapstructure:"iap"`
-	Sentry   SentryConfig   `mapstructure:"sentry"`
+	Server       ServerConfig       `mapstructure:"server"`
+	Database     DatabaseConfig     `mapstructure:"database"`
+	Redis        RedisConfig        `mapstructure:"redis"`
+	JWT          JWTConfig          `mapstructure:"jwt"`
+	IAP          IAPConfig          `mapstructure:"iap"`
+	Sentry       SentryConfig       `mapstructure:"sentry"`
+	Lago         LagoConfig         `mapstructure:"lago"`
+	Notification NotificationConfig `mapstructure:"notification"`
 }
 
 // ServerConfig holds HTTP server configuration
@@ -65,6 +67,24 @@ type SentryConfig struct {
 	Release     string `mapstructure:"release"`
 }
 
+// LagoConfig holds Lago billing configuration
+type LagoConfig struct {
+	APIURL    string `mapstructure:"api_url"`
+	APIKey    string `mapstructure:"api_key"`
+	WebhookSecret string `mapstructure:"webhook_secret"`
+}
+
+// NotificationConfig holds push/email notification configuration
+type NotificationConfig struct {
+	FCMServerKey    string `mapstructure:"fcm_server_key"`
+	APNSKeyID       string `mapstructure:"apns_key_id"`
+	APNSTeamID      string `mapstructure:"apns_team_id"`
+	APNSKeyFile     string `mapstructure:"apns_key_file"`
+	APNSBundleID    string `mapstructure:"apns_bundle_id"`
+	SendGridAPIKey  string `mapstructure:"sendgrid_api_key"`
+	FromEmail       string `mapstructure:"from_email"`
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	viper.SetConfigName(".env")
@@ -86,6 +106,20 @@ func Load() (*Config, error) {
 	_ = viper.BindEnv("iap.google_key_json", "GOOGLE_SERVICE_ACCOUNT_JSON")
 	_ = viper.BindEnv("iap.google_iap_base_url", "GOOGLE_IAP_BASE_URL")
 	_ = viper.BindEnv("iap.is_production", "IAP_IS_PRODUCTION")
+
+	// Lago
+	_ = viper.BindEnv("lago.api_url", "LAGO_API_URL")
+	_ = viper.BindEnv("lago.api_key", "LAGO_API_KEY")
+	_ = viper.BindEnv("lago.webhook_secret", "LAGO_WEBHOOK_SECRET")
+
+	// Notifications
+	_ = viper.BindEnv("notification.fcm_server_key", "FCM_SERVER_KEY")
+	_ = viper.BindEnv("notification.apns_key_id", "APNS_KEY_ID")
+	_ = viper.BindEnv("notification.apns_team_id", "APNS_TEAM_ID")
+	_ = viper.BindEnv("notification.apns_key_file", "APNS_KEY_FILE")
+	_ = viper.BindEnv("notification.apns_bundle_id", "APNS_BUNDLE_ID")
+	_ = viper.BindEnv("notification.sendgrid_api_key", "SENDGRID_API_KEY")
+	_ = viper.BindEnv("notification.from_email", "NOTIFICATION_FROM_EMAIL")
 
 	// Set defaults
 	setDefaults()
