@@ -306,7 +306,10 @@ export function MultiObjectivePageClient({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+            <AppScopeBadge />
+          </div>
           <p className="mt-0.5 text-muted-foreground text-sm">{t("subtitle")}</p>
         </div>
 

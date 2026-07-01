@@ -19,6 +19,8 @@ import {
   resumeExperimentAction,
   updateExperimentAction,
 } from "@/actions/experiments";
+import { AppScopeBadge } from "@/components/app-scope-badge";
+import { NoAppSelected } from "@/components/no-app-selected";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -228,6 +230,7 @@ export function ExperimentsPageClient({
 }) {
   const t = useTranslations("experiments");
   const router = useRouter();
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [hasHydrated, setHasHydrated] = useState(false);
   const [experiments, setExperiments] = useState(initialExperiments);
   const [pendingCreate, setPendingCreate] = useState(false);
@@ -356,10 +359,19 @@ export function ExperimentsPageClient({
     router.refresh();
   }
 
+  const runningCount = experiments.filter((experiment) => experiment.status === "running").length;
+  const draftCount = experiments.filter((experiment) => experiment.status === "draft").length;
+  const totalRevenue = experiments.reduce((sum, experiment) => sum + experiment.total_revenue, 0);
+
+  if (!selectedAppId) return <NoAppSelected />;
+
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+          <AppScopeBadge />
+        </div>
         <p className="mt-0.5 text-muted-foreground text-sm">{t("subtitle")}</p>
       </div>
 

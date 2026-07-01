@@ -7,9 +7,12 @@ import Link from "next/link";
 import { ExternalLink, Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { AppScopeBadge } from "@/components/app-scope-badge";
+import { NoAppSelected } from "@/components/no-app-selected";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAppStore } from "@/stores/app-store";
 
 type DateRangeKey = "last7" | "last30" | "last90";
 
@@ -52,6 +55,7 @@ export function MatomoPageClient({
   };
 }) {
   const t = useTranslations("matomo");
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [range, setRange] = useState<DateRangeKey>("last30");
 
   const isConfigured = Boolean(config.url && config.siteId);
@@ -60,11 +64,16 @@ export function MatomoPageClient({
     return buildMatomoDashboardUrl(config.url, config.siteId, range);
   }, [config.siteId, config.url, isConfigured, range]);
 
+  if (!selectedAppId) return <NoAppSelected />;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+            <AppScopeBadge />
+          </div>
           <p className="mt-0.5 text-muted-foreground text-sm">{t("subtitle")}</p>
         </div>
 

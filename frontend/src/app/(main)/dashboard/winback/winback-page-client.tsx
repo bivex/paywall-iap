@@ -17,12 +17,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AppScopeBadge } from "@/components/app-scope-badge";
+import { NoAppSelected } from "@/components/no-app-selected";
 import {
   EMPTY_WINBACK_CAMPAIGN_INPUT,
   type LaunchWinbackCampaignInput,
   type WinbackCampaign,
   type WinbackDiscountType,
 } from "@/lib/winback";
+import { useAppStore } from "@/stores/app-store";
 
 const formSchema = z
   .object({
@@ -104,6 +107,7 @@ export function WinbackPageClient({
 }) {
   const t = useTranslations("winback");
   const router = useRouter();
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [campaigns, setCampaigns] = useState(initialCampaigns);
   const [pendingLaunch, setPendingLaunch] = useState(false);
   const [pendingCampaignAction, setPendingCampaignAction] = useState<string | null>(null);
@@ -115,6 +119,8 @@ export function WinbackPageClient({
   const totalOffers = campaigns.reduce((sum, campaign) => sum + campaign.total_offers, 0);
   const activeOffers = campaigns.reduce((sum, campaign) => sum + campaign.active_offers, 0);
   const acceptedOffers = campaigns.reduce((sum, campaign) => sum + campaign.accepted_offers, 0);
+
+  if (!selectedAppId) return <NoAppSelected />;
 
   const launchCampaign = form.handleSubmit(async (values) => {
     setPendingLaunch(true);
@@ -157,7 +163,10 @@ export function WinbackPageClient({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+          <AppScopeBadge />
+        </div>
         <p className="mt-0.5 text-muted-foreground text-sm">{t("subtitle")}</p>
       </div>
 

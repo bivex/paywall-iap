@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { changeAdminPasswordAction, updatePlatformSettings } from "@/actions/platform-settings";
+import { AppScopeBadge } from "@/components/app-scope-badge";
+import { NoAppSelected } from "@/components/no-app-selected";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,6 +126,7 @@ function fieldError(error?: { message?: string }) {
 
 export function SettingsPageClient({ initialSettings }: { initialSettings: PlatformSettings }) {
   const t = useTranslations("settings");
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [pendingSection, setPendingSection] = useState<SectionKey | null>(null);
   const notificationItems: Array<{ name: NotificationFieldName; label: string }> = [
     { name: "new_subscription", label: t("notifications.newSubscription") },
@@ -185,9 +188,14 @@ export function SettingsPageClient({ initialSettings }: { initialSettings: Platf
     toast.success(t("feedback.passwordSaved"));
   };
 
+  if (!selectedAppId) return <NoAppSelected />;
+
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-semibold text-2xl">{t("title")}</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="font-semibold text-2xl">{t("title")}</h1>
+        <AppScopeBadge />
+      </div>
       <Tabs defaultValue="general">
         <TabsList>
           <TabsTrigger value="general">{t("tabs.general")}</TabsTrigger>

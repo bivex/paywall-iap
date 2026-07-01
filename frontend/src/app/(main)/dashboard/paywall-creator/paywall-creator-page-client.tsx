@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useTranslations } from "next-intl";
 
+import { AppScopeBadge } from "@/components/app-scope-badge";
+import { NoAppSelected } from "@/components/no-app-selected";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -412,6 +414,7 @@ export function PaywallCreatorPageClient({
   loadFailed: boolean;
 }) {
   const t = useTranslations("paywallCreator");
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [schemaText, setSchemaText] = useState(() => stringifyPaywallDefinition(DEFAULT_PAYWALL_TEMPLATE));
   const parsed = useMemo(() => parsePaywallDefinition(schemaText), [schemaText]);
   const [previewConfig, setPreviewConfig] = useState(DEFAULT_PAYWALL_TEMPLATE);
@@ -490,11 +493,16 @@ export function PaywallCreatorPageClient({
         : t("preview.targetUniversal");
   const canvasLabel = previewMode === "phone" ? t("preview.canvasPhone") : t("preview.canvasDesktop");
 
+  if (!selectedAppId) return <NoAppSelected />;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+            <AppScopeBadge />
+          </div>
           <p className="mt-1 max-w-3xl text-muted-foreground text-sm">{t("subtitle")}</p>
         </div>
         <div className="flex flex-wrap gap-2">

@@ -16,6 +16,8 @@ import {
   resumeExperimentAction,
   updateExperimentAction,
 } from "@/actions/experiments";
+import { AppScopeBadge } from "@/components/app-scope-badge";
+import { NoAppSelected } from "@/components/no-app-selected";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -194,6 +196,7 @@ export function BanditPageClient({
 }) {
   const t = useTranslations("bandit");
   const hasInitialPayload = initialExperiments !== undefined;
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [experiments, setExperiments] = useState(initialExperiments ?? []);
   const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
   const [snapshot, setSnapshot] = useState(initialSnapshot);
@@ -397,11 +400,16 @@ export function BanditPageClient({
     loadSnapshot(result.data.id);
   }
 
+  if (!selectedAppId) return <NoAppSelected />;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-semibold text-2xl tracking-tight">{t("title")}</h1>
+            <AppScopeBadge />
+          </div>
           <p className="mt-0.5 text-muted-foreground text-sm">{t("subtitle")}</p>
         </div>
 
