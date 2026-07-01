@@ -68,7 +68,9 @@ func main() {
 	dunningRepo := repository.NewDunningRepository(dbPool)
 	subscriptionRepo := repository.NewSubscriptionRepository(queries)
 	userRepo := repository.NewUserRepository(queries)
-	notificationSvc := service.NewNotificationService()
+	notificationSvc := service.NewNotificationService().
+		WithSendGrid(cfg.Notification.SendGridAPIKey, cfg.Notification.FromEmail).
+		WithFCM(cfg.Notification.FCMServerKey)
 	dunningService := service.NewDunningService(dunningRepo, subscriptionRepo, userRepo, notificationSvc)
 	asynqClient := asynq.NewClientFromRedisClient(redisClient)
 	defer asynqClient.Close()
