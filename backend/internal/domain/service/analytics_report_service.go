@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -50,56 +51,56 @@ type StatusCounts struct {
 
 // Report contains the complete analytics report
 type Report struct {
-	MRR           float64        `json:"mrr"`
-	ARR           float64        `json:"arr"`
-	LTV           float64        `json:"ltv"`
-	TotalRevenue  float64        `json:"total_revenue"`
-	ChurnRate     float64        `json:"churn_rate"`
-	NewSubsMonth  int            `json:"new_subs_month"`
-	Trend         []TrendPoint   `json:"trend"`
-	ByPlatform    []PlatformRow  `json:"by_platform"`
-	ByPlan        []PlanRow      `json:"by_plan"`
-	StatusCounts  StatusCounts   `json:"status_counts"`
+	MRR          float64       `json:"mrr"`
+	ARR          float64       `json:"arr"`
+	LTV          float64       `json:"ltv"`
+	TotalRevenue float64       `json:"total_revenue"`
+	ChurnRate    float64       `json:"churn_rate"`
+	NewSubsMonth int           `json:"new_subs_month"`
+	Trend        []TrendPoint  `json:"trend"`
+	ByPlatform   []PlatformRow `json:"by_platform"`
+	ByPlan       []PlanRow     `json:"by_plan"`
+	StatusCounts StatusCounts  `json:"status_counts"`
 }
 
-// GetReport fetches the complete analytics report
-func (s *AnalyticsReportService) GetReport(ctx context.Context) (*Report, error) {
-	mrr, err := s.fetchMRR(ctx)
+// GetReport fetches the complete analytics report scoped to the given app.
+func (s *AnalyticsReportService) GetReport(ctx context.Context, appID uuid.UUID) (*Report, error) {
+	mrr, err := s.fetchMRR(ctx, appID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch mrr: %w", err)
 	}
 
-	ltv, totalRevenue, err := s.fetchLTV(ctx)
+	ltv, totalRevenue, err := s.fetchLTV(ctx, appID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch ltv: %w", err)
 	}
 
-	newSubsMonth, err := s.fetchNewSubsMonth(ctx)
+	newSubsMonth, err := s.fetchNewSubsMonth(ctx, appID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch new subs: %w", err)
 	}
 
-	churnRate, err := s.fetchChurnRate(ctx)
+	churnRate, err := s.fetchChurnRate(ctx, appID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch churn rate: %w", err)
 	}
 
-	trend, err := s.fetchTrend(ctx)
+	trend, err := s.fetchTrend(ctx, appID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch trend: %w", err)
 	}
 
-	byPlatform, err := s.fetchByPlatform(ctx)
+	byPlatform, err := s.fetchByPlatform(ctx, appID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch by platform: %w", err)
 	}
 
-	byPlan, err := s.fetchByPlan(ctx)
+	byPlan, err := s.fetchByPlan(ctx, appID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch by plan: %w", err)
 	}
 
-	statusCounts, err := s.fetchStatusCounts(ctx)
+	statusCounts, err := s.fetchStatusCounts(ctx, appID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch status counts: %w", err)
 	}
@@ -118,8 +119,8 @@ func (s *AnalyticsReportService) GetReport(ctx context.Context) (*Report, error)
 	}, nil
 }
 
-// fetchMRR retrieves current monthly recurring revenue
-func (s *AnalyticsReportService) fetchMRR(ctx context.Context) (float64, error) {
+// fetchMRR retrieves current monthly recurring revenue scoped to appID.
+func (s *AnalyticsReportService) fetchMRR(ctx context.Context, appID uuid.UUID) (float64, error) {
 	var mrr float64
 	err := s.dbPool.QueryRow(ctx, `
 		SELECT COALESCE(ROUND(SUM(
@@ -128,38 +129,40 @@ func (s *AnalyticsReportService) fetchMRR(ctx context.Context) (float64, error) 
 			     ELSE 0 END
 		)::numeric, 2), 0)
 		FROM subscriptions
-		WHERE status IN ('active','grace') AND deleted_at IS NULL`).Scan(&mrr)
+		WHERE status IN ('active','grace') AND deleted_at IS NULL
+		  AND app_id = $1`, appID).Scan(&mrr)
 	return mrr, err
 }
 
-// fetchLTV retrieves lifetime value and total revenue
-func (s *AnalyticsReportService) fetchLTV(ctx context.Context) (ltv, totalRevenue float64, err error) {
+// fetchLTV retrieves lifetime value and total revenue scoped to appID.
+func (s *AnalyticsReportService) fetchLTV(ctx context.Context, appID uuid.UUID) (ltv, totalRevenue float64, err error) {
 	err = s.dbPool.QueryRow(ctx, `
 		SELECT COALESCE(SUM(amount),0),
 		       COALESCE(ROUND(SUM(amount)/NULLIF(COUNT(DISTINCT user_id),0),2),0)
-		FROM transactions WHERE status='success'`).Scan(&totalRevenue, &ltv)
+		FROM transactions WHERE status='success' AND app_id = $1`, appID).Scan(&totalRevenue, &ltv)
 	return
 }
 
-// fetchNewSubsMonth retrieves count of new subscriptions this month
-func (s *AnalyticsReportService) fetchNewSubsMonth(ctx context.Context) (int, error) {
+// fetchNewSubsMonth retrieves count of new subscriptions this month scoped to appID.
+func (s *AnalyticsReportService) fetchNewSubsMonth(ctx context.Context, appID uuid.UUID) (int, error) {
 	var count int
 	err := s.dbPool.QueryRow(ctx, `
 		SELECT COUNT(*) FROM subscriptions
 		WHERE deleted_at IS NULL
-		  AND date_trunc('month', created_at) = date_trunc('month', now())`).Scan(&count)
+		  AND date_trunc('month', created_at) = date_trunc('month', now())
+		  AND app_id = $1`, appID).Scan(&count)
 	return count, err
 }
 
-// fetchChurnRate calculates churn rate for current month
-func (s *AnalyticsReportService) fetchChurnRate(ctx context.Context) (float64, error) {
+// fetchChurnRate calculates churn rate for current month scoped to appID.
+func (s *AnalyticsReportService) fetchChurnRate(ctx context.Context, appID uuid.UUID) (float64, error) {
 	var churned, activePlusChurned int
 	err := s.dbPool.QueryRow(ctx, `
 		SELECT
 		  COUNT(*) FILTER (WHERE status IN ('cancelled','expired')
 		    AND date_trunc('month', updated_at) = date_trunc('month', now())),
 		  COUNT(*) FILTER (WHERE status IN ('active','grace','cancelled','expired'))
-		FROM subscriptions WHERE deleted_at IS NULL`).Scan(&churned, &activePlusChurned)
+		FROM subscriptions WHERE deleted_at IS NULL AND app_id = $1`, appID).Scan(&churned, &activePlusChurned)
 	if err != nil {
 		return 0, err
 	}
@@ -171,8 +174,8 @@ func (s *AnalyticsReportService) fetchChurnRate(ctx context.Context) (float64, e
 	return churnRate, nil
 }
 
-// fetchTrend retrieves MRR trend for last 6 months
-func (s *AnalyticsReportService) fetchTrend(ctx context.Context) ([]TrendPoint, error) {
+// fetchTrend retrieves MRR trend for last 6 months scoped to appID.
+func (s *AnalyticsReportService) fetchTrend(ctx context.Context, appID uuid.UUID) ([]TrendPoint, error) {
 	rows, err := s.dbPool.Query(ctx, `
 		WITH months AS (
 			SELECT generate_series(
@@ -190,18 +193,19 @@ func (s *AnalyticsReportService) fetchTrend(ctx context.Context) ([]TrendPoint, 
 					ELSE 0 END)::numeric,2),0) AS mrr
 			FROM months m
 			LEFT JOIN subscriptions s ON s.deleted_at IS NULL
+				AND s.app_id = $1
 				AND s.created_at < m.month_start + interval '1 month'
 				AND (s.expires_at >= m.month_start OR s.status IN ('active','grace'))
 			GROUP BY m.month_start
 		),
 		monthly_new AS (
 			SELECT date_trunc('month', created_at) AS ms, COUNT(*) AS new_subs
-			FROM subscriptions WHERE deleted_at IS NULL GROUP BY 1
+			FROM subscriptions WHERE deleted_at IS NULL AND app_id = $1 GROUP BY 1
 		)
 		SELECT to_char(ms.month_start,'YYYY-MM'), ms.mrr, ms.active_count, COALESCE(mn.new_subs,0)
 		FROM monthly_subs ms
 		LEFT JOIN monthly_new mn ON mn.ms = ms.month_start
-		ORDER BY ms.month_start`)
+		ORDER BY ms.month_start`, appID)
 	if err != nil {
 		return nil, err
 	}
@@ -219,15 +223,15 @@ func (s *AnalyticsReportService) fetchTrend(ctx context.Context) ([]TrendPoint, 
 	return trend, nil
 }
 
-// fetchByPlatform retrieves platform breakdown
-func (s *AnalyticsReportService) fetchByPlatform(ctx context.Context) ([]PlatformRow, error) {
+// fetchByPlatform retrieves platform breakdown scoped to appID.
+func (s *AnalyticsReportService) fetchByPlatform(ctx context.Context, appID uuid.UUID) ([]PlatformRow, error) {
 	rows, err := s.dbPool.Query(ctx, `
 		SELECT platform, COUNT(*),
 			ROUND(SUM(CASE WHEN plan_type='monthly' THEN 9.99
 			               WHEN plan_type='annual'  THEN 99.99/12.0 ELSE 0 END)::numeric,2)
 		FROM subscriptions
-		WHERE status IN ('active','grace') AND deleted_at IS NULL
-		GROUP BY platform ORDER BY platform`)
+		WHERE status IN ('active','grace') AND deleted_at IS NULL AND app_id = $1
+		GROUP BY platform ORDER BY platform`, appID)
 	if err != nil {
 		return nil, err
 	}
@@ -245,15 +249,15 @@ func (s *AnalyticsReportService) fetchByPlatform(ctx context.Context) ([]Platfor
 	return stats, nil
 }
 
-// fetchByPlan retrieves plan type breakdown
-func (s *AnalyticsReportService) fetchByPlan(ctx context.Context) ([]PlanRow, error) {
+// fetchByPlan retrieves plan type breakdown scoped to appID.
+func (s *AnalyticsReportService) fetchByPlan(ctx context.Context, appID uuid.UUID) ([]PlanRow, error) {
 	rows, err := s.dbPool.Query(ctx, `
 		SELECT plan_type, COUNT(*),
 			ROUND(SUM(CASE WHEN plan_type='monthly' THEN 9.99
 			               WHEN plan_type='annual'  THEN 99.99/12.0 ELSE 0 END)::numeric,2)
 		FROM subscriptions
-		WHERE status IN ('active','grace') AND deleted_at IS NULL
-		GROUP BY plan_type ORDER BY plan_type`)
+		WHERE status IN ('active','grace') AND deleted_at IS NULL AND app_id = $1
+		GROUP BY plan_type ORDER BY plan_type`, appID)
 	if err != nil {
 		return nil, err
 	}
@@ -271,8 +275,8 @@ func (s *AnalyticsReportService) fetchByPlan(ctx context.Context) ([]PlanRow, er
 	return stats, nil
 }
 
-// fetchStatusCounts retrieves subscription status counts
-func (s *AnalyticsReportService) fetchStatusCounts(ctx context.Context) (StatusCounts, error) {
+// fetchStatusCounts retrieves subscription status counts scoped to appID.
+func (s *AnalyticsReportService) fetchStatusCounts(ctx context.Context, appID uuid.UUID) (StatusCounts, error) {
 	var counts StatusCounts
 	err := s.dbPool.QueryRow(ctx, `
 		SELECT
@@ -280,7 +284,7 @@ func (s *AnalyticsReportService) fetchStatusCounts(ctx context.Context) (StatusC
 			COUNT(*) FILTER (WHERE status='grace'),
 			COUNT(*) FILTER (WHERE status='cancelled'),
 			COUNT(*) FILTER (WHERE status='expired')
-		FROM subscriptions WHERE deleted_at IS NULL`).Scan(
+		FROM subscriptions WHERE deleted_at IS NULL AND app_id = $1`, appID).Scan(
 		&counts.Active, &counts.Grace, &counts.Cancelled, &counts.Expired)
 	return counts, err
 }

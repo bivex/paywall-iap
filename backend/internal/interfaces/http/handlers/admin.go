@@ -694,8 +694,9 @@ RETURNING id`,
 // New subs = count of subscriptions created this month
 func (h *AdminHandler) GetAnalyticsReport(c *gin.Context) {
 	ctx := c.Request.Context()
+	appID := appctx.MustAppIDFromCtx(ctx)
 
-	report, err := h.analyticsReportService.GetReport(ctx)
+	report, err := h.analyticsReportService.GetReport(ctx, appID)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
