@@ -12,6 +12,12 @@ async function getAdminToken() {
   return cookieStore.get("admin_access_token")?.value;
 }
 
+async function getAppId(explicitAppId: string | null): Promise<string | null> {
+  if (explicitAppId) return explicitAppId;
+  const cookieStore = await cookies();
+  return cookieStore.get("admin_app_id")?.value ?? null;
+}
+
 async function parseResponse<T>(res: Response): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -52,12 +58,12 @@ function appIdHeaders(appId: string | null): Record<string, string> {
 }
 
 export async function getBanditExperimentsFromCookies(appId: string | null = null): Promise<ExperimentSummary[] | null> {
-  const token = await getAdminToken();
+  const [token, resolvedAppId] = await Promise.all([getAdminToken(), getAppId(appId)]);
   if (!token) return null;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments`, {
-      headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(appId) },
+      headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(resolvedAppId) },
       cache: "no-store",
     });
     const parsed = await parseResponse<ExperimentSummary[]>(res);
@@ -69,14 +75,15 @@ export async function getBanditExperimentsFromCookies(appId: string | null = nul
 }
 
 export async function getBanditSnapshotFromCookies(experimentId: string, appId: string | null = null): Promise<BanditSnapshot | null> {
-  const experiments = await getBanditExperimentsFromCookies(appId);
+  const resolvedAppId = await getAppId(appId);
+  const experiments = await getBanditExperimentsFromCookies(resolvedAppId);
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
   const token = await getAdminToken();
   if (!token) return null;
 
-  const extraHeaders = appIdHeaders(appId);
+  const extraHeaders = appIdHeaders(resolvedAppId);
 
   const [statisticsResult, metricsResult, recommendationHistoryResult] = await Promise.allSettled([
     fetch(`${BACKEND_URL}/v1/bandit/statistics?experiment_id=${experimentId}&win_probs=true`, {
