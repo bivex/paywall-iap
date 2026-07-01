@@ -23,6 +23,12 @@ async function getAdminToken() {
   return cookieStore.get("admin_access_token")?.value;
 }
 
+async function getAppId(explicitAppId: string | null): Promise<string | null> {
+  if (explicitAppId) return explicitAppId;
+  const cookieStore = await cookies();
+  return cookieStore.get("admin_app_id")?.value ?? null;
+}
+
 async function parseResponse<T>(res: Response): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -80,21 +86,21 @@ async function fetchProbe<T>(url: string, init?: RequestInit) {
 }
 
 export async function getAdminExperimentsFromCookies(appId: string | null = null): Promise<ExperimentSummary[] | null> {
-  const token = await getAdminToken();
+  const [token, resolvedAppId] = await Promise.all([getAdminToken(), getAppId(appId)]);
   if (!token) return null;
 
   const res = await fetchProbe<ExperimentSummary[]>(`${BACKEND_URL}/v1/admin/experiments`, {
-    headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(appId) },
+    headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(resolvedAppId) },
   });
   return res.ok ? res.data : null;
 }
 
 export async function getPricingTiersFromCookies(appId: string | null = null): Promise<PricingTier[] | null> {
-  const token = await getAdminToken();
+  const [token, resolvedAppId] = await Promise.all([getAdminToken(), getAppId(appId)]);
   if (!token) return null;
 
   const res = await fetchProbe<PricingTier[]>(`${BACKEND_URL}/v1/admin/pricing-tiers`, {
-    headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(appId) },
+    headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(resolvedAppId) },
   });
   return res.ok ? res.data : null;
 }
@@ -114,14 +120,15 @@ async function getBanditHealth(appId: string | null = null) {
 }
 
 export async function getStudioSnapshotFromCookies(experimentId: string, appId: string | null = null): Promise<ExperimentStudioSnapshot | null> {
-  const experiments = await getAdminExperimentsFromCookies(appId);
+  const resolvedAppId = await getAppId(appId);
+  const experiments = await getAdminExperimentsFromCookies(resolvedAppId);
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
   const token = await getAdminToken();
   if (!token) return null;
 
-  const authAndAppIdHeaders = { Authorization: `Bearer ${token}`, ...appIdHeaders(appId) };
+  const authAndAppIdHeaders = { Authorization: `Bearer ${token}`, ...appIdHeaders(resolvedAppId) };
 
   const lifecycleHistoryRes = await fetchProbe<ExperimentLifecycleAudit[]>(
     `${BACKEND_URL}/v1/admin/experiments/${experimentId}/lifecycle-audit`,
@@ -135,7 +142,7 @@ export async function getStudioSnapshotFromCookies(experimentId: string, appId: 
   );
   const recommendationHistory = recommendationHistoryRes.ok ? recommendationHistoryRes.data : [];
 
-  const banditHealthResult = await getBanditHealth(appId);
+  const banditHealthResult = await getBanditHealth(resolvedAppId);
 
   if (!experiment.is_bandit) {
     return {
@@ -153,7 +160,7 @@ export async function getStudioSnapshotFromCookies(experimentId: string, appId: 
     };
   }
 
-  const extraHeaders = appIdHeaders(appId);
+  const extraHeaders = appIdHeaders(resolvedAppId);
 
   const [statisticsRes, metricsRes, objectivesRes, windowInfoRes] = await Promise.all([
     fetchProbe<BanditStatisticsResponse>(
