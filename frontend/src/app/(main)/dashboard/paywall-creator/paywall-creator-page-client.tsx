@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { useTranslations } from "next-intl";
 
@@ -12,6 +12,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +27,8 @@ import {
   stringifyPaywallDefinition,
 } from "@/lib/paywall-schema";
 import type { PricingTier } from "@/lib/pricing-tiers";
+import type { AppPaywall } from "@/actions/paywalls";
+import { createPaywall, updatePaywall, activatePaywall, deletePaywall } from "@/actions/paywalls";
 import { cn } from "@/lib/utils";
 
 function formatTierPrice(amount: number, currency: string) {
@@ -410,9 +414,11 @@ function MobilePreview({
 export function PaywallCreatorPageClient({
   initialTiers,
   loadFailed,
+  initialPaywalls = [],
 }: {
   initialTiers: PricingTier[];
   loadFailed: boolean;
+  initialPaywalls?: AppPaywall[];
 }) {
   const t = useTranslations("paywallCreator");
   const selectedAppId = useAppStore((s) => s.selectedAppId);
@@ -427,11 +433,74 @@ export function PaywallCreatorPageClient({
   );
   const [selectedTierId, setSelectedTierId] = useState<string>(initialTiers[0]?.id ?? "");
 
+  // Saved paywalls state
+  const [paywalls, setPaywalls] = useState<AppPaywall[]>(initialPaywalls);
+  const [saveName, setSaveName] = useState("");
+  const [saveDesc, setSaveDesc] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const selectedTier = useMemo(
     () => initialTiers.find((tier) => tier.id === selectedTierId) ?? null,
     [initialTiers, selectedTierId],
   );
   const selectedTierPlans = useMemo(() => (selectedTier ? buildPlansFromTier(selectedTier) : []), [selectedTier]);
+
+  // Load a saved paywall into the editor
+  function loadPaywall(p: AppPaywall) {
+    try {
+      setSchemaText(JSON.stringify(p.definition, null, 2));
+      setSaveName(p.name);
+      setSaveDesc(p.description);
+      setEditingId(p.id);
+      setSaveError(null);
+    } catch {
+      setSaveError("Failed to load paywall definition");
+    }
+  }
+
+  // Save current editor content as a new or updated paywall
+  function handleSave(isActive: boolean) {
+    if (!saveName.trim()) { setSaveError("Name is required"); return; }
+    if (!parsed.success) { setSaveError("Fix JSON errors before saving"); return; }
+    setSaveError(null);
+    startTransition(async () => {
+      const def = parsed.data as unknown as Record<string, unknown>;
+      let result;
+      if (editingId) {
+        result = await updatePaywall(editingId, { name: saveName, description: saveDesc, definition: def, is_active: isActive });
+      } else {
+        result = await createPaywall({ name: saveName, description: saveDesc, definition: def, is_active: isActive });
+      }
+      if (!result.ok) { setSaveError(result.error); return; }
+      const updated = result.data;
+      setPaywalls((prev) => {
+        const without = prev.filter((p) => p.id !== updated.id);
+        // If activated, deactivate others
+        const deactivated = isActive ? without.map((p) => ({ ...p, is_active: false })) : without;
+        return [updated, ...deactivated].sort((a, b) => (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0));
+      });
+      setEditingId(updated.id);
+    });
+  }
+
+  function handleActivate(id: string) {
+    startTransition(async () => {
+      const result = await activatePaywall(id);
+      if (!result.ok) { setSaveError(result.error); return; }
+      setPaywalls((prev) => prev.map((p) => ({ ...p, is_active: p.id === id })));
+    });
+  }
+
+  function handleDelete(id: string) {
+    startTransition(async () => {
+      const result = await deletePaywall(id);
+      if (!result.ok) { setSaveError(result.error); return; }
+      setPaywalls((prev) => prev.filter((p) => p.id !== id));
+      if (editingId === id) { setEditingId(null); setSaveName(""); setSaveDesc(""); }
+    });
+  }
 
   useEffect(() => {
     if (parsed.success) {
@@ -741,6 +810,88 @@ export function PaywallCreatorPageClient({
           </Card>
         </Tabs>
       </div>
+
+      {/* ── Saved Paywalls ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Saved Paywalls</CardTitle>
+          <CardDescription>Save the current editor config as a named paywall for this app. Only one can be active at a time.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {saveError && (
+            <Alert variant="destructive">
+              <AlertDescription>{saveError}</AlertDescription>
+            </Alert>
+          )}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label htmlFor="paywall-name">Name</Label>
+              <Input
+                id="paywall-name"
+                placeholder="e.g. Summer Sale Paywall"
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="paywall-desc">Description</Label>
+              <Input
+                id="paywall-desc"
+                placeholder="Optional description"
+                value={saveDesc}
+                onChange={(e) => setSaveDesc(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" disabled={isPending || !parsed.success} onClick={() => handleSave(false)}>
+              {editingId ? "Update" : "Save"}
+            </Button>
+            <Button size="sm" variant="outline" disabled={isPending || !parsed.success} onClick={() => handleSave(true)}>
+              {editingId ? "Update & Activate" : "Save & Activate"}
+            </Button>
+            {editingId && (
+              <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setSaveName(""); setSaveDesc(""); }}>
+                New
+              </Button>
+            )}
+          </div>
+
+          {paywalls.length > 0 && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                {paywalls.map((p) => (
+                  <div
+                    key={p.id}
+                    className={cn(
+                      "flex items-center justify-between rounded-md border px-3 py-2 text-sm cursor-pointer hover:bg-muted/50",
+                      editingId === p.id && "border-primary bg-muted/30",
+                    )}
+                    onClick={() => loadPaywall(p)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {p.is_active && <Badge className="bg-green-500/10 text-green-500 border-green-500/20 border shrink-0">Active</Badge>}
+                      <span className="font-medium truncate">{p.name}</span>
+                      {p.description && <span className="text-muted-foreground truncate hidden sm:block">{p.description}</span>}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
+                      {!p.is_active && (
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" disabled={isPending} onClick={() => handleActivate(p.id)}>
+                          Activate
+                        </Button>
+                      )}
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive" disabled={isPending} onClick={() => handleDelete(p.id)}>
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

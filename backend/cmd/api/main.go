@@ -216,6 +216,7 @@ type dependencies struct {
 	banditHandler         *app_handler.BanditHandler
 	banditAdvancedHandler *app_handler.BanditAdvancedHandler
 	paywallHandler        *app_handler.PaywallHandler
+	adminPaywallsHandler  *app_handler.AdminPaywallsHandler
 	winbackHandler        *app_handler.WinbackHandler
 	analyticsExtHandler   *app_handler.AnalyticsHandlersExtended
 }
@@ -329,6 +330,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	captureEmailCmd := command.NewCaptureEmailCommand(userRepo)
 	trackSessionCmd := command.NewTrackSessionCommand(userRepo)
 	paywallHandler := app_handler.NewPaywallHandler(getTriggerStatusQuery, captureEmailCmd, trackSessionCmd, jwtMiddleware)
+	adminPaywallsHandler := app_handler.NewAdminPaywallsHandler(dbPool)
 
 	acceptWinbackCmd := command.NewAcceptWinbackOfferCommand(winbackService)
 	winbackHandler := app_handler.NewWinbackHandler(acceptWinbackCmd, winbackService, jwtMiddleware)
@@ -369,6 +371,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		banditHandler:         banditHandler,
 		banditAdvancedHandler: banditAdvancedHandler,
 		paywallHandler:        paywallHandler,
+		adminPaywallsHandler:  adminPaywallsHandler,
 		winbackHandler:        winbackHandler,
 		analyticsExtHandler:   analyticsExtHandler,
 	}
@@ -584,6 +587,14 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 			appScoped.PUT("/pricing-tiers/:id", d.adminHandler.UpdatePricingTier)
 			appScoped.POST("/pricing-tiers/:id/activate", d.adminHandler.ActivatePricingTier)
 			appScoped.POST("/pricing-tiers/:id/deactivate", d.adminHandler.DeactivatePricingTier)
+
+			// Paywalls
+			appScoped.GET("/paywalls", d.adminPaywallsHandler.ListPaywalls)
+			appScoped.GET("/paywalls/:id", d.adminPaywallsHandler.GetPaywall)
+			appScoped.POST("/paywalls", d.adminPaywallsHandler.CreatePaywall)
+			appScoped.PUT("/paywalls/:id", d.adminPaywallsHandler.UpdatePaywall)
+			appScoped.POST("/paywalls/:id/activate", d.adminPaywallsHandler.ActivatePaywall)
+			appScoped.DELETE("/paywalls/:id", d.adminPaywallsHandler.DeletePaywall)
 
 			// Winback campaigns
 			appScoped.GET("/winback-campaigns", d.adminHandler.ListWinbackCampaigns)
