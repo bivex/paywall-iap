@@ -26,11 +26,13 @@ import type {
   DelayedPendingRewardsByUser,
 } from "@/lib/delayed-feedback";
 import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
+import { apiFetch } from "@/lib/api-fetch";
+import { useAppStore } from "@/stores/app-store";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { cache: "no-store", ...init });
+  const res = await apiFetch(url, { cache: "no-store", ...init });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(
@@ -189,6 +191,7 @@ export function DelayedFeedbackPageClient({
 }) {
   const hasInitialPayload = initialExperiments !== undefined;
   const t = useTranslations("feedback");
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
   const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
   const [snapshot, setSnapshot] = useState<DelayedFeedbackSnapshot | null>(initialSnapshot ?? null);
@@ -226,7 +229,7 @@ export function DelayedFeedbackPageClient({
         setIsBootstrapping(false);
       }
     });
-  }, [isBootstrapping]);
+  }, [isBootstrapping, selectedAppId]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,
@@ -266,7 +269,7 @@ export function DelayedFeedbackPageClient({
 
     setIsLookingUpPendingReward(true);
     try {
-      const res = await fetch(`/api/admin/delayed-feedback/pending/${encodeURIComponent(pendingRewardId.trim())}`, {
+      const res = await apiFetch(`/api/admin/delayed-feedback/pending/${encodeURIComponent(pendingRewardId.trim())}`, {
         cache: "no-store",
       });
       const body = await res.json().catch(() => ({}));
@@ -302,7 +305,7 @@ export function DelayedFeedbackPageClient({
 
     setIsLookingUpUserPending(true);
     try {
-      const res = await fetch(`/api/admin/delayed-feedback/users/${encodeURIComponent(pendingUserId.trim())}/pending`, {
+      const res = await apiFetch(`/api/admin/delayed-feedback/users/${encodeURIComponent(pendingUserId.trim())}/pending`, {
         cache: "no-store",
       });
       const body = await res.json().catch(() => ({}));
@@ -339,7 +342,7 @@ export function DelayedFeedbackPageClient({
     if (!formValid) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/admin/delayed-feedback/conversions", {
+      const res = await apiFetch("/api/admin/delayed-feedback/conversions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

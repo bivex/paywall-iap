@@ -24,11 +24,13 @@ import type {
   SlidingWindowSnapshot,
   TrimWindowResult,
 } from "@/lib/sliding-window";
+import { apiFetch } from "@/lib/api-fetch";
+import { useAppStore } from "@/stores/app-store";
 
 const WINDOW_EVENT_LIMITS = [25, 50, 100, 250] as const;
 
 async function fetchSlidingWindowJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await apiFetch(url, { cache: "no-store" });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(
@@ -196,6 +198,7 @@ export function SlidingWindowPageClient({
 }) {
   const hasInitialPayload = initialExperiments !== undefined;
   const t = useTranslations("slidingWindow");
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
   const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
   const [snapshot, setSnapshot] = useState<SlidingWindowSnapshot | null>(initialSnapshot ?? null);
@@ -224,7 +227,7 @@ export function SlidingWindowPageClient({
         setIsBootstrapping(false);
       }
     });
-  }, [isBootstrapping]);
+  }, [isBootstrapping, selectedAppId]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,
@@ -272,7 +275,7 @@ export function SlidingWindowPageClient({
     setIsTrimming(true);
 
     try {
-      const res = await fetch("/api/admin/sliding-window/trim", {
+      const res = await apiFetch("/api/admin/sliding-window/trim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ experimentId: selectedId }),
@@ -319,7 +322,7 @@ export function SlidingWindowPageClient({
         experimentId: selectedId,
         limit: eventsLimit,
       });
-      const res = await fetch(`/api/admin/sliding-window/events?${params.toString()}`, {
+      const res = await apiFetch(`/api/admin/sliding-window/events?${params.toString()}`, {
         cache: "no-store",
       });
       const body = await res.json().catch(() => ({}));

@@ -25,6 +25,8 @@ import type {
   ObjectiveEndpointProbe,
   ObjectiveType,
 } from "@/lib/multi-objective";
+import { apiFetch } from "@/lib/api-fetch";
+import { useAppStore } from "@/stores/app-store";
 
 const DEFAULT_OBJECTIVE_TYPE: ObjectiveType = "conversion";
 const DEFAULT_OBJECTIVE_WEIGHTS = {
@@ -41,7 +43,7 @@ const SUPPORTED_OBJECTIVES = [
 ] as const;
 
 async function fetchMultiObjectiveJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await apiFetch(url, { cache: "no-store" });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(
@@ -160,6 +162,7 @@ export function MultiObjectivePageClient({
 }) {
   const hasInitialPayload = initialExperiments !== undefined;
   const t = useTranslations("multiObjective");
+  const selectedAppId = useAppStore((s) => s.selectedAppId);
   const [experiments, setExperiments] = useState<ExperimentSummary[]>(initialExperiments ?? []);
   const [selectedId, setSelectedId] = useState(initialSelectedExperimentId ?? "");
   const [snapshot, setSnapshot] = useState<MultiObjectiveSnapshot | null>(initialSnapshot ?? null);
@@ -189,7 +192,7 @@ export function MultiObjectivePageClient({
         setIsBootstrapping(false);
       }
     });
-  }, [isBootstrapping]);
+  }, [isBootstrapping, selectedAppId]);
 
   useEffect(() => {
     setObjectiveType(snapshot?.currentConfig?.objectiveType ?? DEFAULT_OBJECTIVE_TYPE);
@@ -230,7 +233,7 @@ export function MultiObjectivePageClient({
     setIsSavingConfig(true);
 
     try {
-      const res = await fetch("/api/admin/multi-objective/config", {
+      const res = await apiFetch("/api/admin/multi-objective/config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
