@@ -14,7 +14,11 @@ async function adminFetch(path: string, body: object) {
   try {
     const res = await fetch(`${BACKEND_URL}${path}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        ...(appId ? { "X-App-ID": appId } : {}),
+      },
       body: JSON.stringify(body),
     });
     if (!res.ok) {

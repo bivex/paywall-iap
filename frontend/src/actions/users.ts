@@ -48,11 +48,15 @@ export async function getUsers(params: {
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/users/search?${qs}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+      },
       cache: "no-store",
     });
     if (!res.ok) return EMPTY;
-    return (await res.json()) as UsersResponse;
+    const body = await res.json();
+    return (body.data ?? body) as UsersResponse;
   } catch {
     return EMPTY;
   }

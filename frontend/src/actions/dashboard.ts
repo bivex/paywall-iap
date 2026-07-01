@@ -64,11 +64,15 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics | null> {
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/dashboard/metrics`, {
-      headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 60 }, // cache for 60 s, revalidate in background
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+      },
+      next: { revalidate: 60 },
     });
     if (!res.ok) return null;
-    return (await res.json()) as DashboardMetrics;
+    const body = await res.json();
+    return (body.data ?? body) as DashboardMetrics;
   } catch {
     return null;
   }

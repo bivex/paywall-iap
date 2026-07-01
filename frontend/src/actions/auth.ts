@@ -97,7 +97,10 @@ export async function logoutAction(): Promise<{ redirectTo: string }> {
   if (token) {
     await fetch(`${BACKEND_URL}/v1/admin/auth/logout`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+      },
     }).catch(() => undefined);
   }
 

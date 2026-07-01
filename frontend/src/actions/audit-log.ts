@@ -55,11 +55,15 @@ export async function getAuditLog(params: AuditLogParams = {}): Promise<AuditLog
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/audit-log?${qs.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+      },
       cache: "no-store",
     });
     if (!res.ok) return EMPTY;
-    return (await res.json()) as AuditLogResponse;
+    const body = await res.json();
+    return (body.data ?? body) as AuditLogResponse;
   } catch {
     return EMPTY;
   }
