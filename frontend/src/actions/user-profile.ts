@@ -58,11 +58,15 @@ export async function getUserProfile(id: string): Promise<UserProfile | null> {
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/users/${id}/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+      },
       cache: "no-store",
     });
     if (!res.ok) return null;
-    return (await res.json()) as UserProfile;
+    const body = await res.json();
+    return (body.data ?? body) as UserProfile;
   } catch {
     return null;
   }
