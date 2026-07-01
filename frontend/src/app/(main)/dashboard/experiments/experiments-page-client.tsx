@@ -359,10 +359,6 @@ export function ExperimentsPageClient({
     router.refresh();
   }
 
-  const runningCount = experiments.filter((experiment) => experiment.status === "running").length;
-  const draftCount = experiments.filter((experiment) => experiment.status === "draft").length;
-  const totalRevenue = experiments.reduce((sum, experiment) => sum + experiment.total_revenue, 0);
-
   if (!selectedAppId) return <NoAppSelected />;
 
   return (
