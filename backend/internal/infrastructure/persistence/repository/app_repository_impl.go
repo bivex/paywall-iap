@@ -306,22 +306,40 @@ func (r *appRepositoryImpl) scanAndDecryptCredentials(rows pgx.Rows) (*entity.Ap
 	var (
 		c                                                   entity.AppCredentials
 		appleSecretEnc, applePrivKeyEnc                     *string
+		appleTeamID, appleKeyID, appleBundleID              *string
+		googlePackageName                                   *string
 		googleSAEnc                                         *string
+		stripePublishableKey                                *string
 		stripeSecretEnc, stripeWHEnc                        *string
+		paddleVendorID                                      *string
 		paddleAPIEnc, paddleWHEnc                           *string
 	)
 	err := rows.Scan(
 		&c.ID, &c.AppID, &c.Provider,
-		&appleSecretEnc, &c.AppleTeamID, &c.AppleKeyID,
-		&applePrivKeyEnc, &c.AppleBundleID, &c.AppleEnvironment,
-		&c.GooglePackageName, &googleSAEnc,
-		&c.StripePublishableKey, &stripeSecretEnc, &stripeWHEnc,
-		&c.PaddleVendorID, &paddleAPIEnc, &paddleWHEnc,
+		&appleSecretEnc, &appleTeamID, &appleKeyID,
+		&applePrivKeyEnc, &appleBundleID, &c.AppleEnvironment,
+		&googlePackageName, &googleSAEnc,
+		&stripePublishableKey, &stripeSecretEnc, &stripeWHEnc,
+		&paddleVendorID, &paddleAPIEnc, &paddleWHEnc,
 		&c.CreatedAt, &c.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan credentials: %w", err)
 	}
+
+	// Unpack nullable plain-text fields
+	derefStr := func(p *string) string {
+		if p == nil {
+			return ""
+		}
+		return *p
+	}
+	c.AppleTeamID = derefStr(appleTeamID)
+	c.AppleKeyID = derefStr(appleKeyID)
+	c.AppleBundleID = derefStr(appleBundleID)
+	c.GooglePackageName = derefStr(googlePackageName)
+	c.StripePublishableKey = derefStr(stripePublishableKey)
+	c.PaddleVendorID = derefStr(paddleVendorID)
 
 	k := r.credEncKey
 	dec := func(p *string) (string, error) {
