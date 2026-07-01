@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pencil, Plus, Smartphone, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Pencil, Plus, Settings2, Smartphone, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -212,7 +213,12 @@ export function AppsPageClient() {
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="size-8" onClick={() => openEdit(app)}>
-                      <Pencil className="size-3.5" />
+                    	<Pencil className="size-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="size-8" asChild>
+                    	<Link href={`/dashboard/apps/${app.id}/settings`}>
+                    		<Settings2 className="size-3.5" />
+                    	</Link>
                     </Button>
                     <Button
                       variant="ghost"
