@@ -6,7 +6,10 @@ import { getSlidingWindowSnapshotFromCookies } from "@/lib/server/sliding-window
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const experimentId = searchParams.get("experimentId");
-  const appId = searchParams.get("app_id");
+  const appId =
+    searchParams.get("app_id") ??
+    (await cookies()).get("admin_app_id")?.value ??
+    null;
 
   if (!experimentId) {
     return NextResponse.json({ error: "experimentId is required" }, { status: 400 });
