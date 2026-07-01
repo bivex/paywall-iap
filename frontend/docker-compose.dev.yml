@@ -16,7 +16,8 @@ services:
     volumes:
       - .:/app                   # mount source → hot reload picks up changes
       - /app/node_modules        # keep container node_modules, don't override with host
-      - /app/.next               # keep .next build cache inside container
+      # NOTE: .next is NOT excluded — it lives inside the mounted /app so new routes
+      # are picked up immediately without stale cache issues on macOS
     networks:
       - default
       - paywall_internal
