@@ -18,7 +18,12 @@ import { APP_CONFIG } from "@/config/app-config";
 import { rootUser } from "@/data/users";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
 
-import { AppSelector } from "@/components/app-selector";
+import dynamic from "next/dynamic";
+
+const AppSelector = dynamic(() => import("@/components/app-selector").then((m) => m.AppSelector), {
+  ssr: false,
+  loading: () => null,
+});
 
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
