@@ -38,4 +38,7 @@ type SubscriptionRepository interface {
 
 	// GetUsersWithCancelledSubscriptions retrieves users whose subscriptions were cancelled recently
 	GetUsersWithCancelledSubscriptions(ctx context.Context, daysSinceChurn int) ([]uuid.UUID, error)
+
+	// GetTotalRevenue returns the total revenue for a user across all transactions
+	GetTotalRevenue(ctx context.Context, userID uuid.UUID) (float64, error)
 }

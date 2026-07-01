@@ -276,3 +276,12 @@ func (r *mockSubscriptionRepo) GetUsersWithCancelledSubscriptions(ctx context.Co
 	}
 	return userIDs, rows.Err()
 }
+
+func (r *mockSubscriptionRepo) GetTotalRevenue(ctx context.Context, userID uuid.UUID) (float64, error) {
+	var total float64
+	err := r.pool.QueryRow(ctx,
+		"SELECT COALESCE(SUM(t.amount), 0) FROM transactions t WHERE t.user_id = $1 AND t.status = 'success'",
+		userID,
+	).Scan(&total)
+	return total, err
+}

@@ -165,6 +165,28 @@ func (r *subscriptionRepositoryImpl) GetUsersWithCancelledSubscriptions(ctx cont
 	})
 }
 
+func (r *subscriptionRepositoryImpl) GetTotalRevenue(ctx context.Context, userID uuid.UUID) (float64, error) {
+	appID, _ := appctx.AppIDFromCtx(ctx)
+	result, err := r.queries.GetLTVByUserID(ctx, generated.GetLTVByUserIDParams{
+		AppID:  appID,
+		UserID: userID,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to get total revenue: %w", err)
+	}
+	// result is interface{} from COALESCE(SUM(...))
+	switch v := result.(type) {
+	case float64:
+		return v, nil
+	case float32:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	default:
+		return 0, nil
+	}
+}
+
 func (r *subscriptionRepositoryImpl) mapToEntity(row generated.Subscription) *entity.Subscription {
 	return &entity.Subscription{
 		ID:        row.ID,

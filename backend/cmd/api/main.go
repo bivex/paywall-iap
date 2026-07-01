@@ -217,6 +217,7 @@ type dependencies struct {
 	banditAdvancedHandler *app_handler.BanditAdvancedHandler
 	paywallHandler        *app_handler.PaywallHandler
 	winbackHandler        *app_handler.WinbackHandler
+	analyticsExtHandler   *app_handler.AnalyticsHandlersExtended
 }
 
 // initDependencies initializes all repositories, services, middleware, and handlers
@@ -332,6 +333,10 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	acceptWinbackCmd := command.NewAcceptWinbackOfferCommand(winbackService)
 	winbackHandler := app_handler.NewWinbackHandler(acceptWinbackCmd, winbackService, jwtMiddleware)
 
+	analyticsCache := cache.NewAnalyticsCache(redisClient, logging.Logger)
+	ltvService := service.NewLTVService(nil, nil, service.NewLTVSubscriptionAdapter(subscriptionRepo), transactionRepo, logging.Logger)
+	analyticsExtHandler := app_handler.NewAnalyticsHandlersExtended(ltvService, analyticsCache, logging.Logger)
+
 	return &dependencies{
 		queries:               queries,
 		userRepo:              userRepo,
@@ -364,6 +369,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		banditAdvancedHandler: banditAdvancedHandler,
 		paywallHandler:        paywallHandler,
 		winbackHandler:        winbackHandler,
+		analyticsExtHandler:   analyticsExtHandler,
 	}
 }
 
@@ -547,6 +553,12 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 			// Analytics & revenue
 			appScoped.GET("/analytics/report", d.adminHandler.GetAnalyticsReport)
 			appScoped.GET("/revenue-ops", d.adminHandler.GetRevenueOps)
+
+			// Extended analytics (LTV, cohort, churn)
+			appScoped.GET("/analytics/ltv", d.analyticsExtHandler.GetLTV)
+			appScoped.POST("/analytics/ltv", d.analyticsExtHandler.UpdateLTV)
+			appScoped.GET("/analytics/cohort-ltv", d.analyticsExtHandler.GetCohortLTV)
+			appScoped.GET("/analytics/churn-risk", d.analyticsExtHandler.GetChurnRisk)
 
 			// Experiments
 			appScoped.GET("/experiments", d.adminHandler.ListAdminExperiments)
