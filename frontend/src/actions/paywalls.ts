@@ -119,7 +119,7 @@ export async function activatePaywall(
 
 export async function deletePaywall(
   id: string
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/paywalls/${id}`, {
       method: "DELETE",
