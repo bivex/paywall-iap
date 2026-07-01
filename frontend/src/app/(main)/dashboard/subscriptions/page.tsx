@@ -23,6 +23,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { getSubscriptions } from "@/actions/subscriptions";
 import type { SubscriptionsParams } from "@/actions/subscriptions";
+import { RetryError } from "@/components/retry-error";
+import { isFetchError } from "@/lib/server-fetch";
 import { formatSource, formatPlanType } from "@/lib/subscriptions/format";
 import { SubscriptionDetailSheet } from "./_components/subscription-detail-sheet";
 import { SubscriptionRow as SubRow } from "./_components/subscription-row";
@@ -64,16 +66,20 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
   };
 
   const data = await getSubscriptions(params);
-  const notAuthed = data === null;
-  let subs = data?.subscriptions ?? [];
+
+  if (isFetchError(data)) {
+    return <RetryError message={data.message} />;
+  }
+
+  let subs = data.subscriptions;
 
   // Client-side sort by created_at (backend doesn't expose sort param yet)
   subs = [...subs].sort((a, b) => {
     const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     return sort === "date_asc" ? diff : -diff;
   });
-  const total = data?.total ?? 0;
-  const totalPages = data?.total_pages ?? 1;
+  const total = data.total;
+  const totalPages = data.total_pages;
 
   const buildPageUrl = (p: number) => {
     const qs = new URLSearchParams();
@@ -136,7 +142,7 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
               {subs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    {notAuthed ? "⚠️ Not authenticated — please log in." : "No subscriptions found."}
+                    No subscriptions found.
                   </TableCell>
                 </TableRow>
               ) : (
