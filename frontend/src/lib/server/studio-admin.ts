@@ -62,6 +62,10 @@ function unavailableProbe(message: string): StudioEndpointProbe {
   return { ok: false, status: null, message };
 }
 
+function appIdHeaders(appId: string | null): Record<string, string> {
+  return appId ? { "X-App-ID": appId } : {};
+}
+
 async function fetchProbe<T>(url: string, init?: RequestInit) {
   try {
     const res = await fetch(url, { cache: "no-store", ...init });
@@ -75,28 +79,30 @@ async function fetchProbe<T>(url: string, init?: RequestInit) {
   }
 }
 
-export async function getAdminExperimentsFromCookies(): Promise<ExperimentSummary[] | null> {
+export async function getAdminExperimentsFromCookies(appId: string | null = null): Promise<ExperimentSummary[] | null> {
   const token = await getAdminToken();
   if (!token) return null;
 
   const res = await fetchProbe<ExperimentSummary[]>(`${BACKEND_URL}/v1/admin/experiments`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(appId) },
   });
   return res.ok ? res.data : null;
 }
 
-export async function getPricingTiersFromCookies(): Promise<PricingTier[] | null> {
+export async function getPricingTiersFromCookies(appId: string | null = null): Promise<PricingTier[] | null> {
   const token = await getAdminToken();
   if (!token) return null;
 
   const res = await fetchProbe<PricingTier[]>(`${BACKEND_URL}/v1/admin/pricing-tiers`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(appId) },
   });
   return res.ok ? res.data : null;
 }
 
-async function getBanditHealth() {
-  const res = await fetchProbe<StudioBanditHealth>(`${BACKEND_URL}/v1/bandit/health`);
+async function getBanditHealth(appId: string | null = null) {
+  const res = await fetchProbe<StudioBanditHealth>(`${BACKEND_URL}/v1/bandit/health`, {
+    headers: { ...appIdHeaders(appId) },
+  });
   return {
     probe: {
       ok: res.ok,
@@ -107,31 +113,29 @@ async function getBanditHealth() {
   };
 }
 
-export async function getStudioSnapshotFromCookies(experimentId: string): Promise<ExperimentStudioSnapshot | null> {
-  const experiments = await getAdminExperimentsFromCookies();
+export async function getStudioSnapshotFromCookies(experimentId: string, appId: string | null = null): Promise<ExperimentStudioSnapshot | null> {
+  const experiments = await getAdminExperimentsFromCookies(appId);
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
   const token = await getAdminToken();
   if (!token) return null;
 
+  const authAndAppIdHeaders = { Authorization: `Bearer ${token}`, ...appIdHeaders(appId) };
+
   const lifecycleHistoryRes = await fetchProbe<ExperimentLifecycleAudit[]>(
     `${BACKEND_URL}/v1/admin/experiments/${experimentId}/lifecycle-audit`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
+    { headers: authAndAppIdHeaders },
   );
   const lifecycleHistory = lifecycleHistoryRes.ok ? lifecycleHistoryRes.data : [];
 
   const recommendationHistoryRes = await fetchProbe<ExperimentWinnerRecommendationAudit[]>(
     `${BACKEND_URL}/v1/admin/experiments/${experimentId}/winner-recommendation-audit`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
+    { headers: authAndAppIdHeaders },
   );
   const recommendationHistory = recommendationHistoryRes.ok ? recommendationHistoryRes.data : [];
 
-  const banditHealthResult = await getBanditHealth();
+  const banditHealthResult = await getBanditHealth(appId);
 
   if (!experiment.is_bandit) {
     return {
@@ -149,13 +153,22 @@ export async function getStudioSnapshotFromCookies(experimentId: string): Promis
     };
   }
 
+  const extraHeaders = appIdHeaders(appId);
+
   const [statisticsRes, metricsRes, objectivesRes, windowInfoRes] = await Promise.all([
     fetchProbe<BanditStatisticsResponse>(
       `${BACKEND_URL}/v1/bandit/statistics?experiment_id=${experimentId}&win_probs=true`,
+      { headers: extraHeaders },
     ),
-    fetchProbe<unknown>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/metrics`),
-    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/objectives`),
-    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/window/info`),
+    fetchProbe<unknown>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/metrics`, {
+      headers: extraHeaders,
+    }),
+    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/objectives`, {
+      headers: extraHeaders,
+    }),
+    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/window/info`, {
+      headers: extraHeaders,
+    }),
   ]);
 
   return {
@@ -194,10 +207,10 @@ export async function getStudioSnapshotFromCookies(experimentId: string): Promis
   };
 }
 
-export async function getStudioDashboardFromCookies(): Promise<ExperimentStudioDashboardData> {
+export async function getStudioDashboardFromCookies(appId: string | null = null): Promise<ExperimentStudioDashboardData> {
   const [experiments, pricingTiers] = await Promise.all([
-    getAdminExperimentsFromCookies(),
-    getPricingTiersFromCookies(),
+    getAdminExperimentsFromCookies(appId),
+    getPricingTiersFromCookies(appId),
   ]);
   if (!experiments) {
     return {
@@ -222,7 +235,7 @@ export async function getStudioDashboardFromCookies(): Promise<ExperimentStudioD
     };
   }
 
-  const snapshot = await getStudioSnapshotFromCookies(selected.id);
+  const snapshot = await getStudioSnapshotFromCookies(selected.id, appId);
   return {
     experiments,
     selectedExperimentId: selected.id,

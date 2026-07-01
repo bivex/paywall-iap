@@ -33,9 +33,13 @@ function manualProbe(message: string): SlidingWindowEndpointProbe {
   return { state: "manual", status: null, message };
 }
 
-async function fetchProbe<T>(url: string): Promise<{ probe: SlidingWindowEndpointProbe; data: T | null }> {
+function appIdHeaders(appId: string | null): Record<string, string> {
+  return appId ? { "X-App-ID": appId } : {};
+}
+
+async function fetchProbe<T>(url: string, appId: string | null = null): Promise<{ probe: SlidingWindowEndpointProbe; data: T | null }> {
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, { cache: "no-store", headers: { ...appIdHeaders(appId) } });
     const parsed = await parseResponse<T>(res);
     if (!parsed.ok) {
       return {
@@ -56,21 +60,21 @@ async function fetchProbe<T>(url: string): Promise<{ probe: SlidingWindowEndpoin
   }
 }
 
-async function getServiceHealth() {
-  const result = await fetchProbe<SlidingWindowServiceHealth>(`${BACKEND_URL}/v1/bandit/health`);
+async function getServiceHealth(appId: string | null = null) {
+  const result = await fetchProbe<SlidingWindowServiceHealth>(`${BACKEND_URL}/v1/bandit/health`, appId);
   return result.data;
 }
 
-export async function getSlidingWindowSnapshotFromCookies(experimentId: string): Promise<SlidingWindowSnapshot | null> {
-  const experiments = await getBanditExperimentsFromCookies();
+export async function getSlidingWindowSnapshotFromCookies(experimentId: string, appId: string | null = null): Promise<SlidingWindowSnapshot | null> {
+  const experiments = await getBanditExperimentsFromCookies(appId);
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
   const [banditSnapshot, serviceHealth, windowInfoResult, windowEventsResult] = await Promise.all([
-    getBanditSnapshotFromCookies(experimentId),
-    getServiceHealth(),
-    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/window/info`),
-    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/window/events`),
+    getBanditSnapshotFromCookies(experimentId, appId),
+    getServiceHealth(appId),
+    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/window/info`, appId),
+    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/window/events`, appId),
   ]);
 
   return {
@@ -85,8 +89,8 @@ export async function getSlidingWindowSnapshotFromCookies(experimentId: string):
   };
 }
 
-export async function getSlidingWindowDashboardFromCookies(): Promise<SlidingWindowDashboardData> {
-  const experiments = await getBanditExperimentsFromCookies();
+export async function getSlidingWindowDashboardFromCookies(appId: string | null = null): Promise<SlidingWindowDashboardData> {
+  const experiments = await getBanditExperimentsFromCookies(appId);
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
@@ -96,7 +100,7 @@ export async function getSlidingWindowDashboardFromCookies(): Promise<SlidingWin
     return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
   }
 
-  const snapshot = await getSlidingWindowSnapshotFromCookies(selected.id);
+  const snapshot = await getSlidingWindowSnapshotFromCookies(selected.id, appId);
   return {
     experiments,
     selectedExperimentId: selected.id,

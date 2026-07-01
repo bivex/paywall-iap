@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getBanditSnapshotFromCookies } from "@/lib/server/bandit-admin";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+export async function GET(req: NextRequest) {
+  const { searchParams } = req.nextUrl;
   const experimentId = searchParams.get("experimentId");
+  const appId = searchParams.get("app_id");
 
   if (!experimentId) {
     return NextResponse.json({ error: "experimentId is required" }, { status: 400 });
   }
 
-  const data = await getBanditSnapshotFromCookies(experimentId);
+  const data = await getBanditSnapshotFromCookies(experimentId, appId);
   if (!data) {
     return NextResponse.json({ error: "Unable to load bandit snapshot" }, { status: 404 });
   }

@@ -91,9 +91,13 @@ function normalizeObjectiveConfig(payload: unknown): ObjectiveCurrentConfig {
   };
 }
 
-async function fetchProbe<T>(url: string): Promise<{ probe: ObjectiveEndpointProbe; data: T | null }> {
+function appIdHeaders(appId: string | null): Record<string, string> {
+  return appId ? { "X-App-ID": appId } : {};
+}
+
+async function fetchProbe<T>(url: string, appId: string | null = null): Promise<{ probe: ObjectiveEndpointProbe; data: T | null }> {
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, { cache: "no-store", headers: { ...appIdHeaders(appId) } });
     const parsed = await parseResponse<T>(res);
     if (!parsed.ok) {
       return {
@@ -114,23 +118,24 @@ async function fetchProbe<T>(url: string): Promise<{ probe: ObjectiveEndpointPro
   }
 }
 
-async function getServiceHealth() {
-  const result = await fetchProbe<ObjectiveServiceHealth>(`${BACKEND_URL}/v1/bandit/health`);
+async function getServiceHealth(appId: string | null = null) {
+  const result = await fetchProbe<ObjectiveServiceHealth>(`${BACKEND_URL}/v1/bandit/health`, appId);
   return result.data;
 }
 
 export async function getMultiObjectiveSnapshotFromCookies(
   experimentId: string,
+  appId: string | null = null,
 ): Promise<MultiObjectiveSnapshot | null> {
-  const experiments = await getBanditExperimentsFromCookies();
+  const experiments = await getBanditExperimentsFromCookies(appId);
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
   const [banditSnapshot, serviceHealth, objectiveScoresResult, objectiveConfigResult] = await Promise.all([
-    getBanditSnapshotFromCookies(experimentId),
-    getServiceHealth(),
-    fetchProbe<unknown>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/objectives`),
-    fetchProbe<unknown>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/objectives/config`),
+    getBanditSnapshotFromCookies(experimentId, appId),
+    getServiceHealth(appId),
+    fetchProbe<unknown>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/objectives`, appId),
+    fetchProbe<unknown>(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/objectives/config`, appId),
   ]);
 
   return {
@@ -146,8 +151,8 @@ export async function getMultiObjectiveSnapshotFromCookies(
   };
 }
 
-export async function getMultiObjectiveDashboardFromCookies(): Promise<MultiObjectiveDashboardData> {
-  const experiments = await getBanditExperimentsFromCookies();
+export async function getMultiObjectiveDashboardFromCookies(appId: string | null = null): Promise<MultiObjectiveDashboardData> {
+  const experiments = await getBanditExperimentsFromCookies(appId);
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
@@ -157,7 +162,7 @@ export async function getMultiObjectiveDashboardFromCookies(): Promise<MultiObje
     return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
   }
 
-  const snapshot = await getMultiObjectiveSnapshotFromCookies(selected.id);
+  const snapshot = await getMultiObjectiveSnapshotFromCookies(selected.id, appId);
   return {
     experiments,
     selectedExperimentId: selected.id,

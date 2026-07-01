@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getSlidingWindowSnapshotFromCookies } from "@/lib/server/sliding-window-admin";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+export async function GET(req: NextRequest) {
+  const { searchParams } = req.nextUrl;
   const experimentId = searchParams.get("experimentId");
+  const appId = searchParams.get("app_id");
 
   if (!experimentId) {
     return NextResponse.json({ error: "experimentId is required" }, { status: 400 });
   }
 
-  const data = await getSlidingWindowSnapshotFromCookies(experimentId);
+  const data = await getSlidingWindowSnapshotFromCookies(experimentId, appId);
   if (!data) {
     return NextResponse.json({ error: "Unable to load sliding window snapshot" }, { status: 404 });
   }

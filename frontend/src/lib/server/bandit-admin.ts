@@ -47,13 +47,17 @@ function normalizeMetrics(payload: unknown): BanditMetrics {
   };
 }
 
-export async function getBanditExperimentsFromCookies(): Promise<ExperimentSummary[] | null> {
+function appIdHeaders(appId: string | null): Record<string, string> {
+  return appId ? { "X-App-ID": appId } : {};
+}
+
+export async function getBanditExperimentsFromCookies(appId: string | null = null): Promise<ExperimentSummary[] | null> {
   const token = await getAdminToken();
   if (!token) return null;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, ...appIdHeaders(appId) },
       cache: "no-store",
     });
     const parsed = await parseResponse<ExperimentSummary[]>(res);
@@ -64,23 +68,27 @@ export async function getBanditExperimentsFromCookies(): Promise<ExperimentSumma
   }
 }
 
-export async function getBanditSnapshotFromCookies(experimentId: string): Promise<BanditSnapshot | null> {
-  const experiments = await getBanditExperimentsFromCookies();
+export async function getBanditSnapshotFromCookies(experimentId: string, appId: string | null = null): Promise<BanditSnapshot | null> {
+  const experiments = await getBanditExperimentsFromCookies(appId);
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
   const token = await getAdminToken();
   if (!token) return null;
 
+  const extraHeaders = appIdHeaders(appId);
+
   const [statisticsResult, metricsResult, recommendationHistoryResult] = await Promise.allSettled([
     fetch(`${BACKEND_URL}/v1/bandit/statistics?experiment_id=${experimentId}&win_probs=true`, {
       cache: "no-store",
+      headers: { ...extraHeaders },
     }),
     fetch(`${BACKEND_URL}/v1/bandit/experiments/${experimentId}/metrics`, {
       cache: "no-store",
+      headers: { ...extraHeaders },
     }),
     fetch(`${BACKEND_URL}/v1/admin/experiments/${experimentId}/winner-recommendation-audit`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, ...extraHeaders },
       cache: "no-store",
     }),
   ]);
@@ -106,8 +114,8 @@ export async function getBanditSnapshotFromCookies(experimentId: string): Promis
   return { experiment, statistics, metrics, recommendationHistory };
 }
 
-export async function getBanditDashboardFromCookies() {
-  const experiments = await getBanditExperimentsFromCookies();
+export async function getBanditDashboardFromCookies(appId: string | null = null) {
+  const experiments = await getBanditExperimentsFromCookies(appId);
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
@@ -117,7 +125,7 @@ export async function getBanditDashboardFromCookies() {
     return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
   }
 
-  const snapshot = await getBanditSnapshotFromCookies(selected.id);
+  const snapshot = await getBanditSnapshotFromCookies(selected.id, appId);
   return {
     experiments,
     selectedExperimentId: selected.id,

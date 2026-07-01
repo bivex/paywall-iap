@@ -39,12 +39,17 @@ interface ProbeOptions {
   acceptedStatusMessages?: Partial<Record<number, string>>;
 }
 
+function appIdHeaders(appId: string | null): Record<string, string> {
+  return appId ? { "X-App-ID": appId } : {};
+}
+
 async function fetchProbe<T>(
   url: string,
+  appId: string | null = null,
   options: ProbeOptions = {},
 ): Promise<{ probe: DelayedEndpointProbe; data: T | null }> {
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await fetch(url, { cache: "no-store", headers: { ...appIdHeaders(appId) } });
     const parsed = await parseResponse<T>(res);
     if (!parsed.ok) {
       if (options.acceptedErrorStatuses?.includes(res.status)) {
@@ -76,8 +81,8 @@ async function fetchProbe<T>(
   }
 }
 
-async function getServiceHealth() {
-  const result = await fetchProbe<DelayedFeedbackServiceHealth>(`${BACKEND_URL}/v1/bandit/health`);
+async function getServiceHealth(appId: string | null = null) {
+  const result = await fetchProbe<DelayedFeedbackServiceHealth>(`${BACKEND_URL}/v1/bandit/health`, appId);
   return {
     probe: result.probe,
     health: result.data,
@@ -86,21 +91,22 @@ async function getServiceHealth() {
 
 export async function getDelayedFeedbackSnapshotFromCookies(
   experimentId: string,
+  appId: string | null = null,
 ): Promise<DelayedFeedbackSnapshot | null> {
-  const experiments = await getBanditExperimentsFromCookies();
+  const experiments = await getBanditExperimentsFromCookies(appId);
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
 
   const [banditSnapshot, healthResult, pendingById, userPending] = await Promise.all([
-    getBanditSnapshotFromCookies(experimentId),
-    getServiceHealth(),
-    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/pending/${PROBE_UUID}`, {
+    getBanditSnapshotFromCookies(experimentId, appId),
+    getServiceHealth(appId),
+    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/pending/${PROBE_UUID}`, appId, {
       acceptedErrorStatuses: [404],
       acceptedStatusMessages: {
         404: "Endpoint reachable; sentinel pending reward was not found, which is expected for this read-only probe.",
       },
     }),
-    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/users/${PROBE_UUID}/pending`),
+    fetchProbe<Record<string, unknown>>(`${BACKEND_URL}/v1/bandit/users/${PROBE_UUID}/pending`, appId),
   ]);
 
   return {
@@ -117,8 +123,8 @@ export async function getDelayedFeedbackSnapshotFromCookies(
   };
 }
 
-export async function getDelayedFeedbackDashboardFromCookies(): Promise<DelayedFeedbackDashboardData> {
-  const experiments = await getBanditExperimentsFromCookies();
+export async function getDelayedFeedbackDashboardFromCookies(appId: string | null = null): Promise<DelayedFeedbackDashboardData> {
+  const experiments = await getBanditExperimentsFromCookies(appId);
   if (!experiments) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: true };
   }
@@ -128,7 +134,7 @@ export async function getDelayedFeedbackDashboardFromCookies(): Promise<DelayedF
     return { experiments, selectedExperimentId: null, snapshot: null, loadFailed: false };
   }
 
-  const snapshot = await getDelayedFeedbackSnapshotFromCookies(selected.id);
+  const snapshot = await getDelayedFeedbackSnapshotFromCookies(selected.id, appId);
   return {
     experiments,
     selectedExperimentId: selected.id,
