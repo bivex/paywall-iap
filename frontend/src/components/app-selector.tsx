@@ -18,18 +18,32 @@ export function AppSelector() {
   const { apps, selectedAppId, setApps, setSelectedAppId } = useAppStore();
 
   useEffect(() => {
-    fetch("/api/admin/apps")
-      .then((r) => r.json())
-      .then((body: { apps?: App[] }) => {
+    let cancelled = false;
+
+    const load = async (attempt = 0) => {
+      try {
+        const r = await fetch("/api/admin/apps");
+        // Turbopack lazy-compiles routes on first hit — retry on 404 up to 5x
+        if (r.status === 404 && attempt < 5) {
+          setTimeout(() => { if (!cancelled) load(attempt + 1); }, 300 * (attempt + 1));
+          return;
+        }
+        if (!r.ok) return;
+        const body: { apps?: App[] } = await r.json();
+        if (cancelled) return;
         const list = body?.apps ?? [];
         setApps(list);
-        // Auto-select first active app if nothing selected
         if (!selectedAppId && list.length > 0) {
           const first = list.find((a) => a.is_active) ?? list[0];
           setSelectedAppId(first.id);
         }
-      })
-      .catch(() => {});
+      } catch {
+        // network error — ignore
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
