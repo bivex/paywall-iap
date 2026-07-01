@@ -687,6 +687,12 @@ export function StudioPageClient({
         </Card>
       ) : null}
 
+      {!loadFailed && !isBootstrapping && !selectedAppId ? (
+        <Card>
+          <CardContent className="pt-6 text-muted-foreground text-sm">{t("states.noAppSelected")}</CardContent>
+        </Card>
+      ) : null}
+
       {isBootstrapping ? (
         <Card>
           <CardContent className="pt-6 text-muted-foreground text-sm">{t("states.loading")}</CardContent>

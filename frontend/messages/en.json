@@ -570,6 +570,7 @@
     "states": {
       "loading": "Loading experiment studio…",
       "loadFailed": "Failed to load experiment studio data.",
+      "noAppSelected": "Select an app from the top bar to load experiments.",
       "emptyTitle": "No experiments yet",
       "emptyBody": "Create your first experiment in A/B Tests before using Studio."
     },

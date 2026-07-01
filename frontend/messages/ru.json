@@ -570,6 +570,7 @@
     "states": {
       "loading": "Загрузка experiment studio…",
       "loadFailed": "Не удалось загрузить данные experiment studio.",
+      "noAppSelected": "Выберите приложение в верхней панели для загрузки экспериментов.",
       "emptyTitle": "Экспериментов пока нет",
       "emptyBody": "Сначала создайте experiment в A/B Tests, а затем используйте Studio."
     },
