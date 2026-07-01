@@ -13,45 +13,46 @@ import (
 
 const countUsers = `-- name: CountUsers :one
 SELECT COUNT(*) FROM users
-WHERE deleted_at IS NULL
+WHERE app_id = $1 AND deleted_at IS NULL
 `
 
-func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countUsers)
+func (q *Queries) CountUsers(ctx context.Context, appID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countUsers, appID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (platform_user_id, device_id, platform, app_version, email, role, app_id)
+INSERT INTO users (app_id, platform_user_id, device_id, platform, app_version, email, role)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
+RETURNING id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 type CreateUserParams struct {
+	AppID          uuid.UUID `json:"app_id"`
 	PlatformUserID string    `json:"platform_user_id"`
 	DeviceID       *string   `json:"device_id"`
 	Platform       string    `json:"platform"`
 	AppVersion     string    `json:"app_version"`
 	Email          string    `json:"email"`
 	Role           string    `json:"role"`
-	AppID          uuid.UUID `json:"app_id"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
+		arg.AppID,
 		arg.PlatformUserID,
 		arg.DeviceID,
 		arg.Platform,
 		arg.AppVersion,
 		arg.Email,
 		arg.Role,
-		arg.AppID,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -69,8 +70,26 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const existsByPlatformIDAndApp = `-- name: ExistsByPlatformIDAndApp :one
+SELECT id FROM users
+WHERE app_id = $1 AND platform_user_id = $2 AND deleted_at IS NULL
+LIMIT 1
+`
+
+type ExistsByPlatformIDAndAppParams struct {
+	AppID          uuid.UUID `json:"app_id"`
+	PlatformUserID string    `json:"platform_user_id"`
+}
+
+func (q *Queries) ExistsByPlatformIDAndApp(ctx context.Context, arg ExistsByPlatformIDAndAppParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, existsByPlatformIDAndApp, arg.AppID, arg.PlatformUserID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads FROM users
+SELECT id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads FROM users
 WHERE email = $1 AND deleted_at IS NULL
 LIMIT 1
 `
@@ -80,6 +99,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -98,7 +118,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads FROM users
+SELECT id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads FROM users
 WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1
 `
@@ -108,6 +128,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -126,16 +147,22 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByPlatformID = `-- name: GetUserByPlatformID :one
-SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads FROM users
-WHERE platform_user_id = $1 AND deleted_at IS NULL
+SELECT id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads FROM users
+WHERE app_id = $1 AND platform_user_id = $2 AND deleted_at IS NULL
 LIMIT 1
 `
 
-func (q *Queries) GetUserByPlatformID(ctx context.Context, platformUserID string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByPlatformID, platformUserID)
+type GetUserByPlatformIDParams struct {
+	AppID          uuid.UUID `json:"app_id"`
+	PlatformUserID string    `json:"platform_user_id"`
+}
+
+func (q *Queries) GetUserByPlatformID(ctx context.Context, arg GetUserByPlatformIDParams) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByPlatformID, arg.AppID, arg.PlatformUserID)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -157,7 +184,7 @@ const incrementUserSessionCount = `-- name: IncrementUserSessionCount :one
 UPDATE users
 SET session_count = session_count + 1
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
+RETURNING id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 func (q *Queries) IncrementUserSessionCount(ctx context.Context, id uuid.UUID) (User, error) {
@@ -165,6 +192,7 @@ func (q *Queries) IncrementUserSessionCount(ctx context.Context, id uuid.UUID) (
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -183,19 +211,20 @@ func (q *Queries) IncrementUserSessionCount(ctx context.Context, id uuid.UUID) (
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads FROM users
-WHERE deleted_at IS NULL
+SELECT id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads FROM users
+WHERE app_id = $1 AND deleted_at IS NULL
 ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
+LIMIT $2 OFFSET $3
 `
 
 type ListUsersParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	AppID  uuid.UUID `json:"app_id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
 }
 
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listUsers, arg.AppID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -205,6 +234,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		var i User
 		if err := rows.Scan(
 			&i.ID,
+			&i.AppID,
 			&i.PlatformUserID,
 			&i.DeviceID,
 			&i.Platform,
@@ -233,7 +263,7 @@ const softDeleteUser = `-- name: SoftDeleteUser :one
 UPDATE users
 SET deleted_at = now()
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
+RETURNING id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -241,6 +271,7 @@ func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -262,7 +293,7 @@ const updateUserEmail = `-- name: UpdateUserEmail :one
 UPDATE users
 SET email = $2
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
+RETURNING id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 type UpdateUserEmailParams struct {
@@ -275,6 +306,7 @@ func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -296,7 +328,7 @@ const updateUserHasViewedAds = `-- name: UpdateUserHasViewedAds :one
 UPDATE users
 SET has_viewed_ads = $2
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
+RETURNING id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 type UpdateUserHasViewedAdsParams struct {
@@ -309,6 +341,7 @@ func (q *Queries) UpdateUserHasViewedAds(ctx context.Context, arg UpdateUserHasV
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -330,7 +363,7 @@ const updateUserLTV = `-- name: UpdateUserLTV :one
 UPDATE users
 SET ltv = $2, ltv_updated_at = now()
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
+RETURNING id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 type UpdateUserLTVParams struct {
@@ -343,6 +376,7 @@ func (q *Queries) UpdateUserLTV(ctx context.Context, arg UpdateUserLTVParams) (U
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -364,7 +398,7 @@ const updateUserPurchaseChannel = `-- name: UpdateUserPurchaseChannel :one
 UPDATE users
 SET purchase_channel = $2
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
+RETURNING id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 type UpdateUserPurchaseChannelParams struct {
@@ -377,6 +411,7 @@ func (q *Queries) UpdateUserPurchaseChannel(ctx context.Context, arg UpdateUserP
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -398,7 +433,7 @@ const updateUserRole = `-- name: UpdateUserRole :one
 UPDATE users
 SET role = $2
 WHERE id = $1
-RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
+RETURNING id, app_id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 type UpdateUserRoleParams struct {
@@ -411,6 +446,7 @@ func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) 
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.AppID,
 		&i.PlatformUserID,
 		&i.DeviceID,
 		&i.Platform,
@@ -426,20 +462,4 @@ func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) 
 		&i.HasViewedAds,
 	)
 	return i, err
-}
-
-const existsByPlatformIDAndApp = `-- name: ExistsByPlatformIDAndApp :one
-SELECT 1 FROM users WHERE platform_user_id = $1 AND app_id = $2 AND deleted_at IS NULL LIMIT 1
-`
-
-type ExistsByPlatformIDAndAppParams struct {
-	PlatformUserID string    `json:"platform_user_id"`
-	AppID          uuid.UUID `json:"app_id"`
-}
-
-func (q *Queries) ExistsByPlatformIDAndApp(ctx context.Context, arg ExistsByPlatformIDAndAppParams) (int32, error) {
-	row := q.db.QueryRow(ctx, existsByPlatformIDAndApp, arg.PlatformUserID, arg.AppID)
-	var one int32
-	err := row.Scan(&one)
-	return one, err
 }

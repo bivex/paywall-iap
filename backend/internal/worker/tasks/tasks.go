@@ -13,6 +13,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 )
@@ -99,7 +100,11 @@ func (h *TaskHandlers) HandleUpdateLTV(ctx context.Context, t *asynq.Task) error
 	}
 
 	// Sum all successful transactions for this user
-	ltvRaw, err := h.queries.GetLTVByUserID(ctx, userUUID)
+	appID, _ := appctx.AppIDFromCtx(ctx)
+	ltvRaw, err := h.queries.GetLTVByUserID(ctx, generated.GetLTVByUserIDParams{
+		AppID:  appID,
+		UserID: userUUID,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to query LTV: %w", err)
 	}
@@ -143,7 +148,9 @@ func (h *TaskHandlers) HandleComputeAnalytics(ctx context.Context, t *asynq.Task
 	nextDay := targetDate.AddDate(0, 0, 1)
 
 	// Compute daily revenue
+	appID, _ := appctx.AppIDFromCtx(ctx)
 	revenueRaw, err := h.queries.GetDailyRevenue(ctx, generated.GetDailyRevenueParams{
+		AppID:       appID,
 		CreatedAt:   targetDate,
 		CreatedAt_2: nextDay,
 	})
@@ -154,7 +161,7 @@ func (h *TaskHandlers) HandleComputeAnalytics(ctx context.Context, t *asynq.Task
 	revenue := toFloat64(revenueRaw)
 
 	// Compute active subscription count (current snapshot)
-	activeCount, err := h.queries.GetActiveSubscriptionCount(ctx)
+	activeCount, err := h.queries.GetActiveSubscriptionCount(ctx, appID)
 	if err != nil {
 		return fmt.Errorf("failed to count active subscriptions: %w", err)
 	}
@@ -261,14 +268,20 @@ func (h *TaskHandlers) handleStripeEvent(ctx context.Context, event generated.We
 		return fmt.Errorf("missing customer (platform_id) in stripe payload")
 	}
 
+	appID, _ := appctx.AppIDFromCtx(ctx)
+
 	// Find the user
-	user, err := h.queries.GetUserByPlatformID(ctx, platformID)
+	user, err := h.queries.GetUserByPlatformID(ctx, generated.GetUserByPlatformIDParams{
+		AppID:          appID,
+		PlatformUserID: platformID,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to find user by platform_id %s: %w", platformID, err)
 	}
 
 	// Provision premium access (simple create subscription)
 	_, err = h.queries.CreateSubscription(ctx, generated.CreateSubscriptionParams{
+		AppID:     appID,
 		UserID:    user.ID,
 		Status:    "active",
 		Source:    "stripe",

@@ -123,3 +123,15 @@ sql:
             go_type: "time.Time"
           - column: "admin_credentials.updated_at"
             go_type: "time.Time"
+          # apps
+          - column: "apps.id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "apps.created_at"
+            go_type: "time.Time"
+          # app_id foreign keys
+          - column: "users.app_id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "subscriptions.app_id"
+            go_type: "github.com/google/uuid.UUID"
+          - column: "transactions.app_id"
+            go_type: "github.com/google/uuid.UUID"

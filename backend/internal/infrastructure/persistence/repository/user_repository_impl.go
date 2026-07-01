@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/domain/repository"
@@ -55,7 +56,11 @@ func (r *userRepositoryImpl) GetByID(ctx context.Context, id uuid.UUID) (*entity
 }
 
 func (r *userRepositoryImpl) GetByPlatformID(ctx context.Context, platformUserID string) (*entity.User, error) {
-	row, err := r.queries.GetUserByPlatformID(ctx, platformUserID)
+	appID, _ := appctx.AppIDFromCtx(ctx)
+	row, err := r.queries.GetUserByPlatformID(ctx, generated.GetUserByPlatformIDParams{
+		AppID:          appID,
+		PlatformUserID: platformUserID,
+	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("user not found: %w", domainErrors.ErrUserNotFound)
@@ -110,7 +115,11 @@ func (r *userRepositoryImpl) SoftDelete(ctx context.Context, id uuid.UUID) error
 }
 
 func (r *userRepositoryImpl) ExistsByPlatformID(ctx context.Context, platformUserID string) (bool, error) {
-	_, err := r.queries.GetUserByPlatformID(ctx, platformUserID)
+	appID, _ := appctx.AppIDFromCtx(ctx)
+	_, err := r.queries.GetUserByPlatformID(ctx, generated.GetUserByPlatformIDParams{
+		AppID:          appID,
+		PlatformUserID: platformUserID,
+	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return false, nil

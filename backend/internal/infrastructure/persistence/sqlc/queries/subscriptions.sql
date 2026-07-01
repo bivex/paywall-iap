@@ -1,6 +1,6 @@
 -- name: CreateSubscription :one
-INSERT INTO subscriptions (user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO subscriptions (app_id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: GetSubscriptionByID :one
@@ -10,12 +10,13 @@ LIMIT 1;
 
 -- name: GetActiveSubscriptionByUserID :one
 SELECT * FROM subscriptions
-WHERE user_id = $1 AND status = 'active' AND deleted_at IS NULL
+WHERE app_id = $1 AND user_id = $2 AND status = 'active' AND deleted_at IS NULL
 LIMIT 1;
 
 -- name: GetAccessCheck :one
 SELECT id, status, expires_at FROM subscriptions
-WHERE user_id = $1
+WHERE app_id = $1
+  AND user_id = $2
   AND status = 'active'
   AND expires_at > now()
   AND deleted_at IS NULL
@@ -41,19 +42,21 @@ RETURNING *;
 
 -- name: GetActiveSubscriptionCount :one
 SELECT COUNT(*) FROM subscriptions
-WHERE status = 'active'
+WHERE app_id = $1
+  AND status = 'active'
   AND expires_at > now()
   AND deleted_at IS NULL;
 
 -- name: GetSubscriptionsByUserID :many
 SELECT * FROM subscriptions
-WHERE user_id = $1 AND deleted_at IS NULL
+WHERE app_id = $1 AND user_id = $2 AND deleted_at IS NULL
 ORDER BY created_at DESC;
 
 -- name: GetUsersWithRecentlyCancelledSubscriptions :many
 SELECT DISTINCT user_id FROM subscriptions
-WHERE status = 'cancelled'
-  AND updated_at > now() - ($1 * INTERVAL '1 day')
+WHERE app_id = $1
+  AND status = 'cancelled'
+  AND updated_at > now() - ($2 * INTERVAL '1 day')
   AND deleted_at IS NULL;
 
 -- name: GetSubscriptionByProviderTxID :one

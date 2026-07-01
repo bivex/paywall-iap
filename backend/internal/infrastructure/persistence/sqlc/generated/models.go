@@ -34,6 +34,14 @@ type AnalyticsAggregate struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+type App struct {
+	ID        uuid.UUID `json:"id"`
+	BundleID  string    `json:"bundle_id"`
+	Name      string    `json:"name"`
+	Platform  string    `json:"platform"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type AutomationJobRunLog struct {
 	ID                    pgtype.UUID        `json:"id"`
 	JobName               string             `json:"job_name"`
@@ -61,6 +69,7 @@ type GracePeriod struct {
 
 type Subscription struct {
 	ID        uuid.UUID  `json:"id"`
+	AppID     uuid.UUID  `json:"app_id"`
 	UserID    uuid.UUID  `json:"user_id"`
 	Status    string     `json:"status"`
 	Source    string     `json:"source"`
@@ -76,6 +85,7 @@ type Subscription struct {
 
 type Transaction struct {
 	ID             uuid.UUID `json:"id"`
+	AppID          uuid.UUID `json:"app_id"`
 	UserID         uuid.UUID `json:"user_id"`
 	SubscriptionID uuid.UUID `json:"subscription_id"`
 	Amount         float64   `json:"amount"`
@@ -88,6 +98,7 @@ type Transaction struct {
 
 type User struct {
 	ID              uuid.UUID  `json:"id"`
+	AppID           uuid.UUID  `json:"app_id"`
 	PlatformUserID  string     `json:"platform_user_id"`
 	DeviceID        *string    `json:"device_id"`
 	Platform        string     `json:"platform"`

@@ -19,6 +19,7 @@ import (
 	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 	persistenceRepo "github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/bivex/paywall-iap/internal/worker/tasks"
@@ -225,6 +226,7 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 
 	offset := (pageNum - 1) * limitNum
 	users, err := h.queries.ListUsers(c.Request.Context(), generated.ListUsersParams{
+		AppID:  appctx.MustAppIDFromCtx(c.Request.Context()),
 		Limit:  int32(limitNum),
 		Offset: int32(offset),
 	})
@@ -233,7 +235,7 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 		return
 	}
 
-	total, err := h.queries.CountUsers(c.Request.Context())
+	total, err := h.queries.CountUsers(c.Request.Context(), appctx.MustAppIDFromCtx(c.Request.Context()))
 	if err != nil {
 		response.InternalError(c, "Failed to count users")
 		return
@@ -294,14 +296,14 @@ func (h *AdminHandler) GetDashboardMetrics(c *gin.Context) {
 	monthAgo := now.AddDate(0, -1, 0)
 
 	// Active user count
-	activeUsers, err := h.queries.CountUsers(ctx)
+	activeUsers, err := h.queries.CountUsers(ctx, appctx.MustAppIDFromCtx(ctx))
 	if err != nil {
 		response.InternalError(c, "Failed to count users")
 		return
 	}
 
 	// Active subscription count
-	activeSubs, err := h.queries.GetActiveSubscriptionCount(ctx)
+	activeSubs, err := h.queries.GetActiveSubscriptionCount(ctx, appctx.MustAppIDFromCtx(ctx))
 	if err != nil {
 		response.InternalError(c, "Failed to count subscriptions")
 		return

@@ -1,6 +1,6 @@
 -- name: CreateTransaction :one
-INSERT INTO transactions (user_id, subscription_id, amount, currency, status, receipt_hash, provider_tx_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO transactions (app_id, user_id, subscription_id, amount, currency, status, receipt_hash, provider_tx_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
 -- name: GetTransactionByID :one
@@ -10,9 +10,9 @@ LIMIT 1;
 
 -- name: GetTransactionsByUserID :many
 SELECT * FROM transactions
-WHERE user_id = $1
+WHERE app_id = $1 AND user_id = $2
 ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
+LIMIT $3 OFFSET $4;
 
 -- name: CheckDuplicateReceipt :one
 SELECT id FROM transactions
@@ -22,11 +22,12 @@ LIMIT 1;
 -- name: GetLTVByUserID :one
 SELECT COALESCE(SUM(amount), 0) AS ltv
 FROM transactions
-WHERE user_id = $1 AND status = 'success';
+WHERE app_id = $1 AND user_id = $2 AND status = 'success';
 
 -- name: GetDailyRevenue :one
 SELECT COALESCE(SUM(amount), 0) AS revenue
 FROM transactions
-WHERE status = 'success'
-  AND created_at >= $1
-  AND created_at < $2;
+WHERE app_id = $1
+  AND status = 'success'
+  AND created_at >= $2
+  AND created_at < $3;

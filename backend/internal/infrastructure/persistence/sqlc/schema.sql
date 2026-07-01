@@ -2,13 +2,22 @@
 -- This file is the source of truth for sqlc
 -- Keep in sync with migrations
 
+CREATE TABLE apps (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bundle_id   TEXT UNIQUE NOT NULL,
+    name        TEXT NOT NULL,
+    platform    TEXT NOT NULL CHECK (platform IN ('ios', 'android')),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE users (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    platform_user_id    TEXT UNIQUE NOT NULL,
+    app_id              UUID NOT NULL REFERENCES apps(id),
+    platform_user_id    TEXT NOT NULL,
     device_id           TEXT,
     platform            TEXT NOT NULL CHECK (platform IN ('ios', 'android')),
     app_version         TEXT NOT NULL,
-    email               TEXT UNIQUE,
+    email               TEXT,
     role                TEXT NOT NULL DEFAULT 'user',
     ltv                 NUMERIC(10,2) DEFAULT 0,
     ltv_updated_at      TIMESTAMPTZ,
@@ -19,8 +28,11 @@ CREATE TABLE users (
     has_viewed_ads      BOOLEAN NOT NULL DEFAULT false
 );
 
+CREATE UNIQUE INDEX idx_users_app_platform_user ON users(app_id, platform_user_id);
+
 CREATE TABLE subscriptions (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    app_id          UUID NOT NULL REFERENCES apps(id),
     user_id         UUID NOT NULL REFERENCES users(id),
     status          TEXT NOT NULL CHECK (status IN ('active', 'expired', 'cancelled', 'grace')),
     source          TEXT NOT NULL CHECK (source IN ('iap', 'stripe', 'paddle')),
@@ -36,6 +48,7 @@ CREATE TABLE subscriptions (
 
 CREATE TABLE transactions (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    app_id              UUID NOT NULL REFERENCES apps(id),
     user_id             UUID NOT NULL REFERENCES users(id),
     subscription_id     UUID NOT NULL REFERENCES subscriptions(id),
     amount              NUMERIC(10,2) NOT NULL,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/domain/repository"
@@ -23,7 +24,9 @@ func NewSubscriptionRepository(queries *generated.Queries) repository.Subscripti
 }
 
 func (r *subscriptionRepositoryImpl) Create(ctx context.Context, sub *entity.Subscription) error {
+	appID, _ := appctx.AppIDFromCtx(ctx)
 	params := generated.CreateSubscriptionParams{
+		AppID:     appID,
 		UserID:    sub.UserID,
 		Status:    string(sub.Status),
 		Source:    string(sub.Source),
@@ -56,7 +59,11 @@ func (r *subscriptionRepositoryImpl) GetByID(ctx context.Context, id uuid.UUID) 
 }
 
 func (r *subscriptionRepositoryImpl) GetActiveByUserID(ctx context.Context, userID uuid.UUID) (*entity.Subscription, error) {
-	row, err := r.queries.GetActiveSubscriptionByUserID(ctx, userID)
+	appID, _ := appctx.AppIDFromCtx(ctx)
+	row, err := r.queries.GetActiveSubscriptionByUserID(ctx, generated.GetActiveSubscriptionByUserIDParams{
+		AppID:  appID,
+		UserID: userID,
+	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, fmt.Errorf("active subscription not found: %w", domainErrors.ErrSubscriptionNotActive)
@@ -125,7 +132,11 @@ func (r *subscriptionRepositoryImpl) Cancel(ctx context.Context, id uuid.UUID) e
 }
 
 func (r *subscriptionRepositoryImpl) CanAccess(ctx context.Context, userID uuid.UUID) (bool, error) {
-	_, err := r.queries.GetAccessCheck(ctx, userID)
+	appID, _ := appctx.AppIDFromCtx(ctx)
+	_, err := r.queries.GetAccessCheck(ctx, generated.GetAccessCheckParams{
+		AppID:  appID,
+		UserID: userID,
+	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return false, nil
@@ -137,7 +148,11 @@ func (r *subscriptionRepositoryImpl) CanAccess(ctx context.Context, userID uuid.
 }
 
 func (r *subscriptionRepositoryImpl) GetUsersWithCancelledSubscriptions(ctx context.Context, daysSinceChurn int) ([]uuid.UUID, error) {
-	return r.queries.GetUsersWithRecentlyCancelledSubscriptions(ctx, int32(daysSinceChurn))
+	appID, _ := appctx.AppIDFromCtx(ctx)
+	return r.queries.GetUsersWithRecentlyCancelledSubscriptions(ctx, generated.GetUsersWithRecentlyCancelledSubscriptionsParams{
+		AppID:   appID,
+		Column2: daysSinceChurn,
+	})
 }
 
 func (r *subscriptionRepositoryImpl) mapToEntity(row generated.Subscription) *entity.Subscription {
