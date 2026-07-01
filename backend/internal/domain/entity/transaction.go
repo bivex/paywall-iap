@@ -16,6 +16,7 @@ const (
 
 type Transaction struct {
 	ID             uuid.UUID
+	AppID          uuid.UUID
 	UserID         uuid.UUID
 	SubscriptionID uuid.UUID
 	Amount         float64
@@ -27,9 +28,10 @@ type Transaction struct {
 }
 
 // NewTransaction creates a new transaction entity
-func NewTransaction(userID, subscriptionID uuid.UUID, amount float64, currency string) *Transaction {
+func NewTransaction(appID, userID, subscriptionID uuid.UUID, amount float64, currency string) *Transaction {
 	return &Transaction{
 		ID:             uuid.New(),
+		AppID:          appID,
 		UserID:         userID,
 		SubscriptionID: subscriptionID,
 		Amount:         amount,

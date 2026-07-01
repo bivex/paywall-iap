@@ -97,7 +97,7 @@ func NewTransactionFactory() *TransactionFactory {
 }
 
 func (f *TransactionFactory) CreateSuccessful(userID, subscriptionID uuid.UUID, amount float64) *entity.Transaction {
-	tx := entity.NewTransaction(userID, subscriptionID, amount, "USD")
+	tx := entity.NewTransaction(uuid.Nil, userID, subscriptionID, amount, "USD")
 	tx.Status = entity.TransactionStatusSuccess
 	tx.ReceiptHash = "sha256_" + uuid.New().String()
 	tx.ProviderTxID = "tx_" + uuid.New().String()
@@ -105,7 +105,7 @@ func (f *TransactionFactory) CreateSuccessful(userID, subscriptionID uuid.UUID, 
 }
 
 func (f *TransactionFactory) CreateFailed(userID, subscriptionID uuid.UUID) *entity.Transaction {
-	tx := entity.NewTransaction(userID, subscriptionID, 9.99, "USD")
+	tx := entity.NewTransaction(uuid.Nil, userID, subscriptionID, 9.99, "USD")
 	tx.Status = entity.TransactionStatusFailed
 	return tx
 }

@@ -307,6 +307,7 @@ func (r *appRepositoryImpl) scanAndDecryptCredentials(rows pgx.Rows) (*entity.Ap
 		c                                                   entity.AppCredentials
 		appleSecretEnc, applePrivKeyEnc                     *string
 		appleTeamID, appleKeyID, appleBundleID              *string
+		appleEnvironment                                    *string
 		googlePackageName                                   *string
 		googleSAEnc                                         *string
 		stripePublishableKey                                *string
@@ -317,7 +318,7 @@ func (r *appRepositoryImpl) scanAndDecryptCredentials(rows pgx.Rows) (*entity.Ap
 	err := rows.Scan(
 		&c.ID, &c.AppID, &c.Provider,
 		&appleSecretEnc, &appleTeamID, &appleKeyID,
-		&applePrivKeyEnc, &appleBundleID, &c.AppleEnvironment,
+		&applePrivKeyEnc, &appleBundleID, &appleEnvironment,
 		&googlePackageName, &googleSAEnc,
 		&stripePublishableKey, &stripeSecretEnc, &stripeWHEnc,
 		&paddleVendorID, &paddleAPIEnc, &paddleWHEnc,
@@ -337,6 +338,7 @@ func (r *appRepositoryImpl) scanAndDecryptCredentials(rows pgx.Rows) (*entity.Ap
 	c.AppleTeamID = derefStr(appleTeamID)
 	c.AppleKeyID = derefStr(appleKeyID)
 	c.AppleBundleID = derefStr(appleBundleID)
+	c.AppleEnvironment = derefStr(appleEnvironment)
 	c.GooglePackageName = derefStr(googlePackageName)
 	c.StripePublishableKey = derefStr(stripePublishableKey)
 	c.PaddleVendorID = derefStr(paddleVendorID)

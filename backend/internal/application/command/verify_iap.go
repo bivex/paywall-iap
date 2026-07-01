@@ -167,7 +167,7 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uui
 	}
 
 	// Create transaction record
-	txn := entity.NewTransaction(userUUID, sub.ID, 0, "USD")
+	txn := entity.NewTransaction(appID, userUUID, sub.ID, 0, "USD")
 	txn.ReceiptHash = receiptHash
 	txn.ProviderTxID = result.TransactionID
 	if err := c.transactionRepo.Create(ctx, txn); err != nil {

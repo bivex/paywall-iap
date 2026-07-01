@@ -23,6 +23,7 @@ func NewTransactionRepository(queries *generated.Queries) repository.Transaction
 
 func (r *transactionRepositoryImpl) Create(ctx context.Context, txn *entity.Transaction) error {
 	params := generated.CreateTransactionParams{
+		AppID:          txn.AppID,
 		UserID:         txn.UserID,
 		SubscriptionID: txn.SubscriptionID,
 		Amount:         txn.Amount,

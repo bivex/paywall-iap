@@ -95,6 +95,8 @@ services:
       - WEBHOOK_URL=http://api:8080/webhook/apple
     volumes:
       - apple-mock-cache:/app/tmp
+      # Seed plans on every start — bind mount wins over the named volume file
+      - ../../tests/apple-of-my-iap/config/plans.json:/app/tmp/plans.json:ro
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:9090/"]
       interval: 5s
