@@ -28,6 +28,20 @@ export function isFetchError<T>(result: ServerFetchResult<T>): result is FetchEr
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
 /**
+ * Read the admin session token and selected app id from cookies, for Server
+ * Actions that call the multi-tenant backend directly (so they can attach the
+ * X-App-ID header without going through serverFetch). `token`/`appId` are
+ * undefined when absent.
+ */
+export async function getAuth(): Promise<{ token?: string; appId?: string }> {
+  const cookieStore = await cookies();
+  return {
+    token: cookieStore.get("admin_access_token")?.value,
+    appId: cookieStore.get("admin_app_id")?.value,
+  };
+}
+
+/**
  * Authenticated server-side fetch for admin API calls.
  *
  * Auth handling (callers never check the token themselves):

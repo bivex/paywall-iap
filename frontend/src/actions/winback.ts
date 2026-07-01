@@ -1,18 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 
 import type { LaunchWinbackCampaignInput, WinbackCampaign } from "@/lib/winback";
+import { getAuth } from "@/lib/server-fetch";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
-
-async function getAdminToken(): Promise<string | undefined> {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_access_token")?.value;
-}
 
 async function parseResponse<T>(res: Response): Promise<ActionResult<T>> {
   const body = await res.json().catch(() => ({}));
@@ -29,12 +24,12 @@ async function parseResponse<T>(res: Response): Promise<ActionResult<T>> {
 }
 
 export async function getWinbackCampaigns(): Promise<WinbackCampaign[] | null> {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return null;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/winback-campaigns`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}) },
       cache: "no-store",
     });
     const parsed = await parseResponse<WinbackCampaign[]>(res);
@@ -45,13 +40,13 @@ export async function getWinbackCampaigns(): Promise<WinbackCampaign[] | null> {
 }
 
 export async function launchWinbackCampaignAction(payload: LaunchWinbackCampaignInput) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<WinbackCampaign>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/winback-campaigns`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<WinbackCampaign>(res);
@@ -63,13 +58,13 @@ export async function launchWinbackCampaignAction(payload: LaunchWinbackCampaign
 }
 
 export async function deactivateWinbackCampaignAction(campaignId: string) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<WinbackCampaign>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/winback-campaigns/${encodeURIComponent(campaignId)}/deactivate`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}) },
     });
     const parsed = await parseResponse<WinbackCampaign>(res);
     if (parsed.ok) revalidatePath("/dashboard/winback");

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { getAuth } from "@/lib/server-fetch";
 
 import type {
   ExperimentAutomationPolicyUpdateInput,
@@ -14,11 +14,6 @@ import type {
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
-
-async function getAdminToken(): Promise<string | undefined> {
-  const cookieStore = await cookies();
-  return cookieStore.get("admin_access_token")?.value;
-}
 
 async function parseResponse<T>(res: Response): Promise<ActionResult<T>> {
   const body = await res.json().catch(() => ({}));
@@ -41,12 +36,12 @@ function revalidateExperimentPaths() {
 }
 
 export async function getExperiments(): Promise<ExperimentSummary[] | null> {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return null;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}) },
       cache: "no-store",
     });
     const parsed = await parseResponse<ExperimentSummary[]>(res);
@@ -57,13 +52,13 @@ export async function getExperiments(): Promise<ExperimentSummary[] | null> {
 }
 
 export async function createExperimentAction(payload: ExperimentInput) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
@@ -75,13 +70,13 @@ export async function createExperimentAction(payload: ExperimentInput) {
 }
 
 export async function updateExperimentAction(id: string, payload: ExperimentUpdateInput) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}`, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
@@ -96,13 +91,13 @@ async function postExperimentLifecycleAction(
   id: string,
   action: "pause" | "resume" | "complete" | "confirm-winner" | "hold-for-review",
 ) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/${action}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
       body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
@@ -134,13 +129,13 @@ export async function holdExperimentForReviewAction(id: string) {
 }
 
 export async function lockExperimentAction(id: string, payload?: { locked_until?: string | null; reason?: string }) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/lock`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
       body: JSON.stringify({
         locked_until: payload?.locked_until ?? null,
         reason: payload?.reason?.trim() ? payload.reason.trim() : undefined,
@@ -155,13 +150,13 @@ export async function lockExperimentAction(id: string, payload?: { locked_until?
 }
 
 export async function unlockExperimentAction(id: string) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/unlock`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
       body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
@@ -173,13 +168,13 @@ export async function unlockExperimentAction(id: string) {
 }
 
 export async function repairExperimentAction(id: string) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentRepairResult>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/repair`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
       body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentRepairResult>(res);
@@ -194,13 +189,13 @@ export async function updateExperimentAutomationPolicyAction(
   id: string,
   payload: ExperimentAutomationPolicyUpdateInput,
 ) {
-  const token = await getAdminToken();
+  const { token, appId } = await getAuth();
   if (!token) return { ok: false, error: "Unauthorized" } satisfies ActionResult<ExperimentSummary>;
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/automation-policy`, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);

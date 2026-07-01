@@ -64,3 +64,4 @@ backend/api
 tests/load/results/
 backend/.hypothesis/
 /.hypothesis/
+/.playwright-mcp
