@@ -158,7 +158,10 @@ function PaywallPreviewModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-5xl w-full p-0 overflow-hidden">
+      <DialogContent
+        className={cn("w-full p-0 overflow-hidden", mode === "desktop" && "!max-w-5xl")}
+        style={mode === "phone" ? { maxWidth: "358px" } : undefined}
+      >
         <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="flex items-center gap-3">
             <span>Preview</span>
@@ -183,26 +186,33 @@ function PaywallPreviewModal({
             </div>
           </div>
 
-          <ScrollArea className="h-[70vh]">
-            <TabsContent value="desktop" className="mt-0 p-6">
-              <div className="rounded-[32px] bg-muted/30 p-4">
-                <WebPreview
-                  paywall={paywall}
-                  selectedPlanId={selectedPlanId}
-                  onSelectPlan={setSelectedPlanId}
-                  selectedLabel="Selected"
-                />
-              </div>
-            </TabsContent>
-            <TabsContent value="phone" className="mt-0 p-6 flex justify-center">
-              <MobilePreview
-                paywall={paywall}
-                selectedPlanId={selectedPlanId}
-                onSelectPlan={setSelectedPlanId}
-                selectedLabel="Selected"
-              />
-            </TabsContent>
-          </ScrollArea>
+          <div className={cn(
+            "overflow-hidden border-primary/20 bg-linear-to-b from-primary/5 via-background to-background",
+            mode === "phone" ? "p-4" : "p-0"
+          )}>
+            <ScrollArea className="h-[min(78vh,860px)]">
+              <TabsContent value="desktop" className="mt-0">
+                <div className="rounded-[32px] bg-muted/30 p-3 sm:p-4">
+                  <WebPreview
+                    paywall={paywall}
+                    selectedPlanId={selectedPlanId}
+                    onSelectPlan={setSelectedPlanId}
+                    selectedLabel="Selected"
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="phone" className="mt-0">
+                <div className="rounded-[32px] bg-muted/30 p-3 sm:p-4">
+                  <MobilePreview
+                    paywall={paywall}
+                    selectedPlanId={selectedPlanId}
+                    onSelectPlan={setSelectedPlanId}
+                    selectedLabel="Selected"
+                  />
+                </div>
+              </TabsContent>
+            </ScrollArea>
+          </div>
         </Tabs>
       </DialogContent>
     </Dialog>
