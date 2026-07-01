@@ -453,7 +453,10 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, d *dependencies) {
 	protected := v1.Group("")
 	protected.Use(d.jwtMiddleware.Authenticate())
 	{
-		protected.POST("/verify/iap", d.iapHandler.VerifyReceipt)
+		protected.POST("/verify/iap",
+			d.rateLimiter.Middleware(middleware.ByUserID, middleware.StrictConfig),
+			d.iapHandler.VerifyReceipt,
+		)
 
 		subs := protected.Group("/subscription")
 		{

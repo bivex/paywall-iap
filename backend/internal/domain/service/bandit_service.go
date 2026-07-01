@@ -352,6 +352,16 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 	return bestArm.ID, nil
 }
 
+// SelectArmWithMeta returns the assigned arm ID and whether it was a new assignment
+func (b *ThompsonSamplingBandit) SelectArmWithMeta(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, bool, error) {
+	// Check for existing assignment first
+	if assignment, err := b.repo.GetActiveAssignment(ctx, experimentID, userID); err == nil && assignment != nil {
+		return assignment.ArmID, false, nil
+	}
+	armID, err := b.SelectArm(ctx, experimentID, userID)
+	return armID, err == nil, err
+}
+
 // UpdateReward updates the alpha/beta parameters for the selected arm
 // reward > 0 counts as a conversion (alpha increment)
 // reward <= 0 counts as a non-conversion (beta increment)

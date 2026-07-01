@@ -22,6 +22,7 @@ type BanditHandler struct {
 // BanditService defines the interface for bandit operations
 type BanditService interface {
 	SelectArm(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, error)
+	SelectArmWithMeta(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, bool, error)
 	TrackImpression(ctx context.Context, experimentID, armID, userID uuid.UUID, event *service.ImpressionEvent) error
 	UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error
 	UpdateRewardWithEvent(ctx context.Context, experimentID, armID uuid.UUID, reward float64, event *service.ConversionEvent) error
@@ -81,7 +82,7 @@ func (h *BanditHandler) Assign(c *gin.Context) {
 	}
 
 	// Get arm assignment using Thompson Sampling
-	armID, err := h.banditService.SelectArm(c.Request.Context(), experimentID, userID)
+	armID, isNew, err := h.banditService.SelectArmWithMeta(c.Request.Context(), experimentID, userID)
 	if err != nil {
 		if errors.Is(err, service.ErrExperimentArmsNotFound) {
 			response.NotFound(c, "Experiment not found or has no arms")
@@ -92,15 +93,11 @@ func (h *BanditHandler) Assign(c *gin.Context) {
 		return
 	}
 
-	// Check if this was a new assignment (from DB vs cache)
-	// For simplicity, we assume cached assignments return the same arm
-	// In production, you'd want to track this more explicitly
-
 	resp := AssignResponse{
 		ExperimentID: req.ExperimentID,
 		UserID:       req.UserID,
 		ArmID:        armID.String(),
-		IsNew:        false, // TODO: Track if assignment was from cache
+		IsNew:        isNew,
 	}
 
 	response.OK(c, resp)
