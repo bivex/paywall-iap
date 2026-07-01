@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getBanditSnapshotFromCookies } from "@/lib/server/bandit-admin";

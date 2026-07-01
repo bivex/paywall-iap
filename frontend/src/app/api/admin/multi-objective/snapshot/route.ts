@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getMultiObjectiveSnapshotFromCookies } from "@/lib/server/multi-objective-admin";
