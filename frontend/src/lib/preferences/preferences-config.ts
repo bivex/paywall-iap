@@ -66,12 +66,12 @@ type PreferencePersistenceConfig = {
  * Default preference values on first load.
  */
 export const PREFERENCE_DEFAULTS: PreferenceValueMap = {
-  theme_mode: "light",
+  theme_mode: "dark",
   theme_preset: "default",
   font: "inter",
-  content_layout: "centered",
+  content_layout: "full-width",
   navbar_style: "sticky",
-  sidebar_variant: "inset",
+  sidebar_variant: "sidebar",
   sidebar_collapsible: "icon",
 };
 
@@ -82,11 +82,11 @@ export const PREFERENCE_DEFAULTS: PreferenceValueMap = {
 export const PRESET_CONFIGS: Record<ThemePreset, PreferenceValueMap> = {
   default: {
     theme_preset: "default",
-    theme_mode: "light",
+    theme_mode: "dark",
     font: "inter",
-    content_layout: "centered",
+    content_layout: "full-width",
     navbar_style: "sticky",
-    sidebar_variant: "inset",
+    sidebar_variant: "sidebar",
     sidebar_collapsible: "icon",
   },
   brutalist: {
