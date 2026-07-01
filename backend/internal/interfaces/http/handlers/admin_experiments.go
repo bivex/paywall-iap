@@ -1359,11 +1359,7 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 	}
 	req = normalizeCreateAdminExperimentRequest(req)
 	if message := validateCreateAdminExperimentRequest(req); message != "" {
-		if message == "End time must be after start time" {
-			response.Conflict(c, message)
-		} else {
-			response.UnprocessableEntity(c, message)
-		}
+		response.UnprocessableEntity(c, message)
 		return
 	}
 
