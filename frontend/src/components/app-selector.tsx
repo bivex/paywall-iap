@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Check, ChevronsUpDown, Smartphone } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,7 @@ import {
 import { type App, useAppStore } from "@/stores/app-store";
 
 export function AppSelector() {
+  const router = useRouter();
   const { apps, selectedAppId, setApps, setSelectedAppId } = useAppStore();
 
   useEffect(() => {
@@ -46,6 +48,16 @@ export function AppSelector() {
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Mirror the selected app into a cookie so Server Components can attach the
+  // X-App-ID header (the selection otherwise lives only in client localStorage).
+  useEffect(() => {
+    if (!selectedAppId) return;
+    const prev = document.cookie.match(/(?:^|;\s*)admin_app_id=([^;]+)/)?.[1];
+    if (selectedAppId === prev) return;
+    document.cookie = `admin_app_id=${selectedAppId}; path=/; max-age=${60 * 60 * 24 * 30}; samesite=lax`;
+    router.refresh();
+  }, [selectedAppId, router]);
 
   const selected = apps.find((a) => a.id === selectedAppId);
 

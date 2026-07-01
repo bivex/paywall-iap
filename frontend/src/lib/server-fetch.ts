@@ -49,13 +49,18 @@ export async function serverFetch<T>(path: string, init?: RequestInit): Promise<
   if (!token) {
     redirect(LOGIN_PATH);
   }
+  const appId = cookieStore.get("admin_app_id")?.value;
 
   let res: Response;
   try {
     res = await fetch(`${BACKEND_URL}${path}`, {
       cache: "no-store",
       ...init,
-      headers: { Authorization: `Bearer ${token}`, ...(init?.headers ?? {}) },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        ...(init?.headers ?? {}),
+      },
     });
   } catch {
     return { error: true, message: "Could not reach the server. Please try again.", status: 0 };
