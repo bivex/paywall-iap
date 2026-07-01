@@ -291,6 +291,10 @@ func (h *AppSettingsHandler) DeleteAppCredentials(c *gin.Context) {
 		response.InternalError(c, "failed to delete credentials")
 		return
 	}
+	// Invalidate credential cache so stale keys are not used after deletion.
+	if h.resolver != nil {
+		h.resolver.Invalidate(id, provider)
+	}
 	response.NoContent(c)
 }
 
