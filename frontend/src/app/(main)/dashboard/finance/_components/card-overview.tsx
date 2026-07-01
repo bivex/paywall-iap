@@ -2,6 +2,7 @@
 
 import { addDays, format } from "date-fns";
 import { Home, Receipt, Sparkles, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import { siApple, siMastercard } from "simple-icons";
 
 import { SimpleIcon } from "@/components/simple-icon";
@@ -10,40 +11,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 
-const now = new Date();
-
-const upcomingPayments = [
-  {
-    id: 1,
-    icon: Home,
-    title: "Apartment Rent",
-    amount: 1200,
-    date: `Due on ${format(addDays(now, 2), "do MMMM yyyy")}`,
-  },
-  {
-    id: 2,
-    icon: Zap,
-    title: "Electricity Bill",
-    amount: 75,
-    date: `Due on ${format(addDays(now, 2), "do MMMM yyyy")}`,
-  },
-  {
-    id: 3,
-    icon: Sparkles,
-    title: "ChatGPT Plus",
-    amount: 20,
-    date: `Due on ${format(addDays(now, 7), "do MMMM yyyy")}`,
-  },
-  {
-    id: 4,
-    icon: Receipt,
-    title: "Credit Card Payment",
-    amount: 420,
-    date: `Due on ${format(addDays(now, 9), "do MMMM yyyy")}`,
-  },
-];
+function getUpcomingPayments(now: Date) {
+  return [
+    {
+      id: 1,
+      icon: Home,
+      title: "Apartment Rent",
+      amount: 1200,
+      date: `Due on ${format(addDays(now, 2), "do MMMM yyyy")}`,
+    },
+    {
+      id: 2,
+      icon: Zap,
+      title: "Electricity Bill",
+      amount: 75,
+      date: `Due on ${format(addDays(now, 2), "do MMMM yyyy")}`,
+    },
+    {
+      id: 3,
+      icon: Sparkles,
+      title: "ChatGPT Plus",
+      amount: 20,
+      date: `Due on ${format(addDays(now, 7), "do MMMM yyyy")}`,
+    },
+    {
+      id: 4,
+      icon: Receipt,
+      title: "Credit Card Payment",
+      amount: 420,
+      date: `Due on ${format(addDays(now, 9), "do MMMM yyyy")}`,
+    },
+  ];
+}
 
 export function CardOverview() {
+  const [upcomingPayments, setUpcomingPayments] = useState(getUpcomingPayments(new Date(0)));
+
+  useEffect(() => {
+    setUpcomingPayments(getUpcomingPayments(new Date()));
+  }, []);
+
   return (
     <Card className="shadow-xs">
       <CardHeader className="items-center">
