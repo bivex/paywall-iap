@@ -96,6 +96,14 @@ func (recommendationNoopBanditCache) SetAssignment(context.Context, string, uuid
 	return nil
 }
 
+func (recommendationNoopBanditCache) SetBytes(context.Context, string, []byte, time.Duration) error {
+	return nil
+}
+func (recommendationNoopBanditCache) GetBytes(context.Context, string) ([]byte, error) {
+	return nil, errors.New("cache miss")
+}
+func (recommendationNoopBanditCache) DeleteKey(context.Context, string) error { return nil }
+
 func NewExperimentWinnerRecommendationService(banditRepo BanditRepository) *ExperimentWinnerRecommendationService {
 	bandit := NewThompsonSamplingBandit(banditRepo, recommendationNoopBanditCache{}, zap.NewNop())
 	service := &ExperimentWinnerRecommendationService{calculator: bandit, simulations: 2000}

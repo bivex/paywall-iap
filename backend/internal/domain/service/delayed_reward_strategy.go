@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -426,21 +427,27 @@ func (s *DelayedRewardStrategy) getPendingCacheKey(id uuid.UUID) string {
 }
 
 func (s *DelayedRewardStrategy) cachePendingReward(ctx context.Context, key string, pending *PendingReward) error {
-	// Use the cache interface - would need to extend BanditCache for this
-	// For now, this is a placeholder
-	return nil
+	data, err := json.Marshal(pending)
+	if err != nil {
+		return fmt.Errorf("failed to marshal pending reward: %w", err)
+	}
+	return s.cache.SetBytes(ctx, key, data, s.defaultTTL)
 }
 
 func (s *DelayedRewardStrategy) getCachedPendingReward(ctx context.Context, key string) (*PendingReward, error) {
-	// Use the cache interface - would need to extend BanditCache for this
-	// For now, this is a placeholder
-	return nil, fmt.Errorf("not cached")
+	data, err := s.cache.GetBytes(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("not cached")
+	}
+	var pending PendingReward
+	if err := json.Unmarshal(data, &pending); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal pending reward: %w", err)
+	}
+	return &pending, nil
 }
 
 func (s *DelayedRewardStrategy) invalidatePendingCache(ctx context.Context, key string) error {
-	// Use the cache interface - would need to extend BanditCache for this
-	// For now, this is a placeholder
-	return nil
+	return s.cache.DeleteKey(ctx, key)
 }
 
 // GetConversionLinks retrieves all pending rewards linked to a transaction

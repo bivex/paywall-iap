@@ -49,11 +49,16 @@ func (noopBanditCache) SetArmStats(context.Context, string, *ArmStats, time.Dura
 	return nil
 }
 func (noopBanditCache) GetAssignment(context.Context, string) (uuid.UUID, error) {
-	return uuid.Nil, errors.New("cache miss")
+	return uuid.Nil, fmt.Errorf("not found")
 }
 func (noopBanditCache) SetAssignment(context.Context, string, uuid.UUID, time.Duration) error {
 	return nil
 }
+func (noopBanditCache) SetBytes(context.Context, string, []byte, time.Duration) error { return nil }
+func (noopBanditCache) GetBytes(context.Context, string) ([]byte, error) {
+	return nil, fmt.Errorf("not found")
+}
+func (noopBanditCache) DeleteKey(context.Context, string) error { return nil }
 
 type ExperimentRepairService struct {
 	repo        ExperimentRepairRepository

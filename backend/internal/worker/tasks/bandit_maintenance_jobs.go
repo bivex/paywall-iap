@@ -2,6 +2,9 @@ package tasks
 
 import (
 	"context"
+	"fmt"
+	"math"
+	"math/rand"
 	"time"
 
 	"github.com/google/uuid"
@@ -165,17 +168,62 @@ func (j *BanditMaintenanceJobs) CalculateWinProbabilities(
 		return CalculateWinProbabilitiesResult{}, nil
 	}
 
+	experimentID, err := uuid.Parse(args.Args.ExperimentID)
+	if err != nil {
+		return CalculateWinProbabilitiesResult{}, fmt.Errorf("invalid experiment_id: %w", err)
+	}
+
 	j.logger.Info("Calculating win probabilities",
 		zap.String("experiment_id", args.Args.ExperimentID),
 		zap.Int("simulations", args.Args.Simulations),
 	)
 
-	// This would require access to the base bandit
-	// For now, return placeholder
+	statsMap, err := j.engine.GetArmStatistics(ctx, experimentID)
+	if err != nil {
+		return CalculateWinProbabilitiesResult{}, fmt.Errorf("failed to get arm statistics: %w", err)
+	}
 
-	return CalculateWinProbabilitiesResult{
-		WinProbabilities: make(map[string]float64),
-	}, nil
+	simulations := args.Args.Simulations
+	if simulations <= 0 {
+		simulations = 10000
+	}
+
+	// Monte Carlo Thompson Sampling: sample Beta(alpha, beta) per arm per simulation
+	wins := make(map[uuid.UUID]int, len(statsMap))
+	for id := range statsMap {
+		wins[id] = 0
+	}
+
+	for i := 0; i < simulations; i++ {
+		bestArm := uuid.Nil
+		bestSample := -1.0
+		for id, stats := range statsMap {
+			alpha := stats.Alpha
+			beta := stats.Beta
+			if alpha <= 0 {
+				alpha = 1
+			}
+			if beta <= 0 {
+				beta = 1
+			}
+			// Beta sample approximation via gamma ratio
+			sample := sampleBeta(alpha, beta)
+			if sample > bestSample {
+				bestSample = sample
+				bestArm = id
+			}
+		}
+		if bestArm != uuid.Nil {
+			wins[bestArm]++
+		}
+	}
+
+	result := make(map[string]float64, len(wins))
+	for id, w := range wins {
+		result[id.String()] = float64(w) / float64(simulations)
+	}
+
+	return CalculateWinProbabilitiesResult{WinProbabilities: result}, nil
 }
 
 // RunFullMaintenanceArgs represents arguments for full maintenance run
@@ -255,4 +303,39 @@ func (j *BanditMaintenanceJobs) SyncObjectiveStats(
 	return SyncObjectiveStatsResult{
 		StatsSynced: synced,
 	}, nil
+}
+
+// sampleBeta samples from a Beta(alpha, beta) distribution using the Johnk method.
+func sampleBeta(alpha, beta float64) float64 {
+	// Use Johnk's method: sample two gamma RVs, return ratio
+	g1 := sampleGamma(alpha)
+	g2 := sampleGamma(beta)
+	if g1+g2 == 0 {
+		return 0.5
+	}
+	return g1 / (g1 + g2)
+}
+
+// sampleGamma samples from Gamma(shape, 1) using Marsaglia-Tsang method.
+func sampleGamma(shape float64) float64 {
+	if shape < 1 {
+		return sampleGamma(1+shape) * math.Pow(rand.Float64(), 1/shape)
+	}
+	d := shape - 1.0/3.0
+	c := 1.0 / math.Sqrt(9*d)
+	for {
+		x := rand.NormFloat64()
+		v := 1 + c*x
+		if v <= 0 {
+			continue
+		}
+		v = v * v * v
+		u := rand.Float64()
+		if u < 1-0.0331*(x*x)*(x*x) {
+			return d * v
+		}
+		if math.Log(u) < 0.5*x*x+d*(1-v+math.Log(v)) {
+			return d * v
+		}
+	}
 }

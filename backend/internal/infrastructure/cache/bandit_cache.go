@@ -146,6 +146,34 @@ func (c *RedisBanditCache) InvalidateArmStats(ctx context.Context, armID uuid.UU
 	return nil
 }
 
+// SetBytes stores raw bytes under key with TTL
+func (c *RedisBanditCache) SetBytes(ctx context.Context, key string, data []byte, ttl time.Duration) error {
+	if err := c.client.Set(ctx, key, data, ttl).Err(); err != nil {
+		return fmt.Errorf("failed to set bytes cache key %s: %w", key, err)
+	}
+	return nil
+}
+
+// GetBytes retrieves raw bytes stored under key
+func (c *RedisBanditCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
+	data, err := c.client.Get(ctx, key).Bytes()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get bytes cache key %s: %w", key, err)
+	}
+	return data, nil
+}
+
+// DeleteKey removes a key from cache
+func (c *RedisBanditCache) DeleteKey(ctx context.Context, key string) error {
+	if err := c.client.Del(ctx, key).Err(); err != nil {
+		return fmt.Errorf("failed to delete cache key %s: %w", key, err)
+	}
+	return nil
+}
+
 // InvalidateAssignment removes a user's assignment from cache
 func (c *RedisBanditCache) InvalidateAssignment(ctx context.Context, experimentID, userID uuid.UUID) error {
 	key := fmt.Sprintf("ab:assign:%s:%s", experimentID.String(), userID.String())

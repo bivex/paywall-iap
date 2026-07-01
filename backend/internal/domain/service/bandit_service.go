@@ -42,6 +42,10 @@ type BanditCache interface {
 	SetArmStats(ctx context.Context, key string, stats *ArmStats, ttl time.Duration) error
 	GetAssignment(ctx context.Context, key string) (uuid.UUID, error)
 	SetAssignment(ctx context.Context, key string, armID uuid.UUID, ttl time.Duration) error
+	// Generic JSON cache for arbitrary structs (pending rewards, etc.)
+	SetBytes(ctx context.Context, key string, data []byte, ttl time.Duration) error
+	GetBytes(ctx context.Context, key string) ([]byte, error)
+	DeleteKey(ctx context.Context, key string) error
 }
 
 // Arm represents an experiment arm (variant)
