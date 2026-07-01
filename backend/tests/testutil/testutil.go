@@ -7,10 +7,36 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
+
+
+
+
+// SetupTestDBWithT creates a test PostgreSQL container and returns a pool.
+// The container is automatically terminated when the test ends via t.Cleanup.
+func SetupTestDBWithT(t *testing.T) *pgxpool.Pool {
+	t.Helper()
+	ctx := context.Background()
+	pool, cleanup, err := SetupTestDB(ctx)
+	if err != nil {
+		t.Fatalf("SetupTestDB: %v", err)
+	}
+	t.Cleanup(cleanup)
+	return pool
+}
+
+// TeardownTestDB closes the pool. Prefer t.Cleanup registered by SetupTestDBWithT;
+// use this only for explicit defer-style teardown.
+func TeardownTestDB(t *testing.T, pool *pgxpool.Pool) {
+	t.Helper()
+	if pool != nil {
+		pool.Close()
+	}
+}
 
 // SetupTestDB creates a test database container
 func SetupTestDB(ctx context.Context) (*pgxpool.Pool, func(), error) {
@@ -171,5 +197,59 @@ func AssertDBCount(t *testing.T, ctx context.Context, pool *pgxpool.Pool, table 
 	}
 	if count != expected {
 		t.Errorf("Expected %d rows in %s, got %d", expected, table, count)
+	}
+}
+
+// SetupTestRedis starts a Redis testcontainer and returns a connected client.
+// The container is automatically terminated when the test ends.
+func SetupTestRedis(t *testing.T) *redis.Client {
+	t.Helper()
+	ctx := context.Background()
+
+	redisContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image:        "redis:7-alpine",
+			ExposedPorts: []string{"6379/tcp"},
+			WaitingFor:   wait.ForLog("Ready to accept connections"),
+		},
+		Started: true,
+	})
+	if err != nil {
+		t.Fatalf("Failed to start Redis container: %v", err)
+	}
+
+	t.Cleanup(func() {
+		if err := redisContainer.Terminate(ctx); err != nil {
+			t.Logf("Failed to terminate Redis container: %v", err)
+		}
+	})
+
+	host, err := redisContainer.Host(ctx)
+	if err != nil {
+		t.Fatalf("Failed to get Redis container host: %v", err)
+	}
+	port, err := redisContainer.MappedPort(ctx, "6379")
+	if err != nil {
+		t.Fatalf("Failed to get Redis container port: %v", err)
+	}
+
+	client := redis.NewClient(&redis.Options{
+		Addr: fmt.Sprintf("%s:%s", host, port.Port()),
+	})
+
+	t.Cleanup(func() { _ = client.Close() })
+
+	return client
+}
+
+// TeardownTestRedis closes a Redis client created by SetupTestRedis.
+// Prefer using t.Cleanup (already registered by SetupTestRedis); call this
+// only when you need an explicit defer in test teardown.
+func TeardownTestRedis(t *testing.T, client *redis.Client) {
+	t.Helper()
+	if client != nil {
+		if err := client.Close(); err != nil {
+			t.Logf("TeardownTestRedis: close error: %v", err)
+		}
 	}
 }

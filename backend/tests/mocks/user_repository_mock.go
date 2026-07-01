@@ -63,6 +63,11 @@ func (m *MockUserRepository) ExistsByPlatformID(ctx context.Context, platformUse
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockUserRepository) ExistsByPlatformIDAndApp(ctx context.Context, platformUserID string, appID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, platformUserID, appID)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MockUserRepository) UpdatePurchaseChannel(ctx context.Context, id uuid.UUID, channel string) error {
 	args := m.Called(ctx, id, channel)
 	return args.Error(0)

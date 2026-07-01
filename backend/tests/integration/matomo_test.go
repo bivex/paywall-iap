@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -11,12 +10,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
 	matomoClient "github.com/bivex/paywall-iap/internal/infrastructure/external/matomo"
 	"github.com/bivex/paywall-iap/internal/domain/service"
+	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
+	"github.com/bivex/paywall-iap/tests/testutil"
 )
 
 // MockMatomoHTTPServer mocks the Matomo HTTP API
@@ -93,10 +93,10 @@ func TestMatomoEventDelivery(t *testing.T) {
 
 	t.Run("EnqueueEvent", func(t *testing.T) {
 		// Setup test database
-		db := testutil.SetupTestDB(t)
+		db := testutil.SetupTestDBWithT(t)
 		defer testutil.TeardownTestDB(t, db)
 
-		repo := service.NewPostgresMatomoEventRepository(db, logger)
+		repo := repository.NewPostgresMatomoEventRepository(db, logger)
 		forwarder := service.NewMatomoForwarder(matomo, repo, logger)
 
 		userID := uuid.New()
@@ -116,10 +116,10 @@ func TestMatomoEventDelivery(t *testing.T) {
 
 	t.Run("BatchProcessing", func(t *testing.T) {
 		// Setup test database
-		db := testutil.SetupTestDB(t)
+		db := testutil.SetupTestDBWithT(t)
 		defer testutil.TeardownTestDB(t, db)
 
-		repo := service.NewPostgresMatomoEventRepository(db, logger)
+		repo := repository.NewPostgresMatomoEventRepository(db, logger)
 		forwarder := service.NewMatomoForwarder(matomo, repo, logger)
 
 		// Enqueue multiple events
@@ -161,10 +161,10 @@ func TestMatomoEventDelivery(t *testing.T) {
 		flakyMatomo := matomoClient.NewClient(config, logger)
 
 		// Setup test database
-		db := testutil.SetupTestDB(t)
+		db := testutil.SetupTestDBWithT(t)
 		defer testutil.TeardownTestDB(t, db)
 
-		repo := service.NewPostgresMatomoEventRepository(db, logger)
+		repo := repository.NewPostgresMatomoEventRepository(db, logger)
 		forwarder := service.NewMatomoForwarder(flakyMatomo, repo, logger)
 
 		userID := uuid.New()
@@ -176,6 +176,7 @@ func TestMatomoEventDelivery(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, processed)
 		assert.Equal(t, 0, succeeded) // Failed on first try
+		assert.Equal(t, 1, failed)
 
 		// Check that event is scheduled for retry
 		events, err := repo.GetPendingEvents(ctx, 10)
@@ -191,10 +192,10 @@ func TestMatomoEventDelivery(t *testing.T) {
 
 	t.Run("FallbackStorage", func(t *testing.T) {
 		// Setup test database
-		db := testutil.SetupTestDB(t)
+		db := testutil.SetupTestDBWithT(t)
 		defer testutil.TeardownTestDB(t, db)
 
-		repo := service.NewPostgresMatomoEventRepository(db, logger)
+		repo := repository.NewPostgresMatomoEventRepository(db, logger)
 
 		// Create event that will fail permanently
 		failedEvent := &service.MatomoStagedEvent{
@@ -226,10 +227,10 @@ func TestMatomoEventDelivery(t *testing.T) {
 
 	t.Run("EcommerceEvent", func(t *testing.T) {
 		// Setup test database
-		db := testutil.SetupTestDB(t)
+		db := testutil.SetupTestDBWithT(t)
 		defer testutil.TeardownTestDB(t, db)
 
-		repo := service.NewPostgresMatomoEventRepository(db, logger)
+		repo := repository.NewPostgresMatomoEventRepository(db, logger)
 		forwarder := service.NewMatomoForwarder(matomo, repo, logger)
 
 		userID := uuid.New()
@@ -275,10 +276,10 @@ func TestMatomoEventDelivery(t *testing.T) {
 
 	t.Run("CleanupOldEvents", func(t *testing.T) {
 		// Setup test database
-		db := testutil.SetupTestDB(t)
+		db := testutil.SetupTestDBWithT(t)
 		defer testutil.TeardownTestDB(t, db)
 
-		repo := service.NewPostgresMatomoEventRepository(db, logger)
+		repo := repository.NewPostgresMatomoEventRepository(db, logger)
 
 		// Create old sent events
 		oldTime := time.Now().Add(-31 * 24 * time.Hour)
@@ -429,6 +430,4 @@ func timePtr(t time.Time) *time.Time {
 	return &t
 }
 
-func strPtr(s string) *string {
-	return &s
-}
+

@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -96,12 +97,10 @@ func TestAnalyticsAPI(t *testing.T) {
 						"day30": 40,
 					},
 					SampleSize: 1000,
-					Metrics: map[string]interface{}{
-						"revenue": map[string]interface{}{
-							"day1":  999.0,
-							"day7":  5994.0,
-							"day30": 19980.0,
-						},
+					Metrics: map[string]float64{
+						"revenue_day1":  999.0,
+						"revenue_day7":  5994.0,
+						"revenue_day30": 19980.0,
 					},
 				},
 			},
@@ -121,7 +120,7 @@ func TestAnalyticsAPI(t *testing.T) {
 			Date:       time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC),
 			CohortSize: 1000,
 			Retention:  cohortData.Cohorts[0].Retention,
-			Revenue:    cohortData.Cohorts[0].Metrics["revenue"].(map[string]interface{}),
+			Revenue:    cohortData.Cohorts[0].Metrics,
 		})
 		assert.NoError(t, err)
 
@@ -134,10 +133,9 @@ func TestAnalyticsAPI(t *testing.T) {
 
 	t.Run("LTVCalculationAndCaching", func(t *testing.T) {
 		// Setup test database
-		db := testutil.SetupTestDB(t)
+		db := testutil.SetupTestDBWithT(t)
 		defer testutil.TeardownTestDB(t, db)
 
-		mockMatomo := new(MockMatomoClient)
 
 		// Create mock cohort worker
 		mockCohortWorker := new(MockCohortWorker)
@@ -148,7 +146,7 @@ func TestAnalyticsAPI(t *testing.T) {
 		}, nil)
 
 		ltvService := service.NewLTVService(
-			mockMatomo,
+			nil, // matomoClient — concrete type; use nil for unit-level test
 			mockCohortWorker,
 			nil, // subscriptionRepo - will use defaults
 			logger,
@@ -261,12 +259,11 @@ func TestAnalyticsAPI(t *testing.T) {
 
 		// Cache funnel data
 		err := analyticsCache.SetFunnelData(ctx, "funnel_purchase", dateFrom, dateTo, &cache.FunnelData{
-			FunnelID:        funnelData.FunnelID,
-			FunnelName:      funnelData.FunnelName,
-			Steps:           convertFunnelSteps(funnelData.Steps),
-			TotalEntries:    funnelData.TotalEntries,
-			TotalExits:      funnelData.TotalExits,
-			ConversionRate:  funnelData.ConversionRate,
+			FunnelID:       funnelData.FunnelID,
+			Steps:          convertFunnelSteps(funnelData.Steps),
+			TotalEntries:   funnelData.TotalEntries,
+			TotalExits:     funnelData.TotalExits,
+			ConversionRate: funnelData.ConversionRate,
 		})
 		assert.NoError(t, err)
 
@@ -292,6 +289,14 @@ func (m *MockCohortWorker) CalculateLTVFromCohorts(ctx context.Context, userID u
 	return args.Get(0).(map[string]float64), args.Error(1)
 }
 
+func (m *MockCohortWorker) GetCohortMetrics(ctx context.Context, fromDate, toDate time.Time) ([]service.CohortMetrics, error) {
+	args := m.Called(ctx, fromDate, toDate)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]service.CohortMetrics), args.Error(1)
+}
+
 // TestAnalyticsHTTPEndpoints tests the HTTP endpoints
 func TestAnalyticsHTTPEndpoints(t *testing.T) {
 	if testing.Short() {
@@ -299,7 +304,7 @@ func TestAnalyticsHTTPEndpoints(t *testing.T) {
 	}
 
 	// Setup test infrastructure
-	db := testutil.SetupTestDB(t)
+	db := testutil.SetupTestDBWithT(t)
 	defer testutil.TeardownTestDB(t, db)
 
 	redisClient := testutil.SetupTestRedis(t)
@@ -308,10 +313,9 @@ func TestAnalyticsHTTPEndpoints(t *testing.T) {
 	logger := zap.NewNop()
 	ctx := context.Background()
 
-	mockMatomo := new(MockMatomoClient)
 	mockCohortWorker := new(MockCohortWorker)
 
-	ltvService := service.NewLTVService(mockMatomo, mockCohortWorker, nil, logger)
+	ltvService := service.NewLTVService(nil, mockCohortWorker, nil, logger)
 	analyticsCache := cache.NewAnalyticsCache(redisClient, logger)
 
 	// Setup Gin router
@@ -394,7 +398,7 @@ func TestAnalyticsHTTPEndpoints(t *testing.T) {
 		bodyJSON, err := json.Marshal(reqBody)
 		require.NoError(t, err)
 
-		req := httptest.NewRequest("POST", "/api/v1/analytics/ltv", bodyJSON)
+		req := httptest.NewRequest("POST", "/api/v1/analytics/ltv", bytes.NewReader(bodyJSON))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 
@@ -432,7 +436,7 @@ func TestAnalyticsHTTPEndpoints(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		var response map[string]interface{}
-		err = json.Unmarshal(w.Body.Bytes(), &response)
+		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
 
 		data, ok := response["data"].([]interface{})

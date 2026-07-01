@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -27,7 +26,7 @@ func TestBanditIntegrationTestSuite(t *testing.T) {
 	logger := zap.NewNop()
 
 	// Setup test database
-	db := testutil.SetupTestDB(t)
+	db := testutil.SetupTestDBWithT(t)
 	defer testutil.TeardownTestDB(t, db)
 
 	// Setup test Redis
@@ -120,7 +119,6 @@ func TestBanditIntegrationTestSuite(t *testing.T) {
 	t.Run("RewardTracking", func(t *testing.T) {
 		experimentID := uuid.New()
 		armID := uuid.New()
-		userID := uuid.New()
 
 		// Initialize arm stats
 		err := repo.UpdateArmStats(ctx, &service.ArmStats{
@@ -150,7 +148,6 @@ func TestBanditIntegrationTestSuite(t *testing.T) {
 	})
 
 	t.Run("DatabasePersistence", func(t *testing.T) {
-		experimentID := uuid.New()
 		armID := uuid.New()
 
 		// Create arm stats

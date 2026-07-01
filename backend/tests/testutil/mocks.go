@@ -119,6 +119,15 @@ func (r *mockUserRepo) ExistsByPlatformID(ctx context.Context, platformUserID st
 	return exists, err
 }
 
+func (r *mockUserRepo) ExistsByPlatformIDAndApp(ctx context.Context, platformUserID string, appID uuid.UUID) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx,
+		"SELECT EXISTS(SELECT 1 FROM users WHERE platform_user_id = $1 AND app_id = $2 AND deleted_at IS NULL)",
+		platformUserID, appID,
+	).Scan(&exists)
+	return exists, err
+}
+
 func (r *mockUserRepo) UpdatePurchaseChannel(ctx context.Context, id uuid.UUID, channel string) error {
 	_, err := r.pool.Exec(ctx,
 		"UPDATE users SET purchase_channel = $2 WHERE id = $1",
