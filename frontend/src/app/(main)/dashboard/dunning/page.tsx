@@ -1,9 +1,11 @@
 import Link from "next/link";
 
-import { AlertCircle, CheckCircle2, Clock, RefreshCw, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, RefreshCw, XCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { getRevenueOps } from "@/actions/revenue-ops";
+import { RetryError } from "@/components/retry-error";
+import { isFetchError } from "@/lib/server-fetch";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,13 +36,8 @@ export default async function DunningPage({
   const statusFilter = isDunningStatusFilter(sp.status) ? sp.status : "all";
   const report = await getRevenueOps(1);
 
-  if (!report) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground">
-        <AlertCircle className="h-8 w-8" />
-        <p className="text-sm">{t("states.loadFailed")}</p>
-      </div>
-    );
+  if (isFetchError(report)) {
+    return <RetryError message={t("states.loadFailed")} />;
   }
 
   const { dunning } = report;
