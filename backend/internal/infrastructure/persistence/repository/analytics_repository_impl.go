@@ -7,6 +7,7 @@ import (
 	"time"
 
 	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,14 +24,30 @@ func NewAnalyticsRepository(pool *pgxpool.Pool) domainRepo.AnalyticsRepository {
 }
 
 func (r *AnalyticsRepositoryImpl) GetRevenueBetween(ctx context.Context, start, end time.Time) (float64, error) {
-	query := `SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE status = 'success' AND created_at >= $1 AND created_at < $2`
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
 	var amount float64
-	err := r.pool.QueryRow(ctx, query, start, end).Scan(&amount)
+	var err error
+	if hasApp {
+		err = r.pool.QueryRow(ctx,
+			`SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE status = 'success' AND created_at >= $1 AND created_at < $2 AND app_id = $3`,
+			start, end, appID).Scan(&amount)
+	} else {
+		err = r.pool.QueryRow(ctx,
+			`SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE status = 'success' AND created_at >= $1 AND created_at < $2`,
+			start, end).Scan(&amount)
+	}
 	return amount, err
 }
 
 func (r *AnalyticsRepositoryImpl) GetMRR(ctx context.Context) (float64, error) {
-	query := `
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
+	appFilter := ""
+	args := []interface{}{}
+	if hasApp {
+		appFilter = "AND s.app_id = $1"
+		args = append(args, appID)
+	}
+	query := fmt.Sprintf(`
 		SELECT COALESCE(SUM(
 			CASE 
 				WHEN plan_type = 'monthly' THEN amount
@@ -42,32 +59,57 @@ func (r *AnalyticsRepositoryImpl) GetMRR(ctx context.Context) (float64, error) {
 			SELECT DISTINCT ON (s.id) s.plan_type, t.amount
 			FROM subscriptions s
 			JOIN transactions t ON s.id = t.subscription_id
-			WHERE s.status = 'active' AND t.status = 'success'
+			WHERE s.status = 'active' AND t.status = 'success' %s
 			ORDER BY s.id, t.created_at DESC
 		) as active_subs
-	`
+	`, appFilter)
 	var mrr float64
-	err := r.pool.QueryRow(ctx, query).Scan(&mrr)
+	err := r.pool.QueryRow(ctx, query, args...).Scan(&mrr)
 	return mrr, err
 }
 
 func (r *AnalyticsRepositoryImpl) GetActiveSubscriptionCountAt(ctx context.Context, timestamp time.Time) (int, error) {
-	query := `SELECT COUNT(*) FROM subscriptions WHERE created_at < $1 AND (expires_at >= $1 OR status != 'expired')`
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
 	var count int
-	err := r.pool.QueryRow(ctx, query, timestamp).Scan(&count)
+	var err error
+	if hasApp {
+		err = r.pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM subscriptions WHERE created_at < $1 AND (expires_at >= $1 OR status != 'expired') AND app_id = $2`,
+			timestamp, appID).Scan(&count)
+	} else {
+		err = r.pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM subscriptions WHERE created_at < $1 AND (expires_at >= $1 OR status != 'expired')`,
+			timestamp).Scan(&count)
+	}
 	return count, err
 }
 
 func (r *AnalyticsRepositoryImpl) GetChurnedCountBetween(ctx context.Context, start, end time.Time) (int, error) {
-	query := `SELECT COUNT(*) FROM subscriptions WHERE status = 'expired' AND updated_at >= $1 AND updated_at < $2`
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
 	var count int
-	err := r.pool.QueryRow(ctx, query, start, end).Scan(&count)
+	var err error
+	if hasApp {
+		err = r.pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM subscriptions WHERE status = 'expired' AND updated_at >= $1 AND updated_at < $2 AND app_id = $3`,
+			start, end, appID).Scan(&count)
+	} else {
+		err = r.pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM subscriptions WHERE status = 'expired' AND updated_at >= $1 AND updated_at < $2`,
+			start, end).Scan(&count)
+	}
 	return count, err
 }
 
 // GetMRRTrend returns monthly MRR for the last N months (oldest first).
 func (r *AnalyticsRepositoryImpl) GetMRRTrend(ctx context.Context, months int) ([]domainRepo.MonthlyMRR, error) {
-	query := `
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
+	appFilter := ""
+	args := []interface{}{months}
+	if hasApp {
+		appFilter = "AND s.app_id = $2"
+		args = append(args, appID)
+	}
+	query := fmt.Sprintf(`
 		WITH months AS (
 			SELECT generate_series(
 				date_trunc('month', now()) - ($1 - 1) * interval '1 month',
@@ -89,14 +131,15 @@ func (r *AnalyticsRepositoryImpl) GetMRRTrend(ctx context.Context, months int) (
 			ON s.status = 'active'
 			AND date_trunc('month', s.created_at) <= m.month_start
 			AND (s.expires_at >= m.month_start + interval '1 month' OR s.status != 'expired')
+			%s
 		LEFT JOIN transactions t
 			ON t.subscription_id = s.id
 			AND t.status = 'success'
 			AND date_trunc('month', t.created_at) = m.month_start
 		GROUP BY m.month_start
 		ORDER BY m.month_start ASC
-	`
-	rows, err := r.pool.Query(ctx, query, months)
+	`, appFilter)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -115,24 +158,40 @@ func (r *AnalyticsRepositoryImpl) GetMRRTrend(ctx context.Context, months int) (
 
 // GetSubscriptionStatusCounts returns counts broken down by status.
 func (r *AnalyticsRepositoryImpl) GetSubscriptionStatusCounts(ctx context.Context) (*domainRepo.SubscriptionStatusCounts, error) {
-	query := `
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
+	appFilter := ""
+	args := []interface{}{}
+	if hasApp {
+		appFilter = "WHERE app_id = $1"
+		args = append(args, appID)
+	}
+	query := fmt.Sprintf(`
 		SELECT
 			COUNT(*) FILTER (WHERE status = 'active')    AS active,
 			COUNT(*) FILTER (WHERE status = 'grace')     AS grace,
 			COUNT(*) FILTER (WHERE status = 'cancelled') AS cancelled,
 			COUNT(*) FILTER (WHERE status = 'expired')   AS expired
 		FROM subscriptions
-	`
+		%s
+	`, appFilter)
 	c := &domainRepo.SubscriptionStatusCounts{}
-	err := r.pool.QueryRow(ctx, query).Scan(&c.Active, &c.Grace, &c.Cancelled, &c.Expired)
+	err := r.pool.QueryRow(ctx, query, args...).Scan(&c.Active, &c.Grace, &c.Cancelled, &c.Expired)
 	return c, err
 }
 
 // GetChurnRiskCount returns the number of subscriptions in grace/dunning state.
 func (r *AnalyticsRepositoryImpl) GetChurnRiskCount(ctx context.Context) (int, error) {
-	query := `SELECT COUNT(*) FROM subscriptions WHERE status = 'grace'`
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
 	var count int
-	err := r.pool.QueryRow(ctx, query).Scan(&count)
+	var err error
+	if hasApp {
+		err = r.pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM subscriptions WHERE status = 'grace' AND app_id = $1`,
+			appID).Scan(&count)
+	} else {
+		err = r.pool.QueryRow(ctx,
+			`SELECT COUNT(*) FROM subscriptions WHERE status = 'grace'`).Scan(&count)
+	}
 	return count, err
 }
 

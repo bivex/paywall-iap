@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/gin-gonic/gin"
@@ -105,6 +106,11 @@ func (j *JWTMiddleware) Authenticate() gin.HandlerFunc {
 		}
 		if claims.AppID != "" {
 			c.Set("app_id", claims.AppID)
+			// Also inject into request context so repositories can access it
+			if appID, err := uuid.Parse(claims.AppID); err == nil {
+				r := c.Request.WithContext(appctx.WithAppID(c.Request.Context(), appID))
+				c.Request = r
+			}
 		}
 
 		c.Next()

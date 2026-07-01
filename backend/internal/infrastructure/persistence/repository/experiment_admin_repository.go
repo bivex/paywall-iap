@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
 
@@ -391,7 +392,14 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatusAndAutomationPolicyWit
 }
 
 func (r *ExperimentAdminRepository) ListExperimentAutomationStates(ctx context.Context) ([]service.ExperimentAutomationState, error) {
-	rows, err := r.pool.Query(ctx, `
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
+	appFilter := ""
+	args := []interface{}{}
+	if hasApp {
+		appFilter = "AND e.app_id = $1"
+		args = append(args, appID)
+	}
+	query := fmt.Sprintf(`
 		SELECT e.id,
 		       e.status,
 		       e.start_at,
@@ -402,7 +410,8 @@ func (r *ExperimentAdminRepository) ListExperimentAutomationStates(ctx context.C
 		       COALESCE((SELECT SUM(s.samples)::int FROM ab_test_arm_stats s INNER JOIN ab_test_arms a ON a.id = s.arm_id WHERE a.experiment_id = e.id), 0) AS total_samples,
 		       e.automation_policy
 		FROM ab_tests e
-		WHERE e.status IN ('draft', 'running')`)
+		WHERE e.status IN ('draft', 'running') %s`, appFilter)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query experiment automation states: %w", err)
 	}
@@ -596,12 +605,20 @@ func (r *ExperimentAdminRepository) GetExperimentObjectiveConfig(ctx context.Con
 }
 
 func (r *ExperimentAdminRepository) ListExperimentRepairCandidateIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
-	rows, err := r.pool.Query(ctx, `
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
+	appFilter := ""
+	args := []interface{}{limit}
+	if hasApp {
+		appFilter = "AND e.app_id = $2"
+		args = append(args, appID)
+	}
+	query := fmt.Sprintf(`
 		SELECT candidate.id
 		FROM (
 			SELECT DISTINCT e.id, e.updated_at
 			FROM ab_tests e
 			WHERE e.is_bandit = TRUE
+			  %s
 			  AND (
 				e.status IN ('running', 'paused')
 				OR EXISTS (
@@ -621,7 +638,8 @@ func (r *ExperimentAdminRepository) ListExperimentRepairCandidateIDs(ctx context
 			  )
 		) AS candidate
 		ORDER BY candidate.updated_at DESC, candidate.id
-		LIMIT $1`, limit)
+		LIMIT $1`, appFilter)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query experiment repair candidates: %w", err)
 	}
