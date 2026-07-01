@@ -161,8 +161,13 @@ NEXT_PUBLIC_API_URL=https://your-domain.com
 
 ## 📚 Documentation
 
+- [Architecture](docs/architecture.md)
+- [Environment Variables](docs/env-vars.md)
+- [Load Generator](docs/loadgen.md)
 - [API Specification](docs/api/openapi.yaml)
 - [Database Schema](docs/database/schema-erd.md)
+- [Multi-tenancy](docs/multi-tenancy.md)
+- [App Settings & Credentials](docs/app-settings-and-credentials.md)
 - [Deployment](docs/runbooks/deploy-procedure.md)
 - [Latency Optimization](docs/operations/latency-optimization.md)
 - [Wireframes](docs/Wireframes_Rethink.md)
