@@ -34,6 +34,7 @@ import (
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	app_handler "github.com/bivex/paywall-iap/internal/interfaces/http/handlers"
+	httpmiddleware "github.com/bivex/paywall-iap/internal/interfaces/http/middleware"
 )
 
 func main() {
@@ -467,58 +468,82 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 	admin.Use(d.jwtMiddleware.Authenticate())
 	admin.Use(middleware.AdminMiddleware(d.userRepo, cfg.JWT.Secret))
 	{
-		admin.POST("/users/:id/grant", d.adminHandler.GrantSubscription)
-		admin.POST("/users/:id/revoke", d.adminHandler.RevokeSubscription)
-		admin.POST("/users/:id/force-cancel", d.adminHandler.ForceCancel)
-		admin.POST("/users/:id/force-renew", d.adminHandler.ForceRenew)
-		admin.POST("/users/:id/grant-grace", d.adminHandler.GrantGracePeriod)
-		admin.GET("/users", d.adminHandler.ListUsers)
-		admin.GET("/users/search", d.adminHandler.SearchUsers)
-		admin.GET("/users/:id/profile", d.adminHandler.GetUserProfile)
-		admin.GET("/dashboard/metrics", d.adminHandler.GetDashboardMetrics)
+		// Global admin routes — no X-App-ID required
 		admin.GET("/audit-log", d.adminHandler.GetAuditLog)
-		admin.GET("/subscriptions", d.adminHandler.ListSubscriptions)
-		admin.GET("/subscriptions/:id", d.adminHandler.GetSubscriptionDetail)
-		admin.GET("/transactions", d.adminHandler.ListTransactions)
-		admin.GET("/transactions/:id", d.adminHandler.GetTransactionDetail)
-		admin.GET("/webhooks", d.adminHandler.ListWebhooks)
-		admin.GET("/analytics/report", d.adminHandler.GetAnalyticsReport)
-		admin.GET("/revenue-ops", d.adminHandler.GetRevenueOps)
-		admin.GET("/experiments", d.adminHandler.ListAdminExperiments)
-		admin.POST("/experiments", d.adminHandler.CreateAdminExperiment)
-		admin.PUT("/experiments/:id", d.adminHandler.UpdateAdminExperiment)
-		admin.PUT("/experiments/:id/automation-policy", d.adminHandler.UpdateAdminExperimentAutomationPolicy)
-		admin.PUT("/experiments/:id/arms/pricing-tiers", d.adminHandler.UpdateAdminExperimentArmPricingTiers)
-		admin.POST("/experiments/:id/confirm-winner", d.adminHandler.ConfirmAdminExperimentWinner)
-		admin.POST("/experiments/:id/hold-for-review", d.adminHandler.HoldAdminExperimentForReview)
-		admin.GET("/experiments/:id/lifecycle-audit", d.adminHandler.GetAdminExperimentLifecycleAuditHistory)
-		admin.GET("/experiments/:id/winner-recommendation-audit", d.adminHandler.GetAdminExperimentWinnerRecommendationAuditHistory)
-		admin.POST("/experiments/:id/pause", d.adminHandler.PauseAdminExperiment)
-		admin.POST("/experiments/:id/resume", d.adminHandler.ResumeAdminExperiment)
-		admin.POST("/experiments/:id/complete", d.adminHandler.CompleteAdminExperiment)
-		admin.POST("/experiments/:id/lock", d.adminHandler.LockAdminExperiment)
-		admin.POST("/experiments/:id/unlock", d.adminHandler.UnlockAdminExperiment)
-		admin.POST("/experiments/:id/repair", d.adminHandler.RepairAdminExperiment)
-		admin.GET("/pricing-tiers", d.adminHandler.ListPricingTiers)
-		admin.POST("/pricing-tiers", d.adminHandler.CreatePricingTier)
-		admin.PUT("/pricing-tiers/:id", d.adminHandler.UpdatePricingTier)
-		admin.POST("/pricing-tiers/:id/activate", d.adminHandler.ActivatePricingTier)
-		admin.POST("/pricing-tiers/:id/deactivate", d.adminHandler.DeactivatePricingTier)
-		admin.GET("/winback-campaigns", d.adminHandler.ListWinbackCampaigns)
-		admin.POST("/winback-campaigns", d.adminHandler.LaunchWinbackCampaign)
-		admin.POST("/winback-campaigns/:campaignId/deactivate", d.adminHandler.DeactivateWinbackCampaign)
 		admin.GET("/settings", d.adminHandler.GetPlatformSettings)
 		admin.PUT("/settings", d.adminHandler.UpdatePlatformSettings)
 		admin.POST("/settings/password", d.adminHandler.ChangeAdminPassword)
-		admin.POST("/webhooks/:id/replay", d.adminHandler.ReplayWebhook)
 		admin.GET("/health", d.adminHandler.GetHealth)
 
-		// Apps management
+		// Apps management — global (CRUD for apps themselves)
 		admin.GET("/apps", d.appsHandler.ListApps)
 		admin.GET("/apps/:id", d.appsHandler.GetApp)
 		admin.POST("/apps", d.appsHandler.CreateApp)
 		admin.PUT("/apps/:id", d.appsHandler.UpdateApp)
 		admin.DELETE("/apps/:id", d.appsHandler.DeleteApp)
+
+		// App-scoped routes — require X-App-ID header
+		appScoped := admin.Group("/")
+		appScoped.Use(httpmiddleware.RequireAppID())
+		{
+			// Users
+			appScoped.POST("/users/:id/grant", d.adminHandler.GrantSubscription)
+			appScoped.POST("/users/:id/revoke", d.adminHandler.RevokeSubscription)
+			appScoped.POST("/users/:id/force-cancel", d.adminHandler.ForceCancel)
+			appScoped.POST("/users/:id/force-renew", d.adminHandler.ForceRenew)
+			appScoped.POST("/users/:id/grant-grace", d.adminHandler.GrantGracePeriod)
+			appScoped.GET("/users", d.adminHandler.ListUsers)
+			appScoped.GET("/users/search", d.adminHandler.SearchUsers)
+			appScoped.GET("/users/:id/profile", d.adminHandler.GetUserProfile)
+
+			// Dashboard
+			appScoped.GET("/dashboard/metrics", d.adminHandler.GetDashboardMetrics)
+
+			// Subscriptions
+			appScoped.GET("/subscriptions", d.adminHandler.ListSubscriptions)
+			appScoped.GET("/subscriptions/:id", d.adminHandler.GetSubscriptionDetail)
+
+			// Transactions
+			appScoped.GET("/transactions", d.adminHandler.ListTransactions)
+			appScoped.GET("/transactions/:id", d.adminHandler.GetTransactionDetail)
+
+			// Webhooks
+			appScoped.GET("/webhooks", d.adminHandler.ListWebhooks)
+			appScoped.POST("/webhooks/:id/replay", d.adminHandler.ReplayWebhook)
+
+			// Analytics & revenue
+			appScoped.GET("/analytics/report", d.adminHandler.GetAnalyticsReport)
+			appScoped.GET("/revenue-ops", d.adminHandler.GetRevenueOps)
+
+			// Experiments
+			appScoped.GET("/experiments", d.adminHandler.ListAdminExperiments)
+			appScoped.POST("/experiments", d.adminHandler.CreateAdminExperiment)
+			appScoped.PUT("/experiments/:id", d.adminHandler.UpdateAdminExperiment)
+			appScoped.PUT("/experiments/:id/automation-policy", d.adminHandler.UpdateAdminExperimentAutomationPolicy)
+			appScoped.PUT("/experiments/:id/arms/pricing-tiers", d.adminHandler.UpdateAdminExperimentArmPricingTiers)
+			appScoped.POST("/experiments/:id/confirm-winner", d.adminHandler.ConfirmAdminExperimentWinner)
+			appScoped.POST("/experiments/:id/hold-for-review", d.adminHandler.HoldAdminExperimentForReview)
+			appScoped.GET("/experiments/:id/lifecycle-audit", d.adminHandler.GetAdminExperimentLifecycleAuditHistory)
+			appScoped.GET("/experiments/:id/winner-recommendation-audit", d.adminHandler.GetAdminExperimentWinnerRecommendationAuditHistory)
+			appScoped.POST("/experiments/:id/pause", d.adminHandler.PauseAdminExperiment)
+			appScoped.POST("/experiments/:id/resume", d.adminHandler.ResumeAdminExperiment)
+			appScoped.POST("/experiments/:id/complete", d.adminHandler.CompleteAdminExperiment)
+			appScoped.POST("/experiments/:id/lock", d.adminHandler.LockAdminExperiment)
+			appScoped.POST("/experiments/:id/unlock", d.adminHandler.UnlockAdminExperiment)
+			appScoped.POST("/experiments/:id/repair", d.adminHandler.RepairAdminExperiment)
+
+			// Pricing tiers
+			appScoped.GET("/pricing-tiers", d.adminHandler.ListPricingTiers)
+			appScoped.POST("/pricing-tiers", d.adminHandler.CreatePricingTier)
+			appScoped.PUT("/pricing-tiers/:id", d.adminHandler.UpdatePricingTier)
+			appScoped.POST("/pricing-tiers/:id/activate", d.adminHandler.ActivatePricingTier)
+			appScoped.POST("/pricing-tiers/:id/deactivate", d.adminHandler.DeactivatePricingTier)
+
+			// Winback campaigns
+			appScoped.GET("/winback-campaigns", d.adminHandler.ListWinbackCampaigns)
+			appScoped.POST("/winback-campaigns", d.adminHandler.LaunchWinbackCampaign)
+			appScoped.POST("/winback-campaigns/:campaignId/deactivate", d.adminHandler.DeactivateWinbackCampaign)
+		}
 	}
 }
 
