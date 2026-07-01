@@ -3,7 +3,7 @@ import * as React from "react";
 
 import { useRouter } from "next/navigation";
 
-import { Search } from "lucide-react";
+import { Search, Settings2, Smartphone } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -17,12 +17,14 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { useSidebarItems } from "@/navigation/sidebar/use-sidebar-items";
+import { useAppStore } from "@/stores/app-store";
 
 export function SearchDialog() {
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
   const t = useTranslations("search");
   const sidebarGroups = useSidebarItems();
+  const apps = useAppStore((s) => s.apps);
 
   const searchItems = React.useMemo(
     () =>
@@ -38,6 +40,7 @@ export function SearchDialog() {
                 icon: subItem.icon ?? item.icon,
                 label: subItem.title,
                 url: subItem.url,
+                sublabel: undefined as string | undefined,
               }));
           }
 
@@ -47,12 +50,36 @@ export function SearchDialog() {
               icon: item.icon,
               label: item.title,
               url: item.url,
+              sublabel: undefined as string | undefined,
             },
           ];
         }),
       ),
     [sidebarGroups, t],
   );
+
+  const appItems = React.useMemo(
+    () =>
+      apps.flatMap((app) => [
+        {
+          group: "Apps",
+          icon: Smartphone,
+          label: app.display_name || app.name,
+          sublabel: app.bundle_id,
+          url: `/dashboard/apps`,
+        },
+        {
+          group: "Apps",
+          icon: Settings2,
+          label: `${app.display_name || app.name} — Configure`,
+          sublabel: app.bundle_id,
+          url: `/dashboard/apps/${app.id}/settings`,
+        },
+      ]),
+    [apps],
+  );
+
+  const allItems = React.useMemo(() => [...searchItems, ...appItems], [searchItems, appItems]);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -87,16 +114,25 @@ export function SearchDialog() {
         <CommandInput placeholder={t("placeholder")} />
         <CommandList>
           <CommandEmpty>{t("noResults")}</CommandEmpty>
-          {[...new Set(searchItems.map((item) => item.group))].map((group, i) => (
+          {[...new Set(allItems.map((item) => item.group))].map((group, i) => (
             <React.Fragment key={group}>
               {i !== 0 && <CommandSeparator />}
               <CommandGroup heading={group}>
-                {searchItems
+                {allItems
                   .filter((item) => item.group === group)
                   .map((item) => (
-                    <CommandItem className="!py-1.5" key={item.label} onSelect={() => handleSelect(item.url)}>
-                      {item.icon && <item.icon className="size-4" />}
+                    <CommandItem
+                      className="!py-1.5"
+                      key={item.label + item.url}
+                      onSelect={() => handleSelect(item.url)}
+                    >
+                      {item.icon && <item.icon className="size-4 shrink-0" />}
                       <span>{item.label}</span>
+                      {item.sublabel && (
+                        <span className="ml-auto text-xs text-muted-foreground font-mono truncate max-w-[160px]">
+                          {item.sublabel}
+                        </span>
+                      )}
                     </CommandItem>
                   ))}
               </CommandGroup>
