@@ -1386,13 +1386,15 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 		return
 	}
 
+	appID := httpmiddleware.GetAppID(c)
 	_, err = tx.Exec(ctx, `
 		INSERT INTO ab_tests (
-			id, name, description, status, start_at, end_at,
+			id, app_id, name, description, status, start_at, end_at,
 			algorithm_type, is_bandit, min_sample_size, confidence_threshold, automation_policy
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
 		experimentID,
+		appID,
 		req.Name,
 		*req.Description,
 		req.Status,
