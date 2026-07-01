@@ -90,20 +90,28 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 	-- Users table
 	CREATE TABLE IF NOT EXISTS users (
 		id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-		platform_user_id    TEXT UNIQUE NOT NULL,
+		app_id              UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
+		platform_user_id    TEXT NOT NULL,
 		device_id           TEXT,
 		platform            TEXT NOT NULL CHECK (platform IN ('ios', 'android')),
 		app_version         TEXT NOT NULL,
-		email               TEXT UNIQUE,
+		email               TEXT,
+		role                TEXT NOT NULL DEFAULT 'user',
 		ltv                 NUMERIC(10,2) DEFAULT 0,
 		ltv_updated_at      TIMESTAMPTZ,
+		purchase_channel    TEXT,
+		has_viewed_paywall  BOOLEAN NOT NULL DEFAULT false,
+		session_count       INTEGER NOT NULL DEFAULT 0,
 		created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-		deleted_at          TIMESTAMPTZ
+		deleted_at          TIMESTAMPTZ,
+		UNIQUE (app_id, platform_user_id)
 	);
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_users_app_email ON users (app_id, email) WHERE email IS NOT NULL AND email <> '';
 
 	-- Subscriptions table
 	CREATE TABLE IF NOT EXISTS subscriptions (
 		id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		app_id          UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
 		user_id         UUID NOT NULL REFERENCES users(id),
 		status          TEXT NOT NULL CHECK (status IN ('active', 'expired', 'cancelled', 'grace')),
 		source          TEXT NOT NULL CHECK (source IN ('iap', 'stripe', 'paddle')),
@@ -116,10 +124,12 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 		updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
 		deleted_at      TIMESTAMPTZ
 	);
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_one_active ON subscriptions (app_id, user_id) WHERE status = 'active' AND deleted_at IS NULL;
 
 	-- Transactions table
 	CREATE TABLE IF NOT EXISTS transactions (
 		id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		app_id              UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
 		user_id             UUID NOT NULL REFERENCES users(id),
 		subscription_id     UUID NOT NULL REFERENCES subscriptions(id),
 		amount              NUMERIC(10,2) NOT NULL,

@@ -20,27 +20,22 @@ import (
 func TestUserRepositoryIntegration(t *testing.T) {
 	ctx := context.Background()
 
-	// Setup test database
 	dbContainer, err := testutil.SetupTestDBContainer(ctx, t)
 	require.NoError(t, err)
 	defer dbContainer.Teardown(ctx, t)
 
-	// Run migrations
 	err = testutil.RunMigrations(ctx, dbContainer.Pool)
 	require.NoError(t, err)
 
-	// Create real repository using sqlc queries
 	queries := generated.New(dbContainer.Pool)
 	userRepo := infrarepo.NewUserRepository(queries)
 
 	t.Run("Create and GetUserByID", func(t *testing.T) {
-		user := entity.NewUser("platform-user-123-"+uuid.New(, uuid.Nil).String(), "device-123", entity.PlatformiOS, "1.0.0", "test_"+uuid.New().String()[:8]+"@example.com")
+		user := entity.NewUser("platform-user-123-"+uuid.New().String(), "device-123", entity.PlatformiOS, "1.0.0", "test_"+uuid.New().String()[:8]+"@example.com", uuid.Nil)
 
-		// Create
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
-		// Get by Platform ID (since Create doesn't set the UUID from DB)
 		retrieved, err := userRepo.GetByPlatformID(ctx, user.PlatformUserID)
 		require.NoError(t, err)
 		assert.Equal(t, user.PlatformUserID, retrieved.PlatformUserID)
@@ -49,7 +44,7 @@ func TestUserRepositoryIntegration(t *testing.T) {
 
 	t.Run("GetByPlatformID", func(t *testing.T) {
 		platformUserID := "platform-user-" + uuid.New().String()
-		user := entity.NewUser(platformUserID, "device-456", entity.PlatformAndroid, "1.0.0", "test2_"+uuid.New(, uuid.Nil).String()[:8]+"@example.com")
+		user := entity.NewUser(platformUserID, "device-456", entity.PlatformAndroid, "1.0.0", "test2_"+uuid.New().String()[:8]+"@example.com", uuid.Nil)
 
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
@@ -61,7 +56,7 @@ func TestUserRepositoryIntegration(t *testing.T) {
 
 	t.Run("GetByEmail", func(t *testing.T) {
 		email := "test_" + uuid.New().String() + "@example.com"
-		user := entity.NewUser("platform-user-"+uuid.New(, uuid.Nil).String(), "device-789", entity.PlatformiOS, "1.0.0", email)
+		user := entity.NewUser("platform-user-"+uuid.New().String(), "device-789", entity.PlatformiOS, "1.0.0", email, uuid.Nil)
 
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
@@ -72,26 +67,23 @@ func TestUserRepositoryIntegration(t *testing.T) {
 	})
 
 	t.Run("SoftDeleteUser", func(t *testing.T) {
-		user := entity.NewUser("platform-user-del-"+uuid.New(, uuid.Nil).String(), "device-delete", entity.PlatformiOS, "1.0.0", "delete_"+uuid.New().String()[:8]+"@example.com")
+		user := entity.NewUser("platform-user-del-"+uuid.New().String(), "device-delete", entity.PlatformiOS, "1.0.0", "delete_"+uuid.New().String()[:8]+"@example.com", uuid.Nil)
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
-		// Get to find real ID
 		retrieved, err := userRepo.GetByPlatformID(ctx, user.PlatformUserID)
 		require.NoError(t, err)
 
-		// Soft delete
 		err = userRepo.SoftDelete(ctx, retrieved.ID)
 		require.NoError(t, err)
 
-		// Verify user is not found by normal queries
 		_, err = userRepo.GetByID(ctx, retrieved.ID)
-		assert.Error(t, err) // Should return not found
+		assert.Error(t, err)
 	})
 
 	t.Run("ExistsByPlatformID", func(t *testing.T) {
 		platformUserID := "platform-exists-" + uuid.New().String()
-		user := entity.NewUser(platformUserID, "device-exists", entity.PlatformiOS, "1.0.0", "exists_"+uuid.New(, uuid.Nil).String()[:8]+"@example.com")
+		user := entity.NewUser(platformUserID, "device-exists", entity.PlatformiOS, "1.0.0", "exists_"+uuid.New().String()[:8]+"@example.com", uuid.Nil)
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
@@ -108,26 +100,21 @@ func TestUserRepositoryIntegration(t *testing.T) {
 func TestSubscriptionRepositoryIntegration(t *testing.T) {
 	ctx := context.Background()
 
-	// Setup test database
 	dbContainer, err := testutil.SetupTestDBContainer(ctx, t)
 	require.NoError(t, err)
 	defer dbContainer.Teardown(ctx, t)
 
-	// Run migrations
 	err = testutil.RunMigrations(ctx, dbContainer.Pool)
 	require.NoError(t, err)
 
-	// Create repositories
 	queries := generated.New(dbContainer.Pool)
 	userRepo := infrarepo.NewUserRepository(queries)
 	subRepo := infrarepo.NewSubscriptionRepository(queries)
 
-	// Create test user
-	user := entity.NewUser("platform-user-sub-"+uuid.New(, uuid.Nil).String(), "device-sub", entity.PlatformiOS, "1.0.0", "sub_"+uuid.New().String()[:8]+"@example.com")
+	user := entity.NewUser("platform-user-sub-"+uuid.New().String(), "device-sub", entity.PlatformiOS, "1.0.0", "sub_"+uuid.New().String()[:8]+"@example.com", uuid.Nil)
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 
-	// Get the actual user with DB-generated ID
 	dbUser, err := userRepo.GetByPlatformID(ctx, user.PlatformUserID)
 	require.NoError(t, err)
 
@@ -137,7 +124,6 @@ func TestSubscriptionRepositoryIntegration(t *testing.T) {
 		err := subRepo.Create(ctx, sub)
 		require.NoError(t, err)
 
-		// Get active sub to verify creation
 		retrieved, err := subRepo.GetActiveByUserID(ctx, dbUser.ID)
 		require.NoError(t, err)
 		assert.Equal(t, entity.StatusActive, retrieved.Status)
@@ -154,7 +140,6 @@ func TestSubscriptionRepositoryIntegration(t *testing.T) {
 		err := subRepo.Create(ctx, sub)
 		require.NoError(t, err)
 
-		// Get active sub to find real ID
 		retrieved, err := subRepo.GetActiveByUserID(ctx, dbUser.ID)
 		require.NoError(t, err)
 
@@ -167,8 +152,7 @@ func TestSubscriptionRepositoryIntegration(t *testing.T) {
 	})
 
 	t.Run("CancelSubscription", func(t *testing.T) {
-		// Create fresh user for this test
-		cancelUser := entity.NewUser("platform-cancel-"+uuid.New(, uuid.Nil).String(), "device-cancel", entity.PlatformiOS, "1.0.0", "cancel_"+uuid.New().String()[:8]+"@example.com")
+		cancelUser := entity.NewUser("platform-cancel-"+uuid.New().String(), "device-cancel", entity.PlatformiOS, "1.0.0", "cancel_"+uuid.New().String()[:8]+"@example.com", uuid.Nil)
 		err := userRepo.Create(ctx, cancelUser)
 		require.NoError(t, err)
 
@@ -195,23 +179,19 @@ func TestSubscriptionRepositoryIntegration(t *testing.T) {
 func TestTransactionRepositoryIntegration(t *testing.T) {
 	ctx := context.Background()
 
-	// Setup test database
 	dbContainer, err := testutil.SetupTestDBContainer(ctx, t)
 	require.NoError(t, err)
 	defer dbContainer.Teardown(ctx, t)
 
-	// Run migrations
 	err = testutil.RunMigrations(ctx, dbContainer.Pool)
 	require.NoError(t, err)
 
-	// Create repositories
 	queries := generated.New(dbContainer.Pool)
 	userRepo := infrarepo.NewUserRepository(queries)
 	subRepo := infrarepo.NewSubscriptionRepository(queries)
 	txRepo := infrarepo.NewTransactionRepository(queries)
 
-	// Create test user and subscription
-	user := entity.NewUser("platform-user-tx-"+uuid.New(, uuid.Nil).String(), "device-tx", entity.PlatformiOS, "1.0.0", "tx_"+uuid.New().String()[:8]+"@example.com")
+	user := entity.NewUser("platform-user-tx-"+uuid.New().String(), "device-tx", entity.PlatformiOS, "1.0.0", "tx_"+uuid.New().String()[:8]+"@example.com", uuid.Nil)
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 
@@ -226,7 +206,7 @@ func TestTransactionRepositoryIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Create and GetTransactionByID", func(t *testing.T) {
-		tx := entity.NewTransaction(dbUser.ID, dbSub.ID, 9.99, "USD")
+		tx := entity.NewTransaction(dbUser.AppID, dbUser.ID, dbSub.ID, 9.99, "USD")
 		tx.Status = entity.TransactionStatusSuccess
 		tx.ReceiptHash = "sha256_test_hash_" + uuid.New().String()
 		tx.ProviderTxID = "provider_tx_123"
@@ -234,7 +214,6 @@ func TestTransactionRepositoryIntegration(t *testing.T) {
 		err := txRepo.Create(ctx, tx)
 		require.NoError(t, err)
 
-		// Get transactions by user ID
 		txs, err := txRepo.GetByUserID(ctx, dbUser.ID, 10, 0)
 		require.NoError(t, err)
 		assert.True(t, len(txs) >= 1)
@@ -243,18 +222,15 @@ func TestTransactionRepositoryIntegration(t *testing.T) {
 	t.Run("CheckDuplicateReceipt", func(t *testing.T) {
 		receiptHash := "sha256_duplicate_test_" + uuid.New().String()
 
-		// First transaction
-		tx1 := entity.NewTransaction(dbUser.ID, dbSub.ID, 9.99, "USD")
+		tx1 := entity.NewTransaction(dbUser.AppID, dbUser.ID, dbSub.ID, 9.99, "USD")
 		tx1.ReceiptHash = receiptHash
 		err := txRepo.Create(ctx, tx1)
 		require.NoError(t, err)
 
-		// Check duplicate
 		isDuplicate, err := txRepo.CheckDuplicateReceipt(ctx, receiptHash)
 		require.NoError(t, err)
 		assert.True(t, isDuplicate)
 
-		// Check non-existent receipt
 		isDuplicate, err = txRepo.CheckDuplicateReceipt(ctx, "sha256_non_existent_"+uuid.New().String())
 		require.NoError(t, err)
 		assert.False(t, isDuplicate)

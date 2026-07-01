@@ -81,8 +81,12 @@ func RegisterScheduledTasks(scheduler *asynq.Scheduler) {
 	}
 
 	// Schedule Dunning and Analytics jobs
-	_ = ScheduleDunningJobs(scheduler)
-	_ = ScheduleAnalyticsJobs(scheduler)
+	if err := ScheduleDunningJobs(scheduler); err != nil {
+		logging.Logger.Error("Failed to schedule dunning jobs", zap.Error(err))
+	}
+	if err := ScheduleAnalyticsJobs(scheduler); err != nil {
+		logging.Logger.Error("Failed to schedule analytics jobs", zap.Error(err))
+	}
 }
 
 // HandleUpdateLTV updates user lifetime value

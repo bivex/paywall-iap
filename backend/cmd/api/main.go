@@ -216,6 +216,7 @@ type dependencies struct {
 	banditHandler         *app_handler.BanditHandler
 	banditAdvancedHandler *app_handler.BanditAdvancedHandler
 	paywallHandler        *app_handler.PaywallHandler
+	winbackHandler        *app_handler.WinbackHandler
 }
 
 // initDependencies initializes all repositories, services, middleware, and handlers
@@ -328,6 +329,9 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	trackSessionCmd := command.NewTrackSessionCommand(userRepo)
 	paywallHandler := app_handler.NewPaywallHandler(getTriggerStatusQuery, captureEmailCmd, trackSessionCmd, jwtMiddleware)
 
+	acceptWinbackCmd := command.NewAcceptWinbackOfferCommand(winbackService)
+	winbackHandler := app_handler.NewWinbackHandler(acceptWinbackCmd, winbackService, jwtMiddleware)
+
 	return &dependencies{
 		queries:               queries,
 		userRepo:              userRepo,
@@ -359,6 +363,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		banditHandler:         banditHandler,
 		banditAdvancedHandler: banditAdvancedHandler,
 		paywallHandler:        paywallHandler,
+		winbackHandler:        winbackHandler,
 	}
 }
 
@@ -473,6 +478,12 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, d *dependencies) {
 			user.GET("/trigger-status", d.paywallHandler.GetTriggerStatus)
 			user.POST("/email", d.paywallHandler.CaptureEmail)
 			user.POST("/session", d.paywallHandler.TrackSession)
+		}
+
+		winback := protected.Group("/winback")
+		{
+			winback.GET("/offers", d.winbackHandler.GetActiveOffers)
+			winback.POST("/offers/accept", d.winbackHandler.AcceptOffer)
 		}
 	}
 }
