@@ -12,7 +12,10 @@ export async function backendFetch(
   const token = cookieStore.get("admin_access_token")?.value;
   if (!token) throw new Error("UNAUTHORIZED");
 
-  const appId = req?.nextUrl?.searchParams?.get("app_id") ?? null;
+  const appId =
+    req?.nextUrl?.searchParams?.get("app_id") ??
+    cookieStore.get("admin_app_id")?.value ??
+    null;
 
   const headers: Record<string, string> = {
     ...((init?.headers ?? {}) as Record<string, string>),
