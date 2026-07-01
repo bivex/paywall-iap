@@ -30,6 +30,7 @@ type RegisterRequest struct {
 	Platform       string `json:"platform" binding:"required,oneof=ios android"`
 	AppVersion     string `json:"app_version" binding:"required"`
 	Email          string `json:"email" binding:"omitempty,email"`
+	AppID          string `json:"app_id" binding:"omitempty,uuid"`
 }
 
 // RegisterResponse represents a registration response

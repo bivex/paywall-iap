@@ -28,7 +28,7 @@ func TestDunningRepository(t *testing.T) {
 	require.NoError(t, err)
 
 	// Setup related objects
-	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com")
+	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com", uuid.Nil)
 
 	// Create user
 	_, err = dbContainer.Pool.Exec(ctx, `

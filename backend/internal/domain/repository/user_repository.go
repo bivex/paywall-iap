@@ -30,6 +30,9 @@ type UserRepository interface {
 	// ExistsByPlatformID checks if a user exists with the given platform ID
 	ExistsByPlatformID(ctx context.Context, platformUserID string) (bool, error)
 
+	// ExistsByPlatformIDAndApp checks if a user exists with the given platform ID scoped to an app
+	ExistsByPlatformIDAndApp(ctx context.Context, platformUserID string, appID uuid.UUID) (bool, error)
+
 	// UpdatePurchaseChannel sets the purchase channel for a user
 	UpdatePurchaseChannel(ctx context.Context, id uuid.UUID, channel string) error
 

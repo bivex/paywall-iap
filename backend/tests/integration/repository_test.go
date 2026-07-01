@@ -34,7 +34,7 @@ func TestUserRepositoryIntegration(t *testing.T) {
 	userRepo := infrarepo.NewUserRepository(queries)
 
 	t.Run("Create and GetUserByID", func(t *testing.T) {
-		user := entity.NewUser("platform-user-123-"+uuid.New().String(), "device-123", entity.PlatformiOS, "1.0.0", "test_"+uuid.New().String()[:8]+"@example.com")
+		user := entity.NewUser("platform-user-123-"+uuid.New(, uuid.Nil).String(), "device-123", entity.PlatformiOS, "1.0.0", "test_"+uuid.New().String()[:8]+"@example.com")
 
 		// Create
 		err := userRepo.Create(ctx, user)
@@ -49,7 +49,7 @@ func TestUserRepositoryIntegration(t *testing.T) {
 
 	t.Run("GetByPlatformID", func(t *testing.T) {
 		platformUserID := "platform-user-" + uuid.New().String()
-		user := entity.NewUser(platformUserID, "device-456", entity.PlatformAndroid, "1.0.0", "test2_"+uuid.New().String()[:8]+"@example.com")
+		user := entity.NewUser(platformUserID, "device-456", entity.PlatformAndroid, "1.0.0", "test2_"+uuid.New(, uuid.Nil).String()[:8]+"@example.com")
 
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestUserRepositoryIntegration(t *testing.T) {
 
 	t.Run("GetByEmail", func(t *testing.T) {
 		email := "test_" + uuid.New().String() + "@example.com"
-		user := entity.NewUser("platform-user-"+uuid.New().String(), "device-789", entity.PlatformiOS, "1.0.0", email)
+		user := entity.NewUser("platform-user-"+uuid.New(, uuid.Nil).String(), "device-789", entity.PlatformiOS, "1.0.0", email)
 
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestUserRepositoryIntegration(t *testing.T) {
 	})
 
 	t.Run("SoftDeleteUser", func(t *testing.T) {
-		user := entity.NewUser("platform-user-del-"+uuid.New().String(), "device-delete", entity.PlatformiOS, "1.0.0", "delete_"+uuid.New().String()[:8]+"@example.com")
+		user := entity.NewUser("platform-user-del-"+uuid.New(, uuid.Nil).String(), "device-delete", entity.PlatformiOS, "1.0.0", "delete_"+uuid.New().String()[:8]+"@example.com")
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
@@ -91,7 +91,7 @@ func TestUserRepositoryIntegration(t *testing.T) {
 
 	t.Run("ExistsByPlatformID", func(t *testing.T) {
 		platformUserID := "platform-exists-" + uuid.New().String()
-		user := entity.NewUser(platformUserID, "device-exists", entity.PlatformiOS, "1.0.0", "exists_"+uuid.New().String()[:8]+"@example.com")
+		user := entity.NewUser(platformUserID, "device-exists", entity.PlatformiOS, "1.0.0", "exists_"+uuid.New(, uuid.Nil).String()[:8]+"@example.com")
 		err := userRepo.Create(ctx, user)
 		require.NoError(t, err)
 
@@ -123,7 +123,7 @@ func TestSubscriptionRepositoryIntegration(t *testing.T) {
 	subRepo := infrarepo.NewSubscriptionRepository(queries)
 
 	// Create test user
-	user := entity.NewUser("platform-user-sub-"+uuid.New().String(), "device-sub", entity.PlatformiOS, "1.0.0", "sub_"+uuid.New().String()[:8]+"@example.com")
+	user := entity.NewUser("platform-user-sub-"+uuid.New(, uuid.Nil).String(), "device-sub", entity.PlatformiOS, "1.0.0", "sub_"+uuid.New().String()[:8]+"@example.com")
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 
@@ -168,7 +168,7 @@ func TestSubscriptionRepositoryIntegration(t *testing.T) {
 
 	t.Run("CancelSubscription", func(t *testing.T) {
 		// Create fresh user for this test
-		cancelUser := entity.NewUser("platform-cancel-"+uuid.New().String(), "device-cancel", entity.PlatformiOS, "1.0.0", "cancel_"+uuid.New().String()[:8]+"@example.com")
+		cancelUser := entity.NewUser("platform-cancel-"+uuid.New(, uuid.Nil).String(), "device-cancel", entity.PlatformiOS, "1.0.0", "cancel_"+uuid.New().String()[:8]+"@example.com")
 		err := userRepo.Create(ctx, cancelUser)
 		require.NoError(t, err)
 
@@ -211,7 +211,7 @@ func TestTransactionRepositoryIntegration(t *testing.T) {
 	txRepo := infrarepo.NewTransactionRepository(queries)
 
 	// Create test user and subscription
-	user := entity.NewUser("platform-user-tx-"+uuid.New().String(), "device-tx", entity.PlatformiOS, "1.0.0", "tx_"+uuid.New().String()[:8]+"@example.com")
+	user := entity.NewUser("platform-user-tx-"+uuid.New(, uuid.Nil).String(), "device-tx", entity.PlatformiOS, "1.0.0", "tx_"+uuid.New().String()[:8]+"@example.com")
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 

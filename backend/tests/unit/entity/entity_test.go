@@ -17,6 +17,7 @@ func TestNewUser(t *testing.T) {
 		entity.PlatformiOS,
 		"1.0.0",
 		"test@example.com",
+		uuid.Nil,
 	)
 
 	assert.NotNil(t, user.ID)
@@ -50,7 +51,7 @@ func TestUser_HasEmail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user := entity.NewUser("id", "device", entity.PlatformiOS, "1.0", tt.email)
+			user := entity.NewUser("id", "device", entity.PlatformiOS, "1.0", tt.email, uuid.Nil)
 			assert.Equal(t, tt.expected, user.HasEmail())
 		})
 	}

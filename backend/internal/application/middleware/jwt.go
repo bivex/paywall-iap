@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ type JWTClaims struct {
 	UserID string `json:"sub"`
 	JTI    string `json:"jti"` // JWT ID for revocation
 	Role   string `json:"role,omitempty"`
+	AppID  string `json:"app_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -101,6 +103,9 @@ func (j *JWTMiddleware) Authenticate() gin.HandlerFunc {
 		if claims.Role != "" {
 			c.Set("role", claims.Role)
 		}
+		if claims.AppID != "" {
+			c.Set("app_id", claims.AppID)
+		}
 
 		c.Next()
 	}
@@ -176,6 +181,63 @@ func (j *JWTMiddleware) GenerateRefreshToken(userID string) (string, string, err
 		return "", "", err
 	}
 
+	return tokenString, jti, nil
+}
+
+// GenerateTokenPair creates a matched access+refresh token pair embedding userID, appID and role.
+// Pass empty strings for appID or role to omit those claims.
+func (j *JWTMiddleware) GenerateTokenPair(userID, appID, role string) (accessToken, refreshToken string, err error) {
+	accessToken, _, err = j.generateAccessInternal(userID, appID, role)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate access token: %w", err)
+	}
+	refreshToken, _, err = j.generateRefreshInternal(userID, appID)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	return accessToken, refreshToken, nil
+}
+
+func (j *JWTMiddleware) generateAccessInternal(userID, appID, role string) (string, string, error) {
+	jti := uuid.New().String()
+	now := time.Now()
+	claims := &JWTClaims{
+		UserID: userID,
+		JTI:    jti,
+		Role:   role,
+		AppID:  appID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(j.accessTTL)),
+			Issuer:    "iap-system",
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(j.secret)
+	if err != nil {
+		return "", "", err
+	}
+	return tokenString, jti, nil
+}
+
+func (j *JWTMiddleware) generateRefreshInternal(userID, appID string) (string, string, error) {
+	jti := uuid.New().String()
+	now := time.Now()
+	claims := &JWTClaims{
+		UserID: userID,
+		JTI:    jti,
+		AppID:  appID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(30 * 24 * time.Hour)), // 30 days
+			Issuer:    "iap-system",
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(j.secret)
+	if err != nil {
+		return "", "", err
+	}
 	return tokenString, jti, nil
 }
 

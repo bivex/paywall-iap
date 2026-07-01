@@ -10,6 +10,7 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainErrors "github.com/bivex/paywall-iap/internal/domain/errors"
 	"github.com/bivex/paywall-iap/internal/domain/repository"
+	"github.com/google/uuid"
 )
 
 // RegisterCommand handles user registration
@@ -36,8 +37,24 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 		return nil, fmt.Errorf("invalid request: text fields must not contain null bytes")
 	}
 
-	// Check if user already exists
-	exists, err := c.userRepo.ExistsByPlatformID(ctx, req.PlatformUserID)
+	// Parse AppID if provided
+	var appID uuid.UUID
+	if req.AppID != "" {
+		parsed, err := uuid.Parse(req.AppID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid app_id: %w", err)
+		}
+		appID = parsed
+	}
+
+	// Check if user already exists (app-scoped when AppID is provided)
+	var exists bool
+	var err error
+	if appID != uuid.Nil {
+		exists, err = c.userRepo.ExistsByPlatformIDAndApp(ctx, req.PlatformUserID, appID)
+	} else {
+		exists, err = c.userRepo.ExistsByPlatformID(ctx, req.PlatformUserID)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to check user existence: %w", err)
 	}
@@ -62,6 +79,7 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 		entity.Platform(req.Platform),
 		req.AppVersion,
 		req.Email,
+		appID,
 	)
 
 	// Save user
@@ -72,15 +90,10 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Generate JWT tokens
-	accessToken, _, err := c.jwtMiddleware.GenerateAccessToken(user.ID.String())
+	// Generate JWT tokens (embed app_id when present)
+	accessToken, refreshToken, err := c.jwtMiddleware.GenerateTokenPair(user.ID.String(), req.AppID, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate access token: %w", err)
-	}
-
-	refreshToken, _, err := c.jwtMiddleware.GenerateRefreshToken(user.ID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+		return nil, fmt.Errorf("failed to generate tokens: %w", err)
 	}
 
 	return &dto.RegisterResponse{

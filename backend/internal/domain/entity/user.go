@@ -40,10 +40,11 @@ type User struct {
 	PurchaseChannel *string  // "iap", "stripe", "web", or nil
 	SessionCount    int
 	HasViewedAds    bool
+	AppID           uuid.UUID
 }
 
 // NewUser creates a new user entity
-func NewUser(platformUserID, deviceID string, platform Platform, appVersion, email string) *User {
+func NewUser(platformUserID, deviceID string, platform Platform, appVersion, email string, appID uuid.UUID) *User {
 	return &User{
 		ID:             uuid.New(),
 		PlatformUserID: platformUserID,
@@ -54,6 +55,7 @@ func NewUser(platformUserID, deviceID string, platform Platform, appVersion, ema
 		LTV:            0,
 		Role:           RoleUser,
 		CreatedAt:      time.Now(),
+		AppID:          appID,
 	}
 }
 

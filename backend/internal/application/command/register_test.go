@@ -40,6 +40,10 @@ func (r *registerRepoStub) ExistsByPlatformID(context.Context, string) (bool, er
 	r.existsCalled = true
 	return false, nil
 }
+func (r *registerRepoStub) ExistsByPlatformIDAndApp(_ context.Context, _ string, _ uuid.UUID) (bool, error) {
+	r.existsCalled = true
+	return false, nil
+}
 func (r *registerRepoStub) UpdatePurchaseChannel(context.Context, uuid.UUID, string) error {
 	return nil
 }
@@ -67,7 +71,7 @@ func TestRegisterCommand_RejectsNullBytesBeforeRepositoryAccess(t *testing.T) {
 }
 
 func TestRegisterCommand_RejectsDuplicateEmailBeforeCreate(t *testing.T) {
-	repo := &registerRepoStub{userByEmail: entity.NewUser("existing-user", "device-1", entity.PlatformiOS, "1.0.0", "user@example.com")}
+	repo := &registerRepoStub{userByEmail: entity.NewUser("existing-user", "device-1", entity.PlatformiOS, "1.0.0", "user@example.com", uuid.Nil)}
 	cmd := NewRegisterCommand(repo, appMiddleware.NewJWTMiddleware("test-secret", nil, time.Minute))
 
 	_, err := cmd.Execute(context.Background(), &dto.RegisterRequest{

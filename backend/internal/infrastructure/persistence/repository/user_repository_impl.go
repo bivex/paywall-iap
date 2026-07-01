@@ -30,6 +30,7 @@ func (r *userRepositoryImpl) Create(ctx context.Context, user *entity.User) erro
 		AppVersion:     user.AppVersion,
 		Email:          user.Email,
 		Role:           user.Role,
+		AppID:          user.AppID,
 	}
 
 	row, err := r.queries.CreateUser(ctx, params)
@@ -117,6 +118,20 @@ func (r *userRepositoryImpl) ExistsByPlatformID(ctx context.Context, platformUse
 		return false, fmt.Errorf("failed to check user existence: %w", err)
 	}
 
+	return true, nil
+}
+
+func (r *userRepositoryImpl) ExistsByPlatformIDAndApp(ctx context.Context, platformUserID string, appID uuid.UUID) (bool, error) {
+	_, err := r.queries.ExistsByPlatformIDAndApp(ctx, generated.ExistsByPlatformIDAndAppParams{
+		PlatformUserID: platformUserID,
+		AppID:          appID,
+	})
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check user existence by app: %w", err)
+	}
 	return true, nil
 }
 

@@ -46,7 +46,7 @@ func TestGracePeriodWorkerJobs(t *testing.T) {
 	jobHandler := tasks.NewGracePeriodJobHandler(graceService, notificationService)
 
 	// Create test user and subscription
-	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com")
+	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com", uuid.Nil)
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 
@@ -79,7 +79,7 @@ func TestGracePeriodWorkerJobs(t *testing.T) {
 
 	t.Run("NotifyExpiringGracePeriods sends notifications", func(t *testing.T) {
 		// Create grace period expiring in 2 hours
-		user2 := entity.NewUser("test-platform-2", "test-device-2", entity.PlatformiOS, "1.0", "test2@example.com")
+		user2 := entity.NewUser("test-platform-2", "test-device-2", entity.PlatformiOS, "1.0", "test2@example.com", uuid.Nil)
 		err = userRepo.Create(ctx, user2)
 		require.NoError(t, err)
 

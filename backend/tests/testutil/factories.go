@@ -28,6 +28,7 @@ func (f *UserFactory) Create(platform entity.Platform, withEmail bool) *entity.U
 		platform,
 		"1.0.0",
 		email,
+		uuid.Nil,
 	)
 }
 
@@ -38,6 +39,7 @@ func (f *UserFactory) CreateWithPlatformUserID(platformUserID string, platform e
 		platform,
 		"1.0.0",
 		"test_"+platformUserID[:8]+"@example.com",
+		uuid.Nil,
 	)
 }
 

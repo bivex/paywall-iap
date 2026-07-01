@@ -24,18 +24,19 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (platform_user_id, device_id, platform, app_version, email, role)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO users (platform_user_id, device_id, platform, app_version, email, role, app_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id, platform_user_id, device_id, platform, app_version, email, role, ltv, ltv_updated_at, created_at, deleted_at, purchase_channel, session_count, has_viewed_ads
 `
 
 type CreateUserParams struct {
-	PlatformUserID string  `json:"platform_user_id"`
-	DeviceID       *string `json:"device_id"`
-	Platform       string  `json:"platform"`
-	AppVersion     string  `json:"app_version"`
-	Email          string  `json:"email"`
-	Role           string  `json:"role"`
+	PlatformUserID string    `json:"platform_user_id"`
+	DeviceID       *string   `json:"device_id"`
+	Platform       string    `json:"platform"`
+	AppVersion     string    `json:"app_version"`
+	Email          string    `json:"email"`
+	Role           string    `json:"role"`
+	AppID          uuid.UUID `json:"app_id"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -46,6 +47,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.AppVersion,
 		arg.Email,
 		arg.Role,
+		arg.AppID,
 	)
 	var i User
 	err := row.Scan(
@@ -424,4 +426,20 @@ func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) 
 		&i.HasViewedAds,
 	)
 	return i, err
+}
+
+const existsByPlatformIDAndApp = `-- name: ExistsByPlatformIDAndApp :one
+SELECT 1 FROM users WHERE platform_user_id = $1 AND app_id = $2 AND deleted_at IS NULL LIMIT 1
+`
+
+type ExistsByPlatformIDAndAppParams struct {
+	PlatformUserID string    `json:"platform_user_id"`
+	AppID          uuid.UUID `json:"app_id"`
+}
+
+func (q *Queries) ExistsByPlatformIDAndApp(ctx context.Context, arg ExistsByPlatformIDAndAppParams) (int32, error) {
+	row := q.db.QueryRow(ctx, existsByPlatformIDAndApp, arg.PlatformUserID, arg.AppID)
+	var one int32
+	err := row.Scan(&one)
+	return one, err
 }

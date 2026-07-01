@@ -43,7 +43,7 @@ func TestWinbackWorkerJobs(t *testing.T) {
 	jobHandler := tasks.NewWinbackJobHandler(winbackService, notificationService)
 
 	// Create test user
-	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com")
+	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com", uuid.Nil)
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 
