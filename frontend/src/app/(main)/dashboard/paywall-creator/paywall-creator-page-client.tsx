@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import { AppScopeBadge } from "@/components/app-scope-badge";
 import { NoAppSelected } from "@/components/no-app-selected";
+import { useAppStore } from "@/stores/app-store";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
