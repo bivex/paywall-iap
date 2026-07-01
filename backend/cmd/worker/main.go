@@ -60,7 +60,9 @@ func main() {
 	}
 
 	queries := generated.New(dbPool)
-	taskHandlers := worker_tasks.NewTaskHandlers(queries, redisClient)
+	taskHandlers := worker_tasks.NewTaskHandlers(queries, redisClient).
+		WithLago(cfg.Lago.APIURL, cfg.Lago.APIKey).
+		WithFCM(cfg.Notification.FCMServerKey)
 
 	// Initialize dunning service and handler
 	dunningRepo := repository.NewDunningRepository(dbPool)

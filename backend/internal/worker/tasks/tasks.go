@@ -1,10 +1,12 @@
 package tasks
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -30,9 +32,12 @@ const (
 
 // TaskHandlers holds dependencies for all task handlers.
 type TaskHandlers struct {
-	queries *generated.Queries
-	logger  *zap.Logger
-	redis   *redis.Client
+	queries      *generated.Queries
+	logger       *zap.Logger
+	redis        *redis.Client
+	lagoAPIURL   string
+	lagoAPIKey   string
+	fcmServerKey string
 }
 
 // NewTaskHandlers creates task handlers with database access.
@@ -42,6 +47,19 @@ func NewTaskHandlers(queries *generated.Queries, redisClient *redis.Client) *Tas
 		logger:  logging.Logger,
 		redis:   redisClient,
 	}
+}
+
+// WithLago sets Lago billing credentials.
+func (h *TaskHandlers) WithLago(apiURL, apiKey string) *TaskHandlers {
+	h.lagoAPIURL = apiURL
+	h.lagoAPIKey = apiKey
+	return h
+}
+
+// WithFCM sets FCM server key for push notifications.
+func (h *TaskHandlers) WithFCM(serverKey string) *TaskHandlers {
+	h.fcmServerKey = serverKey
+	return h
 }
 
 // RegisterHandlers registers all task handlers with the server mux.
@@ -313,18 +331,61 @@ func (h *TaskHandlers) HandleSendNotification(ctx context.Context, t *asynq.Task
 		Type   string `json:"type"`
 		Title  string `json:"title"`
 		Body   string `json:"body"`
+		Token  string `json:"device_token"`
 	}
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return err
 	}
 
-	// Notification sending requires FCM (Android) or APNs (iOS) credentials.
-	// Credential injection via env vars: FCM_SERVER_KEY, APNS_KEY_ID, APNS_TEAM_ID
-	// Implementation: use firebase.google.com/go/messaging or apns2 library.
-	h.logger.Info("Notification send requested (stub — no credentials configured)",
+	if h.fcmServerKey == "" {
+		h.logger.Warn("FCM_SERVER_KEY not configured — skipping push notification",
+			zap.String("user_id", payload.UserID),
+			zap.String("type", payload.Type),
+		)
+		return nil
+	}
+
+	if payload.Token == "" {
+		h.logger.Warn("no device token for user — skipping push notification",
+			zap.String("user_id", payload.UserID),
+		)
+		return nil
+	}
+
+	body := map[string]interface{}{
+		"to": payload.Token,
+		"notification": map[string]string{
+			"title": payload.Title,
+			"body":  payload.Body,
+		},
+		"data": map[string]string{
+			"type": payload.Type,
+		},
+	}
+	bodyBytes, _ := json.Marshal(body)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		"https://fcm.googleapis.com/fcm/send", bytes.NewReader(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("fcm: build request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "key="+h.fcmServerKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("fcm: send: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("fcm: unexpected status %d", resp.StatusCode)
+	}
+
+	h.logger.Info("push notification sent",
 		zap.String("user_id", payload.UserID),
 		zap.String("type", payload.Type),
-		zap.String("title", payload.Title),
+		zap.Int("status", resp.StatusCode),
 	)
 	return nil
 }
@@ -338,11 +399,56 @@ func (h *TaskHandlers) HandleSyncLago(ctx context.Context, t *asynq.Task) error 
 		return err
 	}
 
-	// Lago sync requires Lago API credentials: LAGO_API_KEY, LAGO_API_URL
-	// Implementation: POST /api/v1/subscriptions with the subscription data
-	// Library: net/http with JSON body
-	h.logger.Info("Lago sync requested (stub — no Lago credentials configured)",
+	if h.lagoAPIKey == "" || h.lagoAPIURL == "" {
+		h.logger.Warn("Lago credentials not configured — skipping sync",
+			zap.String("subscription_id", payload.SubscriptionID),
+		)
+		return nil
+	}
+
+	// Fetch subscription from DB
+	subID, err := uuid.Parse(payload.SubscriptionID)
+	if err != nil {
+		return fmt.Errorf("lago sync: invalid subscription_id: %w", err)
+	}
+	sub, err := h.queries.GetSubscriptionByID(ctx, subID)
+	if err != nil {
+		return fmt.Errorf("lago sync: fetch subscription: %w", err)
+	}
+
+	// POST to Lago /api/v1/subscriptions
+	lagoPayload := map[string]interface{}{
+		"subscription": map[string]interface{}{
+			"external_id":          sub.ID.String(),
+			"external_customer_id": sub.UserID.String(),
+			"plan_code":            sub.ProductID,
+			"status":               sub.Status,
+		},
+	}
+	bodyBytes, _ := json.Marshal(lagoPayload)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		strings.TrimRight(h.lagoAPIURL, "/")+"/api/v1/subscriptions",
+		bytes.NewReader(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("lago: build request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+h.lagoAPIKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("lago: send: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("lago: unexpected status %d for subscription %s", resp.StatusCode, payload.SubscriptionID)
+	}
+
+	h.logger.Info("Lago sync completed",
 		zap.String("subscription_id", payload.SubscriptionID),
+		zap.Int("status", resp.StatusCode),
 	)
 	return nil
 }
