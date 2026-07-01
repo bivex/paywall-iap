@@ -39,6 +39,8 @@ type FormState = {
   is_active: boolean;
 };
 
+type FormErrors = Partial<Record<keyof FormState, string>>;
+
 const emptyForm = (): FormState => ({
   name: "",
   display_name: "",
@@ -46,6 +48,38 @@ const emptyForm = (): FormState => ({
   platform: "ios",
   is_active: true,
 });
+
+const BUNDLE_RE = /^[a-zA-Z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)+$/;
+
+function validateForm(form: FormState, isEdit: boolean): FormErrors {
+  const errors: FormErrors = {};
+
+  if (!form.name.trim()) {
+    errors.name = "Name is required.";
+  } else if (!BUNDLE_RE.test(form.name.trim())) {
+    errors.name = "Use reverse-DNS format, e.g. com.mothsalt.game1";
+  } else if (form.name.length > 128) {
+    errors.name = "Max 128 characters.";
+  }
+
+  if (!form.bundle_id.trim()) {
+    errors.bundle_id = "Bundle ID is required.";
+  } else if (!BUNDLE_RE.test(form.bundle_id.trim())) {
+    errors.bundle_id = "Use reverse-DNS format, e.g. com.mothsalt.game1";
+  } else if (form.bundle_id.length > 256) {
+    errors.bundle_id = "Max 256 characters.";
+  }
+
+  if (form.display_name.length > 128) {
+    errors.display_name = "Max 128 characters.";
+  }
+
+  if (!isEdit && !["ios", "android", "both"].includes(form.platform)) {
+    errors.platform = "Select a platform.";
+  }
+
+  return errors;
+}
 
 export function AppsPageClient() {
   const { apps, setApps } = useAppStore();
@@ -55,6 +89,7 @@ export function AppsPageClient() {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     fetch("/api/admin/apps")
@@ -66,6 +101,7 @@ export function AppsPageClient() {
   function openCreate() {
     setEditApp(null);
     setForm(emptyForm());
+    setErrors({});
     setDialogOpen(true);
   }
 
@@ -78,10 +114,17 @@ export function AppsPageClient() {
       platform: app.platform,
       is_active: app.is_active,
     });
+    setErrors({});
     setDialogOpen(true);
   }
 
   async function handleSave() {
+    const errs = validateForm(form, !!editApp);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
     setSaving(true);
     try {
       if (editApp) {
@@ -201,7 +244,10 @@ export function AppsPageClient() {
                 placeholder="com.mothsalt.game1"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+                aria-invalid={!!errors.name}
+                className={errors.name ? "border-destructive focus-visible:ring-destructive" : ""}
               />
+              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="display_name">Display name</Label>
@@ -210,7 +256,10 @@ export function AppsPageClient() {
                 placeholder="Mothsalt Game 1"
                 value={form.display_name}
                 onChange={(e) => setForm({ ...form, display_name: e.target.value })}
+                aria-invalid={!!errors.display_name}
+                className={errors.display_name ? "border-destructive focus-visible:ring-destructive" : ""}
               />
+              {errors.display_name && <p className="text-xs text-destructive">{errors.display_name}</p>}
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="bundle_id">Bundle ID / Package name</Label>
@@ -219,7 +268,10 @@ export function AppsPageClient() {
                 placeholder="com.mothsalt.game1"
                 value={form.bundle_id}
                 onChange={(e) => setForm({ ...form, bundle_id: e.target.value })}
+                aria-invalid={!!errors.bundle_id}
+                className={errors.bundle_id ? "border-destructive focus-visible:ring-destructive" : ""}
               />
+              {errors.bundle_id && <p className="text-xs text-destructive">{errors.bundle_id}</p>}
             </div>
             <div className="grid gap-1.5">
               <Label>Platform</Label>
@@ -227,7 +279,7 @@ export function AppsPageClient() {
                 value={form.platform}
                 onValueChange={(v) => setForm({ ...form, platform: v })}
               >
-                <SelectTrigger>
+                <SelectTrigger className={errors.platform ? "border-destructive" : ""}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -236,6 +288,7 @@ export function AppsPageClient() {
                   <SelectItem value="both">Both</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.platform && <p className="text-xs text-destructive">{errors.platform}</p>}
             </div>
             {editApp && (
               <div className="flex items-center gap-2">
@@ -254,7 +307,7 @@ export function AppsPageClient() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={saving || !form.name || !form.bundle_id}>
+            <Button onClick={handleSave} disabled={saving}>
               {saving ? "Saving…" : editApp ? "Save changes" : "Create"}
             </Button>
           </DialogFooter>
