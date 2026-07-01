@@ -16,12 +16,18 @@ import (
 	"github.com/google/uuid"
 )
 
-// IAPVerifier interface for IAP verification services
+// IAPVerifier is the legacy interface (static credentials, no app_id).
+// Kept for backward compatibility with tests and adapter wrappers.
 type IAPVerifier interface {
 	VerifyReceipt(ctx context.Context, receiptData string) (*IAPVerificationResult, error)
 }
 
-// IAPVerificationResult represents the result of IAP verification
+// DynamicIAPVerifier is the preferred interface — resolves credentials per app_id at call time.
+type DynamicIAPVerifier interface {
+	VerifyReceipt(ctx context.Context, appID uuid.UUID, receiptData string) (*IAPVerificationResult, error)
+}
+
+// IAPVerificationResult represents the result of IAP verification.
 type IAPVerificationResult struct {
 	Valid         bool
 	TransactionID string
@@ -31,22 +37,30 @@ type IAPVerificationResult struct {
 	OriginalTxID  string
 }
 
-// VerifyIAPCommand handles IAP receipt verification
+// staticVerifierAdapter wraps a legacy IAPVerifier as a DynamicIAPVerifier,
+// ignoring the appID (used when dynamic credentials are not configured).
+type staticVerifierAdapter struct{ v IAPVerifier }
+
+func (a *staticVerifierAdapter) VerifyReceipt(ctx context.Context, _ uuid.UUID, receiptData string) (*IAPVerificationResult, error) {
+	return a.v.VerifyReceipt(ctx, receiptData)
+}
+
+// VerifyIAPCommand handles IAP receipt verification.
 type VerifyIAPCommand struct {
 	userRepo         repository.UserRepository
 	subscriptionRepo repository.SubscriptionRepository
 	transactionRepo  repository.TransactionRepository
-	iosVerifier      IAPVerifier
-	androidVerifier  IAPVerifier
+	iosVerifier      DynamicIAPVerifier
+	androidVerifier  DynamicIAPVerifier
 }
 
-// NewVerifyIAPCommand creates a new verify IAP command
+// NewVerifyIAPCommand creates a new verify IAP command with dynamic (per-app) verifiers.
 func NewVerifyIAPCommand(
 	userRepo repository.UserRepository,
 	subscriptionRepo repository.SubscriptionRepository,
 	transactionRepo repository.TransactionRepository,
-	iosVerifier IAPVerifier,
-	androidVerifier IAPVerifier,
+	iosVerifier DynamicIAPVerifier,
+	androidVerifier DynamicIAPVerifier,
 ) *VerifyIAPCommand {
 	return &VerifyIAPCommand{
 		userRepo:         userRepo,
@@ -57,8 +71,24 @@ func NewVerifyIAPCommand(
 	}
 }
 
-// Execute executes the verify IAP command
-func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.VerifyIAPRequest) (*dto.VerifyIAPResponse, error) {
+// NewVerifyIAPCommandLegacy wraps legacy static verifiers for tests / backward compat.
+func NewVerifyIAPCommandLegacy(
+	userRepo repository.UserRepository,
+	subscriptionRepo repository.SubscriptionRepository,
+	transactionRepo repository.TransactionRepository,
+	iosVerifier IAPVerifier,
+	androidVerifier IAPVerifier,
+) *VerifyIAPCommand {
+	return NewVerifyIAPCommand(
+		userRepo, subscriptionRepo, transactionRepo,
+		&staticVerifierAdapter{iosVerifier},
+		&staticVerifierAdapter{androidVerifier},
+	)
+}
+
+// Execute executes the verify IAP command.
+// appID is the app the user belongs to — used to select per-app store credentials.
+func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uuid.UUID, req *dto.VerifyIAPRequest) (*dto.VerifyIAPResponse, error) {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: invalid user ID", domainErrors.ErrInvalidInput)
@@ -75,15 +105,15 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.
 	}
 
 	// Select verifier based on platform
-	var verifier IAPVerifier
+	var verifier DynamicIAPVerifier
 	if req.Platform == "ios" {
 		verifier = c.iosVerifier
 	} else {
 		verifier = c.androidVerifier
 	}
 
-	// Verify receipt
-	result, err := verifier.VerifyReceipt(ctx, req.ReceiptData)
+	// Verify receipt — uses per-app credentials from app_credentials table
+	result, err := verifier.VerifyReceipt(ctx, appID, req.ReceiptData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify receipt: %w", err)
 	}
@@ -99,7 +129,6 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.
 		return nil, fmt.Errorf("failed to check duplicate receipt: %w", err)
 	}
 	if isDuplicate {
-		// Return existing subscription instead of error
 		sub, err := c.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
 		if err != nil {
 			return nil, fmt.Errorf("receipt already processed, failed to get subscription: %w", err)
@@ -116,14 +145,12 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.
 	isNew := false
 
 	if err == nil && existingSub != nil {
-		// Update existing subscription
 		existingSub.ExpiresAt = result.ExpiresAt
 		if err := c.subscriptionRepo.Update(ctx, existingSub); err != nil {
 			return nil, fmt.Errorf("failed to update subscription: %w", err)
 		}
 		sub = existingSub
 	} else {
-		// Create new subscription
 		sub = entity.NewSubscription(
 			userUUID,
 			entity.SourceIAP,
@@ -136,12 +163,11 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.
 			return nil, fmt.Errorf("failed to create subscription: %w", err)
 		}
 		isNew = true
-		// Record that this user purchased via IAP
 		_ = c.userRepo.UpdatePurchaseChannel(ctx, userUUID, entity.PurchaseChannelIAP)
 	}
 
 	// Create transaction record
-	txn := entity.NewTransaction(userUUID, sub.ID, 0, "USD") // Amount would be from receipt
+	txn := entity.NewTransaction(userUUID, sub.ID, 0, "USD")
 	txn.ReceiptHash = receiptHash
 	txn.ProviderTxID = result.TransactionID
 	if err := c.transactionRepo.Create(ctx, txn); err != nil {
@@ -152,9 +178,7 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, req *dto.
 }
 
 func (c *VerifyIAPCommand) determinePlanType(productID string) entity.PlanType {
-	// Simple logic - in production, this would be more sophisticated
 	if len(productID) > 0 {
-		// Assume product ID contains "monthly" or "annual"
 		if containsIgnoreCase(productID, "annual") || containsIgnoreCase(productID, "year") {
 			return entity.PlanAnnual
 		}
@@ -184,7 +208,6 @@ func containsIgnoreCase(s, substr string) bool {
 
 // validateIAPRequest validates the IAP request fields before sending to verifier.
 func validateIAPRequest(req *dto.VerifyIAPRequest) error {
-	// product_id: min 3 chars, max 200, must be reverse-domain format (contains dot)
 	if len(req.ProductID) < 3 {
 		return domainErrors.NewValidationError("product_id", "must be at least 3 characters")
 	}
@@ -194,23 +217,17 @@ func validateIAPRequest(req *dto.VerifyIAPRequest) error {
 	if !strings.Contains(req.ProductID, ".") {
 		return domainErrors.NewValidationError("product_id", "must be in reverse-domain notation (e.g. com.app.product)")
 	}
-
-	// receipt_data: max 64 KB (belt-and-suspenders, handler already enforces body limit)
 	if len(req.ReceiptData) > 65536 {
 		return domainErrors.NewValidationError("receipt_data", "exceeds maximum allowed size (64 KB)")
 	}
-
-	// Android-specific: receipt_data must be valid JSON with required fields
 	if req.Platform == "android" {
 		if err := validateAndroidReceipt(req.ReceiptData, req.ProductID); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
-// androidReceiptPayload mirrors the expected JSON structure of receipt_data for Android.
 type androidReceiptPayload struct {
 	PackageName   string `json:"packageName"`
 	ProductID     string `json:"productId"`
@@ -218,8 +235,6 @@ type androidReceiptPayload struct {
 	Type          string `json:"type"`
 }
 
-// validateAndroidReceipt checks that receipt_data is valid JSON, has required fields,
-// matches the product_id in the request, and has a non-empty purchaseToken.
 func validateAndroidReceipt(receiptData, requestProductID string) error {
 	var payload androidReceiptPayload
 	if err := json.Unmarshal([]byte(receiptData), &payload); err != nil {
@@ -240,7 +255,6 @@ func validateAndroidReceipt(receiptData, requestProductID string) error {
 	if payload.Type != "subscription" && payload.Type != "inapp" {
 		return domainErrors.NewValidationError("receipt_data", `field "type" must be "subscription" or "inapp"`)
 	}
-	// Cross-check: productId in receipt must match product_id in request
 	if !strings.EqualFold(payload.ProductID, requestProductID) {
 		return domainErrors.NewValidationError("product_id",
 			fmt.Sprintf("mismatch: request has %q but receipt_data.productId is %q", requestProductID, payload.ProductID))

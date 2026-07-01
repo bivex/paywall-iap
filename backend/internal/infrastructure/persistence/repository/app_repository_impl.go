@@ -269,6 +269,29 @@ func (r *appRepositoryImpl) DeleteCredentials(ctx context.Context, appID uuid.UU
 	return err
 }
 
+func (r *appRepositoryImpl) GetCredentialsByProvider(ctx context.Context, appID uuid.UUID, provider string) (*entity.AppCredentials, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, app_id, provider,
+			apple_shared_secret_enc, apple_team_id, apple_key_id,
+			apple_private_key_enc, apple_bundle_id, apple_environment,
+			google_package_name, google_service_account_enc,
+			stripe_publishable_key, stripe_secret_key_enc, stripe_webhook_secret_enc,
+			paddle_vendor_id, paddle_api_key_enc, paddle_webhook_secret_enc,
+			created_at, updated_at
+		FROM app_credentials
+		WHERE app_id = $1 AND provider = $2
+		LIMIT 1`, appID, provider)
+	if err != nil {
+		return nil, fmt.Errorf("query credentials by provider: %w", err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil, fmt.Errorf("credentials not found for provider %q", provider)
+	}
+	return r.scanAndDecryptCredentials(rows)
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 // nullStr converts empty string to nil so pgx stores NULL instead of empty text.

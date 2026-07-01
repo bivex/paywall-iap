@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+
 	"github.com/bivex/paywall-iap/internal/application/command"
 	"github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/application/dto"
@@ -52,6 +54,14 @@ func (h *IAPHandler) VerifyReceipt(c *gin.Context) {
 		return
 	}
 
+	// Get app_id from JWT context (set by JWT middleware from users.app_id)
+	appIDStr := c.GetString("app_id")
+	appID, err := uuid.Parse(appIDStr)
+	if err != nil {
+		response.BadRequest(c, "invalid or missing app_id in token")
+		return
+	}
+
 	// Enforce max body size: 64 KB to prevent oversized receipts
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 65536)
 
@@ -65,7 +75,7 @@ func (h *IAPHandler) VerifyReceipt(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.verifyIAPCmd.Execute(c.Request.Context(), userID, &req)
+	resp, err := h.verifyIAPCmd.Execute(c.Request.Context(), userID, appID, &req)
 	if err != nil {
 		switch {
 		case isValidationError(err):

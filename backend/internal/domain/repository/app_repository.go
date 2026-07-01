@@ -36,6 +36,9 @@ type AppRepository interface {
 	// GetCredentials returns all credential rows for an app (one per provider), decrypted.
 	GetCredentials(ctx context.Context, appID uuid.UUID) ([]*entity.AppCredentials, error)
 
+	// GetCredentialsByProvider returns credentials for a specific provider, decrypted.
+	GetCredentialsByProvider(ctx context.Context, appID uuid.UUID, provider string) (*entity.AppCredentials, error)
+
 	// UpsertCredentials inserts or updates credentials for one provider, encrypting sensitive fields.
 	UpsertCredentials(ctx context.Context, creds *entity.AppCredentials) error
 

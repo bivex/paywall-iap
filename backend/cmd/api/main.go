@@ -264,9 +264,17 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	rateLimiter := middleware.NewRateLimiter(redisClient, true)
 
 	// Initialize IAP verifiers
+	// Dynamic verifiers resolve credentials per-app from app_credentials table at verify time.
+	// Static singleton verifiers (AppleVerifier/GoogleVerifier) are kept for webhook validation
+	// and as fallback when APP_CREDENTIALS_KEY is not set.
 	appleVerifier := iapext.NewAppleVerifier(cfg.IAP.AppleSharedSecret, cfg.IAP.IsProduction, cfg.IAP.AppleMockURL)
 	googleVerifier := iapext.NewGoogleVerifier(cfg.IAP.GoogleKeyJSON, cfg.IAP.IsProduction, cfg.IAP.GoogleIAPBaseURL)
 	iapAdapter := iapext.NewIAPAdapter(appleVerifier, googleVerifier)
+	_ = iapAdapter // used by webhook handlers
+
+	credResolver := iapext.NewCredentialResolver(appRepo)
+	dynamicApple := iapext.NewDynamicAppleVerifier(credResolver, cfg.IAP.AppleMockURL)
+	dynamicGoogle := iapext.NewDynamicGoogleVerifier(credResolver, cfg.IAP.GoogleIAPBaseURL)
 
 	// Initialize commands
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
@@ -275,8 +283,8 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		userRepo,
 		subscriptionRepo,
 		transactionRepo,
-		iapext.NewAppleVerifierAdapter(iapAdapter),
-		iapext.NewAndroidVerifierAdapter(iapAdapter),
+		dynamicApple,
+		dynamicGoogle,
 	)
 	adminLoginCmd := command.NewAdminLoginCommand(userRepo, adminCredRepo, jwtMiddleware)
 
