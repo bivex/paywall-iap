@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -80,8 +81,8 @@ func (h *IAPHandler) VerifyReceipt(c *gin.Context) {
 		switch {
 		case isValidationError(err):
 			response.BadRequest(c, err.Error())
-		case isDuplicateReceiptError(err):
-			response.OK(c, resp)
+		case errors.Is(err, domainErrors.ErrReceiptAlreadyProcessed) || errors.Is(err, domainErrors.ErrDuplicateReceipt):
+			response.Error(c, http.StatusConflict, "RECEIPT_ALREADY_PROCESSED", "receipt already processed")
 		default:
 			response.UnprocessableEntity(c, err.Error())
 		}

@@ -131,7 +131,9 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uui
 	if isDuplicate {
 		sub, err := c.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
 		if err != nil {
-			return nil, fmt.Errorf("receipt already processed, failed to get subscription: %w", err)
+			// Subscription may have been cancelled after the receipt was processed.
+			// Still idempotent — return a clear error rather than an internal failure.
+			return nil, fmt.Errorf("%w: receipt already processed", domainErrors.ErrReceiptAlreadyProcessed)
 		}
 		return c.toSubscriptionResponse(sub, false), nil
 	}

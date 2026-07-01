@@ -23,8 +23,9 @@ var (
 	// Transaction errors
 	ErrTransactionNotFound  = errors.New("transaction not found")
 	ErrDuplicateReceipt     = errors.New("receipt has already been processed")
-	ErrReceiptInvalid       = errors.New("receipt is invalid")
-	ErrReceiptExpired       = errors.New("receipt has expired")
+	ErrReceiptInvalid            = errors.New("receipt is invalid")
+	ErrReceiptExpired            = errors.New("receipt has expired")
+	ErrReceiptAlreadyProcessed  = errors.New("receipt already processed")
 
 	// Payment errors
 	ErrPaymentFailed   = errors.New("payment failed")
