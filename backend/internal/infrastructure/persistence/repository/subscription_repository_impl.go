@@ -75,9 +75,19 @@ func (r *subscriptionRepositoryImpl) GetActiveByUserID(ctx context.Context, user
 }
 
 func (r *subscriptionRepositoryImpl) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Subscription, error) {
-	// For now, return empty array if no subscriptions
-	// In full implementation, add query to GetSubscriptionsByUserID
-	return []*entity.Subscription{}, nil
+	appID, _ := appctx.AppIDFromCtx(ctx)
+	rows, err := r.queries.GetSubscriptionsByUserID(ctx, generated.GetSubscriptionsByUserIDParams{
+		AppID:  appID,
+		UserID: userID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subscriptions: %w", err)
+	}
+	subs := make([]*entity.Subscription, 0, len(rows))
+	for _, row := range rows {
+		subs = append(subs, r.mapToEntity(row))
+	}
+	return subs, nil
 }
 
 func (r *subscriptionRepositoryImpl) Update(ctx context.Context, sub *entity.Subscription) error {

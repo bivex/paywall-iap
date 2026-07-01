@@ -144,6 +144,14 @@ func (r *mockUserRepo) UpdateEmail(ctx context.Context, id uuid.UUID, email stri
 	return err
 }
 
+func (r *mockUserRepo) IncrementLTV(ctx context.Context, id uuid.UUID, amount float64) error {
+	_, err := r.pool.Exec(ctx,
+		"UPDATE users SET ltv = ltv + $2, ltv_updated_at = now() WHERE id = $1",
+		id, amount,
+	)
+	return err
+}
+
 func (r *mockUserRepo) IncrementSessionCount(ctx context.Context, id uuid.UUID) (int, error) {
 	var count int
 	err := r.pool.QueryRow(ctx,

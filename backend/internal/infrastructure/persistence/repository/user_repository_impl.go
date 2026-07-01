@@ -166,6 +166,23 @@ func (r *userRepositoryImpl) UpdateEmail(ctx context.Context, id uuid.UUID, emai
 	return nil
 }
 
+func (r *userRepositoryImpl) IncrementLTV(ctx context.Context, id uuid.UUID, amount float64) error {
+	// Read current LTV, add amount, write back
+	user, err := r.queries.GetUserByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to get user for LTV update: %w", err)
+	}
+	newLTV := user.Ltv + amount
+	_, err = r.queries.UpdateUserLTV(ctx, generated.UpdateUserLTVParams{
+		ID:  id,
+		Ltv: newLTV,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update LTV: %w", err)
+	}
+	return nil
+}
+
 func (r *userRepositoryImpl) IncrementSessionCount(ctx context.Context, id uuid.UUID) (int, error) {
 	row, err := r.queries.IncrementUserSessionCount(ctx, id)
 	if err != nil {

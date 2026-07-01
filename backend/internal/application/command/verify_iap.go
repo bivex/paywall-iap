@@ -174,6 +174,9 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uui
 		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
+	// Update LTV — best-effort, don't fail the whole request
+	_ = c.userRepo.IncrementLTV(ctx, userUUID, priceFromPlanType(planType))
+
 	return c.toSubscriptionResponse(sub, isNew), nil
 }
 
@@ -184,6 +187,15 @@ func (c *VerifyIAPCommand) determinePlanType(productID string) entity.PlanType {
 		}
 	}
 	return entity.PlanMonthly
+}
+
+func priceFromPlanType(planType entity.PlanType) float64 {
+	switch planType {
+	case entity.PlanAnnual:
+		return 49.99
+	default:
+		return 9.99
+	}
 }
 
 func (c *VerifyIAPCommand) toSubscriptionResponse(sub *entity.Subscription, isNew bool) *dto.VerifyIAPResponse {

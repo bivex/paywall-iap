@@ -39,6 +39,9 @@ type UserRepository interface {
 	// UpdateEmail updates the email address of a user
 	UpdateEmail(ctx context.Context, id uuid.UUID, email string) error
 
+	// IncrementLTV adds amount to the user's lifetime value
+	IncrementLTV(ctx context.Context, id uuid.UUID, amount float64) error
+
 	// IncrementSessionCount increments the session count for a user and returns the new count
 	IncrementSessionCount(ctx context.Context, id uuid.UUID) (int, error)
 
