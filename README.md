@@ -36,6 +36,7 @@ The current local stack already includes working, database-backed admin flows fo
 - revenue ops center with dunning and webhook operations views
 - pricing tier management and paywall creation workflows
 - A/B tests / experiment studio backed by `ab_tests`, `ab_test_arms`, and live aggregate stats
+- per-app settings (grace period, trial, currency, webhook, entitlements) and store credentials (Apple / Google / Stripe / Paddle) with AES-256-GCM encryption — see [docs/app-settings-and-credentials.md](docs/app-settings-and-credentials.md)
 - lightweight frontend JS error capture via the local `js-error-collector`
 
 ## 🖼️ Live Screenshots
