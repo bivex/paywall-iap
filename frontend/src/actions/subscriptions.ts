@@ -70,6 +70,8 @@ export interface TransactionRow {
 
 export interface SubscriptionDetail extends SubscriptionRow {
   updated_at: string;
+  app_id: string;
+  app_name: string;
   transactions: TransactionRow[];
 }
 

@@ -204,6 +204,7 @@ export function SubscriptionDetailSheet({ subscriptionId, trigger }: Props) {
                 <div className="space-y-3">
                   <Field label="Subscription ID" value={detail.id} mono />
                   <Field label="User ID" value={detail.user_id} mono />
+                  <Field label="App" value={detail.app_name || detail.app_id || <span className="text-muted-foreground">—</span>} mono={!detail.app_name} />
                 </div>
               </InfoCard>
 

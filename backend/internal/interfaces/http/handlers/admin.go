@@ -937,23 +937,28 @@ func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
 		UserID       string  `json:"user_id"`
 		Email        string  `json:"email"`
 		LTV          float64 `json:"ltv"`
+		AppID        string  `json:"app_id"`
+		AppName      string  `json:"app_name"`
 		Transactions []TxRow `json:"transactions"`
 	}
 
 	var d Detail
-	var sID, uID uuid.UUID
+	var sID, uID, appID uuid.UUID
 	var expiresAt, createdAt, updatedAt time.Time
 	err := h.dbPool.QueryRow(ctx, `
 		SELECT s.id, s.status, s.source, s.platform, s.plan_type,
 		       s.expires_at, s.created_at, s.updated_at,
-		       u.id, COALESCE(u.email,''), COALESCE(u.ltv,0)
+		       u.id, COALESCE(u.email,''), COALESCE(u.ltv,0),
+		       s.app_id, COALESCE(a.name,'')
 		FROM subscriptions s
 		JOIN users u ON u.id = s.user_id
+		LEFT JOIN apps a ON a.id = s.app_id
 		WHERE s.id = $1 AND s.deleted_at IS NULL
 	`, subID).Scan(
 		&sID, &d.Status, &d.Source, &d.Platform, &d.PlanType,
 		&expiresAt, &createdAt, &updatedAt,
 		&uID, &d.Email, &d.LTV,
+		&appID, &d.AppName,
 	)
 	if err != nil {
 		c.JSON(404, gin.H{"error": "subscription not found"})
@@ -961,6 +966,7 @@ func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
 	}
 	d.ID = sID.String()
 	d.UserID = uID.String()
+	d.AppID = appID.String()
 	d.ExpiresAt = expiresAt.Format(time.RFC3339)
 	d.CreatedAt = createdAt.Format(time.RFC3339)
 	d.UpdatedAt = updatedAt.Format(time.RFC3339)
