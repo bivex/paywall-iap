@@ -245,23 +245,9 @@ func (h *AnalyticsHandler) GetLTV(c *gin.Context) {
 		return
 	}
 
-	// Calculate LTV estimates
-	// TODO: Implement actual LTV calculation using cohort data
-	// For now, return mock data
-	ltvResponse := LTVResponse{
-		UserID: userID.String(),
-		Estimates: map[string]float64{
-			"ltv30":  9.99,
-			"ltv90":  29.97,
-			"ltv365": 119.88,
-		},
-		CalculatedAt: time.Now(),
-	}
-
-	// Cache for 1 hour
-	h.setToCache(c, cacheKey, ltvResponse, 1*time.Hour)
-
-	response.OK(c, ltvResponse)
+	// This handler is superseded by AnalyticsHandlersExtended.GetLTV which uses real DB data.
+	// Route /analytics/ltv is registered on analyticsExtHandler — this method is not reachable.
+	response.NotFound(c, "use /analytics/ltv via extended handler")
 }
 
 // LTVResponse represents LTV estimates for a user
