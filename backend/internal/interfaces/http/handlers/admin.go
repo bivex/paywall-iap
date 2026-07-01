@@ -21,6 +21,7 @@ import (
 	persistenceRepo "github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
 	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
+	httpmiddleware "github.com/bivex/paywall-iap/internal/interfaces/http/middleware"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 	"github.com/bivex/paywall-iap/internal/worker/tasks"
 )
@@ -994,6 +995,7 @@ func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
 // GET /admin/subscriptions?page=1&limit=20&status=active&source=iap&platform=ios&plan_type=monthly&search=email&date_from=2024-01-01&date_to=2024-12-31
 func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
 	ctx := c.Request.Context()
+	appID := httpmiddleware.GetAppID(c)
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	if page < 1 {
@@ -1013,9 +1015,10 @@ func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
 	dateFrom := c.Query("date_from")
 	dateTo := c.Query("date_to")
 
-	args := []interface{}{}
-	where := []string{"s.deleted_at IS NULL"}
-	idx := 1
+	// app_id is always the first bound parameter — mandatory scope filter.
+	args := []interface{}{appID}
+	where := []string{"s.app_id = $1", "s.deleted_at IS NULL"}
+	idx := 2
 
 	if status != "" {
 		args = append(args, status)
@@ -1230,9 +1233,10 @@ func (h *AdminHandler) ListTransactions(c *gin.Context) {
 	dateFrom := c.Query("date_from")
 	dateTo := c.Query("date_to")
 
-	args := []interface{}{}
-	where := []string{}
-	idx := 1
+	appID := httpmiddleware.GetAppID(c)
+	args := []interface{}{appID}
+	where := []string{"t.app_id = $1"}
+	idx := 2
 
 	if status != "" {
 		args = append(args, status)
@@ -1265,10 +1269,7 @@ func (h *AdminHandler) ListTransactions(c *gin.Context) {
 		idx++
 	}
 
-	whereSQL := ""
-	if len(where) > 0 {
-		whereSQL = "WHERE " + strings.Join(where, " AND ")
-	}
+	whereSQL := "WHERE " + strings.Join(where, " AND ")
 
 	baseQ := fmt.Sprintf(`
 FROM transactions t

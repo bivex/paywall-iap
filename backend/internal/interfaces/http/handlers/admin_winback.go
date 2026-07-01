@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/bivex/paywall-iap/internal/domain/entity"
+	httpmiddleware "github.com/bivex/paywall-iap/internal/interfaces/http/middleware"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
@@ -121,20 +122,23 @@ func (h *AdminHandler) getWinbackCampaignSummary(ctx *gin.Context, campaignID st
 }
 
 func (h *AdminHandler) ListWinbackCampaigns(c *gin.Context) {
+	appID := httpmiddleware.GetAppID(c)
 	rows, err := h.dbPool.Query(c.Request.Context(), `
-		SELECT campaign_id,
-		       MIN(discount_type)::text AS discount_type,
-		       MIN(discount_value)::double precision AS discount_value,
+		SELECT wo.campaign_id,
+		       MIN(wo.discount_type)::text AS discount_type,
+		       MIN(wo.discount_value)::double precision AS discount_value,
 		       COUNT(*)::int AS total_offers,
-		       COUNT(*) FILTER (WHERE status = 'offered' AND expires_at > NOW())::int AS active_offers,
-		       COUNT(*) FILTER (WHERE status = 'accepted')::int AS accepted_offers,
-		       COUNT(*) FILTER (WHERE status = 'expired' OR (status = 'offered' AND expires_at <= NOW()))::int AS expired_offers,
-		       COUNT(*) FILTER (WHERE status = 'declined')::int AS declined_offers,
-		       MIN(offered_at) AS launched_at,
-		       MAX(expires_at) AS latest_expiry_at
-		FROM winback_offers
-		GROUP BY campaign_id
-		ORDER BY MIN(offered_at) DESC`)
+		       COUNT(*) FILTER (WHERE wo.status = 'offered' AND wo.expires_at > NOW())::int AS active_offers,
+		       COUNT(*) FILTER (WHERE wo.status = 'accepted')::int AS accepted_offers,
+		       COUNT(*) FILTER (WHERE wo.status = 'expired' OR (wo.status = 'offered' AND wo.expires_at <= NOW()))::int AS expired_offers,
+		       COUNT(*) FILTER (WHERE wo.status = 'declined')::int AS declined_offers,
+		       MIN(wo.offered_at) AS launched_at,
+		       MAX(wo.expires_at) AS latest_expiry_at
+		FROM winback_offers wo
+		JOIN users u ON u.id = wo.user_id
+		WHERE u.app_id = $1
+		GROUP BY wo.campaign_id
+		ORDER BY MIN(wo.offered_at) DESC`, appID)
 	if err != nil {
 		response.InternalError(c, "Failed to load winback campaigns")
 		return

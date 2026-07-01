@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/bivex/paywall-iap/internal/domain/service"
+	httpmiddleware "github.com/bivex/paywall-iap/internal/interfaces/http/middleware"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
@@ -1071,9 +1072,11 @@ func adminExperimentListQuery(withAssignments bool, withLifecycleAudit bool, wit
 	}
 	if withAssignments {
 		return adminExperimentSelectBase + automationPolicyColumns + lifecycleColumns + adminExperimentSelectMeta + adminExperimentSelectWithAssignments + adminExperimentSelectFrom + lifecycleJoin + `
+		WHERE e.app_id = $1
 		ORDER BY e.created_at DESC`
 	}
 	return adminExperimentSelectBase + automationPolicyColumns + lifecycleColumns + adminExperimentSelectMeta + adminExperimentSelectStatsOnly + adminExperimentSelectFrom + lifecycleJoin + `
+		WHERE e.app_id = $1
 		ORDER BY e.created_at DESC`
 }
 
@@ -1310,10 +1313,11 @@ func (h *AdminHandler) GetAdminExperimentWinnerRecommendationAuditHistory(c *gin
 }
 
 func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
+	appID := httpmiddleware.GetAppID(c)
 	withAssignments := h.hasAssignmentTable(c)
 	withLifecycleAudit := h.hasLifecycleAuditTable(c)
 	withAutomationPolicy := h.hasExperimentAutomationPolicyColumn(c)
-	rows, err := h.dbPool.Query(c.Request.Context(), adminExperimentListQuery(withAssignments, withLifecycleAudit, withAutomationPolicy))
+	rows, err := h.dbPool.Query(c.Request.Context(), adminExperimentListQuery(withAssignments, withLifecycleAudit, withAutomationPolicy), appID)
 	if err != nil {
 		response.InternalError(c, "Failed to load experiments")
 		return

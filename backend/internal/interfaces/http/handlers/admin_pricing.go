@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
+	httpmiddleware "github.com/bivex/paywall-iap/internal/interfaces/http/middleware"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
@@ -199,6 +200,7 @@ func (h *AdminHandler) logPricingTierAction(c *gin.Context, action string, tier 
 }
 
 func (h *AdminHandler) ListPricingTiers(c *gin.Context) {
+	appID := httpmiddleware.GetAppID(c)
 	rows, err := h.dbPool.Query(c.Request.Context(), `
 		SELECT id,
 		       name,
@@ -212,8 +214,8 @@ func (h *AdminHandler) ListPricingTiers(c *gin.Context) {
 		       created_at,
 		       updated_at
 		FROM pricing_tiers
-		WHERE deleted_at IS NULL
-		ORDER BY created_at DESC`)
+		WHERE deleted_at IS NULL AND app_id = $1
+		ORDER BY created_at DESC`, appID)
 	if err != nil {
 		response.InternalError(c, "Failed to load pricing tiers")
 		return
@@ -255,8 +257,11 @@ func (h *AdminHandler) CreatePricingTier(c *gin.Context) {
 		return
 	}
 
+	appID := httpmiddleware.GetAppID(c)
+
 	tier, err := scanPricingTier(h.dbPool.QueryRow(c.Request.Context(), `
 		INSERT INTO pricing_tiers (
+			app_id,
 			name,
 			description,
 			monthly_price,
@@ -267,7 +272,7 @@ func (h *AdminHandler) CreatePricingTier(c *gin.Context) {
 			is_active,
 			updated_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, now())
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, now())
 		RETURNING id,
 		          name,
 		          COALESCE(description, ''),
@@ -279,6 +284,7 @@ func (h *AdminHandler) CreatePricingTier(c *gin.Context) {
 		          is_active,
 		          created_at,
 		          updated_at`,
+		appID,
 		req.Name,
 		req.Description,
 		req.MonthlyPrice,
