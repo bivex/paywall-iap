@@ -7,8 +7,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	"go.uber.org/zap"
 
 	"github.com/bivex/paywall-iap/internal/domain/service"
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 )
 
 const (
@@ -18,40 +20,34 @@ const (
 
 // ProcessDunningAttemptPayload is the payload for processing a dunning retry
 type ProcessDunningAttemptPayload struct {
-	DunningID uuid.UUID `json:"dunning_id"`
+	DunningID      uuid.UUID `json:"dunning_id"`
+	PaymentSuccess bool      `json:"payment_success"`
 }
 
 // DunningJobHandler handles dunning-related background jobs
 type DunningJobHandler struct {
 	dunningService *service.DunningService
+	asynqClient    *asynq.Client
 }
 
 // NewDunningJobHandler creates a new dunning job handler
-func NewDunningJobHandler(dunningService *service.DunningService) *DunningJobHandler {
+func NewDunningJobHandler(dunningService *service.DunningService, asynqClient *asynq.Client) *DunningJobHandler {
 	return &DunningJobHandler{
 		dunningService: dunningService,
+		asynqClient:    asynqClient,
 	}
 }
 
-// HandleProcessDunningAttempt processes a single dunning retry attempt
+// HandleProcessDunningAttempt processes a single dunning retry attempt.
+// For IAP (App Store/Play Store) subscriptions, dunning is mostly handled by the stores.
+// payment_success is set by the webhook that triggers this task (e.g. a renewal event).
 func (h *DunningJobHandler) HandleProcessDunningAttempt(ctx context.Context, t *asynq.Task) error {
 	var p ProcessDunningAttemptPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
 	}
 
-	// In production, this would call an external payment gateway or IAP service
-	// to check if renewal succeeded or try to charge again.
-	// For this simulation, we'll assume it's a retry logic.
-	// In reality, for IAP (App Store/Play Store), dunning is mostly handled by the stores,
-	// but we might want to track it and notify users if the store tells us it's in dunning.
-
-	// For simulation, let's say we have a 20% recovery rate on each retry
-	paymentSuccess := false
-	// Simulate some logic here...
-
-	err := h.dunningService.ProcessDunningAttempt(ctx, p.DunningID, paymentSuccess)
-	if err != nil {
+	if err := h.dunningService.ProcessDunningAttempt(ctx, p.DunningID, p.PaymentSuccess); err != nil {
 		return err
 	}
 
@@ -65,19 +61,28 @@ func (h *DunningJobHandler) HandleCheckPendingDunning(ctx context.Context, t *as
 		return err
 	}
 
-	client := asynq.NewClient(asynq.RedisClientOpt{Addr: "localhost:6379"})
-	defer client.Close()
-
 	for _, dunning := range pending {
-		payload, _ := json.Marshal(ProcessDunningAttemptPayload{DunningID: dunning.ID})
-		task := asynq.NewTask(TypeProcessDunningAttempt, payload)
-		_, err := client.Enqueue(task)
+		payload, err := json.Marshal(ProcessDunningAttemptPayload{
+			DunningID:      dunning.ID,
+			PaymentSuccess: false, // store-side payment outcome unknown at check time; webhook updates this
+		})
 		if err != nil {
-			fmt.Printf("Failed to enqueue dunning attempt task for %s: %v\n", dunning.ID, err)
+			logging.Logger.Error("Failed to marshal dunning payload",
+				zap.String("dunning_id", dunning.ID.String()),
+				zap.Error(err),
+			)
+			continue
+		}
+		task := asynq.NewTask(TypeProcessDunningAttempt, payload)
+		if _, err := h.asynqClient.Enqueue(task); err != nil {
+			logging.Logger.Error("Failed to enqueue dunning attempt task",
+				zap.String("dunning_id", dunning.ID.String()),
+				zap.Error(err),
+			)
 		}
 	}
 
-	fmt.Printf("Enqueued %d dunning attempt tasks\n", len(pending))
+	logging.Logger.Info("Checked pending dunning", zap.Int("count", len(pending)))
 	return nil
 }
 
@@ -86,8 +91,7 @@ func ScheduleDunningJobs(scheduler *asynq.Scheduler) error {
 	// Check for pending dunning every hour
 	_, err := scheduler.Register("0 * * * *", asynq.NewTask(TypeCheckPendingDunning, nil))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to register dunning check job: %w", err)
 	}
-
 	return nil
 }

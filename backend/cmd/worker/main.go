@@ -62,6 +62,16 @@ func main() {
 	queries := generated.New(dbPool)
 	taskHandlers := worker_tasks.NewTaskHandlers(queries, redisClient)
 
+	// Initialize dunning service and handler
+	dunningRepo := repository.NewDunningRepository(dbPool)
+	subscriptionRepo := repository.NewSubscriptionRepository(queries)
+	userRepo := repository.NewUserRepository(queries)
+	notificationSvc := service.NewNotificationService()
+	dunningService := service.NewDunningService(dunningRepo, subscriptionRepo, userRepo, notificationSvc)
+	asynqClient := asynq.NewClientFromRedisClient(redisClient)
+	defer asynqClient.Close()
+	dunningJobHandler := worker_tasks.NewDunningJobHandler(dunningService, asynqClient)
+
 	// Initialize advanced bandit services for worker
 	banditRepo := repository.NewPostgresBanditRepository(dbPool, logging.Logger)
 	automationJobRunRepo := repository.NewAutomationJobRunRepository(dbPool)
@@ -106,6 +116,7 @@ func main() {
 	// Register task handlers
 	mux := asynq.NewServeMux()
 	worker_tasks.RegisterHandlers(mux, taskHandlers)
+	worker_tasks.RegisterDunningHandlers(mux, dunningJobHandler)
 
 	// Register advanced bandit worker handlers
 	worker_tasks.RegisterCurrencyTasks(mux, currencyService, automationJobExecutor, logging.Logger)

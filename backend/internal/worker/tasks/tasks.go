@@ -52,12 +52,12 @@ func RegisterHandlers(mux *asynq.ServeMux, h *TaskHandlers) {
 	mux.HandleFunc(TypeSendNotification, h.HandleSendNotification)
 	mux.HandleFunc(TypeSyncLago, h.HandleSyncLago)
 	mux.HandleFunc(TypeExpireGracePeriod, h.HandleExpireGracePeriod)
+}
 
-	// Dunning handlers
-	// Note: In a real app we'd inject DunningService/AnalyticsService into TaskHandlers or use separate handlers
-	// For simplicity, we'll assume they are registered in their respective files or here.
-	// But according to my plan, I should have RegisterDunningHandlers etc.
-
+// RegisterDunningHandlers registers dunning task handlers with the server mux.
+func RegisterDunningHandlers(mux *asynq.ServeMux, h *DunningJobHandler) {
+	mux.HandleFunc(TypeProcessDunningAttempt, h.HandleProcessDunningAttempt)
+	mux.HandleFunc(TypeCheckPendingDunning, h.HandleCheckPendingDunning)
 }
 
 // RegisterScheduledTasks registers all scheduled (cron) tasks
