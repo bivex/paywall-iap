@@ -28,20 +28,22 @@ func TestAppleMock_DoubleCancelIdempotent(t *testing.T) {
 	assert.False(t, resp.Valid, "double-cancelled sub must remain invalid")
 }
 
-// Refund on already-cancelled sub: refund endpoint must still respond 2xx.
+// Refund on already-cancelled sub: refund endpoint must still respond 2xx or 404.
+// txID is captured BEFORE cancel to avoid empty-txID skip.
 func TestAppleMock_RefundAfterCancel(t *testing.T) {
 	token := createAppleSub(t, appleTestProduct)
+
+	// Capture txID before cancel
+	resp0, err := newMockAppleVerifier().VerifyReceipt(context.Background(), token)
+	require.NoError(t, err)
+	require.True(t, resp0.Valid)
+	require.NotEmpty(t, resp0.TransactionID, "txID must be present for a fresh active sub")
+	txID := resp0.TransactionID
+
 	cancelAppleSub(t, token)
 
-	// get tx id from verify (still returns receipt data even when invalid)
-	resp, err := newMockAppleVerifier().VerifyReceipt(context.Background(), token)
-	require.NoError(t, err)
-	// sub is cancelled so valid=false, but TransactionID should still be present
-	if resp.TransactionID == "" {
-		t.Skip("no transaction ID available after cancel — skipping refund step")
-	}
-
-	url := fmt.Sprintf("%s/subs/%s/refund/%s", appleMockURL(), token, resp.TransactionID)
+	// Sub is now cancelled — refund endpoint should accept or 404 the tx gracefully
+	url := fmt.Sprintf("%s/subs/%s/refund/%s", appleMockURL(), token, txID)
 	req, _ := http.NewRequest(http.MethodPost, url, nil)
 	r, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
@@ -49,6 +51,11 @@ func TestAppleMock_RefundAfterCancel(t *testing.T) {
 	assert.True(t, r.StatusCode == http.StatusOK || r.StatusCode == http.StatusNoContent ||
 		r.StatusCode == http.StatusNotFound,
 		"refund after cancel: unexpected status %d", r.StatusCode)
+
+	// Either way, verify must still return invalid
+	resp2, err := newMockAppleVerifier().VerifyReceipt(context.Background(), token)
+	require.NoError(t, err)
+	assert.False(t, resp2.Valid, "cancelled sub must remain invalid after refund attempt")
 }
 
 // Multiple renewals: each renew produces a distinct transaction ID; sub stays valid.
@@ -122,19 +129,22 @@ func TestAppleMock_ConcurrentVerify(t *testing.T) {
 	}
 }
 
-// Renew after cancel: renewed sub must stay invalid (cancel is terminal).
+// Renew after cancel: mock must reject renew and sub must stay invalid.
 func TestAppleMock_RenewAfterCancel_StaysInvalid(t *testing.T) {
 	token := createAppleSub(t, appleTestProduct)
 	cancelAppleSub(t, token)
-	renewAppleSub(t, token)
 
-	resp, err := newMockAppleVerifier().VerifyReceipt(context.Background(), token)
+	// renew on cancelled sub must return non-2xx
+	resp, err := http.Post(appleMockURL()+"/subs/"+token+"/renew", "application/json", nil)
 	require.NoError(t, err)
-	// After cancel the receipts have cancellation_date set; renew adds a new receipt
-	// without cancellation_date — so latest receipt may be valid. Mock behaviour:
-	// renew appends a new receipt. Verifier looks at latest (first in list).
-	// Document actual behaviour rather than assert a wrong invariant:
-	t.Logf("valid after renew-post-cancel: %v (txID=%s)", resp.Valid, resp.TransactionID)
+	defer resp.Body.Close()
+	assert.True(t, resp.StatusCode >= 400,
+		"renew on cancelled sub must be rejected (got %d)", resp.StatusCode)
+
+	// verify must still return invalid
+	result, err := newMockAppleVerifier().VerifyReceipt(context.Background(), token)
+	require.NoError(t, err)
+	assert.False(t, result.Valid, "cancelled sub must remain invalid after rejected renew")
 }
 
 // Verify preserves original_transaction_id across renewals.
