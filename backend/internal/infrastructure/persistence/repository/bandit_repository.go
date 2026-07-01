@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
 
@@ -680,15 +681,24 @@ func (r *PostgresBanditRepository) ListWindowMaintenanceExperimentIDs(ctx contex
 		limit = 100
 	}
 
-	rows, err := r.pool.Query(ctx, `
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
+	appFilter := ""
+	args := []interface{}{limit}
+	if hasApp {
+		appFilter = "AND app_id = $2"
+		args = append(args, appID)
+	}
+	query := fmt.Sprintf(`
 		SELECT id
 		FROM ab_tests
 		WHERE is_bandit = TRUE
 		  AND status IN ('running', 'paused')
 		  AND window_type IS NOT NULL
 		  AND window_type <> 'none'
+		  %s
 		ORDER BY updated_at DESC, id
-		LIMIT $1`, limit)
+		LIMIT $1`, appFilter)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query window maintenance experiments: %w", err)
 	}
@@ -713,14 +723,23 @@ func (r *PostgresBanditRepository) ListObjectiveSyncExperimentIDs(ctx context.Co
 		limit = 100
 	}
 
-	rows, err := r.pool.Query(ctx, `
+	appID, hasApp := appctx.AppIDFromCtx(ctx)
+	appFilter := ""
+	args := []interface{}{limit}
+	if hasApp {
+		appFilter = "AND app_id = $2"
+		args = append(args, appID)
+	}
+	query := fmt.Sprintf(`
 		SELECT id
 		FROM ab_tests
 		WHERE is_bandit = TRUE
 		  AND status IN ('running', 'paused', 'completed')
 		  AND objective_type IS NOT NULL
+		  %s
 		ORDER BY updated_at DESC, id
-		LIMIT $1`, limit)
+		LIMIT $1`, appFilter)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query objective sync experiments: %w", err)
 	}
