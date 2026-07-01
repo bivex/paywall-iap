@@ -103,6 +103,7 @@ func dumpRoutesDependencies() *dependencies {
 		subscriptionHandler:   (*app_handler.SubscriptionHandler)(nil),
 		adminHandler:          (*app_handler.AdminHandler)(nil),
 		appsHandler:           (*app_handler.AppsHandler)(nil),
+		appSettingsHandler:    (*app_handler.AppSettingsHandler)(nil),
 		webhookHandler:        (*app_handler.WebhookHandler)(nil),
 		banditHandler:         (*app_handler.BanditHandler)(nil),
 		banditAdvancedHandler: (*app_handler.BanditAdvancedHandler)(nil),
@@ -210,6 +211,7 @@ type dependencies struct {
 	subscriptionHandler   *app_handler.SubscriptionHandler
 	adminHandler          *app_handler.AdminHandler
 	appsHandler           *app_handler.AppsHandler
+	appSettingsHandler    *app_handler.AppSettingsHandler
 	webhookHandler        *app_handler.WebhookHandler
 	banditHandler         *app_handler.BanditHandler
 	banditAdvancedHandler *app_handler.BanditAdvancedHandler
@@ -284,6 +286,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 
 	// Initialize handlers
 	appsHandler := app_handler.NewAppsHandler(appRepo)
+	appSettingsHandler := app_handler.NewAppSettingsHandler(appRepo)
 	authHandler := app_handler.NewAuthHandler(registerCmd, adminLoginCmd, jwtMiddleware)
 	iapHandler := app_handler.NewIAPHandler(verifyIAPCmd, jwtMiddleware, rateLimiter)
 	subscriptionHandler := app_handler.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelSubCmd, jwtMiddleware)
@@ -343,6 +346,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		subscriptionHandler:   subscriptionHandler,
 		adminHandler:          adminHandler,
 		appsHandler:           appsHandler,
+		appSettingsHandler:    appSettingsHandler,
 		webhookHandler:        webhookHandler,
 		banditHandler:         banditHandler,
 		banditAdvancedHandler: banditAdvancedHandler,
@@ -481,6 +485,13 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 		admin.POST("/apps", d.appsHandler.CreateApp)
 		admin.PUT("/apps/:id", d.appsHandler.UpdateApp)
 		admin.DELETE("/apps/:id", d.appsHandler.DeleteApp)
+
+		// App settings & credentials (no X-App-ID required — operates on the app directly by :id)
+		admin.GET("/apps/:id/settings", d.appSettingsHandler.GetAppSettings)
+		admin.PUT("/apps/:id/settings", d.appSettingsHandler.PutAppSettings)
+		admin.GET("/apps/:id/credentials", d.appSettingsHandler.GetAppCredentials)
+		admin.PUT("/apps/:id/credentials", d.appSettingsHandler.PutAppCredentials)
+		admin.DELETE("/apps/:id/credentials/:provider", d.appSettingsHandler.DeleteAppCredentials)
 
 		// App-scoped routes — require X-App-ID header
 		appScoped := admin.Group("/")
