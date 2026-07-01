@@ -8,6 +8,7 @@ import { Activity, Brain, FlaskConical, RefreshCw, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AppScopeBadge } from "@/components/app-scope-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
