@@ -427,9 +427,11 @@ func (h *AdminHandler) SearchUsers(c *gin.Context) {
 	platform := c.Query("platform")
 	role := c.Query("role")
 
-	args := []interface{}{}
-	where := []string{}
-	idx := 1
+	// app_id is always the first bound parameter — mandatory scope filter.
+	appID := appctx.MustAppIDFromCtx(ctx)
+	args := []interface{}{appID}
+	where := []string{"u.app_id = $1"}
+	idx := 2
 
 	if search != "" {
 		args = append(args, "%"+search+"%")
@@ -447,10 +449,7 @@ func (h *AdminHandler) SearchUsers(c *gin.Context) {
 		idx++
 	}
 
-	whereSQL := ""
-	if len(where) > 0 {
-		whereSQL = "WHERE " + strings.Join(where, " AND ")
-	}
+	whereSQL := "WHERE " + strings.Join(where, " AND ")
 
 	var total int64
 	countQ := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s`, whereSQL)
