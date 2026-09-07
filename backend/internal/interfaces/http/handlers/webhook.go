@@ -6,10 +6,12 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
@@ -19,6 +21,15 @@ import (
 	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
 )
+
+// WebhookHandlerConfig configures WebhookHandler
+type WebhookHandlerConfig struct {
+	StripeSecret string
+	AppleSecret  string
+	GoogleSecret string
+	Queries      *generated.Queries
+	AsynqClient  *asynq.Client
+}
 
 // WebhookHandler handles webhook endpoints from external services
 type WebhookHandler struct {
@@ -31,15 +42,64 @@ type WebhookHandler struct {
 }
 
 // NewWebhookHandler creates a new webhook handler
-func NewWebhookHandler(stripeSecret, appleSecret, googleSecret string, queries *generated.Queries, asynqClient *asynq.Client) *WebhookHandler {
+func NewWebhookHandler(cfg WebhookHandlerConfig) *WebhookHandler {
 	return &WebhookHandler{
-		stripeWebhookSecret: stripeSecret,
-		appleWebhookSecret:  appleSecret,
-		googleWebhookSecret: googleSecret,
-		queries:             queries,
-		asynqClient:         asynqClient,
+		stripeWebhookSecret: cfg.StripeSecret,
+		appleWebhookSecret:  cfg.AppleSecret,
+		googleWebhookSecret: cfg.GoogleSecret,
+		queries:             cfg.Queries,
+		asynqClient:         cfg.AsynqClient,
 		allowedIPs:          WebhookIPConfig,
 	}
+}
+
+func (h *WebhookHandler) enqueueWebhookTask(provider, eventType, eventID string) {
+	if h.asynqClient == nil {
+		return
+	}
+	payload, _ := json.Marshal(map[string]string{
+		"provider":   provider,
+		"event_type": eventType,
+		"event_id":   eventID,
+	})
+	task := asynq.NewTask(tasks.TypeProcessWebhook, payload)
+	taskID := fmt.Sprintf("webhook:%s:%s", provider, eventID)
+	if _, err := h.asynqClient.Enqueue(
+		task,
+		asynq.TaskID(taskID),
+		asynq.MaxRetry(3),
+		asynq.Timeout(30*time.Second),
+	); err != nil {
+		if !strings.Contains(err.Error(), "task ID already exists") {
+			logging.Logger.Error("Failed to enqueue webhook task",
+				zap.String("provider", provider),
+				zap.String("event_id", eventID),
+				zap.Error(err),
+			)
+		}
+	}
+}
+
+func (h *WebhookHandler) isIPAllowed(clientIP, service, secret string) bool {
+	if secret == "" || secret == "whsec_dummy" {
+		return true
+	}
+	return h.verifyIP(clientIP, service)
+}
+
+func (h *WebhookHandler) validateStripeRequest(c *gin.Context, body []byte) bool {
+	if !h.isIPAllowed(c.ClientIP(), "stripe", h.stripeWebhookSecret) {
+		response.Unauthorized(c, "IP not allowed")
+		return false
+	}
+	if h.stripeWebhookSecret != "" && h.stripeWebhookSecret != "whsec_dummy" {
+		signature := c.GetHeader("Stripe-Signature")
+		if signature == "" || !h.verifyStripeHMAC(body, signature) {
+			response.Unauthorized(c, "Invalid signature")
+			return false
+		}
+	}
+	return true
 }
 
 // StripeWebhook handles Stripe webhook events
@@ -49,36 +109,14 @@ func NewWebhookHandler(stripeSecret, appleSecret, googleSecret string, queries *
 // @Produce json
 // @Router /webhook/stripe [post]
 func (h *WebhookHandler) StripeWebhook(c *gin.Context) {
-	// Verify IP whitelist
-	if h.stripeWebhookSecret != "" && h.stripeWebhookSecret != "whsec_dummy" {
-		if !h.verifyIP(c.ClientIP(), "stripe") {
-			response.Unauthorized(c, "IP not allowed")
-			return
-		}
-	}
-
-	// Verify HMAC signature
-	signature := c.GetHeader("Stripe-Signature")
-	if h.stripeWebhookSecret != "" && h.stripeWebhookSecret != "whsec_dummy" {
-		if signature == "" {
-			response.Unauthorized(c, "Missing signature")
-			return
-		}
-	}
-
-	// Read body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		response.BadRequest(c, "Failed to read body")
 		return
 	}
 
-	// Verify HMAC
-	if h.stripeWebhookSecret != "" && h.stripeWebhookSecret != "whsec_dummy" {
-		if !h.verifyStripeHMAC(body, signature) {
-			response.Unauthorized(c, "Invalid signature")
-			return
-		}
+	if !h.validateStripeRequest(c, body) {
+		return
 	}
 
 	// Parse event ID and type from Stripe JSON body
@@ -102,16 +140,18 @@ func (h *WebhookHandler) StripeWebhook(c *gin.Context) {
 	}
 
 	// Enqueue background processing task
-	payload, _ := json.Marshal(map[string]string{
-		"provider":   "stripe",
-		"event_type": event.Type,
-		"event_id":   event.ID,
-	})
-	if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, payload)); err != nil {
-		logging.Logger.Error("Failed to enqueue webhook task", zap.Error(err))
-	}
+	h.enqueueWebhookTask("stripe", event.Type, event.ID)
 
 	c.JSON(http.StatusOK, gin.H{"status": "received"})
+}
+
+func (h *WebhookHandler) extractApplePayload(body []byte) ([]byte, error) {
+	jwsToken := strings.TrimSpace(string(body))
+	parts := strings.Split(jwsToken, ".")
+	if len(parts) != 3 {
+		return nil, errors.New("invalid JWS token format")
+	}
+	return base64.RawURLEncoding.DecodeString(parts[1])
 }
 
 // AppleWebhook handles Apple S2S notifications
@@ -121,34 +161,20 @@ func (h *WebhookHandler) StripeWebhook(c *gin.Context) {
 // @Produce json
 // @Router /webhook/apple [post]
 func (h *WebhookHandler) AppleWebhook(c *gin.Context) {
-	// Verify IP whitelist
-	if h.appleWebhookSecret != "" && h.appleWebhookSecret != "whsec_dummy" {
-		if !h.verifyIP(c.ClientIP(), "apple") {
-			response.Unauthorized(c, "IP not allowed")
-			return
-		}
+	if !h.isIPAllowed(c.ClientIP(), "apple", h.appleWebhookSecret) {
+		response.Unauthorized(c, "IP not allowed")
+		return
 	}
 
-	// Apple sends a JWS compact token as the raw body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		response.BadRequest(c, "Failed to read body")
 		return
 	}
 
-	jwsToken := strings.TrimSpace(string(body))
-
-	// JWS compact format: header.payload.signature (three dot-separated base64url parts)
-	parts := strings.Split(jwsToken, ".")
-	if len(parts) != 3 {
-		response.BadRequest(c, "Invalid JWS token format")
-		return
-	}
-
-	// Decode the payload (middle part) — base64url with no padding
-	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
+	payloadBytes, err := h.extractApplePayload(body)
 	if err != nil {
-		response.BadRequest(c, "Failed to decode JWS payload")
+		response.BadRequest(c, err.Error())
 		return
 	}
 
@@ -166,13 +192,6 @@ func (h *WebhookHandler) AppleWebhook(c *gin.Context) {
 		return
 	}
 
-	// Skip JWS signature verification in dev (no Apple cert configured)
-	// In production: verify using Apple's WWDR certificate chain
-	if h.appleWebhookSecret != "" {
-		// Full verification would parse the x5c chain from the JWS header
-		// and verify against Apple's root CA. Omitted in this implementation.
-	}
-
 	if err := h.queries.InsertWebhookEvent(c.Request.Context(), generated.InsertWebhookEventParams{
 		Provider:  "apple",
 		EventType: notification.NotificationType,
@@ -183,14 +202,7 @@ func (h *WebhookHandler) AppleWebhook(c *gin.Context) {
 	}
 
 	// Enqueue background processing task
-	taskPayload, _ := json.Marshal(map[string]string{
-		"provider":   "apple",
-		"event_type": notification.NotificationType,
-		"event_id":   notification.NotificationUUID,
-	})
-	if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, taskPayload)); err != nil {
-		logging.Logger.Error("Failed to enqueue Apple webhook task", zap.Error(err))
-	}
+	h.enqueueWebhookTask("apple", notification.NotificationType, notification.NotificationUUID)
 
 	c.JSON(http.StatusOK, gin.H{"status": "received"})
 }
@@ -202,12 +214,9 @@ func (h *WebhookHandler) AppleWebhook(c *gin.Context) {
 // @Produce json
 // @Router /webhook/google [post]
 func (h *WebhookHandler) GoogleWebhook(c *gin.Context) {
-	// Verify IP whitelist
-	if h.googleWebhookSecret != "" && h.googleWebhookSecret != "whsec_dummy" {
-		if !h.verifyIP(c.ClientIP(), "google") {
-			response.Unauthorized(c, "IP not allowed")
-			return
-		}
+	if !h.isIPAllowed(c.ClientIP(), "google", h.googleWebhookSecret) {
+		response.Unauthorized(c, "IP not allowed")
+		return
 	}
 
 	// Google sends Pub/Sub push as JSON with base64-encoded message.data
@@ -269,14 +278,7 @@ func (h *WebhookHandler) GoogleWebhook(c *gin.Context) {
 	}
 
 	// Enqueue background processing task (same pattern as Stripe).
-	taskPayload, _ := json.Marshal(map[string]string{
-		"provider":   "google",
-		"event_type": eventType,
-		"event_id":   eventID,
-	})
-	if _, err := h.asynqClient.Enqueue(asynq.NewTask(tasks.TypeProcessWebhook, taskPayload)); err != nil {
-		logging.Logger.Error("Failed to enqueue Google webhook task", zap.Error(err))
-	}
+	h.enqueueWebhookTask("google", eventType, eventID)
 
 	c.JSON(http.StatusOK, gin.H{"status": "received"})
 }

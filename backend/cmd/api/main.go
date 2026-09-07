@@ -325,13 +325,13 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 		WinbackService:         winbackService,
 		AsynqClient:            asynqClient,
 	})
-	webhookHandler := app_handler.NewWebhookHandler(
-		cfg.IAP.StripeWebhookSecret,
-		cfg.IAP.AppleWebhookSecret,
-		cfg.IAP.GoogleWebhookSecret,
-		queries,
-		asynqClient,
-	)
+	webhookHandler := app_handler.NewWebhookHandler(app_handler.WebhookHandlerConfig{
+		StripeSecret: cfg.IAP.StripeWebhookSecret,
+		AppleSecret:  cfg.IAP.AppleWebhookSecret,
+		GoogleSecret: cfg.IAP.GoogleWebhookSecret,
+		Queries:      queries,
+		AsynqClient:  asynqClient,
+	})
 	banditHandler := app_handler.NewBanditHandler(banditService)
 	banditAdvancedHandler := app_handler.NewBanditAdvancedHandler(advancedBanditEngine, currencyService, logging.Logger)
 

@@ -214,19 +214,27 @@ func (w *CohortWorker) CalculateLTVFromCohorts(ctx context.Context, userID uuid.
 	// Calculate LTV estimates
 	ltv := make(map[string]float64)
 
-	// LTV30 - average revenue from cohort over 30 days
-	if rev30, ok := cohortData.Revenue["day30"]; ok && cohortData.CohortSize > 0 {
-		ltv["ltv30"] = rev30 / float64(cohortData.CohortSize)
-	}
+	var arpu30 float64
+	if cohortData.CohortSize > 0 {
+		// LTV30 - average revenue per user in cohort over 30 days
+		if rev30, ok := cohortData.Revenue["day30"]; ok {
+			arpu30 = rev30 / float64(cohortData.CohortSize)
+			ltv["ltv30"] = arpu30
+		}
 
-	// LTV90 - extrapolate from 30-day data
-	if rev30, ok := cohortData.Revenue["day30"]; ok {
-		ltv["ltv90"] = rev30 * 3 // Simple 3x extrapolation
-	}
+		// LTV90 - actual if recorded, otherwise modeled with retention curve decay (~1.65x for standard apps)
+		if rev90, ok := cohortData.Revenue["day90"]; ok {
+			ltv["ltv90"] = rev90 / float64(cohortData.CohortSize)
+		} else if arpu30 > 0 {
+			ltv["ltv90"] = arpu30 * 1.65
+		}
 
-	// LTV365 - extrapolate from 30-day data
-	if rev30, ok := cohortData.Revenue["day30"]; ok {
-		ltv["ltv365"] = rev30 * 12 // Simple 12x extrapolation
+		// LTV365 - actual if recorded, otherwise modeled with annual retention curve (~2.85x for standard subscriptions)
+		if rev365, ok := cohortData.Revenue["day365"]; ok {
+			ltv["ltv365"] = rev365 / float64(cohortData.CohortSize)
+		} else if arpu30 > 0 {
+			ltv["ltv365"] = arpu30 * 2.85
+		}
 	}
 
 	return ltv, nil

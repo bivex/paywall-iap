@@ -243,6 +243,15 @@ func (h *TaskHandlers) HandleProcessWebhook(ctx context.Context, t *asynq.Task) 
 		return fmt.Errorf("failed to fetch webhook event: %w", err)
 	}
 
+	// Idempotency check: skip processing if already marked processed
+	if event.ProcessedAt != nil {
+		h.logger.Info("Webhook event already processed, skipping",
+			zap.String("provider", payload.Provider),
+			zap.String("event_id", payload.EventID),
+		)
+		return nil
+	}
+
 	// Dispatch based on provider
 	switch payload.Provider {
 	case "stripe":
