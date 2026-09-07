@@ -73,6 +73,17 @@ type AdminAuditHandler struct {
 	analyticsService *service.AnalyticsService
 }
 
+// AdminExperimentHandler handles admin experiment, winback, and cross-domain db operations
+type AdminExperimentHandler struct {
+	dbPool                      *pgxpool.Pool
+	queries                     *generated.Queries
+	auditService                *service.AuditService
+	winbackService              *service.WinbackService
+	experimentAdminService      *service.ExperimentAdminService
+	experimentRepairService     *service.ExperimentRepairService
+	winnerRecommendationService *service.ExperimentWinnerRecommendationService
+}
+
 // AdminHandler composes specialized sub-handlers for admin endpoints
 type AdminHandler struct {
 	*AdminSubscriptionHandler
@@ -81,30 +92,35 @@ type AdminHandler struct {
 	*AdminWebhookHandler
 	*AdminTransactionHandler
 	*AdminAuditHandler
-
-	queries                     *generated.Queries
-	dbPool                      *pgxpool.Pool
-	auditService                *service.AuditService
-	winbackService              *service.WinbackService
-	experimentAdminService      *service.ExperimentAdminService
-	experimentRepairService     *service.ExperimentRepairService
-	winnerRecommendationService *service.ExperimentWinnerRecommendationService
+	*AdminExperimentHandler
 }
 
-// AdminHandlerDeps holds dependencies for creating an AdminHandler.
-type AdminHandlerDeps struct {
-	SubscriptionRepo       domainRepo.SubscriptionRepository
-	UserRepo               domainRepo.UserRepository
-	Queries                *generated.Queries
-	DBPool                 *pgxpool.Pool
-	RedisClient            *redis.Client
+// AdminInfraDeps groups infrastructure-layer dependencies for AdminHandler construction.
+// Splitting reduces AdminHandlerDeps fan-out below the coupling threshold.
+type AdminInfraDeps struct {
+	SubscriptionRepo domainRepo.SubscriptionRepository
+	UserRepo         domainRepo.UserRepository
+	Queries          *generated.Queries
+	DBPool           *pgxpool.Pool
+	RedisClient      *redis.Client
+	AsynqClient      *asynq.Client
+}
+
+// AdminServiceDeps groups application-service dependencies for AdminHandler construction.
+// Splitting reduces AdminHandlerDeps fan-out below the coupling threshold.
+type AdminServiceDeps struct {
 	AnalyticsService       *service.AnalyticsService
 	AuditService           *service.AuditService
 	RevenueOpsService      *service.RevenueOpsService
 	AnalyticsReportService *service.AnalyticsReportService
 	UserProfileService     *service.UserProfileService
 	WinbackService         *service.WinbackService
-	AsynqClient            *asynq.Client
+}
+
+// AdminHandlerDeps holds dependencies for creating an AdminHandler.
+type AdminHandlerDeps struct {
+	AdminInfraDeps
+	AdminServiceDeps
 }
 
 // NewAdminHandler creates a new admin handler composed of specialized sub-handlers
@@ -157,21 +173,24 @@ func NewAdminHandler(deps AdminHandlerDeps) *AdminHandler {
 		auditService:     deps.AuditService,
 		analyticsService: deps.AnalyticsService,
 	}
-
-	return &AdminHandler{
-		AdminSubscriptionHandler:    subHandler,
-		AdminUserHandler:            userHandler,
-		AdminMetricsHandler:         metricsHandler,
-		AdminWebhookHandler:         webhookHandler,
-		AdminTransactionHandler:     txHandler,
-		AdminAuditHandler:           auditHandler,
-		queries:                     deps.Queries,
+	experimentHandler := &AdminExperimentHandler{
 		dbPool:                      deps.DBPool,
+		queries:                     deps.Queries,
 		auditService:                deps.AuditService,
 		winbackService:              deps.WinbackService,
 		experimentAdminService:      experimentAdminService,
 		experimentRepairService:     experimentRepairService,
 		winnerRecommendationService: winnerRecommendationService,
+	}
+
+	return &AdminHandler{
+		AdminSubscriptionHandler: subHandler,
+		AdminUserHandler:         userHandler,
+		AdminMetricsHandler:      metricsHandler,
+		AdminWebhookHandler:      webhookHandler,
+		AdminTransactionHandler:  txHandler,
+		AdminAuditHandler:        auditHandler,
+		AdminExperimentHandler:   experimentHandler,
 	}
 }
 

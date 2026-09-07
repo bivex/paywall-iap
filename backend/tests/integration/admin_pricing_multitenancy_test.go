@@ -113,7 +113,11 @@ func TestPricingTierMultitenancy(t *testing.T) {
 			c.Next()
 		})
 		r.Use(httpmiddleware.RequireAppID())
-		h := handlers.NewAdminHandler(handlers.AdminHandlerDeps{DBPool: pool})
+		h := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+			AdminInfraDeps: handlers.AdminInfraDeps{
+				DBPool: pool,
+			},
+		})
 		g := r.Group("/v1/admin")
 		g.GET("/pricing-tiers", h.ListPricingTiers)
 		g.POST("/pricing-tiers", h.CreatePricingTier)

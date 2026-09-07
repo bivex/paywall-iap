@@ -207,9 +207,13 @@ func TestExperimentMultitenancy(t *testing.T) {
 		})
 		r.Use(httpmiddleware.RequireAppID())
 		h := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-			Queries:      generated.New(pool),
-			DBPool:       pool,
-			AuditService: service.NewAuditService(pool),
+			AdminInfraDeps: handlers.AdminInfraDeps{
+				Queries: generated.New(pool),
+				DBPool: pool,
+			},
+			AdminServiceDeps: handlers.AdminServiceDeps{
+				AuditService: service.NewAuditService(pool),
+			},
 		})
 		g := r.Group("/v1/admin")
 		g.GET("/experiments", h.ListAdminExperiments)

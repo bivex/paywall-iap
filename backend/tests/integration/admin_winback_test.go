@@ -149,11 +149,15 @@ func TestAdminWinbackHandler(t *testing.T) {
 	})
 
 	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-		SubscriptionRepo: subscriptionRepo,
-		UserRepo:         userRepo,
-		Queries:          queries,
-		DBPool:           db,
-		WinbackService:   winbackService,
+		AdminInfraDeps: handlers.AdminInfraDeps{
+			SubscriptionRepo: subscriptionRepo,
+			UserRepo: userRepo,
+			Queries: queries,
+			DBPool: db,
+		},
+		AdminServiceDeps: handlers.AdminServiceDeps{
+			WinbackService: winbackService,
+		},
 	})
 
 	admin := router.Group("/v1/admin")

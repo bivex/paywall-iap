@@ -215,9 +215,13 @@ func TestAdminExperimentAutomationPolicyEndpointPersistsFlagsAndAuditLog(t *test
 	})
 
 	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-		Queries:      generated.New(db),
-		DBPool:       db,
-		AuditService: service.NewAuditService(db),
+		AdminInfraDeps: handlers.AdminInfraDeps{
+			Queries: generated.New(db),
+			DBPool: db,
+		},
+		AdminServiceDeps: handlers.AdminServiceDeps{
+			AuditService: service.NewAuditService(db),
+		},
 	})
 	admin := router.Group("/v1/admin")
 	admin.PUT("/experiments/:id/automation-policy", handler.UpdateAdminExperimentAutomationPolicy)

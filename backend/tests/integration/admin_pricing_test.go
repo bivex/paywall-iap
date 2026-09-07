@@ -100,8 +100,10 @@ func TestAdminPricingHandler(t *testing.T) {
 	})
 
 	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-		Queries: generated.New(db),
-		DBPool:  db,
+		AdminInfraDeps: handlers.AdminInfraDeps{
+			Queries: generated.New(db),
+			DBPool: db,
+		},
 	})
 
 	admin := router.Group("/v1/admin")

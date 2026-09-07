@@ -79,7 +79,7 @@ func scanWinbackCampaignSummary(scanner interface{ Scan(dest ...any) error }) (W
 	return summary, err
 }
 
-func (h *AdminHandler) logWinbackCampaignAction(c *gin.Context, action string, summary WinbackCampaignSummary, details map[string]interface{}) {
+func (h *AdminExperimentHandler) logWinbackCampaignAction(c *gin.Context, action string, summary WinbackCampaignSummary, details map[string]interface{}) {
 	if h.auditService == nil {
 		return
 	}
@@ -104,7 +104,7 @@ func (h *AdminHandler) logWinbackCampaignAction(c *gin.Context, action string, s
 	_ = h.auditService.LogAction(c.Request.Context(), adminID, action, "winback_campaign", nil, details)
 }
 
-func (h *AdminHandler) getWinbackCampaignSummary(ctx *gin.Context, campaignID string) (WinbackCampaignSummary, error) {
+func (h *AdminExperimentHandler) getWinbackCampaignSummary(ctx *gin.Context, campaignID string) (WinbackCampaignSummary, error) {
 	return scanWinbackCampaignSummary(h.dbPool.QueryRow(ctx.Request.Context(), `
 		SELECT campaign_id,
 		       MIN(discount_type)::text AS discount_type,
@@ -121,7 +121,7 @@ func (h *AdminHandler) getWinbackCampaignSummary(ctx *gin.Context, campaignID st
 		GROUP BY campaign_id`, campaignID))
 }
 
-func (h *AdminHandler) ListWinbackCampaigns(c *gin.Context) {
+func (h *AdminExperimentHandler) ListWinbackCampaigns(c *gin.Context) {
 	appID := httpmiddleware.GetAppID(c)
 	rows, err := h.dbPool.Query(c.Request.Context(), `
 		SELECT wo.campaign_id,
@@ -162,7 +162,7 @@ func (h *AdminHandler) ListWinbackCampaigns(c *gin.Context) {
 	response.OK(c, campaigns)
 }
 
-func (h *AdminHandler) LaunchWinbackCampaign(c *gin.Context) {
+func (h *AdminExperimentHandler) LaunchWinbackCampaign(c *gin.Context) {
 	if h.winbackService == nil {
 		response.ServiceUnavailable(c, "Winback service is not configured")
 		return
@@ -225,7 +225,7 @@ func (h *AdminHandler) LaunchWinbackCampaign(c *gin.Context) {
 	response.OK(c, summary)
 }
 
-func (h *AdminHandler) DeactivateWinbackCampaign(c *gin.Context) {
+func (h *AdminExperimentHandler) DeactivateWinbackCampaign(c *gin.Context) {
 	if h.winbackService == nil {
 		response.ServiceUnavailable(c, "Winback service is not configured")
 		return

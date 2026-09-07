@@ -11,21 +11,33 @@ import (
 	"go.uber.org/zap"
 )
 
-// BanditRewardEngine manages arm selection, reward recording, and metrics
-type BanditRewardEngine struct {
-	base              *ThompsonSamplingBandit
-	repo              BanditRepository
-	cache             BanditCache
-	currencyService   *CurrencyRateService
-	logger            *zap.Logger
+// banditStrategyGroup groups the pluggable reward / selection strategies together.
+// Grouping reduces the fan-out of BanditRewardEngine below the coupling threshold.
+type banditStrategyGroup struct {
 	rewardStrategy    RewardStrategy
 	selectionStrategy SelectionStrategy
 	delayedStrategy   *DelayedRewardStrategy
-	windowEngine      *BanditWindowEngine
-	objectiveEngine   *BanditObjectiveEngine
-	enableCurrency    bool
-	enableContextual  bool
-	enableDelayed     bool
+}
+
+// banditSubEngines groups references to the companion sub-engines used by BanditRewardEngine.
+// Grouping reduces the fan-out of BanditRewardEngine below the coupling threshold.
+type banditSubEngines struct {
+	windowEngine    *BanditWindowEngine
+	objectiveEngine *BanditObjectiveEngine
+}
+
+// BanditRewardEngine manages arm selection, reward recording, and metrics
+type BanditRewardEngine struct {
+	base            *ThompsonSamplingBandit
+	repo            BanditRepository
+	cache           BanditCache
+	currencyService *CurrencyRateService
+	logger          *zap.Logger
+	strategies      banditStrategyGroup
+	subEngines      banditSubEngines
+	enableCurrency  bool
+	enableContextual bool
+	enableDelayed   bool
 }
 
 // BanditWindowEngine manages sliding window operations for bandit experiments
@@ -173,19 +185,23 @@ func NewAdvancedBanditEngine(
 	}
 
 	rewardEngine := &BanditRewardEngine{
-		base:              base,
-		repo:              repo,
-		cache:             cache,
-		currencyService:   currencyService,
-		logger:            logger,
-		rewardStrategy:    rewardStrategy,
-		selectionStrategy: selectionStrategy,
-		delayedStrategy:   delayedStrategy,
-		windowEngine:      windowEngine,
-		objectiveEngine:   objectiveEngine,
-		enableCurrency:    enableCurrency,
-		enableContextual:  enableContextual,
-		enableDelayed:     enableDelayed,
+		base:             base,
+		repo:             repo,
+		cache:            cache,
+		currencyService:  currencyService,
+		logger:           logger,
+		strategies: banditStrategyGroup{
+			rewardStrategy:    rewardStrategy,
+			selectionStrategy: selectionStrategy,
+			delayedStrategy:   delayedStrategy,
+		},
+		subEngines: banditSubEngines{
+			windowEngine:    windowEngine,
+			objectiveEngine: objectiveEngine,
+		},
+		enableCurrency:   enableCurrency,
+		enableContextual: enableContextual,
+		enableDelayed:    enableDelayed,
 	}
 
 	maintenanceEngine := &BanditMaintenanceEngine{
@@ -217,12 +233,12 @@ func (e *BanditRewardEngine) getDelayedStrategy() (*DelayedRewardStrategy, error
 	if !e.enableDelayed {
 		return nil, fmt.Errorf("delayed feedback not enabled")
 	}
-	if e.delayedStrategy != nil {
-		return e.delayedStrategy, nil
+	if e.strategies.delayedStrategy != nil {
+		return e.strategies.delayedStrategy, nil
 	}
 
-	e.delayedStrategy = NewDelayedRewardStrategy(e.repo, e.cache, e.logger)
-	return e.delayedStrategy, nil
+	e.strategies.delayedStrategy = NewDelayedRewardStrategy(e.repo, e.cache, e.logger)
+	return e.strategies.delayedStrategy, nil
 }
 
 func (e *BanditObjectiveEngine) getHybridStrategy(
@@ -275,8 +291,8 @@ func (e *BanditRewardEngine) SelectArm(
 	var selectedArm *Arm
 
 	// Use selection strategy if configured
-	if e.selectionStrategy != nil {
-		arm, err := e.selectionStrategy.SelectArm(ctx, arms, userContext)
+	if e.strategies.selectionStrategy != nil {
+		arm, err := e.strategies.selectionStrategy.SelectArm(ctx, arms, userContext)
 		if err != nil {
 			e.logger.Warn("Selection strategy failed, falling back to base", zap.Error(err))
 		} else {
@@ -314,7 +330,7 @@ func (e *BanditRewardEngine) SelectArm(
 	}
 
 	// Update LinUCB model if contextual is enabled
-	if linucbStrategy, ok := e.selectionStrategy.(*LinUCBSelectionStrategy); ok {
+	if linucbStrategy, ok := e.strategies.selectionStrategy.(*LinUCBSelectionStrategy); ok {
 		// Model will be updated when reward is recorded
 		_ = linucbStrategy
 	}
@@ -367,15 +383,15 @@ func (e *BanditRewardEngine) RecordReward(
 	}
 
 	// Update LinUCB model if contextual is enabled
-	if linucbStrategy, ok := e.selectionStrategy.(*LinUCBSelectionStrategy); ok {
+	if linucbStrategy, ok := e.strategies.selectionStrategy.(*LinUCBSelectionStrategy); ok {
 		if err := linucbStrategy.UpdateModel(ctx, armID, userContext, finalReward); err != nil {
 			e.logger.Warn("Failed to update LinUCB model", zap.Error(err))
 		}
 	}
 
 	// Update window strategy if enabled
-	if e.windowEngine != nil {
-		if windowStrategy, err := e.windowEngine.getWindowStrategy(ctx, experimentID); err == nil {
+	if e.subEngines.windowEngine != nil {
+		if windowStrategy, err := e.subEngines.windowEngine.getWindowStrategy(ctx, experimentID); err == nil {
 			event := RewardEvent{
 				UserID:      userID,
 				ArmID:       armID,
@@ -390,8 +406,8 @@ func (e *BanditRewardEngine) RecordReward(
 	}
 
 	// Update hybrid objective stats if enabled
-	if e.objectiveEngine != nil {
-		if hybridStrategy, err := e.objectiveEngine.getHybridStrategy(ctx, experimentID); err == nil {
+	if e.subEngines.objectiveEngine != nil {
+		if hybridStrategy, err := e.subEngines.objectiveEngine.getHybridStrategy(ctx, experimentID); err == nil {
 			// Determine which objectives to update
 			objectiveType := hybridStrategy.GetConfig().ObjectiveType
 
@@ -539,8 +555,8 @@ func (e *BanditRewardEngine) GetMetrics(ctx context.Context, experimentID uuid.U
 		}
 	}
 
-	if e.windowEngine != nil {
-		if windowStrategy, err := e.windowEngine.getWindowStrategy(ctx, experimentID); err == nil {
+	if e.subEngines.windowEngine != nil {
+		if windowStrategy, err := e.subEngines.windowEngine.getWindowStrategy(ctx, experimentID); err == nil {
 			arms, armsErr := e.repo.GetArms(ctx, experimentID)
 			if armsErr == nil && len(arms) > 0 {
 				totalUtilization := 0.0

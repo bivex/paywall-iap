@@ -99,19 +99,26 @@ func dumpRoutesConfig() *config.Config {
 func dumpRoutesDependencies() *dependencies {
 	redisClient := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	return &dependencies{
-		jwtMiddleware: middleware.NewJWTMiddleware("dump-routes-secret-dump-routes-secret", nil, 15*time.Minute),
-		rateLimiter:   middleware.NewRateLimiter(redisClient, true),
-
-		authHandler:           (*app_handler.AuthHandler)(nil),
-		iapHandler:            (*app_handler.IAPHandler)(nil),
-		subscriptionHandler:   (*app_handler.SubscriptionHandler)(nil),
-		adminHandler:          (*app_handler.AdminHandler)(nil),
-		appsHandler:           (*app_handler.AppsHandler)(nil),
-		appSettingsHandler:    (*app_handler.AppSettingsHandler)(nil),
-		webhookHandler:        (*app_handler.WebhookHandler)(nil),
-		banditHandler:         (*app_handler.BanditHandler)(nil),
-		banditAdvancedHandler: (*app_handler.BanditAdvancedHandler)(nil),
-		paywallHandler:        (*app_handler.PaywallHandler)(nil),
+		middlewareLayer: middlewareLayer{
+			jwtMiddleware: middleware.NewJWTMiddleware("dump-routes-secret-dump-routes-secret", nil, 15*time.Minute),
+			rateLimiter:   middleware.NewRateLimiter(redisClient, true),
+		},
+		handlerLayer: handlerLayer{
+			coreHandlerLayer: coreHandlerLayer{
+				authHandler:         (*app_handler.AuthHandler)(nil),
+				iapHandler:          (*app_handler.IAPHandler)(nil),
+				subscriptionHandler: (*app_handler.SubscriptionHandler)(nil),
+				adminHandler:        (*app_handler.AdminHandler)(nil),
+				appsHandler:         (*app_handler.AppsHandler)(nil),
+				appSettingsHandler:  (*app_handler.AppSettingsHandler)(nil),
+				webhookHandler:      (*app_handler.WebhookHandler)(nil),
+			},
+			featureHandlerLayer: featureHandlerLayer{
+				banditHandler:         (*app_handler.BanditHandler)(nil),
+				banditAdvancedHandler: (*app_handler.BanditAdvancedHandler)(nil),
+				paywallHandler:        (*app_handler.PaywallHandler)(nil),
+			},
+		},
 	}
 }
 
@@ -189,8 +196,8 @@ func mustInitRedis(ctx context.Context, redisCfg config.RedisConfig) *redis.Opti
 	return opts
 }
 
-// dependencies holds all initialized dependencies
-type dependencies struct {
+// repoLayer holds all initialized repository dependencies
+type repoLayer struct {
 	queries          *generated.Queries
 	userRepo         domainRepo.UserRepository
 	subscriptionRepo domainRepo.SubscriptionRepository
@@ -198,37 +205,67 @@ type dependencies struct {
 	analyticsRepo    domainRepo.AnalyticsRepository
 	banditRepo       service.BanditRepository
 	adminCredRepo    domainRepo.AdminCredentialRepository
+}
 
+// serviceLayer holds all initialized service dependencies
+type serviceLayer struct {
 	analyticsService *service.AnalyticsService
 	auditService     *service.AuditService
 	banditService    *service.ThompsonSamplingBandit
 	advancedBandit   *service.AdvancedBanditEngine
 	currencyService  *service.CurrencyRateService
+}
 
-	jwtMiddleware *middleware.JWTMiddleware
-	rateLimiter   *middleware.RateLimiter
-
-	registerCmd   *command.RegisterCommand
-	cancelSubCmd  *command.CancelSubscriptionCommand
-	verifyIAPCmd  *command.VerifyIAPCommand
-	adminLoginCmd *command.AdminLoginCommand
-
+// commandLayer holds CQRS command and query objects
+type commandLayer struct {
+	registerCmd      *command.RegisterCommand
+	cancelSubCmd     *command.CancelSubscriptionCommand
+	verifyIAPCmd     *command.VerifyIAPCommand
+	adminLoginCmd    *command.AdminLoginCommand
 	getSubQuery      *query.GetSubscriptionQuery
 	checkAccessQuery *query.CheckAccessQuery
+}
 
-	authHandler           *app_handler.AuthHandler
-	iapHandler            *app_handler.IAPHandler
-	subscriptionHandler   *app_handler.SubscriptionHandler
-	adminHandler          *app_handler.AdminHandler
-	appsHandler           *app_handler.AppsHandler
-	appSettingsHandler    *app_handler.AppSettingsHandler
-	webhookHandler        *app_handler.WebhookHandler
+// middlewareLayer holds HTTP middleware and rate limiter
+type middlewareLayer struct {
+	jwtMiddleware *middleware.JWTMiddleware
+	rateLimiter   *middleware.RateLimiter
+}
+
+// coreHandlerLayer holds core domain HTTP handlers
+type coreHandlerLayer struct {
+	authHandler         *app_handler.AuthHandler
+	iapHandler          *app_handler.IAPHandler
+	subscriptionHandler *app_handler.SubscriptionHandler
+	adminHandler        *app_handler.AdminHandler
+	appsHandler         *app_handler.AppsHandler
+	appSettingsHandler  *app_handler.AppSettingsHandler
+	webhookHandler      *app_handler.WebhookHandler
+}
+
+// featureHandlerLayer holds feature-specific HTTP handlers
+type featureHandlerLayer struct {
 	banditHandler         *app_handler.BanditHandler
 	banditAdvancedHandler *app_handler.BanditAdvancedHandler
 	paywallHandler        *app_handler.PaywallHandler
 	adminPaywallsHandler  *app_handler.AdminPaywallsHandler
 	winbackHandler        *app_handler.WinbackHandler
 	analyticsExtHandler   *app_handler.AnalyticsHandlersExtended
+}
+
+// handlerLayer composes core and feature handler groups
+type handlerLayer struct {
+	coreHandlerLayer
+	featureHandlerLayer
+}
+
+// dependencies holds all initialized dependencies
+type dependencies struct {
+	repoLayer
+	serviceLayer
+	commandLayer
+	middlewareLayer
+	handlerLayer
 }
 
 // initDependencies initializes all repositories, services, middleware, and handlers
@@ -312,18 +349,22 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	iapHandler := app_handler.NewIAPHandler(verifyIAPCmd, jwtMiddleware, rateLimiter)
 	subscriptionHandler := app_handler.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelSubCmd, jwtMiddleware)
 	adminHandler := app_handler.NewAdminHandler(app_handler.AdminHandlerDeps{
-		SubscriptionRepo:       subscriptionRepo,
-		UserRepo:               userRepo,
-		Queries:                queries,
-		DBPool:                 dbPool,
-		RedisClient:            redisClient,
-		AnalyticsService:       analyticsService,
-		AuditService:           auditService,
-		RevenueOpsService:      service.NewRevenueOpsService(dbPool),
-		AnalyticsReportService: service.NewAnalyticsReportService(dbPool),
-		UserProfileService:     service.NewUserProfileService(dbPool),
-		WinbackService:         winbackService,
-		AsynqClient:            asynqClient,
+		AdminInfraDeps: app_handler.AdminInfraDeps{
+			SubscriptionRepo: subscriptionRepo,
+			UserRepo:         userRepo,
+			Queries:          queries,
+			DBPool:           dbPool,
+			RedisClient:      redisClient,
+			AsynqClient:      asynqClient,
+		},
+		AdminServiceDeps: app_handler.AdminServiceDeps{
+			AnalyticsService:       analyticsService,
+			AuditService:           auditService,
+			RevenueOpsService:      service.NewRevenueOpsService(dbPool),
+			AnalyticsReportService: service.NewAnalyticsReportService(dbPool),
+			UserProfileService:     service.NewUserProfileService(dbPool),
+			WinbackService:         winbackService,
+		},
 	})
 	webhookHandler := app_handler.NewWebhookHandler(app_handler.WebhookHandlerConfig{
 		StripeSecret: cfg.IAP.StripeWebhookSecret,
@@ -351,39 +392,53 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	analyticsExtHandler := app_handler.NewAnalyticsHandlersExtended(ltvService, analyticsCache, logging.Logger)
 
 	return &dependencies{
-		queries:               queries,
-		userRepo:              userRepo,
-		subscriptionRepo:      subscriptionRepo,
-		transactionRepo:       transactionRepo,
-		analyticsRepo:         analyticsRepo,
-		banditRepo:            banditRepo,
-		adminCredRepo:         adminCredRepo,
-		analyticsService:      analyticsService,
-		auditService:          auditService,
-		banditService:         banditService,
-		advancedBandit:        advancedBanditEngine,
-		currencyService:       currencyService,
-		jwtMiddleware:         jwtMiddleware,
-		rateLimiter:           rateLimiter,
-		registerCmd:           registerCmd,
-		cancelSubCmd:          cancelSubCmd,
-		verifyIAPCmd:          verifyIAPCmd,
-		adminLoginCmd:         adminLoginCmd,
-		getSubQuery:           getSubQuery,
-		checkAccessQuery:      checkAccessQuery,
-		authHandler:           authHandler,
-		iapHandler:            iapHandler,
-		subscriptionHandler:   subscriptionHandler,
-		adminHandler:          adminHandler,
-		appsHandler:           appsHandler,
-		appSettingsHandler:    appSettingsHandler,
-		webhookHandler:        webhookHandler,
-		banditHandler:         banditHandler,
-		banditAdvancedHandler: banditAdvancedHandler,
-		paywallHandler:        paywallHandler,
-		adminPaywallsHandler:  adminPaywallsHandler,
-		winbackHandler:        winbackHandler,
-		analyticsExtHandler:   analyticsExtHandler,
+		repoLayer: repoLayer{
+			queries:          queries,
+			userRepo:         userRepo,
+			subscriptionRepo: subscriptionRepo,
+			transactionRepo:  transactionRepo,
+			analyticsRepo:    analyticsRepo,
+			banditRepo:       banditRepo,
+			adminCredRepo:    adminCredRepo,
+		},
+		serviceLayer: serviceLayer{
+			analyticsService: analyticsService,
+			auditService:     auditService,
+			banditService:    banditService,
+			advancedBandit:   advancedBanditEngine,
+			currencyService:  currencyService,
+		},
+		commandLayer: commandLayer{
+			registerCmd:      registerCmd,
+			cancelSubCmd:     cancelSubCmd,
+			verifyIAPCmd:     verifyIAPCmd,
+			adminLoginCmd:    adminLoginCmd,
+			getSubQuery:      getSubQuery,
+			checkAccessQuery: checkAccessQuery,
+		},
+		middlewareLayer: middlewareLayer{
+			jwtMiddleware: jwtMiddleware,
+			rateLimiter:   rateLimiter,
+		},
+		handlerLayer: handlerLayer{
+			coreHandlerLayer: coreHandlerLayer{
+				authHandler:         authHandler,
+				iapHandler:          iapHandler,
+				subscriptionHandler: subscriptionHandler,
+				adminHandler:        adminHandler,
+				appsHandler:         appsHandler,
+				appSettingsHandler:  appSettingsHandler,
+				webhookHandler:      webhookHandler,
+			},
+			featureHandlerLayer: featureHandlerLayer{
+				banditHandler:         banditHandler,
+				banditAdvancedHandler: banditAdvancedHandler,
+				paywallHandler:        paywallHandler,
+				adminPaywallsHandler:  adminPaywallsHandler,
+				winbackHandler:        winbackHandler,
+				analyticsExtHandler:   analyticsExtHandler,
+			},
+		},
 	}
 }
 

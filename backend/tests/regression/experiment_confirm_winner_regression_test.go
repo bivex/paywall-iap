@@ -62,9 +62,13 @@ func TestAdminConfirmExperimentWinnerCompletesRecommendedBanditAndWritesAudits(t
 		c.Next()
 	})
 	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-		Queries:      generated.New(db),
-		DBPool:       db,
-		AuditService: service.NewAuditService(db),
+		AdminInfraDeps: handlers.AdminInfraDeps{
+			Queries: generated.New(db),
+			DBPool: db,
+		},
+		AdminServiceDeps: handlers.AdminServiceDeps{
+			AuditService: service.NewAuditService(db),
+		},
 	})
 	router.POST("/v1/admin/experiments/:id/confirm-winner", handler.ConfirmAdminExperimentWinner)
 	router.POST("/v1/admin/experiments/:id/hold-for-review", handler.HoldAdminExperimentForReview)
@@ -140,9 +144,13 @@ func TestAdminHoldExperimentForReviewPausesRecommendedBanditAndWritesAudits(t *t
 		c.Next()
 	})
 	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-		Queries:      generated.New(db),
-		DBPool:       db,
-		AuditService: service.NewAuditService(db),
+		AdminInfraDeps: handlers.AdminInfraDeps{
+			Queries: generated.New(db),
+			DBPool: db,
+		},
+		AdminServiceDeps: handlers.AdminServiceDeps{
+			AuditService: service.NewAuditService(db),
+		},
 	})
 	router.POST("/v1/admin/experiments/:id/hold-for-review", handler.HoldAdminExperimentForReview)
 
@@ -219,9 +227,13 @@ func TestAdminConfirmExperimentWinnerRejectsLockedExperiment(t *testing.T) {
 		c.Next()
 	})
 	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-		Queries:      generated.New(db),
-		DBPool:       db,
-		AuditService: service.NewAuditService(db),
+		AdminInfraDeps: handlers.AdminInfraDeps{
+			Queries: generated.New(db),
+			DBPool: db,
+		},
+		AdminServiceDeps: handlers.AdminServiceDeps{
+			AuditService: service.NewAuditService(db),
+		},
 	})
 	router.POST("/v1/admin/experiments/:id/confirm-winner", handler.ConfirmAdminExperimentWinner)
 
@@ -291,9 +303,13 @@ func TestAdminHoldExperimentForReviewKeepsPausedExperimentPaused(t *testing.T) {
 		c.Next()
 	})
 	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-		Queries:      generated.New(db),
-		DBPool:       db,
-		AuditService: service.NewAuditService(db),
+		AdminInfraDeps: handlers.AdminInfraDeps{
+			Queries: generated.New(db),
+			DBPool: db,
+		},
+		AdminServiceDeps: handlers.AdminServiceDeps{
+			AuditService: service.NewAuditService(db),
+		},
 	})
 	router.POST("/v1/admin/experiments/:id/hold-for-review", handler.HoldAdminExperimentForReview)
 

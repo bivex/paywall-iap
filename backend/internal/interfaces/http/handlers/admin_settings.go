@@ -122,7 +122,7 @@ func validatePlatformSettings(settings PlatformSettings) string {
 	return ""
 }
 
-func (h *AdminHandler) loadPlatformSettings(ctx context.Context) (PlatformSettings, error) {
+func (h *AdminExperimentHandler) loadPlatformSettings(ctx context.Context) (PlatformSettings, error) {
 	settings := defaultPlatformSettings()
 	var raw []byte
 	err := h.dbPool.QueryRow(ctx, `SELECT value FROM admin_settings WHERE key = $1`, platformSettingsKey).Scan(&raw)
@@ -138,7 +138,7 @@ func (h *AdminHandler) loadPlatformSettings(ctx context.Context) (PlatformSettin
 	return settings, nil
 }
 
-func (h *AdminHandler) savePlatformSettings(ctx context.Context, settings PlatformSettings) error {
+func (h *AdminExperimentHandler) savePlatformSettings(ctx context.Context, settings PlatformSettings) error {
 	payload, err := json.Marshal(settings)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func (h *AdminHandler) savePlatformSettings(ctx context.Context, settings Platfo
 	return err
 }
 
-func (h *AdminHandler) GetPlatformSettings(c *gin.Context) {
+func (h *AdminExperimentHandler) GetPlatformSettings(c *gin.Context) {
 	settings, err := h.loadPlatformSettings(c.Request.Context())
 	if err != nil {
 		response.InternalError(c, "Failed to load platform settings")
@@ -163,7 +163,7 @@ func (h *AdminHandler) GetPlatformSettings(c *gin.Context) {
 	response.OK(c, settings)
 }
 
-func (h *AdminHandler) UpdatePlatformSettings(c *gin.Context) {
+func (h *AdminExperimentHandler) UpdatePlatformSettings(c *gin.Context) {
 	var req PlatformSettings
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid settings payload")
@@ -195,7 +195,7 @@ func (h *AdminHandler) UpdatePlatformSettings(c *gin.Context) {
 	response.OK(c, settings)
 }
 
-func (h *AdminHandler) ChangeAdminPassword(c *gin.Context) {
+func (h *AdminExperimentHandler) ChangeAdminPassword(c *gin.Context) {
 	var req struct {
 		CurrentPassword string `json:"current_password"`
 		NewPassword     string `json:"new_password"`

@@ -8,16 +8,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config holds all application configuration
-type Config struct {
-	Server       ServerConfig       `mapstructure:"server"`
-	Database     DatabaseConfig     `mapstructure:"database"`
-	Redis        RedisConfig        `mapstructure:"redis"`
-	JWT          JWTConfig          `mapstructure:"jwt"`
-	IAP          IAPConfig          `mapstructure:"iap"`
-	Sentry       SentryConfig       `mapstructure:"sentry"`
+// ExternalServicesConfig groups external third-party service configurations.
+// Embedding reduces Config fan-out below the coupling threshold.
+type ExternalServicesConfig struct {
 	Lago         LagoConfig         `mapstructure:"lago"`
 	Notification NotificationConfig `mapstructure:"notification"`
+}
+
+// Config holds all application configuration
+type Config struct {
+	Server   ServerConfig          `mapstructure:"server"`
+	Database DatabaseConfig        `mapstructure:"database"`
+	Redis    RedisConfig           `mapstructure:"redis"`
+	JWT      JWTConfig             `mapstructure:"jwt"`
+	IAP      IAPConfig             `mapstructure:"iap"`
+	Sentry   SentryConfig          `mapstructure:"sentry"`
+	ExternalServicesConfig         `mapstructure:",squash"`
 }
 
 // ServerConfig holds HTTP server configuration

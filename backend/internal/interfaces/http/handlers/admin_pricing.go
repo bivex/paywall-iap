@@ -167,7 +167,7 @@ func pricingTierTargetID(id string) *uuid.UUID {
 	return &parsed
 }
 
-func (h *AdminHandler) logPricingTierAction(c *gin.Context, action string, tier PricingTier) {
+func (h *AdminExperimentHandler) logPricingTierAction(c *gin.Context, action string, tier PricingTier) {
 	if h.auditService == nil {
 		return
 	}
@@ -199,7 +199,7 @@ func (h *AdminHandler) logPricingTierAction(c *gin.Context, action string, tier 
 	_ = h.auditService.LogAction(c.Request.Context(), adminID, action, "pricing_tier", pricingTierTargetID(tier.ID), details)
 }
 
-func (h *AdminHandler) ListPricingTiers(c *gin.Context) {
+func (h *AdminExperimentHandler) ListPricingTiers(c *gin.Context) {
 	appID := httpmiddleware.GetAppID(c)
 	rows, err := h.dbPool.Query(c.Request.Context(), `
 		SELECT id,
@@ -239,7 +239,7 @@ func (h *AdminHandler) ListPricingTiers(c *gin.Context) {
 	response.OK(c, tiers)
 }
 
-func (h *AdminHandler) CreatePricingTier(c *gin.Context) {
+func (h *AdminExperimentHandler) CreatePricingTier(c *gin.Context) {
 	var req pricingTierUpsertRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid pricing tier payload")
@@ -307,7 +307,7 @@ func (h *AdminHandler) CreatePricingTier(c *gin.Context) {
 	response.Created(c, tier)
 }
 
-func (h *AdminHandler) UpdatePricingTier(c *gin.Context) {
+func (h *AdminExperimentHandler) UpdatePricingTier(c *gin.Context) {
 	tierID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid pricing tier ID")
@@ -381,15 +381,15 @@ func (h *AdminHandler) UpdatePricingTier(c *gin.Context) {
 	response.OK(c, tier)
 }
 
-func (h *AdminHandler) ActivatePricingTier(c *gin.Context) {
+func (h *AdminExperimentHandler) ActivatePricingTier(c *gin.Context) {
 	h.setPricingTierActive(c, true)
 }
 
-func (h *AdminHandler) DeactivatePricingTier(c *gin.Context) {
+func (h *AdminExperimentHandler) DeactivatePricingTier(c *gin.Context) {
 	h.setPricingTierActive(c, false)
 }
 
-func (h *AdminHandler) setPricingTierActive(c *gin.Context, isActive bool) {
+func (h *AdminExperimentHandler) setPricingTierActive(c *gin.Context, isActive bool) {
 	tierID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid pricing tier ID")

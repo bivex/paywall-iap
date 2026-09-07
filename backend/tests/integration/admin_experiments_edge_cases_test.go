@@ -41,9 +41,13 @@ func TestExperimentEdgeCases(t *testing.T) {
 	require.NoError(t, err)
 
 	h := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
-		Queries:      generated.New(db),
-		DBPool:       db,
-		AuditService: service.NewAuditService(db),
+		AdminInfraDeps: handlers.AdminInfraDeps{
+			Queries: generated.New(db),
+			DBPool: db,
+		},
+		AdminServiceDeps: handlers.AdminServiceDeps{
+			AuditService: service.NewAuditService(db),
+		},
 	})
 
 	newRouter := func() *gin.Engine {

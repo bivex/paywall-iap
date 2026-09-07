@@ -484,7 +484,7 @@ func experimentAutomationPolicyChangedFields(before, after service.ExperimentAut
 	return fields
 }
 
-func (h *AdminHandler) logExperimentAutomationPolicyAction(c *gin.Context, experimentID uuid.UUID, before, after service.ExperimentAutomationPolicy) {
+func (h *AdminExperimentHandler) logExperimentAutomationPolicyAction(c *gin.Context, experimentID uuid.UUID, before, after service.ExperimentAutomationPolicy) {
 	if h.auditService == nil {
 		return
 	}
@@ -548,7 +548,7 @@ func buildAdminExperimentStatusAudit(c *gin.Context, reason string, details map[
 	}
 }
 
-func (h *AdminHandler) logConfirmExperimentWinnerAction(c *gin.Context, experiment AdminExperiment) {
+func (h *AdminExperimentHandler) logConfirmExperimentWinnerAction(c *gin.Context, experiment AdminExperiment) {
 	if h.auditService == nil || experiment.WinnerRecommendation == nil {
 		return
 	}
@@ -609,7 +609,7 @@ func adminExperimentWinnerRecommendationAuditDetails(experiment AdminExperiment)
 	return details
 }
 
-func (h *AdminHandler) logHoldExperimentForReviewAction(c *gin.Context, experiment AdminExperiment, statusAfter string) {
+func (h *AdminExperimentHandler) logHoldExperimentForReviewAction(c *gin.Context, experiment AdminExperiment, statusAfter string) {
 	if h.auditService == nil || experiment.WinnerRecommendation == nil {
 		return
 	}
@@ -1021,14 +1021,14 @@ func applyExperimentArmPricingTierUpdates(ctx context.Context, tx pgx.Tx, experi
 	return nil
 }
 
-func (h *AdminHandler) hasTable(ctx context.Context, relation string) bool {
+func (h *AdminExperimentHandler) hasTable(ctx context.Context, relation string) bool {
 	var exists bool
 	err := h.dbPool.QueryRow(ctx, `
 		SELECT to_regclass($1) IS NOT NULL`, relation).Scan(&exists)
 	return err == nil && exists
 }
 
-func (h *AdminHandler) hasColumn(ctx context.Context, tableName string, columnName string) bool {
+func (h *AdminExperimentHandler) hasColumn(ctx context.Context, tableName string, columnName string) bool {
 	var exists bool
 	err := h.dbPool.QueryRow(ctx, `
 		SELECT EXISTS (
@@ -1039,23 +1039,23 @@ func (h *AdminHandler) hasColumn(ctx context.Context, tableName string, columnNa
 	return err == nil && exists
 }
 
-func (h *AdminHandler) hasAssignmentTable(c *gin.Context) bool {
+func (h *AdminExperimentHandler) hasAssignmentTable(c *gin.Context) bool {
 	return h.hasTable(c.Request.Context(), "public.ab_test_assignments")
 }
 
-func (h *AdminHandler) hasLifecycleAuditTable(c *gin.Context) bool {
+func (h *AdminExperimentHandler) hasLifecycleAuditTable(c *gin.Context) bool {
 	return h.hasTable(c.Request.Context(), "public.experiment_lifecycle_audit_log")
 }
 
-func (h *AdminHandler) hasWinnerRecommendationLogTable(c *gin.Context) bool {
+func (h *AdminExperimentHandler) hasWinnerRecommendationLogTable(c *gin.Context) bool {
 	return h.hasTable(c.Request.Context(), "public.experiment_winner_recommendation_log")
 }
 
-func (h *AdminHandler) hasExperimentAutomationPolicyColumn(c *gin.Context) bool {
+func (h *AdminExperimentHandler) hasExperimentAutomationPolicyColumn(c *gin.Context) bool {
 	return h.hasColumn(c.Request.Context(), "ab_tests", "automation_policy")
 }
 
-func (h *AdminHandler) hasExperimentArmPricingTierColumn(c *gin.Context) bool {
+func (h *AdminExperimentHandler) hasExperimentArmPricingTierColumn(c *gin.Context) bool {
 	return h.hasColumn(c.Request.Context(), "ab_test_arms", "pricing_tier_id")
 }
 
@@ -1099,7 +1099,7 @@ func adminExperimentByIDQuery(withAssignments bool, withLifecycleAudit bool, wit
 		WHERE e.id = $1`
 }
 
-func (h *AdminHandler) listExperimentArms(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentArm, error) {
+func (h *AdminExperimentHandler) listExperimentArms(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentArm, error) {
 	pricingTierSelect := `NULL::uuid`
 	if h.hasExperimentArmPricingTierColumn(ctx) {
 		pricingTierSelect = `a.pricing_tier_id`
@@ -1135,7 +1135,7 @@ func (h *AdminHandler) listExperimentArms(ctx *gin.Context, experimentID uuid.UU
 	return arms, rows.Err()
 }
 
-func (h *AdminHandler) getAdminExperimentByID(c *gin.Context, experimentID uuid.UUID) (AdminExperiment, error) {
+func (h *AdminExperimentHandler) getAdminExperimentByID(c *gin.Context, experimentID uuid.UUID) (AdminExperiment, error) {
 	withAssignments := h.hasAssignmentTable(c)
 	withLifecycleAudit := h.hasLifecycleAuditTable(c)
 	withAutomationPolicy := h.hasExperimentAutomationPolicyColumn(c)
@@ -1154,7 +1154,7 @@ func (h *AdminHandler) getAdminExperimentByID(c *gin.Context, experimentID uuid.
 	return experiment, nil
 }
 
-func (h *AdminHandler) enrichWinnerRecommendation(ctx context.Context, experiment *AdminExperiment, source ...string) error {
+func (h *AdminExperimentHandler) enrichWinnerRecommendation(ctx context.Context, experiment *AdminExperiment, source ...string) error {
 	if experiment == nil || h.winnerRecommendationService == nil {
 		return nil
 	}
@@ -1196,7 +1196,7 @@ func (h *AdminHandler) enrichWinnerRecommendation(ctx context.Context, experimen
 	return nil
 }
 
-func (h *AdminHandler) listExperimentWinnerRecommendationAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentWinnerRecommendationAudit, error) {
+func (h *AdminExperimentHandler) listExperimentWinnerRecommendationAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentWinnerRecommendationAudit, error) {
 	if !h.hasWinnerRecommendationLogTable(ctx) {
 		return []AdminExperimentWinnerRecommendationAudit{}, nil
 	}
@@ -1230,7 +1230,7 @@ func (h *AdminHandler) listExperimentWinnerRecommendationAuditHistory(ctx *gin.C
 	return history, rows.Err()
 }
 
-func (h *AdminHandler) listExperimentLifecycleAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentLifecycleAudit, error) {
+func (h *AdminExperimentHandler) listExperimentLifecycleAuditHistory(ctx *gin.Context, experimentID uuid.UUID) ([]AdminExperimentLifecycleAudit, error) {
 	if !h.hasLifecycleAuditTable(ctx) {
 		return []AdminExperimentLifecycleAudit{}, nil
 	}
@@ -1262,7 +1262,7 @@ func (h *AdminHandler) listExperimentLifecycleAuditHistory(ctx *gin.Context, exp
 	return history, rows.Err()
 }
 
-func (h *AdminHandler) GetAdminExperimentLifecycleAuditHistory(c *gin.Context) {
+func (h *AdminExperimentHandler) GetAdminExperimentLifecycleAuditHistory(c *gin.Context) {
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1287,7 +1287,7 @@ func (h *AdminHandler) GetAdminExperimentLifecycleAuditHistory(c *gin.Context) {
 	response.OK(c, history)
 }
 
-func (h *AdminHandler) GetAdminExperimentWinnerRecommendationAuditHistory(c *gin.Context) {
+func (h *AdminExperimentHandler) GetAdminExperimentWinnerRecommendationAuditHistory(c *gin.Context) {
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1312,7 +1312,7 @@ func (h *AdminHandler) GetAdminExperimentWinnerRecommendationAuditHistory(c *gin
 	response.OK(c, history)
 }
 
-func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
+func (h *AdminExperimentHandler) ListAdminExperiments(c *gin.Context) {
 	appID := httpmiddleware.GetAppID(c)
 	withAssignments := h.hasAssignmentTable(c)
 	withLifecycleAudit := h.hasLifecycleAuditTable(c)
@@ -1351,7 +1351,7 @@ func (h *AdminHandler) ListAdminExperiments(c *gin.Context) {
 	response.OK(c, experiments)
 }
 
-func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
+func (h *AdminExperimentHandler) CreateAdminExperiment(c *gin.Context) {
 	var req createAdminExperimentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid experiment payload")
@@ -1448,7 +1448,7 @@ func (h *AdminHandler) CreateAdminExperiment(c *gin.Context) {
 	response.Created(c, experiment)
 }
 
-func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
+func (h *AdminExperimentHandler) UpdateAdminExperiment(c *gin.Context) {
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1531,7 +1531,7 @@ func (h *AdminHandler) UpdateAdminExperiment(c *gin.Context) {
 	response.OK(c, updatedExperiment)
 }
 
-func (h *AdminHandler) UpdateAdminExperimentAutomationPolicy(c *gin.Context) {
+func (h *AdminExperimentHandler) UpdateAdminExperimentAutomationPolicy(c *gin.Context) {
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1589,7 +1589,7 @@ func (h *AdminHandler) UpdateAdminExperimentAutomationPolicy(c *gin.Context) {
 	response.OK(c, updatedExperiment)
 }
 
-func (h *AdminHandler) UpdateAdminExperimentArmPricingTiers(c *gin.Context) {
+func (h *AdminExperimentHandler) UpdateAdminExperimentArmPricingTiers(c *gin.Context) {
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1662,19 +1662,19 @@ func (h *AdminHandler) UpdateAdminExperimentArmPricingTiers(c *gin.Context) {
 	response.OK(c, updatedExperiment)
 }
 
-func (h *AdminHandler) PauseAdminExperiment(c *gin.Context) {
+func (h *AdminExperimentHandler) PauseAdminExperiment(c *gin.Context) {
 	h.updateAdminExperimentStatus(c, "paused")
 }
 
-func (h *AdminHandler) ResumeAdminExperiment(c *gin.Context) {
+func (h *AdminExperimentHandler) ResumeAdminExperiment(c *gin.Context) {
 	h.updateAdminExperimentStatus(c, "running")
 }
 
-func (h *AdminHandler) CompleteAdminExperiment(c *gin.Context) {
+func (h *AdminExperimentHandler) CompleteAdminExperiment(c *gin.Context) {
 	h.updateAdminExperimentStatus(c, "completed")
 }
 
-func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
+func (h *AdminExperimentHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
 	if !bindRequiredEmptyJSONObject(c) {
 		return
 	}
@@ -1744,7 +1744,7 @@ func (h *AdminHandler) ConfirmAdminExperimentWinner(c *gin.Context) {
 	response.OK(c, updatedExperiment)
 }
 
-func (h *AdminHandler) HoldAdminExperimentForReview(c *gin.Context) {
+func (h *AdminExperimentHandler) HoldAdminExperimentForReview(c *gin.Context) {
 	if !bindRequiredEmptyJSONObject(c) {
 		return
 	}
@@ -1816,7 +1816,7 @@ func (h *AdminHandler) HoldAdminExperimentForReview(c *gin.Context) {
 	response.OK(c, updatedExperiment)
 }
 
-func (h *AdminHandler) LockAdminExperiment(c *gin.Context) {
+func (h *AdminExperimentHandler) LockAdminExperiment(c *gin.Context) {
 	experimentID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid experiment ID")
@@ -1865,7 +1865,7 @@ func (h *AdminHandler) LockAdminExperiment(c *gin.Context) {
 	response.OK(c, updatedExperiment)
 }
 
-func (h *AdminHandler) UnlockAdminExperiment(c *gin.Context) {
+func (h *AdminExperimentHandler) UnlockAdminExperiment(c *gin.Context) {
 	if !bindRequiredEmptyJSONObject(c) {
 		return
 	}
@@ -1900,7 +1900,7 @@ func (h *AdminHandler) UnlockAdminExperiment(c *gin.Context) {
 	response.OK(c, updatedExperiment)
 }
 
-func (h *AdminHandler) RepairAdminExperiment(c *gin.Context) {
+func (h *AdminExperimentHandler) RepairAdminExperiment(c *gin.Context) {
 	if !bindRequiredEmptyJSONObject(c) {
 		return
 	}
@@ -1945,7 +1945,7 @@ func (h *AdminHandler) RepairAdminExperiment(c *gin.Context) {
 	response.OK(c, repairAdminExperimentResponse{Experiment: updatedExperiment, Summary: summary})
 }
 
-func (h *AdminHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus string) {
+func (h *AdminExperimentHandler) updateAdminExperimentStatus(c *gin.Context, nextStatus string) {
 	if !bindRequiredEmptyJSONObject(c) {
 		return
 	}
