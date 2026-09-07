@@ -46,7 +46,9 @@ func main() {
 		defer logging.Sync()
 
 		router := setupRouter(cfg, dumpRoutesDependencies(), nil)
-		printRoutes(os.Stdout, router)
+		if err := printRoutes(os.Stdout, router); err != nil {
+			log.Fatalf("Failed to print routes: %v", err)
+		}
 		return
 	}
 
@@ -73,7 +75,9 @@ func main() {
 	deps := initDependencies(cfg, dbPool, redisClient, asynqClient)
 	router := setupRouter(cfg, deps, redisClient)
 	if *dumpRoutes {
-		printRoutes(os.Stdout, router)
+		if err := printRoutes(os.Stdout, router); err != nil {
+			log.Fatalf("Failed to print routes: %v", err)
+		}
 		return
 	}
 
@@ -111,7 +115,7 @@ func dumpRoutesDependencies() *dependencies {
 	}
 }
 
-func printRoutes(w io.Writer, router *gin.Engine) {
+func printRoutes(w io.Writer, router *gin.Engine) error {
 	routes := append([]gin.RouteInfo(nil), router.Routes()...)
 	sort.Slice(routes, func(i, j int) bool {
 		if routes[i].Path == routes[j].Path {
@@ -121,12 +125,18 @@ func printRoutes(w io.Writer, router *gin.Engine) {
 	})
 
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	_, _ = fmt.Fprintln(tw, "METHOD\tPATH\tHANDLER")
-	for _, route := range routes {
-		_, _ = fmt.Fprintf(tw, "%s\t%s\t%s\n", route.Method, route.Path, route.Handler)
+	if _, err := fmt.Fprintln(tw, "METHOD\tPATH\tHANDLER"); err != nil {
+		return err
 	}
-	_, _ = fmt.Fprintf(tw, "\nTOTAL\t%d\t\n", len(routes))
-	_ = tw.Flush()
+	for _, route := range routes {
+		if _, err := fmt.Fprintf(tw, "%s\t%s\t%s\n", route.Method, route.Path, route.Handler); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(tw, "\nTOTAL\t%d\t\n", len(routes)); err != nil {
+		return err
+	}
+	return tw.Flush()
 }
 
 // mustLoadConfig loads and returns configuration, exiting on failure

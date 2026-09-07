@@ -18,6 +18,7 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
 	"github.com/bivex/paywall-iap/internal/domain/service"
+	"github.com/bivex/paywall-iap/internal/infrastructure/logging"
 	persistenceRepo "github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
 	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
@@ -658,8 +659,10 @@ func (h *AdminHandler) GrantGracePeriod(c *gin.Context) {
 	}
 
 	// Upsert: deactivate any existing active grace period first
-	_, _ = h.dbPool.Exec(ctx,
-		`UPDATE grace_periods SET status='expired', updated_at=now() WHERE user_id=$1 AND status='active'`, userID)
+	if _, err := h.dbPool.Exec(ctx,
+		`UPDATE grace_periods SET status='expired', updated_at=now() WHERE user_id=$1 AND status='active'`, userID); err != nil {
+		logging.Logger.Warn("Failed to deactivate existing grace periods", zap.Error(err), zap.String("user_id", userID.String()))
+	}
 
 	gracExpires := time.Now().UTC().AddDate(0, 0, req.Days)
 	var graceID uuid.UUID
@@ -675,8 +678,10 @@ RETURNING id`,
 	}
 
 	// Set subscription to grace status
-	_, _ = h.dbPool.Exec(ctx,
-		`UPDATE subscriptions SET status='grace', updated_at=now() WHERE id=$1`, subID)
+	if _, err := h.dbPool.Exec(ctx,
+		`UPDATE subscriptions SET status='grace', updated_at=now() WHERE id=$1`, subID); err != nil {
+		logging.Logger.Warn("Failed to update subscription status to grace", zap.Error(err), zap.String("sub_id", subID.String()))
+	}
 
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {

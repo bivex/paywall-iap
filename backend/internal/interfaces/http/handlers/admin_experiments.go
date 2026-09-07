@@ -957,36 +957,33 @@ func scanAdminExperimentArm(scanner interface{ Scan(dest ...any) error }) (Admin
 	return arm, nil
 }
 
-func pricingTierIDsFromCreateExperimentArms(arms []createAdminExperimentArmRequest) []uuid.UUID {
+func extractUniquePricingTierIDs[T any](items []T, getID func(T) *uuid.UUID) []uuid.UUID {
 	seen := make(map[uuid.UUID]struct{})
 	ids := make([]uuid.UUID, 0)
-	for _, arm := range arms {
-		if arm.PricingTierID == nil {
+	for _, item := range items {
+		id := getID(item)
+		if id == nil {
 			continue
 		}
-		if _, exists := seen[*arm.PricingTierID]; exists {
+		if _, exists := seen[*id]; exists {
 			continue
 		}
-		seen[*arm.PricingTierID] = struct{}{}
-		ids = append(ids, *arm.PricingTierID)
+		seen[*id] = struct{}{}
+		ids = append(ids, *id)
 	}
 	return ids
 }
 
+func pricingTierIDsFromCreateExperimentArms(arms []createAdminExperimentArmRequest) []uuid.UUID {
+	return extractUniquePricingTierIDs(arms, func(arm createAdminExperimentArmRequest) *uuid.UUID {
+		return arm.PricingTierID
+	})
+}
+
 func pricingTierIDsFromArmPricingTierUpdates(arms []updateAdminExperimentArmPricingTierRequest) []uuid.UUID {
-	seen := make(map[uuid.UUID]struct{})
-	ids := make([]uuid.UUID, 0)
-	for _, arm := range arms {
-		if arm.PricingTierID == nil {
-			continue
-		}
-		if _, exists := seen[*arm.PricingTierID]; exists {
-			continue
-		}
-		seen[*arm.PricingTierID] = struct{}{}
-		ids = append(ids, *arm.PricingTierID)
-	}
-	return ids
+	return extractUniquePricingTierIDs(arms, func(arm updateAdminExperimentArmPricingTierRequest) *uuid.UUID {
+		return arm.PricingTierID
+	})
 }
 
 func validatePricingTiersExist(ctx context.Context, tx pgx.Tx, pricingTierIDs []uuid.UUID) error {
