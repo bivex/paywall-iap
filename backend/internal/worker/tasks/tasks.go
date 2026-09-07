@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -508,24 +509,10 @@ func toFloat64(v interface{}) float64 {
 	if v == nil {
 		return 0
 	}
-	switch x := v.(type) {
-	case float64:
-		return x
-	case float32:
-		return float64(x)
-	case int64:
-		return float64(x)
-	case int32:
-		return float64(x)
-	case int:
-		return float64(x)
-	case fmt.Stringer:
-		f := 0.0
-		fmt.Sscanf(x.String(), "%f", &f)
+	if f, ok := v.(float64); ok {
 		return f
 	}
-	f := 0.0
-	fmt.Sscanf(fmt.Sprintf("%v", v), "%f", &f)
+	f, _ := strconv.ParseFloat(fmt.Sprint(v), 64)
 	return f
 }
 
