@@ -67,6 +67,45 @@ func (m *mockAppRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return args.Error(0)
 }
 
+func (m *mockAppRepository) GetSettings(ctx context.Context, id uuid.UUID) (*entity.AppSettings, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.AppSettings), args.Error(1)
+}
+
+func (m *mockAppRepository) UpdateSettings(ctx context.Context, id uuid.UUID, s *entity.AppSettings) error {
+	args := m.Called(ctx, id, s)
+	return args.Error(0)
+}
+
+func (m *mockAppRepository) GetCredentials(ctx context.Context, appID uuid.UUID) ([]*entity.AppCredentials, error) {
+	args := m.Called(ctx, appID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*entity.AppCredentials), args.Error(1)
+}
+
+func (m *mockAppRepository) GetCredentialsByProvider(ctx context.Context, appID uuid.UUID, provider string) (*entity.AppCredentials, error) {
+	args := m.Called(ctx, appID, provider)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entity.AppCredentials), args.Error(1)
+}
+
+func (m *mockAppRepository) UpsertCredentials(ctx context.Context, creds *entity.AppCredentials) error {
+	args := m.Called(ctx, creds)
+	return args.Error(0)
+}
+
+func (m *mockAppRepository) DeleteCredentials(ctx context.Context, appID uuid.UUID, provider string) error {
+	args := m.Called(ctx, appID, provider)
+	return args.Error(0)
+}
+
 // helpers
 
 func newRouter(h *handlers.AppsHandler) *gin.Engine {

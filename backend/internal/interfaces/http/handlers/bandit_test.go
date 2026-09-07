@@ -24,6 +24,10 @@ func (s banditServiceStub) SelectArm(ctx context.Context, experimentID, userID u
 	return uuid.Nil, nil
 }
 
+func (s banditServiceStub) SelectArmWithMeta(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, bool, error) {
+	return uuid.Nil, false, nil
+}
+
 func (s banditServiceStub) TrackImpression(ctx context.Context, experimentID, armID, userID uuid.UUID, event *service.ImpressionEvent) error {
 	if s.trackImpressionFunc != nil {
 		return s.trackImpressionFunc(ctx, experimentID, armID, userID, event)

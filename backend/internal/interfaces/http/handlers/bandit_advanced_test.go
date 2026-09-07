@@ -113,6 +113,18 @@ func (c *routerPathTestCache) SetAssignment(_ context.Context, _ string, _ uuid.
 	return nil
 }
 
+func (c *routerPathTestCache) SetBytes(_ context.Context, _ string, _ []byte, _ time.Duration) error {
+	return nil
+}
+
+func (c *routerPathTestCache) GetBytes(_ context.Context, _ string) ([]byte, error) {
+	return nil, nil
+}
+
+func (c *routerPathTestCache) DeleteKey(_ context.Context, _ string) error {
+	return nil
+}
+
 func TestParseUUIDPathParamAfter_ParsesGinStyleExperimentPath(t *testing.T) {
 	experimentID := uuid.New()
 	req := httptest.NewRequest("GET", "/v1/bandit/experiments/"+experimentID.String()+"/objectives", nil)

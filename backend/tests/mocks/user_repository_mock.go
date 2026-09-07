@@ -87,3 +87,8 @@ func (m *MockUserRepository) UpdateHasViewedAds(ctx context.Context, id uuid.UUI
 	args := m.Called(ctx, id, hasViewedAds)
 	return args.Error(0)
 }
+
+func (m *MockUserRepository) IncrementLTV(ctx context.Context, id uuid.UUID, amount float64) error {
+	args := m.Called(ctx, id, amount)
+	return args.Error(0)
+}

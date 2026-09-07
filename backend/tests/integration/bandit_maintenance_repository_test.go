@@ -162,3 +162,15 @@ func (c *integrationBanditMaintenanceCache) GetAssignment(context.Context, strin
 func (c *integrationBanditMaintenanceCache) SetAssignment(context.Context, string, uuid.UUID, time.Duration) error {
 	return nil
 }
+
+func (c *integrationBanditMaintenanceCache) SetBytes(context.Context, string, []byte, time.Duration) error {
+	return nil
+}
+
+func (c *integrationBanditMaintenanceCache) GetBytes(context.Context, string) ([]byte, error) {
+	return nil, nil
+}
+
+func (c *integrationBanditMaintenanceCache) DeleteKey(context.Context, string) error {
+	return nil
+}

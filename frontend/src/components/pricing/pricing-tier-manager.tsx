@@ -46,6 +46,7 @@ const formSchema = z
     description: z.string(),
     monthly_price: z.string().trim(),
     annual_price: z.string().trim(),
+    lifetime_price: z.string().trim(),
     currency: z
       .string()
       .trim()
@@ -56,15 +57,18 @@ const formSchema = z
   .superRefine((value, ctx) => {
     const monthly = value.monthly_price.trim();
     const annual = value.annual_price.trim();
+    const lifetime = value.lifetime_price.trim();
 
-    if (!monthly && !annual) {
+    if (!monthly && !annual && !lifetime) {
       ctx.addIssue({ code: "custom", message: "Provide at least one price", path: ["monthly_price"] });
       ctx.addIssue({ code: "custom", message: "Provide at least one price", path: ["annual_price"] });
+      ctx.addIssue({ code: "custom", message: "Provide at least one price", path: ["lifetime_price"] });
     }
 
     for (const [field, raw] of [
       ["monthly_price", monthly],
       ["annual_price", annual],
+      ["lifetime_price", lifetime],
     ] as const) {
       if (!raw) continue;
       const parsed = Number(raw);
@@ -81,6 +85,7 @@ const EMPTY_FORM_VALUES: PricingFormValues = {
   description: EMPTY_PRICING_TIER_INPUT.description,
   monthly_price: "",
   annual_price: "",
+  lifetime_price: "",
   currency: EMPTY_PRICING_TIER_INPUT.currency,
   features: "",
   is_active: EMPTY_PRICING_TIER_INPUT.is_active,
@@ -116,6 +121,7 @@ function tierToFormValues(tier: PricingTier): PricingFormValues {
     description: tier.description,
     monthly_price: tier.monthly_price?.toString() ?? "",
     annual_price: tier.annual_price?.toString() ?? "",
+    lifetime_price: tier.lifetime_price?.toString() ?? "",
     currency: tier.currency,
     features: tier.features.join("\n"),
     is_active: tier.is_active,
@@ -133,6 +139,7 @@ function toPayload(values: PricingFormValues): PricingTierInput {
     description: values.description.trim(),
     monthly_price: parsePrice(values.monthly_price),
     annual_price: parsePrice(values.annual_price),
+    lifetime_price: parsePrice(values.lifetime_price),
     currency: values.currency.trim().toUpperCase(),
     features: values.features
       .split("\n")
@@ -310,6 +317,7 @@ export function PricingTierManager({
                   <TableHead>{t("table.name")}</TableHead>
                   <TableHead>{t("table.monthly")}</TableHead>
                   <TableHead>{t("table.annual")}</TableHead>
+                  <TableHead>{t("table.lifetime")}</TableHead>
                   <TableHead>{t("table.currency")}</TableHead>
                   <TableHead>{t("table.features")}</TableHead>
                   <TableHead>{t("table.status")}</TableHead>
@@ -330,6 +338,7 @@ export function PricingTierManager({
                       {formatMoney(tier.monthly_price, tier.currency)}
                     </TableCell>
                     <TableCell className="font-mono text-sm">{formatMoney(tier.annual_price, tier.currency)}</TableCell>
+                    <TableCell className="font-mono text-sm">{formatMoney(tier.lifetime_price, tier.currency)}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{tier.currency}</Badge>
                     </TableCell>
@@ -428,6 +437,17 @@ export function PricingTierManager({
                   )}
                 />
                 {fieldError(form.formState.errors.annual_price)}
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-xs">{t("form.lifetimePrice")}</p>
+                <Controller
+                  control={form.control}
+                  name="lifetime_price"
+                  render={({ field }) => (
+                    <Input {...field} inputMode="decimal" placeholder="199.99" value={field.value} />
+                  )}
+                />
+                {fieldError(form.formState.errors.lifetime_price)}
               </div>
               <div className="space-y-1 md:col-span-2">
                 <p className="font-medium text-xs">{t("form.descriptionLabel")}</p>

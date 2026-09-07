@@ -10,7 +10,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var Logger *zap.Logger
+var Logger *zap.Logger = zap.NewNop()
+
+func init() {
+	if Logger == nil {
+		Logger = zap.NewNop()
+	}
+}
 
 // Init initializes the global logger
 func Init(cfg *config.SentryConfig) error {

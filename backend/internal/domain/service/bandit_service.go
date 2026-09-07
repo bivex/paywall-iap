@@ -570,30 +570,38 @@ func (b *ThompsonSamplingBandit) sampleBetaJohnk(alpha, beta float64) float64 {
 // sampleBetaMarsagliaTsang implements Marsaglia-Tsang method for alpha,beta >= 1
 // Returns -1 if sampling fails
 func (b *ThompsonSamplingBandit) sampleBetaMarsagliaTsang(alpha, beta float64) float64 {
-	const iterations = 3
+	gamma1 := b.sampleGamma(alpha)
+	gamma2 := b.sampleGamma(beta)
 
-	for i := 0; i < iterations; i++ {
-		u := b.rng.Float64()
-		v := b.rng.Float64()
-
-		gamma := b.sampleGamma(alpha, u)
-		gamma2 := b.sampleGamma(beta, v)
-
-		if gamma+gamma2 > 0 {
-			return gamma / (gamma + gamma2)
-		}
+	if gamma1+gamma2 > 0 {
+		return gamma1 / (gamma1 + gamma2)
 	}
 
 	return -1 // Indicate failure
 }
 
-// sampleGamma generates a sample from Gamma(shape, 1) using logarithm
-func (b *ThompsonSamplingBandit) sampleGamma(shape, u float64) float64 {
-	gamma := -math.Log(u)
-	if gamma > 0 {
-		gamma = math.Pow(gamma, 1/shape)
+// sampleGamma generates a sample from Gamma(shape, 1) using the Marsaglia-Tsang method (2000)
+func (b *ThompsonSamplingBandit) sampleGamma(shape float64) float64 {
+	if shape < 1 {
+		return b.sampleGamma(shape+1) * math.Pow(b.rng.Float64(), 1.0/shape)
 	}
-	return gamma
+	d := shape - 1.0/3.0
+	c := 1.0 / math.Sqrt(9.0*d)
+	for {
+		z := b.rng.NormFloat64()
+		v := 1.0 + c*z
+		if v <= 0 {
+			continue
+		}
+		v = v * v * v
+		u := b.rng.Float64()
+		if u < 1.0-0.0331*z*z*z*z {
+			return d * v
+		}
+		if math.Log(u) < 0.5*z*z+d-d*v+d*math.Log(v) {
+			return d * v
+		}
+	}
 }
 
 // sampleBetaCheng implements Cheng's method as a fallback

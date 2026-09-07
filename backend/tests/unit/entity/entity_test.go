@@ -173,12 +173,14 @@ func TestSubscription_CanAccessContent(t *testing.T) {
 }
 
 func TestNewTransaction(t *testing.T) {
+	appID := uuid.New()
 	userID := uuid.New()
 	subID := uuid.New()
 
-	txn := entity.NewTransaction(userID, subID, 9.99, "USD")
+	txn := entity.NewTransaction(appID, userID, subID, 9.99, "USD")
 
 	assert.NotNil(t, txn.ID)
+	assert.Equal(t, appID, txn.AppID)
 	assert.Equal(t, userID, txn.UserID)
 	assert.Equal(t, subID, txn.SubscriptionID)
 	assert.Equal(t, 9.99, txn.Amount)

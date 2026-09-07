@@ -149,6 +149,7 @@ func TestAnalyticsAPI(t *testing.T) {
 			nil, // matomoClient — concrete type; use nil for unit-level test
 			mockCohortWorker,
 			nil, // subscriptionRepo - will use defaults
+			nil, // transactionRepo
 			logger,
 		)
 
@@ -315,7 +316,7 @@ func TestAnalyticsHTTPEndpoints(t *testing.T) {
 
 	mockCohortWorker := new(MockCohortWorker)
 
-	ltvService := service.NewLTVService(nil, mockCohortWorker, nil, logger)
+	ltvService := service.NewLTVService(nil, mockCohortWorker, nil, nil, logger)
 	analyticsCache := cache.NewAnalyticsCache(redisClient, logger)
 
 	// Setup Gin router

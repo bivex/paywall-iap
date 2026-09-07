@@ -134,6 +134,20 @@ func (m *MockBanditCache) SetAssignment(ctx context.Context, key string, armID u
 	return nil
 }
 
+func (m *MockBanditCache) SetBytes(ctx context.Context, key string, data []byte, ttl time.Duration) error {
+	return nil
+}
+
+func (m *MockBanditCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
+	return nil, cache.ErrNotFound
+}
+
+func (m *MockBanditCache) DeleteKey(ctx context.Context, key string) error {
+	delete(m.data, key)
+	delete(m.assignments, key)
+	return nil
+}
+
 // TestSelectArm tests the SelectArm method
 func TestSelectArm(t *testing.T) {
 	ctx := context.Background()

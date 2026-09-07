@@ -48,6 +48,7 @@ func (r *registerRepoStub) UpdatePurchaseChannel(context.Context, uuid.UUID, str
 	return nil
 }
 func (r *registerRepoStub) UpdateEmail(context.Context, uuid.UUID, string) error { return nil }
+func (r *registerRepoStub) IncrementLTV(context.Context, uuid.UUID, float64) error { return nil }
 func (r *registerRepoStub) IncrementSessionCount(context.Context, uuid.UUID) (int, error) {
 	return 0, nil
 }

@@ -80,3 +80,8 @@ func (m *MockSubscriptionRepository) GetUsersWithCancelledSubscriptions(ctx cont
 	}
 	return args.Get(0).([]uuid.UUID), args.Error(1)
 }
+
+func (m *MockSubscriptionRepository) GetTotalRevenue(ctx context.Context, userID uuid.UUID) (float64, error) {
+	args := m.Called(ctx, userID)
+	return args.Get(0).(float64), args.Error(1)
+}

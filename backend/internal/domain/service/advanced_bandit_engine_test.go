@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"sort"
 	"testing"
 	"time"
 
@@ -122,6 +121,15 @@ func (c *advancedEngineTestCache) GetAssignment(ctx context.Context, key string)
 	return uuid.Nil, nil
 }
 func (c *advancedEngineTestCache) SetAssignment(ctx context.Context, key string, armID uuid.UUID, ttl time.Duration) error {
+	return nil
+}
+func (c *advancedEngineTestCache) SetBytes(ctx context.Context, key string, data []byte, ttl time.Duration) error {
+	return nil
+}
+func (c *advancedEngineTestCache) GetBytes(ctx context.Context, key string) ([]byte, error) {
+	return nil, nil
+}
+func (c *advancedEngineTestCache) DeleteKey(ctx context.Context, key string) error {
 	return nil
 }
 
@@ -248,8 +256,7 @@ func TestAdvancedBanditEngine_SyncObjectiveStats_UsesConfiguredHybridObjectives(
 		for _, stat := range repo.updatedObjectiveStats {
 			seen = append(seen, stat.ArmID.String()+":"+string(stat.ObjectiveType))
 		}
-		sort.Strings(seen)
-		assert.Equal(t, []string{
+		assert.ElementsMatch(t, []string{
 			firstArmID.String() + ":conversion",
 			firstArmID.String() + ":ltv",
 			secondArmID.String() + ":conversion",
