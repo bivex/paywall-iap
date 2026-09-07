@@ -311,20 +311,20 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	authHandler := app_handler.NewAuthHandler(registerCmd, adminLoginCmd, jwtMiddleware)
 	iapHandler := app_handler.NewIAPHandler(verifyIAPCmd, jwtMiddleware, rateLimiter)
 	subscriptionHandler := app_handler.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelSubCmd, jwtMiddleware)
-	adminHandler := app_handler.NewAdminHandler(
-		subscriptionRepo,
-		userRepo,
-		queries,
-		dbPool,
-		redisClient,
-		analyticsService,
-		auditService,
-		service.NewRevenueOpsService(dbPool),
-		service.NewAnalyticsReportService(dbPool),
-		service.NewUserProfileService(dbPool),
-		winbackService,
-		asynqClient,
-	)
+	adminHandler := app_handler.NewAdminHandler(app_handler.AdminHandlerDeps{
+		SubscriptionRepo:       subscriptionRepo,
+		UserRepo:               userRepo,
+		Queries:                queries,
+		DBPool:                 dbPool,
+		RedisClient:            redisClient,
+		AnalyticsService:       analyticsService,
+		AuditService:           auditService,
+		RevenueOpsService:      service.NewRevenueOpsService(dbPool),
+		AnalyticsReportService: service.NewAnalyticsReportService(dbPool),
+		UserProfileService:     service.NewUserProfileService(dbPool),
+		WinbackService:         winbackService,
+		AsynqClient:            asynqClient,
+	})
 	webhookHandler := app_handler.NewWebhookHandler(
 		cfg.IAP.StripeWebhookSecret,
 		cfg.IAP.AppleWebhookSecret,

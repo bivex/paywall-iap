@@ -26,124 +26,14 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	require.NoError(t, err)
 	defer cleanup()
 
-	_, err = db.Exec(ctx, `
-		CREATE EXTENSION IF NOT EXISTS pgcrypto;
-		CREATE TABLE pricing_tiers (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			name TEXT NOT NULL UNIQUE,
-			description TEXT,
-			monthly_price NUMERIC(10,2),
-			annual_price NUMERIC(10,2),
-			currency CHAR(3) NOT NULL DEFAULT 'USD',
-			features JSONB,
-			is_active BOOLEAN NOT NULL DEFAULT true,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			deleted_at TIMESTAMPTZ
-		);
-		CREATE TABLE users (
-			id UUID PRIMARY KEY,
-			platform_user_id TEXT UNIQUE NOT NULL,
-			device_id TEXT,
-			platform TEXT NOT NULL,
-			app_version TEXT NOT NULL,
-			email TEXT UNIQUE,
-			role TEXT NOT NULL DEFAULT 'user',
-			ltv NUMERIC(10,2) DEFAULT 0,
-			ltv_updated_at TIMESTAMPTZ,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			deleted_at TIMESTAMPTZ
-		);
-		CREATE TABLE ab_tests (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			name TEXT NOT NULL,
-			description TEXT,
-			status TEXT NOT NULL CHECK (status IN ('draft', 'running', 'paused', 'completed')) DEFAULT 'draft',
-			start_at TIMESTAMPTZ,
-			end_at TIMESTAMPTZ,
-			algorithm_type TEXT CHECK (algorithm_type IN ('thompson_sampling', 'ucb', 'epsilon_greedy')),
-			is_bandit BOOLEAN NOT NULL DEFAULT false,
-			min_sample_size INT DEFAULT 100,
-			confidence_threshold NUMERIC(3,2) DEFAULT 0.95,
-			winner_confidence NUMERIC(3,2),
-				automation_policy JSONB NOT NULL DEFAULT '{"enabled": false, "auto_start": false, "auto_complete": false, "complete_on_end_time": true, "complete_on_sample_size": false, "complete_on_confidence": false, "manual_override": false}'::jsonb,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		);
-		CREATE TABLE ab_test_arms (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
-			name TEXT NOT NULL,
-			description TEXT,
-			is_control BOOLEAN NOT NULL DEFAULT false,
-			traffic_weight NUMERIC(3,2) NOT NULL DEFAULT 1.0,
-			pricing_tier_id UUID REFERENCES pricing_tiers(id),
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		);
-		CREATE TABLE ab_test_arm_stats (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			arm_id UUID NOT NULL UNIQUE REFERENCES ab_test_arms(id) ON DELETE CASCADE,
-			alpha NUMERIC(10,2) NOT NULL DEFAULT 1.0,
-			beta NUMERIC(10,2) NOT NULL DEFAULT 1.0,
-			samples INT NOT NULL DEFAULT 0,
-			conversions INT NOT NULL DEFAULT 0,
-			revenue NUMERIC(15,2) NOT NULL DEFAULT 0.0,
-			avg_reward NUMERIC(10,4),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			CHECK (alpha > 0),
-			CHECK (beta > 0),
-			CHECK (samples >= 0),
-			CHECK (conversions >= 0),
-			CHECK (conversions <= samples)
-		);
-		CREATE TABLE ab_test_assignments (
-			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			arm_id UUID NOT NULL REFERENCES ab_test_arms(id) ON DELETE CASCADE,
-			assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '24 hours')
-			);
-			CREATE TABLE experiment_lifecycle_audit_log (
-				id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-				experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
-				actor_type TEXT NOT NULL,
-				actor_id UUID,
-				source TEXT NOT NULL,
-				action TEXT NOT NULL,
-				from_status TEXT NOT NULL,
-				to_status TEXT NOT NULL,
-				idempotency_key TEXT,
-				details JSONB,
-				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-			);
-			CREATE UNIQUE INDEX idx_experiment_lifecycle_audit_log_idempotency
-				ON experiment_lifecycle_audit_log(idempotency_key);
-			CREATE TABLE experiment_winner_recommendation_log (
-				id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-				experiment_id UUID NOT NULL REFERENCES ab_tests(id) ON DELETE CASCADE,
-				source TEXT NOT NULL,
-				recommended BOOLEAN NOT NULL DEFAULT FALSE,
-				reason TEXT NOT NULL,
-				winning_arm_id UUID REFERENCES ab_test_arms(id) ON DELETE SET NULL,
-				confidence_percent DOUBLE PRECISION,
-				confidence_threshold_percent DOUBLE PRECISION NOT NULL,
-				observed_samples INT NOT NULL,
-				min_sample_size INT NOT NULL,
-				details JSONB,
-				occurred_at TIMESTAMPTZ NOT NULL,
-				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-			);
-			CREATE TABLE admin_audit_log (
-				id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-				admin_id UUID NOT NULL REFERENCES users(id),
-				action TEXT NOT NULL,
-				target_type TEXT NOT NULL,
-				target_user_id UUID,
-				details JSONB,
-				created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-			);`)
+	_, err = db.Exec(ctx, experimentsMultitenancySchema)
+	require.NoError(t, err)
+
+	appID := uuid.New()
+	_, err = db.Exec(ctx,
+		`INSERT INTO apps (id, name, display_name, bundle_id, platform) VALUES ($1,$2,$3,$4,$5)`,
+		appID, "Default App", "Default App", "com.default.app", "ios",
+	)
 	require.NoError(t, err)
 
 	adminID := uuid.New()
@@ -163,11 +53,11 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	primaryTierID := uuid.New()
 	upsellTierID := uuid.New()
 	_, err = db.Exec(ctx, `
-		INSERT INTO pricing_tiers (id, name, description, monthly_price, annual_price, currency, features, is_active)
+		INSERT INTO pricing_tiers (id, app_id, name, description, monthly_price, annual_price, currency, features, is_active)
 		VALUES
-			($1, 'Pro', 'Primary paid tier', 9.99, 99.99, 'USD', '["Unlimited access"]'::jsonb, TRUE),
-			($2, 'Plus', 'Upsell paid tier', 19.99, 199.99, 'USD', '["Priority support"]'::jsonb, TRUE)
-	`, primaryTierID, upsellTierID)
+			($1, $3, 'Pro', 'Primary paid tier', 9.99, 99.99, 'USD', '["Unlimited access"]'::jsonb, TRUE),
+			($2, $3, 'Plus', 'Upsell paid tier', 19.99, 199.99, 'USD', '["Priority support"]'::jsonb, TRUE)
+	`, primaryTierID, upsellTierID, appID)
 	require.NoError(t, err)
 
 	gin.SetMode(gin.TestMode)
@@ -175,23 +65,15 @@ func TestAdminExperimentsHandler(t *testing.T) {
 	router.Use(func(c *gin.Context) {
 		c.Set("admin_id", adminID)
 		c.Set("user_id", adminID.String())
+		c.Set("app_id", appID)
 		c.Next()
 	})
 
-	handler := handlers.NewAdminHandler(
-		nil,
-		nil,
-		generated.New(db),
-		db,
-		nil,
-		nil,
-		service.NewAuditService(db),
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-	)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		Queries:      generated.New(db),
+		DBPool:       db,
+		AuditService: service.NewAuditService(db),
+	})
 
 	admin := router.Group("/v1/admin")
 	admin.GET("/experiments", handler.ListAdminExperiments)
@@ -665,12 +547,12 @@ func TestAdminExperimentsHandler(t *testing.T) {
 
 		_, err = db.Exec(ctx, `
 			INSERT INTO ab_tests (
-				id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
+				id, app_id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
 			) VALUES (
-				$1, 'Confirm winner regression', 'recommended winner path', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
+				$1, $2, 'Confirm winner regression', 'recommended winner path', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
 				'{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false}'::jsonb
 			)
-		`, confirmExperimentID)
+		`, confirmExperimentID, appID)
 		require.NoError(t, err)
 		_, err = db.Exec(ctx, `
 			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
@@ -741,12 +623,12 @@ func TestAdminExperimentsHandler(t *testing.T) {
 
 		_, err = db.Exec(ctx, `
 			INSERT INTO ab_tests (
-				id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
+				id, app_id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
 			) VALUES (
-				$1, 'Locked confirm winner regression', 'manual override blocks confirmation', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
+				$1, $2, 'Locked confirm winner regression', 'manual override blocks confirmation', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
 				'{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":true,"lock_reason":"Operator hold"}'::jsonb
 			)
-		`, lockedExperimentID)
+		`, lockedExperimentID, appID)
 		require.NoError(t, err)
 		_, err = db.Exec(ctx, `
 			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
@@ -797,12 +679,12 @@ func TestAdminExperimentsHandler(t *testing.T) {
 
 		_, err = db.Exec(ctx, `
 			INSERT INTO ab_tests (
-				id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
+				id, app_id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
 			) VALUES (
-				$1, 'Hold for review regression', 'pause and lock for review', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
+				$1, $2, 'Hold for review regression', 'pause and lock for review', 'running', 'thompson_sampling', true, 20, 0.95, 0.97,
 				'{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false}'::jsonb
 			)
-		`, holdExperimentID)
+		`, holdExperimentID, appID)
 		require.NoError(t, err)
 		_, err = db.Exec(ctx, `
 			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
@@ -874,12 +756,12 @@ func TestAdminExperimentsHandler(t *testing.T) {
 
 		_, err = db.Exec(ctx, `
 			INSERT INTO ab_tests (
-				id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
+				id, app_id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, automation_policy
 			) VALUES (
-				$1, 'Paused hold for review regression', 'lock metadata only path', 'paused', 'thompson_sampling', true, 20, 0.95, 0.97,
+				$1, $2, 'Paused hold for review regression', 'lock metadata only path', 'paused', 'thompson_sampling', true, 20, 0.95, 0.97,
 				'{"enabled":true,"auto_start":true,"auto_complete":true,"complete_on_end_time":true,"complete_on_sample_size":false,"complete_on_confidence":false,"manual_override":false}'::jsonb
 			)
-		`, pausedExperimentID)
+		`, pausedExperimentID, appID)
 		require.NoError(t, err)
 		_, err = db.Exec(ctx, `
 			INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)

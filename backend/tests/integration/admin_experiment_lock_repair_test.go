@@ -210,7 +210,10 @@ func TestAdminExperimentLockAndRepairHandlers(t *testing.T) {
 		c.Next()
 	})
 
-	handler := handlers.NewAdminHandler(nil, nil, generated.New(db), db, nil, nil, nil, nil, nil, nil, nil, nil)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		Queries: generated.New(db),
+		DBPool:  db,
+	})
 	admin := router.Group("/v1/admin")
 	admin.POST("/experiments/:id/lock", handler.LockAdminExperiment)
 	admin.POST("/experiments/:id/unlock", handler.UnlockAdminExperiment)
@@ -237,7 +240,8 @@ func TestAdminExperimentLockAndRepairHandlers(t *testing.T) {
 	})
 
 	t.Run("unlock clears lock metadata", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/unlock", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/unlock", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -272,7 +276,8 @@ func TestAdminExperimentLockAndRepairHandlers(t *testing.T) {
 	})
 
 	t.Run("repair restores missing stats row and recomputes derived state", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/repair", nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/repair", bytes.NewBufferString("{}"))
+		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 

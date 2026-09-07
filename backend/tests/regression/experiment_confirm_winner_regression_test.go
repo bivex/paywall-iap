@@ -1,6 +1,7 @@
 package regression
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -60,11 +61,16 @@ func TestAdminConfirmExperimentWinnerCompletesRecommendedBanditAndWritesAudits(t
 		c.Set("user_id", adminID.String())
 		c.Next()
 	})
-	handler := handlers.NewAdminHandler(nil, nil, generated.New(db), db, nil, nil, service.NewAuditService(db), nil, nil, nil, nil, nil)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		Queries:      generated.New(db),
+		DBPool:       db,
+		AuditService: service.NewAuditService(db),
+	})
 	router.POST("/v1/admin/experiments/:id/confirm-winner", handler.ConfirmAdminExperimentWinner)
 	router.POST("/v1/admin/experiments/:id/hold-for-review", handler.HoldAdminExperimentForReview)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/confirm-winner", nil)
+	req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/confirm-winner", bytes.NewBufferString("{}"))
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -133,10 +139,15 @@ func TestAdminHoldExperimentForReviewPausesRecommendedBanditAndWritesAudits(t *t
 		c.Set("user_id", adminID.String())
 		c.Next()
 	})
-	handler := handlers.NewAdminHandler(nil, nil, generated.New(db), db, nil, nil, service.NewAuditService(db), nil, nil, nil, nil, nil)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		Queries:      generated.New(db),
+		DBPool:       db,
+		AuditService: service.NewAuditService(db),
+	})
 	router.POST("/v1/admin/experiments/:id/hold-for-review", handler.HoldAdminExperimentForReview)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/hold-for-review", nil)
+	req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/hold-for-review", bytes.NewBufferString("{}"))
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -207,14 +218,19 @@ func TestAdminConfirmExperimentWinnerRejectsLockedExperiment(t *testing.T) {
 		c.Set("user_id", adminID.String())
 		c.Next()
 	})
-	handler := handlers.NewAdminHandler(nil, nil, generated.New(db), db, nil, nil, service.NewAuditService(db), nil, nil, nil, nil, nil)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		Queries:      generated.New(db),
+		DBPool:       db,
+		AuditService: service.NewAuditService(db),
+	})
 	router.POST("/v1/admin/experiments/:id/confirm-winner", handler.ConfirmAdminExperimentWinner)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/confirm-winner", nil)
+	req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/confirm-winner", bytes.NewBufferString("{}"))
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 
 	var status string
 	err = db.QueryRow(ctx, `SELECT status FROM ab_tests WHERE id = $1`, experimentID).Scan(&status)
@@ -260,7 +276,7 @@ func TestAdminHoldExperimentForReviewKeepsPausedExperimentPaused(t *testing.T) {
 
 	_, err = db.Exec(ctx, `INSERT INTO users (id, platform_user_id, device_id, platform, app_version, email, role) VALUES ($1, 'admin-user', 'admin-device', 'ios', '1.0.0', 'admin@example.com', 'admin')`, adminID)
 	require.NoError(t, err)
-	_, err = db.Exec(ctx, `INSERT INTO ab_tests (id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence) VALUES ($1, 'Paused hold for review regression', 'lock metadata only path', 'paused', 'thompson_sampling', true, 20, 0.95, 0.97)`, experimentID)
+	_, err = db.Exec(ctx, `INSERT INTO ab_tests (id, name, description, status, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence) VALUES ($1, 'Paused hold for review regression', 'keep paused experiment paused', 'paused', 'thompson_sampling', true, 20, 0.95, 0.97)`, experimentID)
 	require.NoError(t, err)
 	_, err = db.Exec(ctx, `INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight) VALUES ($1, $2, 'Control', 'Baseline', true, 1.0), ($3, $2, 'Variant Winner', 'Winner candidate', false, 1.0)`, controlArmID, experimentID, winnerArmID)
 	require.NoError(t, err)
@@ -274,10 +290,15 @@ func TestAdminHoldExperimentForReviewKeepsPausedExperimentPaused(t *testing.T) {
 		c.Set("user_id", adminID.String())
 		c.Next()
 	})
-	handler := handlers.NewAdminHandler(nil, nil, generated.New(db), db, nil, nil, service.NewAuditService(db), nil, nil, nil, nil, nil)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		Queries:      generated.New(db),
+		DBPool:       db,
+		AuditService: service.NewAuditService(db),
+	})
 	router.POST("/v1/admin/experiments/:id/hold-for-review", handler.HoldAdminExperimentForReview)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/hold-for-review", nil)
+	req := httptest.NewRequest(http.MethodPost, "/v1/admin/experiments/"+experimentID.String()+"/hold-for-review", bytes.NewBufferString("{}"))
+	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 

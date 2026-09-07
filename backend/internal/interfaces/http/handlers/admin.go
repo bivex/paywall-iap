@@ -46,27 +46,30 @@ type AdminHandler struct {
 	asynqClient                 *asynq.Client
 }
 
+// AdminHandlerDeps holds dependencies for creating an AdminHandler.
+type AdminHandlerDeps struct {
+	SubscriptionRepo       domainRepo.SubscriptionRepository
+	UserRepo               domainRepo.UserRepository
+	Queries                *generated.Queries
+	DBPool                 *pgxpool.Pool
+	RedisClient            *redis.Client
+	AnalyticsService       *service.AnalyticsService
+	AuditService           *service.AuditService
+	RevenueOpsService      *service.RevenueOpsService
+	AnalyticsReportService *service.AnalyticsReportService
+	UserProfileService     *service.UserProfileService
+	WinbackService         *service.WinbackService
+	AsynqClient            *asynq.Client
+}
+
 // NewAdminHandler creates a new admin handler
-func NewAdminHandler(
-	subscriptionRepo domainRepo.SubscriptionRepository,
-	userRepo domainRepo.UserRepository,
-	queries *generated.Queries,
-	dbPool *pgxpool.Pool,
-	redisClient *redis.Client,
-	analyticsService *service.AnalyticsService,
-	auditService *service.AuditService,
-	revenueOpsService *service.RevenueOpsService,
-	analyticsReportService *service.AnalyticsReportService,
-	userProfileService *service.UserProfileService,
-	winbackService *service.WinbackService,
-	asynqClient *asynq.Client,
-) *AdminHandler {
+func NewAdminHandler(deps AdminHandlerDeps) *AdminHandler {
 	var experimentAdminService *service.ExperimentAdminService
 	var experimentRepairService *service.ExperimentRepairService
 	var winnerRecommendationService *service.ExperimentWinnerRecommendationService
-	if dbPool != nil {
-		experimentRepo := persistenceRepo.NewExperimentAdminRepository(dbPool)
-		banditRepo := persistenceRepo.NewPostgresBanditRepository(dbPool, zap.NewNop())
+	if deps.DBPool != nil {
+		experimentRepo := persistenceRepo.NewExperimentAdminRepository(deps.DBPool)
+		banditRepo := persistenceRepo.NewPostgresBanditRepository(deps.DBPool, zap.NewNop())
 		experimentAdminService = service.NewExperimentAdminService(experimentRepo)
 		experimentRepairService = service.NewExperimentRepairService(
 			experimentRepo,
@@ -76,21 +79,21 @@ func NewAdminHandler(
 	}
 
 	return &AdminHandler{
-		subscriptionRepo:            subscriptionRepo,
-		userRepo:                    userRepo,
-		queries:                     queries,
-		dbPool:                      dbPool,
-		redisClient:                 redisClient,
-		analyticsService:            analyticsService,
-		auditService:                auditService,
-		revenueOpsService:           revenueOpsService,
-		analyticsReportService:      analyticsReportService,
-		userProfileService:          userProfileService,
-		winbackService:              winbackService,
+		subscriptionRepo:            deps.SubscriptionRepo,
+		userRepo:                    deps.UserRepo,
+		queries:                     deps.Queries,
+		dbPool:                      deps.DBPool,
+		redisClient:                 deps.RedisClient,
+		analyticsService:            deps.AnalyticsService,
+		auditService:                deps.AuditService,
+		revenueOpsService:           deps.RevenueOpsService,
+		analyticsReportService:      deps.AnalyticsReportService,
+		userProfileService:          deps.UserProfileService,
+		winbackService:              deps.WinbackService,
 		experimentAdminService:      experimentAdminService,
 		experimentRepairService:     experimentRepairService,
 		winnerRecommendationService: winnerRecommendationService,
-		asynqClient:                 asynqClient,
+		asynqClient:                 deps.AsynqClient,
 	}
 }
 

@@ -88,20 +88,11 @@ func TestAdminSettingsHandler(t *testing.T) {
 		c.Next()
 	})
 
-	handler := handlers.NewAdminHandler(
-		nil,
-		nil,
-		generated.New(db),
-		db,
-		nil,
-		nil,
-		service.NewAuditService(db),
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-	)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		Queries:      generated.New(db),
+		DBPool:       db,
+		AuditService: service.NewAuditService(db),
+	})
 
 	admin := router.Group("/v1/admin")
 	admin.GET("/settings", handler.GetPlatformSettings)

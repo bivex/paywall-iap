@@ -26,6 +26,16 @@ func TestAdminPricingHandler(t *testing.T) {
 
 	_, err = db.Exec(ctx, `
 		CREATE EXTENSION IF NOT EXISTS pgcrypto;
+		CREATE TABLE apps (
+			id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			name         TEXT NOT NULL UNIQUE,
+			display_name TEXT NOT NULL,
+			platform     TEXT NOT NULL CHECK (platform IN ('ios','android','both')),
+			bundle_id    TEXT NOT NULL UNIQUE,
+			is_active    BOOLEAN NOT NULL DEFAULT true,
+			created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+			updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
 		CREATE TABLE users (
 			id UUID PRIMARY KEY,
 			platform_user_id TEXT UNIQUE NOT NULL,
@@ -40,17 +50,36 @@ func TestAdminPricingHandler(t *testing.T) {
 		);
 		CREATE TABLE pricing_tiers (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			name TEXT NOT NULL UNIQUE,
+			app_id UUID NOT NULL REFERENCES apps(id),
+			name TEXT NOT NULL,
 			description TEXT,
 			monthly_price NUMERIC(10,2),
 			annual_price NUMERIC(10,2),
+			lifetime_price NUMERIC(10,2),
 			currency CHAR(3) NOT NULL DEFAULT 'USD',
 			features JSONB,
 			is_active BOOLEAN NOT NULL DEFAULT true,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			deleted_at TIMESTAMPTZ
+			deleted_at TIMESTAMPTZ,
+			UNIQUE (app_id, name)
+		);
+		CREATE TABLE admin_audit_log (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			admin_id UUID NOT NULL,
+			action TEXT NOT NULL,
+			target_type TEXT NOT NULL,
+			target_user_id UUID,
+			details JSONB,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 		);`)
+	require.NoError(t, err)
+
+	appID := uuid.New()
+	_, err = db.Exec(ctx,
+		`INSERT INTO apps (id, name, display_name, bundle_id, platform) VALUES ($1, $2, $3, $4, $5)`,
+		appID, "Pricing Test App", "Pricing Test App", "com.pricing.test", "ios",
+	)
 	require.NoError(t, err)
 
 	adminID := uuid.New()
@@ -66,23 +95,14 @@ func TestAdminPricingHandler(t *testing.T) {
 	router.Use(func(c *gin.Context) {
 		c.Set("admin_id", adminID)
 		c.Set("user_id", adminID.String())
+		c.Set("app_id", appID)
 		c.Next()
 	})
 
-	handler := handlers.NewAdminHandler(
-		nil,
-		nil,
-		generated.New(db),
-		db,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-	)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		Queries: generated.New(db),
+		DBPool:  db,
+	})
 
 	admin := router.Group("/v1/admin")
 	admin.GET("/pricing-tiers", handler.ListPricingTiers)

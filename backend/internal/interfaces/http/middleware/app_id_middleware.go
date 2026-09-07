@@ -5,6 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"github.com/bivex/paywall-iap/internal/appctx"
 )
 
 const AppIDKey = "app_id"
@@ -27,6 +29,7 @@ func RequireAppID() gin.HandlerFunc {
 			return
 		}
 		c.Set(AppIDKey, id)
+		c.Request = c.Request.WithContext(appctx.WithAppID(c.Request.Context(), id))
 		c.Next()
 	}
 }

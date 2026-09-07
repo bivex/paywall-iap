@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/repository"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
@@ -30,8 +31,19 @@ func TestAdminWinbackHandler(t *testing.T) {
 
 	_, err = db.Exec(ctx, `
 		CREATE EXTENSION IF NOT EXISTS pgcrypto;
+		CREATE TABLE apps (
+			id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			name         TEXT NOT NULL UNIQUE,
+			display_name TEXT NOT NULL,
+			platform     TEXT NOT NULL CHECK (platform IN ('ios','android','both')),
+			bundle_id    TEXT NOT NULL UNIQUE,
+			is_active    BOOLEAN NOT NULL DEFAULT true,
+			created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+			updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
 		CREATE TABLE users (
 			id UUID PRIMARY KEY,
+			app_id UUID REFERENCES apps(id),
 			platform_user_id TEXT UNIQUE NOT NULL,
 			device_id TEXT,
 			platform TEXT NOT NULL,
@@ -40,11 +52,15 @@ func TestAdminWinbackHandler(t *testing.T) {
 			role TEXT NOT NULL DEFAULT 'user',
 			ltv NUMERIC(10,2) DEFAULT 0,
 			ltv_updated_at TIMESTAMPTZ,
+			purchase_channel TEXT,
+			session_count INT NOT NULL DEFAULT 0,
+			has_viewed_ads BOOLEAN NOT NULL DEFAULT false,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			deleted_at TIMESTAMPTZ
 		);
 		CREATE TABLE subscriptions (
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			app_id UUID NOT NULL REFERENCES apps(id),
 			user_id UUID NOT NULL REFERENCES users(id),
 			status TEXT NOT NULL,
 			source TEXT NOT NULL,
@@ -74,15 +90,23 @@ func TestAdminWinbackHandler(t *testing.T) {
 			WHERE status IN ('offered', 'accepted');`)
 	require.NoError(t, err)
 
+	appID := uuid.New()
+	_, err = db.Exec(ctx,
+		`INSERT INTO apps (id, name, display_name, bundle_id, platform) VALUES ($1, $2, $3, $4, $5)`,
+		appID, "Winback App", "Winback App", "com.winback.test", "ios",
+	)
+	require.NoError(t, err)
+
 	adminID := uuid.New()
 	recentUserA := uuid.New()
 	recentUserB := uuid.New()
 	oldUser := uuid.New()
 	for idx, id := range []uuid.UUID{adminID, recentUserA, recentUserB, oldUser} {
 		_, err = db.Exec(ctx,
-			`INSERT INTO users (id, platform_user_id, device_id, platform, app_version, email, role)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			`INSERT INTO users (id, app_id, platform_user_id, device_id, platform, app_version, email, role)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
 			id,
+			appID,
 			fmt.Sprintf("user-%d", idx),
 			fmt.Sprintf("device-%d", idx),
 			"ios",
@@ -102,9 +126,9 @@ func TestAdminWinbackHandler(t *testing.T) {
 		{userID: oldUser, updatedAt: time.Now().Add(-45 * 24 * time.Hour)},
 	} {
 		_, err = db.Exec(ctx,
-			`INSERT INTO subscriptions (id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
-			 VALUES ($1, $2, 'cancelled', 'stripe', 'web', 'pro', 'monthly', $3, false, $4, $4)`,
-			uuid.New(), tc.userID, time.Now().Add(30*24*time.Hour), tc.updatedAt,
+			`INSERT INTO subscriptions (id, app_id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
+			 VALUES ($1, $5, $2, 'cancelled', 'stripe', 'web', 'pro', 'monthly', $3, false, $4, $4)`,
+			uuid.New(), tc.userID, time.Now().Add(30*24*time.Hour), tc.updatedAt, appID,
 		)
 		require.NoError(t, err)
 	}
@@ -119,23 +143,18 @@ func TestAdminWinbackHandler(t *testing.T) {
 	router.Use(func(c *gin.Context) {
 		c.Set("admin_id", adminID)
 		c.Set("user_id", adminID.String())
+		c.Set("app_id", appID)
+		c.Request = c.Request.WithContext(appctx.WithAppID(c.Request.Context(), appID))
 		c.Next()
 	})
 
-	handler := handlers.NewAdminHandler(
-		subscriptionRepo,
-		userRepo,
-		queries,
-		db,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		winbackService,
-		nil,
-	)
+	handler := handlers.NewAdminHandler(handlers.AdminHandlerDeps{
+		SubscriptionRepo: subscriptionRepo,
+		UserRepo:         userRepo,
+		Queries:          queries,
+		DBPool:           db,
+		WinbackService:   winbackService,
+	})
 
 	admin := router.Group("/v1/admin")
 	admin.GET("/winback-campaigns", handler.ListWinbackCampaigns)
@@ -162,7 +181,7 @@ func TestAdminWinbackHandler(t *testing.T) {
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
 		var resp struct {
 			Data handlers.WinbackCampaignSummary `json:"data"`
 		}
