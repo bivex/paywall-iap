@@ -19,10 +19,51 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
 
-// PostgresBanditRepository implements bandit data persistence using PostgreSQL
-type PostgresBanditRepository struct {
+// PostgresBanditArmRepository handles arm and arm statistics persistence
+type PostgresBanditArmRepository struct {
 	pool   *pgxpool.Pool
 	logger *zap.Logger
+}
+
+// PostgresBanditAssignmentRepository handles bandit user assignments persistence
+type PostgresBanditAssignmentRepository struct {
+	pool   *pgxpool.Pool
+	logger *zap.Logger
+}
+
+// PostgresBanditConversionRepository handles conversion and event logging persistence
+type PostgresBanditConversionRepository struct {
+	pool   *pgxpool.Pool
+	logger *zap.Logger
+}
+
+// PostgresBanditConfigRepository handles bandit experiment and objective configuration persistence
+type PostgresBanditConfigRepository struct {
+	pool   *pgxpool.Pool
+	logger *zap.Logger
+}
+
+// PostgresBanditPendingRewardRepository handles delayed pending reward persistence
+type PostgresBanditPendingRewardRepository struct {
+	pool   *pgxpool.Pool
+	logger *zap.Logger
+}
+
+// PostgresBanditMaintenanceRepository handles maintenance query and context retention persistence
+type PostgresBanditMaintenanceRepository struct {
+	pool   *pgxpool.Pool
+	logger *zap.Logger
+}
+
+// PostgresBanditRepository implements bandit data persistence using PostgreSQL
+// by composing specialized domain-specific sub-repositories.
+type PostgresBanditRepository struct {
+	*PostgresBanditArmRepository
+	*PostgresBanditAssignmentRepository
+	*PostgresBanditConversionRepository
+	*PostgresBanditConfigRepository
+	*PostgresBanditPendingRewardRepository
+	*PostgresBanditMaintenanceRepository
 }
 
 type pendingRewardScanner interface {
@@ -32,8 +73,12 @@ type pendingRewardScanner interface {
 // NewPostgresBanditRepository creates a new PostgreSQL-backed bandit repository
 func NewPostgresBanditRepository(pool *pgxpool.Pool, logger *zap.Logger) *PostgresBanditRepository {
 	return &PostgresBanditRepository{
-		pool:   pool,
-		logger: logger,
+		PostgresBanditArmRepository:           &PostgresBanditArmRepository{pool: pool, logger: logger},
+		PostgresBanditAssignmentRepository:    &PostgresBanditAssignmentRepository{pool: pool, logger: logger},
+		PostgresBanditConversionRepository:    &PostgresBanditConversionRepository{pool: pool, logger: logger},
+		PostgresBanditConfigRepository:        &PostgresBanditConfigRepository{pool: pool, logger: logger},
+		PostgresBanditPendingRewardRepository: &PostgresBanditPendingRewardRepository{pool: pool, logger: logger},
+		PostgresBanditMaintenanceRepository:   &PostgresBanditMaintenanceRepository{pool: pool, logger: logger},
 	}
 }
 
@@ -79,7 +124,7 @@ func scanPendingReward(scanner pendingRewardScanner, reward *service.PendingRewa
 }
 
 // GetArms retrieves all arms for an experiment
-func (r *PostgresBanditRepository) GetArms(ctx context.Context, experimentID uuid.UUID) ([]service.Arm, error) {
+func (r *PostgresBanditArmRepository) GetArms(ctx context.Context, experimentID uuid.UUID) ([]service.Arm, error) {
 	query := `
 		SELECT id, experiment_id, name, description, is_control, traffic_weight
 		FROM ab_test_arms
@@ -117,7 +162,7 @@ func (r *PostgresBanditRepository) GetArms(ctx context.Context, experimentID uui
 }
 
 // GetArmStats retrieves statistics for a specific arm
-func (r *PostgresBanditRepository) GetArmStats(ctx context.Context, armID uuid.UUID) (*service.ArmStats, error) {
+func (r *PostgresBanditArmRepository) GetArmStats(ctx context.Context, armID uuid.UUID) (*service.ArmStats, error) {
 	query := `
 		SELECT arm_id, alpha, beta, samples, conversions, revenue, avg_reward, updated_at
 		FROM ab_test_arm_stats
@@ -168,7 +213,7 @@ func (r *PostgresBanditRepository) GetArmStats(ctx context.Context, armID uuid.U
 }
 
 // UpdateArmStats updates statistics for a specific arm
-func (r *PostgresBanditRepository) UpdateArmStats(ctx context.Context, stats *service.ArmStats) error {
+func (r *PostgresBanditArmRepository) UpdateArmStats(ctx context.Context, stats *service.ArmStats) error {
 	query := `
 		INSERT INTO ab_test_arm_stats (arm_id, alpha, beta, samples, conversions, revenue, avg_reward)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -208,7 +253,7 @@ func (r *PostgresBanditRepository) UpdateArmStats(ctx context.Context, stats *se
 }
 
 // CreateAssignment creates a new user assignment
-func (r *PostgresBanditRepository) CreateAssignment(ctx context.Context, assignment *service.Assignment) error {
+func (r *PostgresBanditAssignmentRepository) CreateAssignment(ctx context.Context, assignment *service.Assignment) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to begin assignment transaction: %w", err)
@@ -284,7 +329,7 @@ func (r *PostgresBanditRepository) CreateAssignment(ctx context.Context, assignm
 }
 
 // GetActiveAssignment retrieves the active (non-expired) assignment for a user in an experiment
-func (r *PostgresBanditRepository) GetActiveAssignment(ctx context.Context, experimentID, userID uuid.UUID) (*service.Assignment, error) {
+func (r *PostgresBanditAssignmentRepository) GetActiveAssignment(ctx context.Context, experimentID, userID uuid.UUID) (*service.Assignment, error) {
 	query := `
 		SELECT id, experiment_id, user_id, arm_id, assigned_at, expires_at
 		FROM ab_test_assignments
@@ -317,7 +362,7 @@ func (r *PostgresBanditRepository) GetActiveAssignment(ctx context.Context, expe
 }
 
 // SaveConversion records a conversion event for an arm
-func (r *PostgresBanditRepository) SaveConversion(ctx context.Context, experimentID, armID, userID uuid.UUID, amount float64) error {
+func (r *PostgresBanditConversionRepository) SaveConversion(ctx context.Context, experimentID, armID, userID uuid.UUID, amount float64) error {
 	return r.AppendConversionEvent(ctx, &service.ConversionEvent{
 		ExperimentID:          experimentID,
 		ArmID:                 armID,
@@ -329,7 +374,7 @@ func (r *PostgresBanditRepository) SaveConversion(ctx context.Context, experimen
 	})
 }
 
-func (r *PostgresBanditRepository) AppendConversionEvent(ctx context.Context, event *service.ConversionEvent) error {
+func (r *PostgresBanditConversionRepository) AppendConversionEvent(ctx context.Context, event *service.ConversionEvent) error {
 	var metadataJSON []byte
 	var err error
 	if event.Metadata != nil {
@@ -376,7 +421,7 @@ func (r *PostgresBanditRepository) AppendConversionEvent(ctx context.Context, ev
 	return nil
 }
 
-func (r *PostgresBanditRepository) AppendImpressionEvent(ctx context.Context, event *service.ImpressionEvent) error {
+func (r *PostgresBanditConversionRepository) AppendImpressionEvent(ctx context.Context, event *service.ImpressionEvent) error {
 	var metadataJSON []byte
 	var err error
 	if event.Metadata != nil {
@@ -411,7 +456,7 @@ func (r *PostgresBanditRepository) AppendImpressionEvent(ctx context.Context, ev
 	return nil
 }
 
-func (r *PostgresBanditRepository) AppendWinnerRecommendationEvent(ctx context.Context, event *service.WinnerRecommendationEvent) error {
+func (r *PostgresBanditConversionRepository) AppendWinnerRecommendationEvent(ctx context.Context, event *service.WinnerRecommendationEvent) error {
 	var detailsJSON []byte
 	var err error
 	if event.Details != nil {
@@ -463,7 +508,7 @@ func (r *PostgresBanditRepository) AppendWinnerRecommendationEvent(ctx context.C
 	return nil
 }
 
-func (r *PostgresBanditRepository) ProcessPendingConversion(ctx context.Context, transactionID, userID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) (*service.PendingReward, bool, error) {
+func (r *PostgresBanditConversionRepository) ProcessPendingConversion(ctx context.Context, transactionID, userID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) (*service.PendingReward, bool, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to begin pending conversion transaction: %w", err)
@@ -555,7 +600,7 @@ func (r *PostgresBanditRepository) ProcessPendingConversion(ctx context.Context,
 	return matchedPending, true, nil
 }
 
-func (r *PostgresBanditRepository) ProcessExpiredPendingReward(ctx context.Context, pendingID uuid.UUID, processedAt time.Time) (bool, error) {
+func (r *PostgresBanditConversionRepository) ProcessExpiredPendingReward(ctx context.Context, pendingID uuid.UUID, processedAt time.Time) (bool, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return false, fmt.Errorf("failed to begin expired pending reward transaction: %w", err)
@@ -624,7 +669,7 @@ func (r *PostgresBanditRepository) ProcessExpiredPendingReward(ctx context.Conte
 }
 
 // GetAssignmentHistory retrieves historical assignments for a user
-func (r *PostgresBanditRepository) GetAssignmentHistory(ctx context.Context, userID uuid.UUID, limit int) ([]service.Assignment, error) {
+func (r *PostgresBanditAssignmentRepository) GetAssignmentHistory(ctx context.Context, userID uuid.UUID, limit int) ([]service.Assignment, error) {
 	query := `
 		SELECT id, experiment_id, user_id, arm_id, assigned_at, expires_at
 		FROM ab_test_assignments
@@ -659,7 +704,7 @@ func (r *PostgresBanditRepository) GetAssignmentHistory(ctx context.Context, use
 }
 
 // CleanupExpiredAssignments removes expired assignments older than the specified duration
-func (r *PostgresBanditRepository) CleanupExpiredAssignments(ctx context.Context, olderThan time.Duration) (int64, error) {
+func (r *PostgresBanditAssignmentRepository) CleanupExpiredAssignments(ctx context.Context, olderThan time.Duration) (int64, error) {
 	query := `
 		DELETE FROM ab_test_assignments
 		WHERE expires_at < NOW() - $1::interval
@@ -676,7 +721,7 @@ func (r *PostgresBanditRepository) CleanupExpiredAssignments(ctx context.Context
 	return count, nil
 }
 
-func (r *PostgresBanditRepository) ListWindowMaintenanceExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
+func (r *PostgresBanditMaintenanceRepository) ListWindowMaintenanceExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
 	if limit <= 0 {
 		limit = 100
 	}
@@ -718,7 +763,7 @@ func (r *PostgresBanditRepository) ListWindowMaintenanceExperimentIDs(ctx contex
 	return ids, nil
 }
 
-func (r *PostgresBanditRepository) ListObjectiveSyncExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
+func (r *PostgresBanditMaintenanceRepository) ListObjectiveSyncExperimentIDs(ctx context.Context, limit int) ([]uuid.UUID, error) {
 	if limit <= 0 {
 		limit = 100
 	}
@@ -759,7 +804,7 @@ func (r *PostgresBanditRepository) ListObjectiveSyncExperimentIDs(ctx context.Co
 	return ids, nil
 }
 
-func (r *PostgresBanditRepository) CleanupStaleUserContext(ctx context.Context, olderThan time.Duration) (int64, error) {
+func (r *PostgresBanditMaintenanceRepository) CleanupStaleUserContext(ctx context.Context, olderThan time.Duration) (int64, error) {
 	query := `
 		DELETE FROM bandit_user_context
 		WHERE updated_at < NOW() - $1::interval
@@ -776,7 +821,7 @@ func (r *PostgresBanditRepository) CleanupStaleUserContext(ctx context.Context, 
 }
 
 // GetAllArmStatsForExperiment retrieves statistics for all arms in an experiment
-func (r *PostgresBanditRepository) GetAllArmStatsForExperiment(ctx context.Context, experimentID uuid.UUID) (map[uuid.UUID]*service.ArmStats, error) {
+func (r *PostgresBanditArmRepository) GetAllArmStatsForExperiment(ctx context.Context, experimentID uuid.UUID) (map[uuid.UUID]*service.ArmStats, error) {
 	query := `
 		SELECT s.arm_id, s.alpha, s.beta, s.samples, s.conversions, s.revenue, s.avg_reward, s.updated_at
 		FROM ab_test_arm_stats s
@@ -812,7 +857,7 @@ func (r *PostgresBanditRepository) GetAllArmStatsForExperiment(ctx context.Conte
 }
 
 // CreateExperiment creates a new experiment
-func (r *PostgresBanditRepository) CreateExperiment(ctx context.Context, experiment *Experiment) error {
+func (r *PostgresBanditConfigRepository) CreateExperiment(ctx context.Context, experiment *Experiment) error {
 	query := `
 		INSERT INTO ab_tests (id, name, description, status, start_at, end_at, algorithm_type, is_bandit, min_sample_size, confidence_threshold)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -839,7 +884,7 @@ func (r *PostgresBanditRepository) CreateExperiment(ctx context.Context, experim
 }
 
 // GetExperiment retrieves an experiment by ID
-func (r *PostgresBanditRepository) GetExperiment(ctx context.Context, experimentID uuid.UUID) (*Experiment, error) {
+func (r *PostgresBanditConfigRepository) GetExperiment(ctx context.Context, experimentID uuid.UUID) (*Experiment, error) {
 	query := `
 		SELECT id, name, description, status, start_at, end_at, algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence, created_at, updated_at, automation_policy
 		FROM ab_tests
@@ -886,7 +931,7 @@ func (r *PostgresBanditRepository) GetExperiment(ctx context.Context, experiment
 }
 
 // CreateArm creates a new arm for an experiment
-func (r *PostgresBanditRepository) CreateArm(ctx context.Context, arm *service.Arm) error {
+func (r *PostgresBanditArmRepository) CreateArm(ctx context.Context, arm *service.Arm) error {
 	query := `
 		INSERT INTO ab_test_arms (id, experiment_id, name, description, is_control, traffic_weight)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -941,7 +986,7 @@ type Experiment struct {
 // =====================================================
 
 // GetExperimentConfig retrieves the experiment configuration
-func (r *PostgresBanditRepository) GetExperimentConfig(ctx context.Context, experimentID uuid.UUID) (*service.ExperimentConfig, error) {
+func (r *PostgresBanditConfigRepository) GetExperimentConfig(ctx context.Context, experimentID uuid.UUID) (*service.ExperimentConfig, error) {
 	query := `
 		SELECT id, objective_type, objective_weights, window_type, window_size, window_min_samples,
 		       enable_contextual, enable_delayed, enable_currency, exploration_alpha
@@ -1000,7 +1045,7 @@ func (r *PostgresBanditRepository) GetExperimentConfig(ctx context.Context, expe
 }
 
 // UpdateObjectiveConfig persists objective configuration fields for an experiment.
-func (r *PostgresBanditRepository) UpdateObjectiveConfig(
+func (r *PostgresBanditConfigRepository) UpdateObjectiveConfig(
 	ctx context.Context,
 	experimentID uuid.UUID,
 	objectiveType service.ObjectiveType,
@@ -1035,7 +1080,7 @@ func (r *PostgresBanditRepository) UpdateObjectiveConfig(
 }
 
 // GetUserContext retrieves user context for contextual bandits
-func (r *PostgresBanditRepository) GetUserContext(ctx context.Context, userID uuid.UUID) (*service.UserContext, error) {
+func (r *PostgresBanditMaintenanceRepository) GetUserContext(ctx context.Context, userID uuid.UUID) (*service.UserContext, error) {
 	query := `
 		SELECT user_id, country, device, app_version, days_since_install, total_spent, last_purchase_at, updated_at
 		FROM bandit_user_context
@@ -1068,7 +1113,7 @@ func (r *PostgresBanditRepository) GetUserContext(ctx context.Context, userID uu
 }
 
 // SetUserContext saves or updates user context
-func (r *PostgresBanditRepository) SetUserContext(ctx context.Context, userCtx *service.UserContext) error {
+func (r *PostgresBanditMaintenanceRepository) SetUserContext(ctx context.Context, userCtx *service.UserContext) error {
 	query := `
 		INSERT INTO bandit_user_context (user_id, country, device, app_version, days_since_install, total_spent, last_purchase_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -1105,7 +1150,7 @@ func (r *PostgresBanditRepository) SetUserContext(ctx context.Context, userCtx *
 // =====================================================
 
 // GetObjectiveStats retrieves objective-specific statistics for an arm
-func (r *PostgresBanditRepository) GetObjectiveStats(ctx context.Context, armID uuid.UUID, objectiveType service.ObjectiveType) (*service.ArmObjectiveStats, error) {
+func (r *PostgresBanditConfigRepository) GetObjectiveStats(ctx context.Context, armID uuid.UUID, objectiveType service.ObjectiveType) (*service.ArmObjectiveStats, error) {
 	query := `
 		SELECT arm_id, objective_type, alpha, beta, samples, conversions, total_revenue, avg_ltv
 		FROM bandit_arm_objective_stats
@@ -1146,7 +1191,7 @@ func (r *PostgresBanditRepository) GetObjectiveStats(ctx context.Context, armID 
 }
 
 // UpdateObjectiveStats updates objective-specific statistics
-func (r *PostgresBanditRepository) UpdateObjectiveStats(ctx context.Context, stats *service.ArmObjectiveStats) error {
+func (r *PostgresBanditConfigRepository) UpdateObjectiveStats(ctx context.Context, stats *service.ArmObjectiveStats) error {
 	query := `
 		INSERT INTO bandit_arm_objective_stats (arm_id, objective_type, alpha, beta, samples, conversions, total_revenue, avg_ltv)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -1180,7 +1225,7 @@ func (r *PostgresBanditRepository) UpdateObjectiveStats(ctx context.Context, sta
 }
 
 // GetAllObjectiveStats retrieves all objective statistics for an arm
-func (r *PostgresBanditRepository) GetAllObjectiveStats(ctx context.Context, armID uuid.UUID) (map[service.ObjectiveType]*service.ArmObjectiveStats, error) {
+func (r *PostgresBanditConfigRepository) GetAllObjectiveStats(ctx context.Context, armID uuid.UUID) (map[service.ObjectiveType]*service.ArmObjectiveStats, error) {
 	query := `
 		SELECT arm_id, objective_type, alpha, beta, samples, conversions, total_revenue, avg_ltv
 		FROM bandit_arm_objective_stats
@@ -1219,7 +1264,7 @@ func (r *PostgresBanditRepository) GetAllObjectiveStats(ctx context.Context, arm
 // =====================================================
 
 // CreatePendingReward creates a new pending reward
-func (r *PostgresBanditRepository) CreatePendingReward(ctx context.Context, reward *service.PendingReward) error {
+func (r *PostgresBanditPendingRewardRepository) CreatePendingReward(ctx context.Context, reward *service.PendingReward) error {
 	query := `
 		INSERT INTO bandit_pending_rewards (id, experiment_id, arm_id, user_id, assigned_at, expires_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -1242,7 +1287,7 @@ func (r *PostgresBanditRepository) CreatePendingReward(ctx context.Context, rewa
 }
 
 // GetPendingReward retrieves a pending reward by ID
-func (r *PostgresBanditRepository) GetPendingReward(ctx context.Context, id uuid.UUID) (*service.PendingReward, error) {
+func (r *PostgresBanditPendingRewardRepository) GetPendingReward(ctx context.Context, id uuid.UUID) (*service.PendingReward, error) {
 	query := `
 		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
 		       conversion_value, conversion_currency, converted_at, processed_at
@@ -1265,7 +1310,7 @@ func (r *PostgresBanditRepository) GetPendingReward(ctx context.Context, id uuid
 }
 
 // GetPendingRewardsByUser retrieves pending rewards for a user
-func (r *PostgresBanditRepository) GetPendingRewardsByUser(ctx context.Context, userID, experimentID uuid.UUID) ([]*service.PendingReward, error) {
+func (r *PostgresBanditPendingRewardRepository) GetPendingRewardsByUser(ctx context.Context, userID, experimentID uuid.UUID) ([]*service.PendingReward, error) {
 	query := `
 		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
 		       conversion_value, conversion_currency, converted_at, processed_at
@@ -1298,7 +1343,7 @@ func (r *PostgresBanditRepository) GetPendingRewardsByUser(ctx context.Context, 
 }
 
 // GetExpiredPendingRewards retrieves expired pending rewards
-func (r *PostgresBanditRepository) GetExpiredPendingRewards(ctx context.Context, limit int) ([]*service.PendingReward, error) {
+func (r *PostgresBanditPendingRewardRepository) GetExpiredPendingRewards(ctx context.Context, limit int) ([]*service.PendingReward, error) {
 	query := `
 		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
 		       conversion_value, conversion_currency, converted_at, processed_at
@@ -1327,7 +1372,7 @@ func (r *PostgresBanditRepository) GetExpiredPendingRewards(ctx context.Context,
 }
 
 // UpdatePendingReward updates a pending reward
-func (r *PostgresBanditRepository) UpdatePendingReward(ctx context.Context, reward *service.PendingReward) error {
+func (r *PostgresBanditPendingRewardRepository) UpdatePendingReward(ctx context.Context, reward *service.PendingReward) error {
 	query := `
 		UPDATE bandit_pending_rewards
 		SET converted = $2,
@@ -1355,7 +1400,7 @@ func (r *PostgresBanditRepository) UpdatePendingReward(ctx context.Context, rewa
 }
 
 // LinkConversion links a pending reward to a transaction
-func (r *PostgresBanditRepository) LinkConversion(ctx context.Context, link *service.ConversionLink) error {
+func (r *PostgresBanditConversionRepository) LinkConversion(ctx context.Context, link *service.ConversionLink) error {
 	query := `
 		INSERT INTO bandit_conversion_links (pending_id, transaction_id)
 		VALUES ($1, $2)
@@ -1370,7 +1415,7 @@ func (r *PostgresBanditRepository) LinkConversion(ctx context.Context, link *ser
 	return nil
 }
 
-func (r *PostgresBanditRepository) applyRewardToArmTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID, reward float64) error {
+func (r *PostgresBanditConversionRepository) applyRewardToArmTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID, reward float64) error {
 	stats, err := r.loadArmStatsTx(ctx, tx, armID)
 	if err != nil {
 		return err
@@ -1408,7 +1453,7 @@ func (r *PostgresBanditRepository) applyRewardToArmTx(ctx context.Context, tx pg
 	return nil
 }
 
-func (r *PostgresBanditRepository) loadArmStatsTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID) (*service.ArmStats, error) {
+func (r *PostgresBanditConversionRepository) loadArmStatsTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID) (*service.ArmStats, error) {
 	stats := &service.ArmStats{}
 	err := tx.QueryRow(ctx, `
 		SELECT arm_id, alpha, beta, samples, conversions, revenue, avg_reward, updated_at
@@ -1434,7 +1479,7 @@ func (r *PostgresBanditRepository) loadArmStatsTx(ctx context.Context, tx pgx.Tx
 	return stats, nil
 }
 
-func (r *PostgresBanditRepository) insertConversionEventTx(ctx context.Context, tx pgx.Tx, event *service.ConversionEvent) (bool, error) {
+func (r *PostgresBanditConversionRepository) insertConversionEventTx(ctx context.Context, tx pgx.Tx, event *service.ConversionEvent) (bool, error) {
 	var metadataJSON []byte
 	var err error
 	if event.Metadata != nil {
@@ -1496,7 +1541,7 @@ func normalizeOccurredAt(occurredAt time.Time) time.Time {
 }
 
 // GetByTransactionID retrieves conversion links by transaction ID
-func (r *PostgresBanditRepository) GetByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]*service.ConversionLink, error) {
+func (r *PostgresBanditConversionRepository) GetByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]*service.ConversionLink, error) {
 	query := `
 		SELECT pending_id, transaction_id, linked_at
 		FROM bandit_conversion_links

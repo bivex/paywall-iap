@@ -98,7 +98,7 @@ func (r *ExperimentAdminRepository) UpdateExperimentDraft(ctx context.Context, e
 	}
 
 	if input.Arms != nil {
-		if err := r.syncDraftExperimentArms(ctx, tx, experimentID, input.Arms); err != nil {
+		if err := syncDraftExperimentArms(ctx, tx, experimentID, input.Arms); err != nil {
 			return err
 		}
 	}
@@ -109,7 +109,7 @@ func (r *ExperimentAdminRepository) UpdateExperimentDraft(ctx context.Context, e
 	return nil
 }
 
-func (r *ExperimentAdminRepository) syncDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, arms []service.ExperimentArmInput) error {
+func syncDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, arms []service.ExperimentArmInput) error {
 	if err := ensureDraftExperimentPricingTiersExist(ctx, tx, arms); err != nil {
 		return err
 	}

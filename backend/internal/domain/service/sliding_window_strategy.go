@@ -61,13 +61,13 @@ func NewSlidingWindowStrategy(
 
 // GetArmStats retrieves arm statistics for the current window
 func (s *SlidingWindowStrategy) GetArmStats(ctx context.Context, armID uuid.UUID) (*ArmStats, error) {
-	statsKey := s.getStatsKey(armID)
+	statsKey := slidingStatsKey(s.experimentID, armID)
 
 	// Try to get cached stats first
 	cachedStats, err := s.redisClient.Get(ctx, statsKey).Result()
 	if err == nil {
 		// Parse cached stats - for production, use proper serialization
-		return s.parseCachedStats(cachedStats, armID)
+		return parseCachedStats(cachedStats, armID)
 	}
 
 	if err != redis.Nil {
@@ -82,7 +82,7 @@ func (s *SlidingWindowStrategy) GetArmStats(ctx context.Context, armID uuid.UUID
 	}
 
 	// Cache the stats
-	if err := s.cacheStats(ctx, armID, stats); err != nil {
+	if err := cacheWindowStats(ctx, s.redisClient, s.experimentID, armID, stats); err != nil {
 		s.logger.Warn("Failed to cache stats", zap.Error(err))
 	}
 
@@ -91,7 +91,7 @@ func (s *SlidingWindowStrategy) GetArmStats(ctx context.Context, armID uuid.UUID
 
 // RecordEvent records a reward event in the sliding window
 func (s *SlidingWindowStrategy) RecordEvent(ctx context.Context, armID uuid.UUID, event RewardEvent) error {
-	windowKey := s.getWindowKey(armID)
+	windowKey := slidingWindowKey(s.experimentID, armID)
 
 	// Add event to sorted set (score = timestamp)
 	score := float64(event.Timestamp.UnixMilli())
@@ -117,7 +117,7 @@ func (s *SlidingWindowStrategy) RecordEvent(ctx context.Context, armID uuid.UUID
 	}
 
 	// Invalidate cached stats
-	statsKey := s.getStatsKey(armID)
+	statsKey := slidingStatsKey(s.experimentID, armID)
 	pipe.Del(ctx, statsKey)
 
 	if _, err := pipe.Exec(ctx); err != nil {
@@ -140,7 +140,7 @@ func (s *SlidingWindowStrategy) GetType() string {
 
 // calculateWindowStats calculates statistics from the current window
 func (s *SlidingWindowStrategy) calculateWindowStats(ctx context.Context, armID uuid.UUID) (*ArmStats, error) {
-	windowKey := s.getWindowKey(armID)
+	windowKey := slidingWindowKey(s.experimentID, armID)
 
 	// Get all events in the window
 	events, err := s.redisClient.ZRevRangeWithScores(ctx, windowKey, 0, -1).Result()
@@ -154,7 +154,7 @@ func (s *SlidingWindowStrategy) calculateWindowStats(ctx context.Context, armID 
 	revenue := 0.0
 
 	for _, z := range events {
-		event, err := s.parseEventMember(z.Member.(string))
+		event, err := parseEventMember(z.Member.(string))
 		if err != nil {
 			s.logger.Warn("Failed to parse event", zap.Error(err))
 			continue
@@ -187,18 +187,18 @@ func (s *SlidingWindowStrategy) calculateWindowStats(ctx context.Context, armID 
 	}, nil
 }
 
-// getWindowKey returns the Redis key for the window sorted set
-func (s *SlidingWindowStrategy) getWindowKey(armID uuid.UUID) string {
-	return fmt.Sprintf("bandit:window:%s:%s", s.experimentID.String(), armID.String())
+// slidingWindowKey returns the Redis key for the window sorted set
+func slidingWindowKey(experimentID, armID uuid.UUID) string {
+	return fmt.Sprintf("bandit:window:%s:%s", experimentID.String(), armID.String())
 }
 
-// getStatsKey returns the Redis key for cached stats
-func (s *SlidingWindowStrategy) getStatsKey(armID uuid.UUID) string {
-	return fmt.Sprintf("bandit:window:stats:%s:%s", s.experimentID.String(), armID.String())
+// slidingStatsKey returns the Redis key for cached stats
+func slidingStatsKey(experimentID, armID uuid.UUID) string {
+	return fmt.Sprintf("bandit:window:stats:%s:%s", experimentID.String(), armID.String())
 }
 
 // parseEventMember parses an event member string
-func (s *SlidingWindowStrategy) parseEventMember(member string) (RewardEvent, error) {
+func parseEventMember(member string) (RewardEvent, error) {
 	// Format: userID:rewardValue:currency
 	var userID uuid.UUID
 	var rewardValue float64
@@ -217,19 +217,19 @@ func (s *SlidingWindowStrategy) parseEventMember(member string) (RewardEvent, er
 	}, nil
 }
 
-// cacheStats caches the calculated stats
-func (s *SlidingWindowStrategy) cacheStats(ctx context.Context, armID uuid.UUID, stats *ArmStats) error {
-	statsKey := s.getStatsKey(armID)
+// cacheWindowStats caches the calculated stats
+func cacheWindowStats(ctx context.Context, client *redis.Client, experimentID, armID uuid.UUID, stats *ArmStats) error {
+	statsKey := slidingStatsKey(experimentID, armID)
 
 	// Serialize stats - for production, use JSON or msgpack
 	serialized := fmt.Sprintf("%.2f,%.2f,%d,%d,%.2f",
 		stats.Alpha, stats.Beta, stats.Samples, stats.Conversions, stats.Revenue)
 
-	return s.redisClient.Set(ctx, statsKey, serialized, 5*time.Minute).Err()
+	return client.Set(ctx, statsKey, serialized, 5*time.Minute).Err()
 }
 
 // parseCachedStats parses cached stats from Redis
-func (s *SlidingWindowStrategy) parseCachedStats(serialized string, armID uuid.UUID) (*ArmStats, error) {
+func parseCachedStats(serialized string, armID uuid.UUID) (*ArmStats, error) {
 	var alpha, beta, revenue float64
 	var samples, conversions int
 
@@ -258,7 +258,7 @@ func (s *SlidingWindowStrategy) parseCachedStats(serialized string, armID uuid.U
 
 // GetWindowInfo returns information about the current window
 func (s *SlidingWindowStrategy) GetWindowInfo(ctx context.Context, armID uuid.UUID) (*WindowStats, error) {
-	windowKey := s.getWindowKey(armID)
+	windowKey := slidingWindowKey(s.experimentID, armID)
 
 	// Get window size
 	size, err := s.redisClient.ZCard(ctx, windowKey).Result()
@@ -312,7 +312,7 @@ func (s *SlidingWindowStrategy) GetWindowInfo(ctx context.Context, armID uuid.UU
 
 // TrimWindow trims the window to the configured size
 func (s *SlidingWindowStrategy) TrimWindow(ctx context.Context, armID uuid.UUID) error {
-	windowKey := s.getWindowKey(armID)
+	windowKey := slidingWindowKey(s.experimentID, armID)
 
 	switch s.config.Type {
 	case WindowTypeEvents:
@@ -329,8 +329,8 @@ func (s *SlidingWindowStrategy) TrimWindow(ctx context.Context, armID uuid.UUID)
 
 // ClearWindow clears all events for an arm
 func (s *SlidingWindowStrategy) ClearWindow(ctx context.Context, armID uuid.UUID) error {
-	windowKey := s.getWindowKey(armID)
-	statsKey := s.getStatsKey(armID)
+	windowKey := slidingWindowKey(s.experimentID, armID)
+	statsKey := slidingStatsKey(s.experimentID, armID)
 
 	pipe := s.redisClient.Pipeline()
 	pipe.Del(ctx, windowKey)
@@ -366,7 +366,7 @@ func (s *SlidingWindowStrategy) GetUtilization(ctx context.Context, armID uuid.U
 		return 1.0, nil // Not applicable for time-based windows
 	}
 
-	windowKey := s.getWindowKey(armID)
+	windowKey := slidingWindowKey(s.experimentID, armID)
 	size, err := s.redisClient.ZCard(ctx, windowKey).Result()
 	if err != nil {
 		return 0, fmt.Errorf("failed to get window size: %w", err)
@@ -382,7 +382,7 @@ func (s *SlidingWindowStrategy) GetUtilization(ctx context.Context, armID uuid.U
 
 // ExportEvents exports all events in the window for analysis
 func (s *SlidingWindowStrategy) ExportEvents(ctx context.Context, armID uuid.UUID, limit int64) ([]RewardEvent, error) {
-	windowKey := s.getWindowKey(armID)
+	windowKey := slidingWindowKey(s.experimentID, armID)
 
 	// Get events from newest to oldest
 	events, err := s.redisClient.ZRevRangeWithScores(ctx, windowKey, 0, limit-1).Result()
@@ -392,7 +392,7 @@ func (s *SlidingWindowStrategy) ExportEvents(ctx context.Context, armID uuid.UUI
 
 	result := make([]RewardEvent, 0, len(events))
 	for _, z := range events {
-		event, err := s.parseEventMember(z.Member.(string))
+		event, err := parseEventMember(z.Member.(string))
 		if err != nil {
 			s.logger.Warn("Failed to parse event during export", zap.Error(err))
 			continue

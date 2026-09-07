@@ -11,17 +11,37 @@ import (
 	"go.uber.org/zap"
 )
 
-// AnalyticsCache handles caching for analytics data
-type AnalyticsCache struct {
+// MetricCache handles realtime metric caching
+type MetricCache struct {
 	client *redis.Client
 	logger *zap.Logger
+}
+
+// CohortFunnelCache handles cohort and funnel metric caching
+type CohortFunnelCache struct {
+	client *redis.Client
+	logger *zap.Logger
+}
+
+// LTVAdminCache handles LTV and administrative cache operations
+type LTVAdminCache struct {
+	client *redis.Client
+	logger *zap.Logger
+}
+
+// AnalyticsCache handles caching for analytics data via composition
+type AnalyticsCache struct {
+	*MetricCache
+	*CohortFunnelCache
+	*LTVAdminCache
 }
 
 // NewAnalyticsCache creates a new analytics cache
 func NewAnalyticsCache(client *redis.Client, logger *zap.Logger) *AnalyticsCache {
 	return &AnalyticsCache{
-		client: client,
-		logger: logger,
+		MetricCache:       &MetricCache{client: client, logger: logger},
+		CohortFunnelCache: &CohortFunnelCache{client: client, logger: logger},
+		LTVAdminCache:     &LTVAdminCache{client: client, logger: logger},
 	}
 }
 
@@ -52,7 +72,7 @@ type RealtimeMetric struct {
 }
 
 // SetRealtimeMetric stores a realtime metric with 30s TTL
-func (c *AnalyticsCache) SetRealtimeMetric(ctx context.Context, metric *RealtimeMetric) error {
+func (c *MetricCache) SetRealtimeMetric(ctx context.Context, metric *RealtimeMetric) error {
 	key := fmt.Sprintf(KeyRealtimeMetric, metric.Name)
 
 	data, err := json.Marshal(metric)
@@ -73,7 +93,7 @@ func (c *AnalyticsCache) SetRealtimeMetric(ctx context.Context, metric *Realtime
 }
 
 // GetRealtimeMetric retrieves a realtime metric
-func (c *AnalyticsCache) GetRealtimeMetric(ctx context.Context, name string) (*RealtimeMetric, error) {
+func (c *MetricCache) GetRealtimeMetric(ctx context.Context, name string) (*RealtimeMetric, error) {
 	key := fmt.Sprintf(KeyRealtimeMetric, name)
 
 	data, err := c.client.Get(ctx, key).Bytes()
@@ -93,7 +113,7 @@ func (c *AnalyticsCache) GetRealtimeMetric(ctx context.Context, name string) (*R
 }
 
 // IncrementRealtimeMetric atomically increments a realtime metric
-func (c *AnalyticsCache) IncrementRealtimeMetric(ctx context.Context, name string, delta float64) error {
+func (c *MetricCache) IncrementRealtimeMetric(ctx context.Context, name string, delta float64) error {
 	key := fmt.Sprintf(KeyRealtimeMetric, name)
 
 	// Use HINCRBYFLOAT for atomic increment
@@ -111,7 +131,7 @@ func (c *AnalyticsCache) IncrementRealtimeMetric(ctx context.Context, name strin
 }
 
 // SetRealtimeMetrics stores multiple realtime metrics in a pipeline
-func (c *AnalyticsCache) SetRealtimeMetrics(ctx context.Context, metrics []RealtimeMetric) error {
+func (c *MetricCache) SetRealtimeMetrics(ctx context.Context, metrics []RealtimeMetric) error {
 	if len(metrics) == 0 {
 		return nil
 	}
@@ -137,7 +157,7 @@ func (c *AnalyticsCache) SetRealtimeMetrics(ctx context.Context, metrics []Realt
 }
 
 // GetRealtimeMetrics retrieves multiple realtime metrics
-func (c *AnalyticsCache) GetRealtimeMetrics(ctx context.Context, names []string) (map[string]*RealtimeMetric, error) {
+func (c *MetricCache) GetRealtimeMetrics(ctx context.Context, names []string) (map[string]*RealtimeMetric, error) {
 	if len(names) == 0 {
 		return make(map[string]*RealtimeMetric), nil
 	}
@@ -190,7 +210,7 @@ type CohortData struct {
 }
 
 // SetCohortData stores cohort data with 1h TTL
-func (c *AnalyticsCache) SetCohortData(ctx context.Context, metricName string, date time.Time, data *CohortData) error {
+func (c *CohortFunnelCache) SetCohortData(ctx context.Context, metricName string, date time.Time, data *CohortData) error {
 	key := fmt.Sprintf(KeyCohortData, metricName, date.Format("2006-01-02"))
 
 	data.CachedAt = time.Now()
@@ -212,7 +232,7 @@ func (c *AnalyticsCache) SetCohortData(ctx context.Context, metricName string, d
 }
 
 // GetCohortData retrieves cached cohort data
-func (c *AnalyticsCache) GetCohortData(ctx context.Context, metricName string, date time.Time) (*CohortData, error) {
+func (c *CohortFunnelCache) GetCohortData(ctx context.Context, metricName string, date time.Time) (*CohortData, error) {
 	key := fmt.Sprintf(KeyCohortData, metricName, date.Format("2006-01-02"))
 
 	data, err := c.client.Get(ctx, key).Bytes()
@@ -232,7 +252,7 @@ func (c *AnalyticsCache) GetCohortData(ctx context.Context, metricName string, d
 }
 
 // InvalidateCohort removes cached cohort data for a metric
-func (c *AnalyticsCache) InvalidateCohort(ctx context.Context, metricName string) error {
+func (c *CohortFunnelCache) InvalidateCohort(ctx context.Context, metricName string) error {
 	pattern := fmt.Sprintf(KeyCohortData, metricName, "*")
 
 	iter := c.client.Scan(ctx, 0, pattern, 100).Iterator()
@@ -278,7 +298,7 @@ type FunnelStep struct {
 }
 
 // SetFunnelData stores funnel data with 30min TTL
-func (c *AnalyticsCache) SetFunnelData(ctx context.Context, funnelID string, dateFrom, dateTo time.Time, data *FunnelData) error {
+func (c *CohortFunnelCache) SetFunnelData(ctx context.Context, funnelID string, dateFrom, dateTo time.Time, data *FunnelData) error {
 	key := fmt.Sprintf(KeyFunnelData, funnelID, fmt.Sprintf("%s:%s", dateFrom.Format("2006-01-02"), dateTo.Format("2006-01-02")))
 
 	data.CachedAt = time.Now()
@@ -296,7 +316,7 @@ func (c *AnalyticsCache) SetFunnelData(ctx context.Context, funnelID string, dat
 }
 
 // GetFunnelData retrieves cached funnel data
-func (c *AnalyticsCache) GetFunnelData(ctx context.Context, funnelID string, dateFrom, dateTo time.Time) (*FunnelData, error) {
+func (c *CohortFunnelCache) GetFunnelData(ctx context.Context, funnelID string, dateFrom, dateTo time.Time) (*FunnelData, error) {
 	key := fmt.Sprintf(KeyFunnelData, funnelID, fmt.Sprintf("%s:%s", dateFrom.Format("2006-01-02"), dateTo.Format("2006-01-02")))
 
 	data, err := c.client.Get(ctx, key).Bytes()
@@ -328,7 +348,7 @@ type LTVData struct {
 }
 
 // SetLTV stores LTV data with 1h TTL
-func (c *AnalyticsCache) SetLTV(ctx context.Context, userID string, data *LTVData) error {
+func (c *LTVAdminCache) SetLTV(ctx context.Context, userID string, data *LTVData) error {
 	key := fmt.Sprintf(KeyLTV, userID)
 
 	jsonData, err := json.Marshal(data)
@@ -345,7 +365,7 @@ func (c *AnalyticsCache) SetLTV(ctx context.Context, userID string, data *LTVDat
 }
 
 // GetLTV retrieves cached LTV data
-func (c *AnalyticsCache) GetLTV(ctx context.Context, userID string) (*LTVData, error) {
+func (c *LTVAdminCache) GetLTV(ctx context.Context, userID string) (*LTVData, error) {
 	key := fmt.Sprintf(KeyLTV, userID)
 
 	data, err := c.client.Get(ctx, key).Bytes()
@@ -365,7 +385,7 @@ func (c *AnalyticsCache) GetLTV(ctx context.Context, userID string) (*LTVData, e
 }
 
 // InvalidateLTV removes cached LTV data for a user
-func (c *AnalyticsCache) InvalidateLTV(ctx context.Context, userID string) error {
+func (c *LTVAdminCache) InvalidateLTV(ctx context.Context, userID string) error {
 	key := fmt.Sprintf(KeyLTV, userID)
 
 	if err := c.client.Del(ctx, key).Err(); err != nil {
@@ -377,7 +397,7 @@ func (c *AnalyticsCache) InvalidateLTV(ctx context.Context, userID string) error
 }
 
 // GetCacheStats returns statistics about cache usage
-func (c *AnalyticsCache) GetCacheStats(ctx context.Context) (*CacheStats, error) {
+func (c *LTVAdminCache) GetCacheStats(ctx context.Context) (*CacheStats, error) {
 	info, err := c.client.Info(ctx).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get info: %w", err)
@@ -420,7 +440,7 @@ func parseMemoryUsage(info string) int64 {
 }
 
 // FlushPattern removes all keys matching a pattern
-func (c *AnalyticsCache) FlushPattern(ctx context.Context, pattern string) error {
+func (c *LTVAdminCache) FlushPattern(ctx context.Context, pattern string) error {
 	iter := c.client.Scan(ctx, 0, pattern, 100).Iterator()
 	var keys []string
 

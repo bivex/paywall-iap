@@ -20,11 +20,39 @@ import (
 	"github.com/bivex/paywall-iap/internal/domain/service"
 )
 
-// BanditAdvancedHandler handles advanced bandit feature HTTP endpoints
-type BanditAdvancedHandler struct {
+// BanditCurrencyHandler handles currency rate queries and conversions
+type BanditCurrencyHandler struct {
 	engine          *service.AdvancedBanditEngine
 	currencyService *service.CurrencyRateService
 	logger          *zap.Logger
+}
+
+// BanditObjectiveHandler handles multi-objective configuration and scoring
+type BanditObjectiveHandler struct {
+	engine *service.AdvancedBanditEngine
+	logger *zap.Logger
+}
+
+// BanditWindowHandler handles sliding window inspections, trims, and event exports
+type BanditWindowHandler struct {
+	engine *service.AdvancedBanditEngine
+	logger *zap.Logger
+}
+
+// BanditOpsHandler handles conversions, pending rewards, metrics, and maintenance
+type BanditOpsHandler struct {
+	engine          *service.AdvancedBanditEngine
+	currencyService *service.CurrencyRateService
+	logger          *zap.Logger
+}
+
+// BanditAdvancedHandler aggregates advanced bandit feature HTTP endpoints via composition
+type BanditAdvancedHandler struct {
+	*BanditCurrencyHandler
+	*BanditObjectiveHandler
+	*BanditWindowHandler
+	*BanditOpsHandler
+	logger *zap.Logger
 }
 
 type runMaintenanceRequest struct {
@@ -41,9 +69,11 @@ func NewBanditAdvancedHandler(
 	logger *zap.Logger,
 ) *BanditAdvancedHandler {
 	return &BanditAdvancedHandler{
-		engine:          engine,
-		currencyService: currencyService,
-		logger:          logger,
+		BanditCurrencyHandler:  &BanditCurrencyHandler{engine: engine, currencyService: currencyService, logger: logger},
+		BanditObjectiveHandler: &BanditObjectiveHandler{engine: engine, logger: logger},
+		BanditWindowHandler:    &BanditWindowHandler{engine: engine, logger: logger},
+		BanditOpsHandler:       &BanditOpsHandler{engine: engine, currencyService: currencyService, logger: logger},
+		logger:                 logger,
 	}
 }
 
@@ -75,7 +105,7 @@ func (h *BanditAdvancedHandler) RegisterRoutes(router *mux.Router) {
 }
 
 // GetCurrencyRates returns current currency rates
-func (h *BanditAdvancedHandler) GetCurrencyRates(w http.ResponseWriter, r *http.Request) {
+func (h *BanditCurrencyHandler) GetCurrencyRates(w http.ResponseWriter, r *http.Request) {
 	if h.currencyService == nil {
 		http.Error(w, "Currency service not available", http.StatusServiceUnavailable)
 		return
@@ -104,7 +134,7 @@ func (h *BanditAdvancedHandler) GetCurrencyRates(w http.ResponseWriter, r *http.
 }
 
 // UpdateCurrencyRates triggers a currency rate update
-func (h *BanditAdvancedHandler) UpdateCurrencyRates(w http.ResponseWriter, r *http.Request) {
+func (h *BanditCurrencyHandler) UpdateCurrencyRates(w http.ResponseWriter, r *http.Request) {
 	if h.currencyService == nil {
 		http.Error(w, "Currency service not available", http.StatusServiceUnavailable)
 		return
@@ -123,7 +153,7 @@ func (h *BanditAdvancedHandler) UpdateCurrencyRates(w http.ResponseWriter, r *ht
 }
 
 // ConvertCurrency converts an amount between currencies
-func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.Request) {
+func (h *BanditCurrencyHandler) ConvertCurrency(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Amount   json.Number `json:"amount"`
 		Currency string      `json:"currency"`
@@ -167,7 +197,7 @@ func (h *BanditAdvancedHandler) ConvertCurrency(w http.ResponseWriter, r *http.R
 }
 
 // GetObjectiveScores returns objective scores for all arms
-func (h *BanditAdvancedHandler) GetObjectiveScores(w http.ResponseWriter, r *http.Request) {
+func (h *BanditObjectiveHandler) GetObjectiveScores(w http.ResponseWriter, r *http.Request) {
 	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
@@ -184,7 +214,7 @@ func (h *BanditAdvancedHandler) GetObjectiveScores(w http.ResponseWriter, r *htt
 }
 
 // GetObjectiveConfig returns the persisted objective configuration for an experiment.
-func (h *BanditAdvancedHandler) GetObjectiveConfig(w http.ResponseWriter, r *http.Request) {
+func (h *BanditObjectiveHandler) GetObjectiveConfig(w http.ResponseWriter, r *http.Request) {
 	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
@@ -205,7 +235,7 @@ func (h *BanditAdvancedHandler) GetObjectiveConfig(w http.ResponseWriter, r *htt
 }
 
 // SetObjectiveConfig updates the objective configuration for an experiment
-func (h *BanditAdvancedHandler) SetObjectiveConfig(w http.ResponseWriter, r *http.Request) {
+func (h *BanditObjectiveHandler) SetObjectiveConfig(w http.ResponseWriter, r *http.Request) {
 	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
@@ -247,7 +277,7 @@ func normalizeObjectiveWeights(weights map[string]float64) map[string]float64 {
 }
 
 // GetWindowInfo returns window information for an experiment
-func (h *BanditAdvancedHandler) GetWindowInfo(w http.ResponseWriter, r *http.Request) {
+func (h *BanditWindowHandler) GetWindowInfo(w http.ResponseWriter, r *http.Request) {
 	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
@@ -267,7 +297,7 @@ func (h *BanditAdvancedHandler) GetWindowInfo(w http.ResponseWriter, r *http.Req
 }
 
 // TrimWindow trims the sliding window for an experiment
-func (h *BanditAdvancedHandler) TrimWindow(w http.ResponseWriter, r *http.Request) {
+func (h *BanditWindowHandler) TrimWindow(w http.ResponseWriter, r *http.Request) {
 	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
@@ -286,7 +316,7 @@ func (h *BanditAdvancedHandler) TrimWindow(w http.ResponseWriter, r *http.Reques
 }
 
 // ExportWindowEvents exports events from the sliding window
-func (h *BanditAdvancedHandler) ExportWindowEvents(w http.ResponseWriter, r *http.Request) {
+func (h *BanditWindowHandler) ExportWindowEvents(w http.ResponseWriter, r *http.Request) {
 	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
@@ -326,7 +356,7 @@ func (h *BanditAdvancedHandler) ExportWindowEvents(w http.ResponseWriter, r *htt
 }
 
 // ProcessConversion processes a delayed conversion
-func (h *BanditAdvancedHandler) ProcessConversion(w http.ResponseWriter, r *http.Request) {
+func (h *BanditOpsHandler) ProcessConversion(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		TransactionID   uuid.UUID `json:"transaction_id"`
 		UserID          uuid.UUID `json:"user_id"`
@@ -364,7 +394,7 @@ func (h *BanditAdvancedHandler) ProcessConversion(w http.ResponseWriter, r *http
 }
 
 // GetPendingReward returns a pending reward by ID
-func (h *BanditAdvancedHandler) GetPendingReward(w http.ResponseWriter, r *http.Request) {
+func (h *BanditOpsHandler) GetPendingReward(w http.ResponseWriter, r *http.Request) {
 	pendingID, err := parseUUIDPathParamAfter(r, "pending")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid pending reward ID")
@@ -381,7 +411,7 @@ func (h *BanditAdvancedHandler) GetPendingReward(w http.ResponseWriter, r *http.
 }
 
 // GetUserPendingRewards returns all pending rewards for a user
-func (h *BanditAdvancedHandler) GetUserPendingRewards(w http.ResponseWriter, r *http.Request) {
+func (h *BanditOpsHandler) GetUserPendingRewards(w http.ResponseWriter, r *http.Request) {
 	userID, err := parseUUIDPathParamAfter(r, "users")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid user ID")
@@ -404,7 +434,7 @@ func (h *BanditAdvancedHandler) GetUserPendingRewards(w http.ResponseWriter, r *
 }
 
 // GetMetrics returns production metrics for an experiment
-func (h *BanditAdvancedHandler) GetMetrics(w http.ResponseWriter, r *http.Request) {
+func (h *BanditOpsHandler) GetMetrics(w http.ResponseWriter, r *http.Request) {
 	experimentID, err := parseUUIDPathParamAfter(r, "experiments")
 	if err != nil {
 		respondError(w, http.StatusBadRequest, "Invalid experiment ID")
@@ -443,7 +473,7 @@ func executeMaintenanceTask(ctx context.Context, engine *service.AdvancedBanditE
 }
 
 // RunMaintenance triggers maintenance tasks
-func (h *BanditAdvancedHandler) RunMaintenance(w http.ResponseWriter, r *http.Request) {
+func (h *BanditOpsHandler) RunMaintenance(w http.ResponseWriter, r *http.Request) {
 	if h.engine == nil {
 		respondError(w, http.StatusServiceUnavailable, "Bandit engine not available")
 		return

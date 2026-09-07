@@ -11,25 +11,59 @@ import (
 	"go.uber.org/zap"
 )
 
-// AdvancedBanditEngine orchestrates all advanced bandit features
-// It composes multiple strategies and provides a unified interface
-type AdvancedBanditEngine struct {
+// BanditRewardEngine manages arm selection, reward recording, and metrics
+type BanditRewardEngine struct {
 	base              *ThompsonSamplingBandit
-	rewardStrategy    RewardStrategy
-	selectionStrategy SelectionStrategy
-	windowStrategy    WindowStrategy
-	delayedStrategy   *DelayedRewardStrategy
-	hybridStrategy    *HybridObjectiveStrategy
-	currencyService   *CurrencyRateService
 	repo              BanditRepository
 	cache             BanditCache
-	redisClient       *redis.Client
+	currencyService   *CurrencyRateService
 	logger            *zap.Logger
+	rewardStrategy    RewardStrategy
+	selectionStrategy SelectionStrategy
+	delayedStrategy   *DelayedRewardStrategy
+	windowEngine      *BanditWindowEngine
+	objectiveEngine   *BanditObjectiveEngine
 	enableCurrency    bool
 	enableContextual  bool
 	enableDelayed     bool
-	enableWindow      bool
-	enableHybrid      bool
+}
+
+// BanditWindowEngine manages sliding window operations for bandit experiments
+type BanditWindowEngine struct {
+	repo         BanditRepository
+	redisClient  *redis.Client
+	logger       *zap.Logger
+	enableWindow bool
+}
+
+// BanditObjectiveEngine manages multi-objective optimization strategies and stats
+type BanditObjectiveEngine struct {
+	repo           BanditRepository
+	cache          BanditCache
+	logger         *zap.Logger
+	base           *ThompsonSamplingBandit
+	hybridStrategy *HybridObjectiveStrategy
+	enableHybrid   bool
+}
+
+// BanditMaintenanceEngine performs periodic maintenance and retention cleanup
+type BanditMaintenanceEngine struct {
+	repo            BanditRepository
+	logger          *zap.Logger
+	currencyService *CurrencyRateService
+	base            *ThompsonSamplingBandit
+	rewardEngine    *BanditRewardEngine
+	windowEngine    *BanditWindowEngine
+	objectiveEngine *BanditObjectiveEngine
+}
+
+// AdvancedBanditEngine orchestrates all advanced bandit features
+// It composes multiple specialized sub-engines and provides a unified interface
+type AdvancedBanditEngine struct {
+	*BanditRewardEngine
+	*BanditWindowEngine
+	*BanditObjectiveEngine
+	*BanditMaintenanceEngine
 }
 
 const (
@@ -68,7 +102,21 @@ type EngineConfig struct {
 	EnableHybrid     bool
 }
 
-// NewAdvancedBanditEngine creates a new advanced bandit engine
+func fetchExperimentConfig(ctx context.Context, repo BanditRepository, experimentID uuid.UUID) (*ExperimentConfig, error) {
+	config, err := repo.GetExperimentConfig(ctx, experimentID)
+	if err != nil || config == nil {
+		return &ExperimentConfig{ID: experimentID, ObjectiveType: ObjectiveConversion}, nil
+	}
+	if config.ID == uuid.Nil {
+		config.ID = experimentID
+	}
+	if config.ObjectiveType == "" {
+		config.ObjectiveType = ObjectiveConversion
+	}
+	return config, nil
+}
+
+// NewAdvancedBanditEngine creates a new advanced bandit engine composed of specialized sub-engines
 func NewAdvancedBanditEngine(
 	base *ThompsonSamplingBandit,
 	repo BanditRepository,
@@ -78,87 +126,94 @@ func NewAdvancedBanditEngine(
 	logger *zap.Logger,
 	config *EngineConfig,
 ) *AdvancedBanditEngine {
-	engine := &AdvancedBanditEngine{
-		base:            base,
-		repo:            repo,
-		cache:           cache,
-		redisClient:     redisClient,
-		currencyService: currencyService,
-		logger:          logger,
-	}
-
+	var enableCurrency, enableContextual, enableDelayed, enableWindow, enableHybrid bool
 	if config != nil {
-		engine.enableCurrency = config.EnableCurrency
-		engine.enableContextual = config.EnableContextual
-		engine.enableDelayed = config.EnableDelayed
-		engine.enableWindow = config.EnableWindow
-		engine.enableHybrid = config.EnableHybrid
+		enableCurrency = config.EnableCurrency
+		enableContextual = config.EnableContextual
+		enableDelayed = config.EnableDelayed
+		enableWindow = config.EnableWindow
+		enableHybrid = config.EnableHybrid
 	}
 
-	// Configure strategies based on config
-	if config != nil && config.ExperimentConfig != nil {
-		// Hybrid objective strategy
-		if config.EnableHybrid {
-			engine.hybridStrategy = NewHybridObjectiveStrategy(
-				repo, cache, logger, config.ExperimentConfig, base,
-			)
-		}
+	var hybridStrategy *HybridObjectiveStrategy
+	var selectionStrategy SelectionStrategy
+	var delayedStrategy *DelayedRewardStrategy
+	var rewardStrategy RewardStrategy
 
-		// Contextual bandit (LinUCB)
+	if config != nil && config.ExperimentConfig != nil {
+		if config.EnableHybrid {
+			hybridStrategy = NewHybridObjectiveStrategy(repo, cache, logger, config.ExperimentConfig, base)
+		}
 		if config.EnableContextual && config.ExperimentConfig.EnableContextual {
 			alpha := config.ExperimentConfig.ExplorationAlpha
-			engine.selectionStrategy = NewLinUCBSelectionStrategy(
-				repo, cache, logger, alpha, 20, // 20 dimension features
-			)
+			selectionStrategy = NewLinUCBSelectionStrategy(repo, cache, logger, alpha, 20)
 		}
-
-		// Sliding window
-		if config.EnableWindow && config.ExperimentConfig.WindowConfig != nil {
-			// Note: Need Redis client for window strategy
-			// engine.windowStrategy = NewSlidingWindowStrategy(...)
-		}
-
-		// Delayed feedback
 		if config.EnableDelayed && config.ExperimentConfig.EnableDelayed {
-			engine.delayedStrategy = NewDelayedRewardStrategy(repo, cache, logger)
+			delayedStrategy = NewDelayedRewardStrategy(repo, cache, logger)
 		}
-
-		// Currency conversion
-		if config.EnableCurrency && config.ExperimentConfig.EnableCurrency {
-			if currencyService != nil {
-				// Wrap base reward strategy with currency conversion
-				engine.rewardStrategy = NewCurrencyConversionRewardStrategy(
-					nil, // No base strategy needed for conversion-only
-					currencyService,
-					logger,
-				)
-			}
+		if config.EnableCurrency && config.ExperimentConfig.EnableCurrency && currencyService != nil {
+			rewardStrategy = NewCurrencyConversionRewardStrategy(nil, currencyService, logger)
 		}
 	}
 
-	return engine
+	windowEngine := &BanditWindowEngine{
+		repo:         repo,
+		redisClient:  redisClient,
+		logger:       logger,
+		enableWindow: enableWindow,
+	}
+
+	objectiveEngine := &BanditObjectiveEngine{
+		repo:           repo,
+		cache:          cache,
+		logger:         logger,
+		base:           base,
+		hybridStrategy: hybridStrategy,
+		enableHybrid:   enableHybrid,
+	}
+
+	rewardEngine := &BanditRewardEngine{
+		base:              base,
+		repo:              repo,
+		cache:             cache,
+		currencyService:   currencyService,
+		logger:            logger,
+		rewardStrategy:    rewardStrategy,
+		selectionStrategy: selectionStrategy,
+		delayedStrategy:   delayedStrategy,
+		windowEngine:      windowEngine,
+		objectiveEngine:   objectiveEngine,
+		enableCurrency:    enableCurrency,
+		enableContextual:  enableContextual,
+		enableDelayed:     enableDelayed,
+	}
+
+	maintenanceEngine := &BanditMaintenanceEngine{
+		repo:            repo,
+		logger:          logger,
+		currencyService: currencyService,
+		base:            base,
+		rewardEngine:    rewardEngine,
+		windowEngine:    windowEngine,
+		objectiveEngine: objectiveEngine,
+	}
+
+	return &AdvancedBanditEngine{
+		BanditRewardEngine:      rewardEngine,
+		BanditWindowEngine:      windowEngine,
+		BanditObjectiveEngine:   objectiveEngine,
+		BanditMaintenanceEngine: maintenanceEngine,
+	}
 }
 
-func (e *AdvancedBanditEngine) getExperimentConfig(
+func (e *BanditRewardEngine) getExperimentConfig(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (*ExperimentConfig, error) {
-	config, err := e.repo.GetExperimentConfig(ctx, experimentID)
-	if err != nil || config == nil {
-		return &ExperimentConfig{ID: experimentID, ObjectiveType: ObjectiveConversion}, nil
-	}
-
-	if config.ID == uuid.Nil {
-		config.ID = experimentID
-	}
-	if config.ObjectiveType == "" {
-		config.ObjectiveType = ObjectiveConversion
-	}
-
-	return config, nil
+	return fetchExperimentConfig(ctx, e.repo, experimentID)
 }
 
-func (e *AdvancedBanditEngine) getDelayedStrategy() (*DelayedRewardStrategy, error) {
+func (e *BanditRewardEngine) getDelayedStrategy() (*DelayedRewardStrategy, error) {
 	if !e.enableDelayed {
 		return nil, fmt.Errorf("delayed feedback not enabled")
 	}
@@ -170,7 +225,7 @@ func (e *AdvancedBanditEngine) getDelayedStrategy() (*DelayedRewardStrategy, err
 	return e.delayedStrategy, nil
 }
 
-func (e *AdvancedBanditEngine) getHybridStrategy(
+func (e *BanditObjectiveEngine) getHybridStrategy(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (*HybridObjectiveStrategy, error) {
@@ -178,7 +233,7 @@ func (e *AdvancedBanditEngine) getHybridStrategy(
 		return nil, fmt.Errorf("hybrid objective not enabled")
 	}
 
-	config, err := e.getExperimentConfig(ctx, experimentID)
+	config, err := fetchExperimentConfig(ctx, e.repo, experimentID)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +241,7 @@ func (e *AdvancedBanditEngine) getHybridStrategy(
 	return NewHybridObjectiveStrategy(e.repo, e.cache, e.logger, config, e.base), nil
 }
 
-func (e *AdvancedBanditEngine) getWindowStrategy(
+func (e *BanditWindowEngine) getWindowStrategy(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (*SlidingWindowStrategy, error) {
@@ -197,7 +252,7 @@ func (e *AdvancedBanditEngine) getWindowStrategy(
 		return nil, fmt.Errorf("sliding window requires redis")
 	}
 
-	config, err := e.getExperimentConfig(ctx, experimentID)
+	config, err := fetchExperimentConfig(ctx, e.repo, experimentID)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +261,7 @@ func (e *AdvancedBanditEngine) getWindowStrategy(
 }
 
 // SelectArm selects an arm using the configured strategies
-func (e *AdvancedBanditEngine) SelectArm(
+func (e *BanditRewardEngine) SelectArm(
 	ctx context.Context,
 	experimentID, userID uuid.UUID,
 	userContext UserContext,
@@ -268,7 +323,7 @@ func (e *AdvancedBanditEngine) SelectArm(
 }
 
 // RecordReward records a reward with all applicable strategies
-func (e *AdvancedBanditEngine) RecordReward(
+func (e *BanditRewardEngine) RecordReward(
 	ctx context.Context,
 	experimentID, armID, userID uuid.UUID,
 	reward float64,
@@ -319,41 +374,45 @@ func (e *AdvancedBanditEngine) RecordReward(
 	}
 
 	// Update window strategy if enabled
-	if windowStrategy, err := e.getWindowStrategy(ctx, experimentID); err == nil {
-		event := RewardEvent{
-			UserID:      userID,
-			ArmID:       armID,
-			RewardValue: finalReward,
-			Currency:    finalCurrency,
-			Timestamp:   recordedAt,
-		}
-		if err := windowStrategy.RecordEvent(ctx, armID, event); err != nil {
-			e.logger.Warn("Failed to record window event", zap.Error(err))
+	if e.windowEngine != nil {
+		if windowStrategy, err := e.windowEngine.getWindowStrategy(ctx, experimentID); err == nil {
+			event := RewardEvent{
+				UserID:      userID,
+				ArmID:       armID,
+				RewardValue: finalReward,
+				Currency:    finalCurrency,
+				Timestamp:   recordedAt,
+			}
+			if err := windowStrategy.RecordEvent(ctx, armID, event); err != nil {
+				e.logger.Warn("Failed to record window event", zap.Error(err))
+			}
 		}
 	}
 
 	// Update hybrid objective stats if enabled
-	if hybridStrategy, err := e.getHybridStrategy(ctx, experimentID); err == nil {
-		// Determine which objectives to update
-		objectiveType := hybridStrategy.GetConfig().ObjectiveType
+	if e.objectiveEngine != nil {
+		if hybridStrategy, err := e.objectiveEngine.getHybridStrategy(ctx, experimentID); err == nil {
+			// Determine which objectives to update
+			objectiveType := hybridStrategy.GetConfig().ObjectiveType
 
-		if objectiveType == ObjectiveHybrid {
-			// Update all objectives
-			for objType := range hybridStrategy.GetConfig().ObjectiveWeights {
-				if err := hybridStrategy.RecordObjectiveReward(
-					ctx, armID, ObjectiveType(objType), finalReward, 0,
-				); err != nil {
-					e.logger.Warn("Failed to record objective reward",
-						zap.String("objective", objType),
-						zap.Error(err),
-					)
+			if objectiveType == ObjectiveHybrid {
+				// Update all objectives
+				for objType := range hybridStrategy.GetConfig().ObjectiveWeights {
+					if err := hybridStrategy.RecordObjectiveReward(
+						ctx, armID, ObjectiveType(objType), finalReward, 0,
+					); err != nil {
+						e.logger.Warn("Failed to record objective reward",
+							zap.String("objective", objType),
+							zap.Error(err),
+						)
+					}
 				}
-			}
-		} else {
-			if err := hybridStrategy.RecordObjectiveReward(
-				ctx, armID, objectiveType, finalReward, 0,
-			); err != nil {
-				e.logger.Warn("Failed to record objective reward", zap.Error(err))
+			} else {
+				if err := hybridStrategy.RecordObjectiveReward(
+					ctx, armID, objectiveType, finalReward, 0,
+				); err != nil {
+					e.logger.Warn("Failed to record objective reward", zap.Error(err))
+				}
 			}
 		}
 	}
@@ -362,7 +421,7 @@ func (e *AdvancedBanditEngine) RecordReward(
 }
 
 // ProcessConversion processes a delayed conversion
-func (e *AdvancedBanditEngine) ProcessConversion(
+func (e *BanditRewardEngine) ProcessConversion(
 	ctx context.Context,
 	transactionID uuid.UUID,
 	userID uuid.UUID,
@@ -386,7 +445,7 @@ func (e *AdvancedBanditEngine) ProcessConversion(
 }
 
 // GetArmStatistics returns statistics for all arms in an experiment
-func (e *AdvancedBanditEngine) GetArmStatistics(
+func (e *BanditRewardEngine) GetArmStatistics(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (map[uuid.UUID]*ArmStats, error) {
@@ -394,7 +453,7 @@ func (e *AdvancedBanditEngine) GetArmStatistics(
 }
 
 // GetObjectiveScores returns objective scores for all arms
-func (e *AdvancedBanditEngine) GetObjectiveScores(
+func (e *BanditObjectiveEngine) GetObjectiveScores(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (map[uuid.UUID]map[ObjectiveType]*ObjectiveScore, error) {
@@ -425,7 +484,7 @@ func (e *AdvancedBanditEngine) GetObjectiveScores(
 }
 
 // SetObjectiveConfig persists optimization objective settings for an experiment.
-func (e *AdvancedBanditEngine) SetObjectiveConfig(
+func (e *BanditObjectiveEngine) SetObjectiveConfig(
 	ctx context.Context,
 	experimentID uuid.UUID,
 	objectiveType ObjectiveType,
@@ -461,14 +520,14 @@ func (e *AdvancedBanditEngine) SetObjectiveConfig(
 }
 
 // GetMetrics returns production metrics for the engine
-func (e *AdvancedBanditEngine) GetMetrics(ctx context.Context, experimentID uuid.UUID) (*BanditMetrics, error) {
+func (e *BanditRewardEngine) GetMetrics(ctx context.Context, experimentID uuid.UUID) (*BanditMetrics, error) {
 	stats, err := e.GetArmStatistics(ctx, experimentID)
 	if err != nil {
 		return nil, err
 	}
 
 	metrics := &BanditMetrics{
-		BalanceIndex: e.calculateBalanceIndex(stats),
+		BalanceIndex: calculateBalanceIndex(stats),
 	}
 
 	// Get additional metrics if strategies are enabled
@@ -480,21 +539,23 @@ func (e *AdvancedBanditEngine) GetMetrics(ctx context.Context, experimentID uuid
 		}
 	}
 
-	if windowStrategy, err := e.getWindowStrategy(ctx, experimentID); err == nil {
-		arms, armsErr := e.repo.GetArms(ctx, experimentID)
-		if armsErr == nil && len(arms) > 0 {
-			totalUtilization := 0.0
-			count := 0.0
-			for _, arm := range arms {
-				utilization, utilErr := windowStrategy.GetUtilization(ctx, arm.ID)
-				if utilErr != nil {
-					continue
+	if e.windowEngine != nil {
+		if windowStrategy, err := e.windowEngine.getWindowStrategy(ctx, experimentID); err == nil {
+			arms, armsErr := e.repo.GetArms(ctx, experimentID)
+			if armsErr == nil && len(arms) > 0 {
+				totalUtilization := 0.0
+				count := 0.0
+				for _, arm := range arms {
+					utilization, utilErr := windowStrategy.GetUtilization(ctx, arm.ID)
+					if utilErr != nil {
+						continue
+					}
+					totalUtilization += utilization
+					count++
 				}
-				totalUtilization += utilization
-				count++
-			}
-			if count > 0 {
-				metrics.WindowUtilization = totalUtilization / count
+				if count > 0 {
+					metrics.WindowUtilization = totalUtilization / count
+				}
 			}
 		}
 	}
@@ -502,7 +563,7 @@ func (e *AdvancedBanditEngine) GetMetrics(ctx context.Context, experimentID uuid
 	return metrics, nil
 }
 
-func (e *AdvancedBanditEngine) GetWindowInfo(
+func (e *BanditWindowEngine) GetWindowInfo(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (map[uuid.UUID]*WindowStats, error) {
@@ -528,7 +589,7 @@ func (e *AdvancedBanditEngine) GetWindowInfo(
 	return result, nil
 }
 
-func (e *AdvancedBanditEngine) TrimWindow(ctx context.Context, experimentID uuid.UUID) error {
+func (e *BanditWindowEngine) TrimWindow(ctx context.Context, experimentID uuid.UUID) error {
 	windowStrategy, err := e.getWindowStrategy(ctx, experimentID)
 	if err != nil {
 		return err
@@ -548,12 +609,15 @@ func (e *AdvancedBanditEngine) TrimWindow(ctx context.Context, experimentID uuid
 	return nil
 }
 
-func (e *AdvancedBanditEngine) ProcessExpiredPendingRewards(ctx context.Context, batchSize int) (int, error) {
+func (e *BanditMaintenanceEngine) ProcessExpiredPendingRewards(ctx context.Context, batchSize int) (int, error) {
 	if batchSize <= 0 {
 		batchSize = defaultBanditMaintenanceBatchSize
 	}
 
-	delayedStrategy, err := e.getDelayedStrategy()
+	if e.rewardEngine == nil {
+		return 0, nil
+	}
+	delayedStrategy, err := e.rewardEngine.getDelayedStrategy()
 	if err != nil {
 		return 0, nil
 	}
@@ -568,7 +632,7 @@ func (e *AdvancedBanditEngine) ProcessExpiredPendingRewards(ctx context.Context,
 	return processed, nil
 }
 
-func (e *AdvancedBanditEngine) TrimConfiguredWindows(ctx context.Context, limit int) (int, error) {
+func (e *BanditWindowEngine) TrimConfiguredWindows(ctx context.Context, limit int) (int, error) {
 	if !e.enableWindow {
 		return 0, nil
 	}
@@ -605,7 +669,7 @@ func (e *AdvancedBanditEngine) TrimConfiguredWindows(ctx context.Context, limit 
 	return trimmed, nil
 }
 
-func (e *AdvancedBanditEngine) SyncObjectiveStats(ctx context.Context, limit int) (int, error) {
+func (e *BanditObjectiveEngine) SyncObjectiveStats(ctx context.Context, limit int) (int, error) {
 	if limit <= 0 {
 		limit = defaultBanditMaintenanceScanLimit
 	}
@@ -626,7 +690,7 @@ func (e *AdvancedBanditEngine) SyncObjectiveStats(ctx context.Context, limit int
 
 	synced := 0
 	for _, experimentID := range experimentIDs {
-		config, err := e.getExperimentConfig(ctx, experimentID)
+		config, err := fetchExperimentConfig(ctx, e.repo, experimentID)
 		if err != nil {
 			return synced, err
 		}
@@ -667,7 +731,7 @@ func (e *AdvancedBanditEngine) SyncObjectiveStats(ctx context.Context, limit int
 	return synced, nil
 }
 
-func (e *AdvancedBanditEngine) CleanupOldContextData(ctx context.Context, olderThan time.Duration) (int64, error) {
+func (e *BanditMaintenanceEngine) CleanupOldContextData(ctx context.Context, olderThan time.Duration) (int64, error) {
 	if olderThan <= 0 {
 		olderThan = defaultBanditContextRetentionWindow
 	}
@@ -680,7 +744,7 @@ func (e *AdvancedBanditEngine) CleanupOldContextData(ctx context.Context, olderT
 	return maintenanceRepo.CleanupStaleUserContext(ctx, olderThan)
 }
 
-func (e *AdvancedBanditEngine) CleanupExpiredAssignments(ctx context.Context, olderThan time.Duration) (int64, error) {
+func (e *BanditMaintenanceEngine) CleanupExpiredAssignments(ctx context.Context, olderThan time.Duration) (int64, error) {
 	if olderThan <= 0 {
 		olderThan = defaultBanditExpiredAssignmentRetention
 	}
@@ -693,7 +757,7 @@ func (e *AdvancedBanditEngine) CleanupExpiredAssignments(ctx context.Context, ol
 	return maintenanceRepo.CleanupExpiredAssignments(ctx, olderThan)
 }
 
-func (e *AdvancedBanditEngine) ExportWindowEvents(
+func (e *BanditWindowEngine) ExportWindowEvents(
 	ctx context.Context,
 	experimentID uuid.UUID,
 	limit int64,
@@ -720,11 +784,11 @@ func (e *AdvancedBanditEngine) ExportWindowEvents(
 	return result, nil
 }
 
-func (e *AdvancedBanditEngine) GetObjectiveConfig(ctx context.Context, experimentID uuid.UUID) (*ExperimentConfig, error) {
-	return e.getExperimentConfig(ctx, experimentID)
+func (e *BanditObjectiveEngine) GetObjectiveConfig(ctx context.Context, experimentID uuid.UUID) (*ExperimentConfig, error) {
+	return fetchExperimentConfig(ctx, e.repo, experimentID)
 }
 
-func (e *AdvancedBanditEngine) GetPendingReward(ctx context.Context, pendingID uuid.UUID) (*PendingReward, error) {
+func (e *BanditRewardEngine) GetPendingReward(ctx context.Context, pendingID uuid.UUID) (*PendingReward, error) {
 	delayedStrategy, err := e.getDelayedStrategy()
 	if err != nil {
 		return nil, err
@@ -733,7 +797,7 @@ func (e *AdvancedBanditEngine) GetPendingReward(ctx context.Context, pendingID u
 	return delayedStrategy.GetPendingReward(ctx, pendingID)
 }
 
-func (e *AdvancedBanditEngine) GetUserPendingRewards(
+func (e *BanditRewardEngine) GetUserPendingRewards(
 	ctx context.Context,
 	userID uuid.UUID,
 ) ([]*PendingReward, error) {
@@ -747,7 +811,7 @@ func (e *AdvancedBanditEngine) GetUserPendingRewards(
 
 // calculateBalanceIndex measures how evenly users are distributed
 // Returns 1.0 for perfect balance, 0.0 for all users in one arm
-func (e *AdvancedBanditEngine) calculateBalanceIndex(stats map[uuid.UUID]*ArmStats) float64 {
+func calculateBalanceIndex(stats map[uuid.UUID]*ArmStats) float64 {
 	if len(stats) == 0 {
 		return 0
 	}
@@ -791,7 +855,7 @@ type BanditMetrics struct {
 }
 
 // RunMaintenanceDetailed performs periodic maintenance tasks and returns a structured summary.
-func (e *AdvancedBanditEngine) RunMaintenanceDetailed(ctx context.Context) (*BanditMaintenanceSummary, error) {
+func (e *BanditMaintenanceEngine) RunMaintenanceDetailed(ctx context.Context) (*BanditMaintenanceSummary, error) {
 	summary := &BanditMaintenanceSummary{}
 
 	processed, err := e.ProcessExpiredPendingRewards(ctx, defaultBanditMaintenanceBatchSize)
@@ -814,11 +878,13 @@ func (e *AdvancedBanditEngine) RunMaintenanceDetailed(ctx context.Context) (*Ban
 		}
 		summary.WindowExperimentsScanned = len(windowExperimentIDs)
 
-		trimmed, err := e.TrimConfiguredWindows(ctx, defaultBanditMaintenanceScanLimit)
-		if err != nil {
-			return summary, err
+		if e.windowEngine != nil {
+			trimmed, err := e.windowEngine.TrimConfiguredWindows(ctx, defaultBanditMaintenanceScanLimit)
+			if err != nil {
+				return summary, err
+			}
+			summary.WindowsTrimmed = trimmed
 		}
-		summary.WindowsTrimmed = trimmed
 
 		objectiveExperimentIDs, err := maintenanceRepo.ListObjectiveSyncExperimentIDs(ctx, defaultBanditMaintenanceScanLimit)
 		if err != nil {
@@ -827,11 +893,13 @@ func (e *AdvancedBanditEngine) RunMaintenanceDetailed(ctx context.Context) (*Ban
 		summary.ObjectiveExperimentsScanned = len(objectiveExperimentIDs)
 	}
 
-	synced, err := e.SyncObjectiveStats(ctx, defaultBanditMaintenanceScanLimit)
-	if err != nil {
-		return summary, err
+	if e.objectiveEngine != nil {
+		synced, err := e.objectiveEngine.SyncObjectiveStats(ctx, defaultBanditMaintenanceScanLimit)
+		if err != nil {
+			return summary, err
+		}
+		summary.ObjectiveStatsSynced = synced
 	}
-	summary.ObjectiveStatsSynced = synced
 
 	contextsDeleted, err := e.CleanupOldContextData(ctx, defaultBanditContextRetentionWindow)
 	if err != nil {
@@ -849,7 +917,7 @@ func (e *AdvancedBanditEngine) RunMaintenanceDetailed(ctx context.Context) (*Ban
 }
 
 // RunMaintenance performs periodic maintenance tasks.
-func (e *AdvancedBanditEngine) RunMaintenance(ctx context.Context) error {
+func (e *BanditMaintenanceEngine) RunMaintenance(ctx context.Context) error {
 	_, err := e.RunMaintenanceDetailed(ctx)
 	return err
 }

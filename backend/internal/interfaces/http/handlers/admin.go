@@ -27,23 +27,68 @@ import (
 	"github.com/bivex/paywall-iap/internal/worker/tasks"
 )
 
-// AdminHandler handles admin endpoints
+// AdminSubscriptionHandler handles admin subscription operations
+type AdminSubscriptionHandler struct {
+	subscriptionRepo domainRepo.SubscriptionRepository
+	auditService     *service.AuditService
+	queries          *generated.Queries
+	dbPool           *pgxpool.Pool
+}
+
+// AdminUserHandler handles admin user operations
+type AdminUserHandler struct {
+	userRepo           domainRepo.UserRepository
+	userProfileService *service.UserProfileService
+	queries            *generated.Queries
+	dbPool             *pgxpool.Pool
+}
+
+// AdminMetricsHandler handles admin metrics and analytics operations
+type AdminMetricsHandler struct {
+	queries                *generated.Queries
+	dbPool                 *pgxpool.Pool
+	redisClient            *redis.Client
+	analyticsService       *service.AnalyticsService
+	analyticsReportService *service.AnalyticsReportService
+	revenueOpsService      *service.RevenueOpsService
+}
+
+// AdminWebhookHandler handles admin webhook operations
+type AdminWebhookHandler struct {
+	queries      *generated.Queries
+	dbPool       *pgxpool.Pool
+	auditService *service.AuditService
+	asynqClient  *asynq.Client
+}
+
+// AdminTransactionHandler handles admin transaction operations
+type AdminTransactionHandler struct {
+	dbPool  *pgxpool.Pool
+	queries *generated.Queries
+}
+
+// AdminAuditHandler handles admin audit log operations
+type AdminAuditHandler struct {
+	auditService     *service.AuditService
+	analyticsService *service.AnalyticsService
+}
+
+// AdminHandler composes specialized sub-handlers for admin endpoints
 type AdminHandler struct {
-	subscriptionRepo            domainRepo.SubscriptionRepository
-	userRepo                    domainRepo.UserRepository
+	*AdminSubscriptionHandler
+	*AdminUserHandler
+	*AdminMetricsHandler
+	*AdminWebhookHandler
+	*AdminTransactionHandler
+	*AdminAuditHandler
+
 	queries                     *generated.Queries
 	dbPool                      *pgxpool.Pool
-	redisClient                 *redis.Client
-	analyticsService            *service.AnalyticsService
 	auditService                *service.AuditService
-	revenueOpsService           *service.RevenueOpsService
-	analyticsReportService      *service.AnalyticsReportService
-	userProfileService          *service.UserProfileService
 	winbackService              *service.WinbackService
 	experimentAdminService      *service.ExperimentAdminService
 	experimentRepairService     *service.ExperimentRepairService
 	winnerRecommendationService *service.ExperimentWinnerRecommendationService
-	asynqClient                 *asynq.Client
 }
 
 // AdminHandlerDeps holds dependencies for creating an AdminHandler.
@@ -62,7 +107,7 @@ type AdminHandlerDeps struct {
 	AsynqClient            *asynq.Client
 }
 
-// NewAdminHandler creates a new admin handler
+// NewAdminHandler creates a new admin handler composed of specialized sub-handlers
 func NewAdminHandler(deps AdminHandlerDeps) *AdminHandler {
 	var experimentAdminService *service.ExperimentAdminService
 	var experimentRepairService *service.ExperimentRepairService
@@ -78,22 +123,55 @@ func NewAdminHandler(deps AdminHandlerDeps) *AdminHandler {
 		winnerRecommendationService = service.NewExperimentWinnerRecommendationService(banditRepo)
 	}
 
+	subHandler := &AdminSubscriptionHandler{
+		subscriptionRepo: deps.SubscriptionRepo,
+		auditService:     deps.AuditService,
+		queries:          deps.Queries,
+		dbPool:           deps.DBPool,
+	}
+	userHandler := &AdminUserHandler{
+		userRepo:           deps.UserRepo,
+		userProfileService: deps.UserProfileService,
+		queries:            deps.Queries,
+		dbPool:             deps.DBPool,
+	}
+	metricsHandler := &AdminMetricsHandler{
+		queries:                deps.Queries,
+		dbPool:                 deps.DBPool,
+		redisClient:            deps.RedisClient,
+		analyticsService:       deps.AnalyticsService,
+		analyticsReportService: deps.AnalyticsReportService,
+		revenueOpsService:      deps.RevenueOpsService,
+	}
+	webhookHandler := &AdminWebhookHandler{
+		queries:      deps.Queries,
+		dbPool:       deps.DBPool,
+		auditService: deps.AuditService,
+		asynqClient:  deps.AsynqClient,
+	}
+	txHandler := &AdminTransactionHandler{
+		dbPool:  deps.DBPool,
+		queries: deps.Queries,
+	}
+	auditHandler := &AdminAuditHandler{
+		auditService:     deps.AuditService,
+		analyticsService: deps.AnalyticsService,
+	}
+
 	return &AdminHandler{
-		subscriptionRepo:            deps.SubscriptionRepo,
-		userRepo:                    deps.UserRepo,
+		AdminSubscriptionHandler:    subHandler,
+		AdminUserHandler:            userHandler,
+		AdminMetricsHandler:         metricsHandler,
+		AdminWebhookHandler:         webhookHandler,
+		AdminTransactionHandler:     txHandler,
+		AdminAuditHandler:           auditHandler,
 		queries:                     deps.Queries,
 		dbPool:                      deps.DBPool,
-		redisClient:                 deps.RedisClient,
-		analyticsService:            deps.AnalyticsService,
 		auditService:                deps.AuditService,
-		revenueOpsService:           deps.RevenueOpsService,
-		analyticsReportService:      deps.AnalyticsReportService,
-		userProfileService:          deps.UserProfileService,
 		winbackService:              deps.WinbackService,
 		experimentAdminService:      experimentAdminService,
 		experimentRepairService:     experimentRepairService,
 		winnerRecommendationService: winnerRecommendationService,
-		asynqClient:                 deps.AsynqClient,
 	}
 }
 
@@ -107,7 +185,7 @@ func NewAdminHandler(deps AdminHandlerDeps) *AdminHandler {
 // @Param request body object{product_id:string, plan_type:string, expires_at:string} true "Grant request"
 // @Success 204
 // @Router /admin/users/{id}/grant [post]
-func (h *AdminHandler) GrantSubscription(c *gin.Context) {
+func (h *AdminSubscriptionHandler) GrantSubscription(c *gin.Context) {
 	userID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid user ID")
@@ -168,7 +246,7 @@ func (h *AdminHandler) GrantSubscription(c *gin.Context) {
 // @Param request body object{reason:string} true "Revoke request"
 // @Success 204
 // @Router /admin/users/{id}/revoke [post]
-func (h *AdminHandler) RevokeSubscription(c *gin.Context) {
+func (h *AdminSubscriptionHandler) RevokeSubscription(c *gin.Context) {
 	userID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid user ID")
@@ -216,7 +294,7 @@ func (h *AdminHandler) RevokeSubscription(c *gin.Context) {
 // @Param limit query int false "Items per page" default(50)
 // @Success 200 {object} response.SuccessResponse{data=object}
 // @Router /admin/users [get]
-func (h *AdminHandler) ListUsers(c *gin.Context) {
+func (h *AdminUserHandler) ListUsers(c *gin.Context) {
 	pageStr := c.DefaultQuery("page", "1")
 	limitStr := c.DefaultQuery("limit", "50")
 
@@ -263,7 +341,7 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 // @Security Bearer
 // @Success 200 {object} response.SuccessResponse{data=object}
 // @Router /admin/health [get]
-func (h *AdminHandler) GetHealth(c *gin.Context) {
+func (h *AdminMetricsHandler) GetHealth(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	dbStatus := "ok"
@@ -295,7 +373,7 @@ func (h *AdminHandler) GetHealth(c *gin.Context) {
 // @Security Bearer
 // @Success 200 {object} response.SuccessResponse{data=object}
 // @Router /admin/dashboard/metrics [get]
-func (h *AdminHandler) GetDashboardMetrics(c *gin.Context) {
+func (h *AdminMetricsHandler) GetDashboardMetrics(c *gin.Context) {
 	ctx := c.Request.Context()
 	now := time.Now()
 	monthAgo := now.AddDate(0, -1, 0)
@@ -372,7 +450,7 @@ func (h *AdminHandler) GetDashboardMetrics(c *gin.Context) {
 
 // GetAuditLog returns a paginated list of admin audit log entries with optional filters.
 // Query params: page (1-based), limit (default 20), action, search, from, to (RFC3339)
-func (h *AdminHandler) GetAuditLog(c *gin.Context) {
+func (h *AdminAuditHandler) GetAuditLog(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -439,7 +517,7 @@ func buildUserSearchFilter(search, platform, role string, appID uuid.UUID) (stri
 
 // SearchUsers returns a filtered, paginated list of users.
 // Query: page, limit, search (email/platform_user_id), platform (ios/android/web), role
-func (h *AdminHandler) SearchUsers(c *gin.Context) {
+func (h *AdminUserHandler) SearchUsers(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -536,7 +614,7 @@ LIMIT $%d OFFSET $%d
 
 // ForceCancel hard-cancels a user's active subscription immediately.
 // Body: {"reason": "..."}
-func (h *AdminHandler) ForceCancel(c *gin.Context) {
+func (h *AdminSubscriptionHandler) ForceCancel(c *gin.Context) {
 	userID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		response.BadRequest(c, "Invalid user ID")
@@ -570,7 +648,7 @@ func (h *AdminHandler) ForceCancel(c *gin.Context) {
 
 // ForceRenew extends the active subscription's expires_at by the given days (default 30).
 // Body: {"days": 30, "reason": "..."}
-func (h *AdminHandler) ForceRenew(c *gin.Context) {
+func (h *AdminSubscriptionHandler) ForceRenew(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -611,7 +689,7 @@ type manualRenewalParams struct {
 	reason string
 }
 
-func (h *AdminHandler) logManualRenewal(c *gin.Context, p manualRenewalParams) {
+func (h *AdminSubscriptionHandler) logManualRenewal(c *gin.Context, p manualRenewalParams) {
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
 		_ = h.auditService.LogAction(c.Request.Context(), aid, "manual_renewal", "subscription", &p.userID, map[string]interface{}{
@@ -620,7 +698,7 @@ func (h *AdminHandler) logManualRenewal(c *gin.Context, p manualRenewalParams) {
 	}
 }
 
-func (h *AdminHandler) reactivateExpiredSubscription(c *gin.Context, p manualRenewalParams) {
+func (h *AdminSubscriptionHandler) reactivateExpiredSubscription(c *gin.Context, p manualRenewalParams) {
 	ctx := c.Request.Context()
 	var subID uuid.UUID
 	var expiresAt time.Time
@@ -644,7 +722,7 @@ func (h *AdminHandler) reactivateExpiredSubscription(c *gin.Context, p manualRen
 	c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
 }
 
-func (h *AdminHandler) extendActiveSubscription(c *gin.Context, sub *entity.Subscription, p manualRenewalParams) {
+func (h *AdminSubscriptionHandler) extendActiveSubscription(c *gin.Context, sub *entity.Subscription, p manualRenewalParams) {
 	ctx := c.Request.Context()
 	newExpires := sub.ExpiresAt.AddDate(0, 0, p.days)
 	_, err := h.dbPool.Exec(ctx,
@@ -660,7 +738,7 @@ func (h *AdminHandler) extendActiveSubscription(c *gin.Context, sub *entity.Subs
 
 // GrantGracePeriod grants a grace period of given days to a user's subscription.
 // Body: {"days": 7, "reason": "..."}
-func (h *AdminHandler) GrantGracePeriod(c *gin.Context) {
+func (h *AdminSubscriptionHandler) GrantGracePeriod(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -728,7 +806,7 @@ RETURNING id`,
 // Churn rate = churned this month / (active + churned) × 100
 // LTV = total successful revenue / distinct users with transactions
 // New subs = count of subscriptions created this month
-func (h *AdminHandler) GetAnalyticsReport(c *gin.Context) {
+func (h *AdminMetricsHandler) GetAnalyticsReport(c *gin.Context) {
 	ctx := c.Request.Context()
 	appID := appctx.MustAppIDFromCtx(ctx)
 
@@ -744,7 +822,7 @@ func (h *AdminHandler) GetAnalyticsReport(c *gin.Context) {
 // GetRevenueOps returns dunning queue, recent webhook events, and matomo staging stats.
 // GetRevenueOps returns revenue operations dashboard data
 // GET /admin/revenue-ops?wh_page=1&wh_page_size=20&wh_pending=1
-func (h *AdminHandler) GetRevenueOps(c *gin.Context) {
+func (h *AdminMetricsHandler) GetRevenueOps(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// Parse pagination params
@@ -818,7 +896,7 @@ func buildWebhookFilter(c *gin.Context) (string, []interface{}) {
 
 // ListWebhooks returns paginated, filterable webhook events.
 // GET /admin/webhooks?page=1&limit=20&provider=stripe&status=pending&search=evt_id
-func (h *AdminHandler) ListWebhooks(c *gin.Context) {
+func (h *AdminWebhookHandler) ListWebhooks(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -909,7 +987,7 @@ func (h *AdminHandler) ListWebhooks(c *gin.Context) {
 
 // ReplayWebhook re-enqueues an unprocessed webhook event for processing.
 // POST /v1/admin/webhooks/:id/replay
-func (h *AdminHandler) ReplayWebhook(c *gin.Context) {
+func (h *AdminWebhookHandler) ReplayWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -950,7 +1028,7 @@ func (h *AdminHandler) ReplayWebhook(c *gin.Context) {
 
 // GetSubscriptionDetail returns full detail for a single subscription by ID.
 // GET /admin/subscriptions/:id
-func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
+func (h *AdminSubscriptionHandler) GetSubscriptionDetail(c *gin.Context) {
 	ctx := c.Request.Context()
 	subID := c.Param("id")
 	if subID == "" {
@@ -1095,7 +1173,7 @@ func buildSubscriptionFilter(c *gin.Context, appID uuid.UUID) (string, []interfa
 }
 
 // GET /admin/subscriptions?page=1&limit=20&status=active&source=iap&platform=ios&plan_type=monthly&search=email&date_from=2024-01-01&date_to=2024-12-31
-func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
+func (h *AdminSubscriptionHandler) ListSubscriptions(c *gin.Context) {
 	ctx := c.Request.Context()
 	appID := httpmiddleware.GetAppID(c)
 
@@ -1189,7 +1267,7 @@ LIMIT $%d OFFSET $%d
 
 // GetTransactionDetail returns full detail for a single transaction: tx data + user + subscription.
 // GET /admin/transactions/:id
-func (h *AdminHandler) GetTransactionDetail(c *gin.Context) {
+func (h *AdminTransactionHandler) GetTransactionDetail(c *gin.Context) {
 	ctx := c.Request.Context()
 	txIDStr := c.Param("id")
 	if txIDStr == "" {
@@ -1321,7 +1399,7 @@ func buildTransactionFilter(c *gin.Context, appID uuid.UUID) (string, []interfac
 }
 
 // GET /admin/transactions?page=1&limit=20&status=success&source=iap&platform=ios&search=email&date_from=2024-01-01&date_to=2024-12-31
-func (h *AdminHandler) ListTransactions(c *gin.Context) {
+func (h *AdminTransactionHandler) ListTransactions(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -1442,7 +1520,7 @@ LIMIT $%d OFFSET $%d`, baseQ, limitIdx, offsetIdx)
 }
 
 // GetUserProfile returns a full 360° user profile: identity, subscriptions, transactions, audit log, dunning.
-func (h *AdminHandler) GetUserProfile(c *gin.Context) {
+func (h *AdminUserHandler) GetUserProfile(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID := c.Param("id")
 
