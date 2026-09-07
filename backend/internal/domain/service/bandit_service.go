@@ -21,19 +21,27 @@ var ErrExperimentArmsNotFound = errors.New("experiment arms not found")
 // ErrBanditArmNotFound is returned when a reward references a non-existent arm.
 var ErrBanditArmNotFound = errors.New("bandit arm not found")
 
-// BanditRepository defines the interface for bandit data persistence
-type BanditRepository interface {
+// BanditCoreRepository defines arm stats and assignment operations
+type BanditCoreRepository interface {
 	GetArms(ctx context.Context, experimentID uuid.UUID) ([]Arm, error)
 	GetArmStats(ctx context.Context, armID uuid.UUID) (*ArmStats, error)
 	UpdateArmStats(ctx context.Context, stats *ArmStats) error
 	CreateAssignment(ctx context.Context, assignment *Assignment) error
 	GetActiveAssignment(ctx context.Context, experimentID, userID uuid.UUID) (*Assignment, error)
+}
 
-	// Advanced bandit methods
+// BanditContextRepository defines contextual experiment config and user context persistence
+type BanditContextRepository interface {
 	GetExperimentConfig(ctx context.Context, experimentID uuid.UUID) (*ExperimentConfig, error)
 	UpdateObjectiveConfig(ctx context.Context, experimentID uuid.UUID, objectiveType ObjectiveType, objectiveWeights map[string]float64) error
 	GetUserContext(ctx context.Context, userID uuid.UUID) (*UserContext, error)
 	SetUserContext(ctx context.Context, uctx *UserContext) error
+}
+
+// BanditRepository defines the composite interface for bandit data persistence
+type BanditRepository interface {
+	BanditCoreRepository
+	BanditContextRepository
 }
 
 // BanditCache defines the interface for caching bandit state

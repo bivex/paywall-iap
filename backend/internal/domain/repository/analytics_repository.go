@@ -50,23 +50,26 @@ type AuditLogPage struct {
 	TotalCount int64
 }
 
-// AnalyticsRepository defines methods for retrieving analytics data
-type AnalyticsRepository interface {
+// RevenueAnalyticsReader defines methods for querying financial and subscriber metrics.
+type RevenueAnalyticsReader interface {
 	GetRevenueBetween(ctx context.Context, start, end time.Time) (float64, error)
 	GetMRR(ctx context.Context) (float64, error)
 	GetActiveSubscriptionCountAt(ctx context.Context, timestamp time.Time) (int, error)
 	GetChurnedCountBetween(ctx context.Context, start, end time.Time) (int, error)
-
-	// Dashboard extras
 	GetMRRTrend(ctx context.Context, months int) ([]MonthlyMRR, error)
 	GetSubscriptionStatusCounts(ctx context.Context) (*SubscriptionStatusCounts, error)
 	GetChurnRiskCount(ctx context.Context) (int, error)
+}
+
+// SystemAnalyticsReader defines methods for system health and audit log querying.
+type SystemAnalyticsReader interface {
 	GetWebhookHealthByProvider(ctx context.Context) ([]WebhookProviderHealth, error)
 	GetRecentAuditLog(ctx context.Context, limit int) ([]AuditLogEntry, error)
-
-	// GetAuditLogPaginated returns a page of audit log rows with optional filters.
-	// action: filter by action string (empty = all)
-	// search: filter admin email or target_type (empty = all)
-	// from/to: time range (zero = no bound)
 	GetAuditLogPaginated(ctx context.Context, offset, limit int, action, search string, from, to time.Time) (*AuditLogPage, error)
+}
+
+// AnalyticsRepository aggregates all analytics querying operations via composition.
+type AnalyticsRepository interface {
+	RevenueAnalyticsReader
+	SystemAnalyticsReader
 }

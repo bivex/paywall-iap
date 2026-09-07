@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// AppRepository defines the data access interface for App entities.
-type AppRepository interface {
+// AppCoreRepository defines core CRUD operations on App entities.
+type AppCoreRepository interface {
 	// GetByID returns an app by its UUID primary key.
 	GetByID(ctx context.Context, id uuid.UUID) (*entity.App, error)
 
@@ -26,13 +26,19 @@ type AppRepository interface {
 
 	// Delete soft-deletes (deactivates) an app.
 	Delete(ctx context.Context, id uuid.UUID) error
+}
 
+// AppSettingsRepository defines access to application JSONB settings.
+type AppSettingsRepository interface {
 	// GetSettings returns the JSONB settings for an app.
 	GetSettings(ctx context.Context, id uuid.UUID) (*entity.AppSettings, error)
 
 	// UpdateSettings replaces the JSONB settings for an app.
 	UpdateSettings(ctx context.Context, id uuid.UUID, s *entity.AppSettings) error
+}
 
+// AppCredentialsRepository defines operations on provider credentials for an app.
+type AppCredentialsRepository interface {
 	// GetCredentials returns all credential rows for an app (one per provider), decrypted.
 	GetCredentials(ctx context.Context, appID uuid.UUID) ([]*entity.AppCredentials, error)
 
@@ -44,4 +50,11 @@ type AppRepository interface {
 
 	// DeleteCredentials removes credentials for a given provider.
 	DeleteCredentials(ctx context.Context, appID uuid.UUID, provider string) error
+}
+
+// AppRepository aggregates all app repository capabilities via composition.
+type AppRepository interface {
+	AppCoreRepository
+	AppSettingsRepository
+	AppCredentialsRepository
 }
