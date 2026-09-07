@@ -30,7 +30,7 @@ curl -fsS http://localhost:8081/health
 make dump-routes
 ```
 
-По умолчанию dump пишется в `routes.txt`.
+По умолчанию dump пишется в `docs/api/routes.txt`.
 
 Это полезно делать:
 

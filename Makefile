@@ -1,6 +1,6 @@
 .PHONY: dump-routes
 
-ROUTES_OUT ?= routes.txt
+ROUTES_OUT ?= docs/api/routes.txt
 
 dump-routes:
 	@echo "Dumping API routes to $(ROUTES_OUT)"

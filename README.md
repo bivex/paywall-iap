@@ -161,14 +161,28 @@ NEXT_PUBLIC_API_URL=https://your-domain.com
 
 ## 📚 Documentation
 
+### Architecture & Operations
 - [Architecture](docs/architecture.md)
 - [Environment Variables](docs/env-vars.md)
-- [Load Generator](docs/loadgen.md)
-- [API Specification](docs/api/openapi.yaml)
-- [Database Schema](docs/database/schema-erd.md)
 - [Multi-tenancy](docs/multi-tenancy.md)
 - [App Settings & Credentials](docs/app-settings-and-credentials.md)
-- [Deployment](docs/runbooks/deploy-procedure.md)
 - [Latency Optimization](docs/operations/latency-optimization.md)
-- [Wireframes](docs/Wireframes_Rethink.md)
+- [Troubleshooting Runbook](docs/runbooks/test-failure-troubleshooting.md)
+
+### API & Testing
+- [API Specification (OpenAPI)](docs/api/openapi.yaml)
+- [API Route Inventory](docs/api/routes.txt)
+- [API Contract Testing Guide](docs/testing/api-contract-testing.md)
+- [Testing Strategy](docs/testing/testing-strategy.md)
+- [E2E Testing Guide](docs/testing/e2e-testing-guide.md)
+- [Load Testing Guide](docs/testing/load-testing-guide.md)
+- [Load Generator Guide](docs/loadgen.md)
+- [Android IAP Mock Guide](docs/testing/mock-android-iap.md)
+
+### Design, Wireframes & UI
+- [Wireframes Specification](docs/wireframes/Wireframes_Rethink.md)
+- [Wireframe to Real Code Journey](docs/wireframes/mock-wireframe-to-real-code.md)
+- [UI Components Mapping](docs/ui/components-mapping.md)
+- [Frontend Audit Status](docs/audit.md)
+- [Plans & Roadmap](docs/plans/todo-list.md)
 
