@@ -43,6 +43,7 @@ run_sql <<'SQL'
 BEGIN;
 
 INSERT INTO pricing_tiers (
+  app_id,
   name,
   description,
   monthly_price,
@@ -54,56 +55,63 @@ INSERT INTO pricing_tiers (
   updated_at,
   deleted_at
 )
-VALUES
-  (
-    'Starter',
-    'For solo makers getting started with subscriptions',
-    9.99,
-    79.99,
-    NULL,
-    'USD',
-    '["Ad-free experience", "Unlimited access", "Basic analytics", "Email support"]'::jsonb,
-    true,
-    now(),
-    NULL
-  ),
-  (
-    'Growth',
-    'For growing teams that need collaboration and analytics',
-    29.99,
-    239.99,
-    NULL,
-    'USD',
-    '["Everything in Starter", "Team collaboration", "Advanced dashboards", "Priority support"]'::jsonb,
-    true,
-    now(),
-    NULL
-  ),
-  (
-    'Scale',
-    'For larger organizations with premium support needs',
-    79.99,
-    639.99,
-    NULL,
-    'USD',
-    '["Everything in Growth", "Dedicated success manager", "Custom integrations", "SLA & onboarding"]'::jsonb,
-    true,
-    now(),
-    NULL
-  ),
-  (
-    'No Ads Lifetime',
-    'Lifetime Ad-free experience for Demo Game',
-    NULL,
-    NULL,
-    2.99,
-    'USD',
-    '["No forced ads", "Bottom banner ads disabled", "Keep rewarded ads", "+500 gems bonus"]'::jsonb,
-    true,
-    now(),
-    NULL
-  )
-ON CONFLICT (name) DO UPDATE
+SELECT
+  a.id AS app_id,
+  t.name,
+  t.description,
+  t.monthly_price,
+  t.annual_price,
+  t.lifetime_price,
+  t.currency,
+  t.features::jsonb,
+  t.is_active,
+  now(),
+  NULL
+FROM (SELECT id FROM apps) a
+CROSS JOIN (
+  VALUES
+    (
+      'Starter',
+      'For solo makers getting started with subscriptions',
+      9.99::numeric,
+      79.99::numeric,
+      NULL::numeric,
+      'USD',
+      '["Ad-free experience", "Unlimited access", "Basic analytics", "Email support"]',
+      true
+    ),
+    (
+      'Growth',
+      'For growing teams that need collaboration and analytics',
+      29.99::numeric,
+      239.99::numeric,
+      NULL::numeric,
+      'USD',
+      '["Everything in Starter", "Team collaboration", "Advanced dashboards", "Priority support"]',
+      true
+    ),
+    (
+      'Scale',
+      'For larger organizations with premium support needs',
+      79.99::numeric,
+      639.99::numeric,
+      NULL::numeric,
+      'USD',
+      '["Everything in Growth", "Dedicated success manager", "Custom integrations", "SLA & onboarding"]',
+      true
+    ),
+    (
+      'No Ads Lifetime',
+      'Lifetime Ad-free experience for Demo Game',
+      NULL::numeric,
+      NULL::numeric,
+      2.99::numeric,
+      'USD',
+      '["No forced ads", "Bottom banner ads disabled", "Keep rewarded ads", "+500 gems bonus"]',
+      true
+    )
+) AS t(name, description, monthly_price, annual_price, lifetime_price, currency, features, is_active)
+ON CONFLICT (app_id, name) WHERE deleted_at IS NULL DO UPDATE
 SET description   = EXCLUDED.description,
     monthly_price = EXCLUDED.monthly_price,
     annual_price  = EXCLUDED.annual_price,

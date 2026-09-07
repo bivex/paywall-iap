@@ -74,7 +74,7 @@ wait_for_healthy() {
   local container="$1" max="${2:-60}" i=0
   info "Waiting for $container to be healthy..."
   until [[ "$(docker inspect --format='{{.State.Health.Status}}' "$container" 2>/dev/null)" == "healthy" ]]; do
-    ((i++))
+    i=$((i + 1))
     [[ $i -ge $max ]] && die "$container did not become healthy after ${max}s"
     sleep 1
   done
@@ -85,7 +85,7 @@ wait_for_http() {
   local url="$1" label="${2:-$1}" max="${3:-60}" i=0
   info "Waiting for $label..."
   until curl -sf -L -o /dev/null "$url"; do
-    ((i++))
+    i=$((i + 1))
     [[ $i -ge $max ]] && die "$label not reachable after ${max}s"
     sleep 1
   done

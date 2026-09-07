@@ -9,9 +9,10 @@
 BEGIN;
 
 -- ─── 1. USERS (50 regular test users) ────────────────────────────────────────
-INSERT INTO users (id, platform_user_id, platform, app_version, email, role, ltv, created_at)
+INSERT INTO users (id, app_id, platform_user_id, platform, app_version, email, role, ltv, created_at)
 SELECT
   gen_random_uuid(),
+  COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
   'usr_seed_' || i,
   (ARRAY['ios','ios','ios','android','android','web'])[1 + (i % 6)],
   (ARRAY['2.1.0','2.2.0','2.3.0','3.0.0'])[1 + (i % 4)],
@@ -25,9 +26,10 @@ ON CONFLICT DO NOTHING;
 -- ─── 2. SUBSCRIPTIONS ────────────────────────────────────────────────────────
 
 -- 2a. Active (users 1-30)
-INSERT INTO subscriptions (id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
+INSERT INTO subscriptions (id, app_id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
 SELECT
   gen_random_uuid(),
+  u.app_id,
   u.id,
   'active',
   (ARRAY['iap','iap','stripe'])[1 + (u.rn % 3)],
@@ -39,16 +41,17 @@ SELECT
   now() - ((180 - u.rn * 5) || ' days')::interval,
   now()
 FROM (
-  SELECT id, platform, row_number() OVER (ORDER BY created_at) AS rn
+  SELECT id, app_id, platform, row_number() OVER (ORDER BY created_at) AS rn
   FROM users WHERE email LIKE '%@seed.example.com'
   ORDER BY created_at LIMIT 30
 ) u
 ON CONFLICT DO NOTHING;
 
 -- 2b. Grace period (users 31-35, 5 rows)
-INSERT INTO subscriptions (id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
+INSERT INTO subscriptions (id, app_id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
 SELECT
   gen_random_uuid(),
+  u.app_id,
   u.id,
   'grace',
   'iap',
@@ -60,15 +63,16 @@ SELECT
   now() - interval '35 days',
   now() - interval '3 days'
 FROM (
-  SELECT id, platform FROM users WHERE email LIKE '%@seed.example.com'
+  SELECT id, app_id, platform FROM users WHERE email LIKE '%@seed.example.com'
   ORDER BY created_at LIMIT 5 OFFSET 30
 ) u
 ON CONFLICT DO NOTHING;
 
 -- 2c. Cancelled (users 36-43, 8 rows)
-INSERT INTO subscriptions (id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
+INSERT INTO subscriptions (id, app_id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
 SELECT
   gen_random_uuid(),
+  u.app_id,
   u.id,
   'cancelled',
   (ARRAY['iap','stripe'])[1 + (row_number() OVER (ORDER BY u.created_at) % 2)],
@@ -80,15 +84,16 @@ SELECT
   now() - interval '90 days',
   now() - interval '10 days'
 FROM (
-  SELECT id, platform, created_at FROM users WHERE email LIKE '%@seed.example.com'
+  SELECT id, app_id, platform, created_at FROM users WHERE email LIKE '%@seed.example.com'
   ORDER BY created_at LIMIT 8 OFFSET 35
 ) u
 ON CONFLICT DO NOTHING;
 
 -- 2d. Expired (users 44-50, 7 rows)
-INSERT INTO subscriptions (id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
+INSERT INTO subscriptions (id, app_id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at)
 SELECT
   gen_random_uuid(),
+  u.app_id,
   u.id,
   'expired',
   'iap',
@@ -100,16 +105,17 @@ SELECT
   now() - interval '60 days',
   now() - interval '20 days'
 FROM (
-  SELECT id, platform FROM users WHERE email LIKE '%@seed.example.com'
+  SELECT id, app_id, platform FROM users WHERE email LIKE '%@seed.example.com'
   ORDER BY created_at LIMIT 7 OFFSET 43
 ) u
 ON CONFLICT DO NOTHING;
 
 -- ─── 3. TRANSACTIONS (MRR trend over 6 months) ───────────────────────────────
 -- Monthly renewals for active/grace subscriptions, one per month × 6 months
-INSERT INTO transactions (id, user_id, subscription_id, amount, currency, status, provider_tx_id, created_at)
+INSERT INTO transactions (id, app_id, user_id, subscription_id, amount, currency, status, provider_tx_id, created_at)
 SELECT
   gen_random_uuid(),
+  s.app_id,
   s.user_id,
   s.id,
   CASE WHEN s.plan_type = 'monthly' THEN 9.99 ELSE 99.99 END,
@@ -125,9 +131,10 @@ WHERE s.status IN ('active', 'grace')
 ON CONFLICT DO NOTHING;
 
 -- Single historical transaction for cancelled/expired subs
-INSERT INTO transactions (id, user_id, subscription_id, amount, currency, status, provider_tx_id, created_at)
+INSERT INTO transactions (id, app_id, user_id, subscription_id, amount, currency, status, provider_tx_id, created_at)
 SELECT
   gen_random_uuid(),
+  s.app_id,
   s.user_id,
   s.id,
   CASE WHEN s.plan_type = 'monthly' THEN 9.99 ELSE 99.99 END,
@@ -141,9 +148,10 @@ WHERE s.status IN ('cancelled', 'expired')
 ON CONFLICT DO NOTHING;
 
 -- A few refunded transactions
-INSERT INTO transactions (id, user_id, subscription_id, amount, currency, status, provider_tx_id, created_at)
+INSERT INTO transactions (id, app_id, user_id, subscription_id, amount, currency, status, provider_tx_id, created_at)
 SELECT
   gen_random_uuid(),
+  s.app_id,
   s.user_id,
   s.id,
   9.99,
@@ -159,8 +167,9 @@ ON CONFLICT DO NOTHING;
 
 -- ─── 4. WEBHOOK EVENTS ───────────────────────────────────────────────────────
 -- Stripe: 20 events, all processed
-INSERT INTO webhook_events (provider, event_type, event_id, payload, processed_at, created_at)
+INSERT INTO webhook_events (app_id, provider, event_type, event_id, payload, processed_at, created_at)
 SELECT
+  COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
   'stripe',
   (ARRAY['payment_intent.succeeded','customer.subscription.updated','invoice.paid'])[1 + (i % 3)],
   'evt_stripe_seed_' || i,
@@ -171,8 +180,9 @@ FROM generate_series(1, 20) AS i
 ON CONFLICT DO NOTHING;
 
 -- Apple: 12 events, all processed
-INSERT INTO webhook_events (provider, event_type, event_id, payload, processed_at, created_at)
+INSERT INTO webhook_events (app_id, provider, event_type, event_id, payload, processed_at, created_at)
 SELECT
+  COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
   'apple',
   (ARRAY['DID_RENEW','DID_CHANGE_RENEWAL_STATUS','CANCEL'])[1 + (i % 3)],
   'evt_apple_seed_' || i,
@@ -183,8 +193,9 @@ FROM generate_series(1, 12) AS i
 ON CONFLICT DO NOTHING;
 
 -- Google: 10 events — 8 processed, 2 unprocessed (pending retry)
-INSERT INTO webhook_events (provider, event_type, event_id, payload, processed_at, created_at)
+INSERT INTO webhook_events (app_id, provider, event_type, event_id, payload, processed_at, created_at)
 SELECT
+  COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game4' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
   'google',
   'subscriptionNotification',
   'evt_google_seed_' || i,

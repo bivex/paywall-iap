@@ -65,12 +65,19 @@ run_sql_quiet() {
 echo "👤 Creating user: $EMAIL"
 run_sql "
 DO \$\$
+DECLARE
+  v_app_id UUID;
 BEGIN
+  SELECT id INTO v_app_id FROM apps WHERE id = '00000000-0000-0000-0000-000000000001' OR bundle_id = 'com.mothsalt.game1' LIMIT 1;
+  IF v_app_id IS NULL THEN
+    SELECT id INTO v_app_id FROM apps LIMIT 1;
+  END IF;
+
   IF EXISTS (SELECT 1 FROM users WHERE email = '$EMAIL') THEN
     UPDATE users SET role = 'superadmin' WHERE email = '$EMAIL';
   ELSE
-    INSERT INTO users (platform_user_id, platform, app_version, email, role)
-    VALUES ('admin_web_$(echo "$EMAIL" | tr '@.' '__')', 'web', '1.0.0', '$EMAIL', 'superadmin');
+    INSERT INTO users (app_id, platform_user_id, platform, app_version, email, role)
+    VALUES (v_app_id, 'admin_web_$(echo "$EMAIL" | tr '@.' '__')', 'web', '1.0.0', '$EMAIL', 'superadmin');
   END IF;
 END \$\$;
 "

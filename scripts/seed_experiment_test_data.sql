@@ -17,7 +17,7 @@ SET rate = EXCLUDED.rate,
     updated_at = now();
 
 INSERT INTO ab_tests (
-  id, name, description, status, start_at, end_at,
+  id, app_id, name, description, status, start_at, end_at,
   algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence,
   automation_policy,
   created_at, updated_at,
@@ -28,6 +28,7 @@ INSERT INTO ab_tests (
 VALUES
   (
     '10000000-0000-0000-0000-000000000001',
+    COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
     'Seed Hybrid Paywall Experiment',
     'Running hybrid bandit fixture for Studio, Sliding Window, Delayed Feedback, and Objective dashboards.',
     'running',
@@ -42,6 +43,7 @@ VALUES
   ),
   (
     '10000000-0000-0000-0000-000000000002',
+    COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
     'Seed Onboarding Copy Test',
     'Draft classic A/B experiment fixture for CRUD and arm-plan testing.',
     'draft',
@@ -56,6 +58,7 @@ VALUES
   ),
   (
     '10000000-0000-0000-0000-000000000003',
+    COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
     'Seed Winback Offer Test',
     'Paused revenue-focused bandit fixture for status coverage and alternative arm telemetry.',
     'paused',
@@ -70,6 +73,7 @@ VALUES
   ),
   (
     '10000000-0000-0000-0000-000000000004',
+    COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
     'Seed Confirmable Winner Test',
     'Running bandit fixture with a confirmable winner recommendation for admin contract actions.',
     'running',
@@ -150,11 +154,11 @@ SET alpha = EXCLUDED.alpha,
     original_currency = EXCLUDED.original_currency,
     original_revenue = EXCLUDED.original_revenue;
 
-INSERT INTO users (id, platform_user_id, platform, app_version, email, role, ltv, created_at)
+INSERT INTO users (id, app_id, platform_user_id, platform, app_version, email, role, ltv, created_at)
 VALUES
-  ('33333333-3333-4333-8333-000000000001', 'usr_contract_bandit_1', 'ios', '3.0.0', 'bandit-contract-1@seed.example.com', 'user', 49.99, now() - interval '14 days'),
-  ('33333333-3333-4333-8333-000000000002', 'usr_contract_bandit_2', 'android', '3.0.0', 'bandit-contract-2@seed.example.com', 'user', 79.99, now() - interval '10 days'),
-  ('33333333-3333-4333-8333-000000000003', 'usr_contract_bandit_3', 'ios', '3.0.0', 'bandit-contract-3@seed.example.com', 'user', 129.99, now() - interval '7 days')
+  ('33333333-3333-4333-8333-000000000001', COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid), 'usr_contract_bandit_1', 'ios', '3.0.0', 'bandit-contract-1@seed.example.com', 'user', 49.99, now() - interval '14 days'),
+  ('33333333-3333-4333-8333-000000000002', COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid), 'usr_contract_bandit_2', 'android', '3.0.0', 'bandit-contract-2@seed.example.com', 'user', 79.99, now() - interval '10 days'),
+  ('33333333-3333-4333-8333-000000000003', COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid), 'usr_contract_bandit_3', 'ios', '3.0.0', 'bandit-contract-3@seed.example.com', 'user', 129.99, now() - interval '7 days')
 ON CONFLICT (id) DO UPDATE
 SET platform_user_id = EXCLUDED.platform_user_id,
     platform = EXCLUDED.platform,
@@ -164,7 +168,7 @@ SET platform_user_id = EXCLUDED.platform_user_id,
     ltv = EXCLUDED.ltv;
 
 INSERT INTO ab_tests (
-  id, name, description, status, start_at, end_at,
+  id, app_id, name, description, status, start_at, end_at,
   algorithm_type, is_bandit, min_sample_size, confidence_threshold, winner_confidence,
   automation_policy,
   created_at, updated_at,
@@ -174,6 +178,7 @@ INSERT INTO ab_tests (
 )
 VALUES (
   '11111111-1111-4111-8111-111111111111',
+  COALESCE((SELECT id FROM apps WHERE bundle_id = 'com.mothsalt.game1' LIMIT 1), '00000000-0000-0000-0000-000000000001'::uuid),
   'Bandit Contract Fixture',
   'Schema-valid UUID contract fixture for bandit Schemathesis coverage.',
   'running',
@@ -235,12 +240,25 @@ SET alpha = EXCLUDED.alpha,
     original_currency = EXCLUDED.original_currency,
     original_revenue = EXCLUDED.original_revenue;
 
-INSERT INTO bandit_user_context (user_id, country, device, app_version, days_since_install, total_spent, last_purchase_at, updated_at)
-VALUES
-  ('33333333-3333-4333-8333-000000000001', 'US', 'ios', '3.0.0', 14, 49.99, now() - interval '2 days', now()),
-  ('33333333-3333-4333-8333-000000000002', 'DE', 'android', '3.0.0', 10, 79.99, now() - interval '3 days', now()),
-  ('33333333-3333-4333-8333-000000000003', 'GB', 'ios', '3.0.0', 7, 129.99, now() - interval '1 days', now())
-ON CONFLICT (user_id) DO UPDATE
+INSERT INTO bandit_user_context (app_id, user_id, country, device, app_version, days_since_install, total_spent, last_purchase_at, updated_at)
+SELECT
+  u.app_id,
+  u.id,
+  c.country,
+  c.device,
+  c.app_version,
+  c.days_since_install,
+  c.total_spent,
+  c.last_purchase_at,
+  c.updated_at
+FROM (
+  VALUES
+    ('33333333-3333-4333-8333-000000000001'::uuid, 'US', 'ios', '3.0.0', 14, 49.99::numeric, now() - interval '2 days', now()),
+    ('33333333-3333-4333-8333-000000000002'::uuid, 'DE', 'android', '3.0.0', 10, 79.99::numeric, now() - interval '3 days', now()),
+    ('33333333-3333-4333-8333-000000000003'::uuid, 'GB', 'ios', '3.0.0', 7, 129.99::numeric, now() - interval '1 days', now())
+) AS c(user_id, country, device, app_version, days_since_install, total_spent, last_purchase_at, updated_at)
+JOIN users u ON u.id = c.user_id
+ON CONFLICT (app_id, user_id) DO UPDATE
 SET country = EXCLUDED.country,
     device = EXCLUDED.device,
     app_version = EXCLUDED.app_version,
@@ -323,16 +341,17 @@ WHERE NOT EXISTS (
 );
 
 WITH seeded_users AS (
-  SELECT id, row_number() OVER (ORDER BY created_at, email) AS rn
+  SELECT id, app_id, row_number() OVER (ORDER BY created_at, email) AS rn
   FROM users
   WHERE email LIKE '%@seed.example.com'
   ORDER BY created_at, email
   LIMIT 12
 )
 INSERT INTO bandit_user_context (
-  user_id, country, device, app_version, days_since_install, total_spent, last_purchase_at, updated_at
+  app_id, user_id, country, device, app_version, days_since_install, total_spent, last_purchase_at, updated_at
 )
 SELECT
+  app_id,
   id,
   (ARRAY['US','DE','GB','CA','BR','JP'])[1 + ((rn - 1) % 6)],
   (ARRAY['ios','android','web'])[1 + ((rn - 1) % 3)],
@@ -342,7 +361,7 @@ SELECT
   now() - ((rn * 4) || ' days')::interval,
   now()
 FROM seeded_users
-ON CONFLICT (user_id) DO UPDATE
+ON CONFLICT (app_id, user_id) DO UPDATE
 SET country = EXCLUDED.country,
     device = EXCLUDED.device,
     app_version = EXCLUDED.app_version,
