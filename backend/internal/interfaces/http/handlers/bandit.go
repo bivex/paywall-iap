@@ -307,16 +307,64 @@ type ArmStatistics struct {
 // @Failure 400 {object} response.ErrorResponse
 // @Failure 404 {object} response.ErrorResponse
 // @Router /api/v1/bandit/statistics [get]
-func (h *BanditHandler) Statistics(c *gin.Context) {
+func validateBanditQueryParams(c *gin.Context) string {
 	allowedQueryParams := map[string]struct{}{
 		"experiment_id": {},
 		"win_probs":     {},
 	}
 	for key := range c.Request.URL.Query() {
 		if _, ok := allowedQueryParams[key]; !ok {
-			response.BadRequest(c, "Unknown query parameter: "+key)
-			return
+			return "Unknown query parameter: " + key
 		}
+	}
+	return ""
+}
+
+func parseWinProbsOption(c *gin.Context) (include bool, specified bool, errMsg string) {
+	queryValues, hasWinProbs := c.Request.URL.Query()["win_probs"]
+	if !hasWinProbs {
+		return false, false, ""
+	}
+	rawWinProbs := ""
+	if len(queryValues) > 0 {
+		rawWinProbs = strings.TrimSpace(queryValues[0])
+	}
+	if rawWinProbs == "" || (!strings.EqualFold(rawWinProbs, "true") && !strings.EqualFold(rawWinProbs, "false")) {
+		return false, true, "Invalid win_probs value"
+	}
+	includeWinProbs, parseErr := strconv.ParseBool(rawWinProbs)
+	if parseErr != nil {
+		return false, true, "Invalid win_probs value"
+	}
+	return includeWinProbs, true, ""
+}
+
+func formatArmStatistics(armStats map[uuid.UUID]*service.ArmStats) []ArmStatistics {
+	arms := make([]ArmStatistics, 0, len(armStats))
+	for _, stats := range armStats {
+		conversionRate := 0.0
+		if stats.Samples > 0 {
+			conversionRate = float64(stats.Conversions) / float64(stats.Samples)
+		}
+
+		arms = append(arms, ArmStatistics{
+			ArmID:          stats.ArmID.String(),
+			Alpha:          stats.Alpha,
+			Beta:           stats.Beta,
+			Samples:        stats.Samples,
+			Conversions:    stats.Conversions,
+			Revenue:        stats.Revenue,
+			AvgReward:      stats.AvgReward,
+			ConversionRate: conversionRate,
+		})
+	}
+	return arms
+}
+
+func (h *BanditHandler) Statistics(c *gin.Context) {
+	if errStr := validateBanditQueryParams(c); errStr != "" {
+		response.BadRequest(c, errStr)
+		return
 	}
 
 	var req StatisticsRequest
@@ -338,60 +386,23 @@ func (h *BanditHandler) Statistics(c *gin.Context) {
 		return
 	}
 
-	// Convert to response format
-	arms := make([]ArmStatistics, 0, len(armStats))
-	for _, stats := range armStats {
-		conversionRate := 0.0
-		if stats.Samples > 0 {
-			conversionRate = float64(stats.Conversions) / float64(stats.Samples)
-		}
-
-		arms = append(arms, ArmStatistics{
-			ArmID:          stats.ArmID.String(),
-			Alpha:          stats.Alpha,
-			Beta:           stats.Beta,
-			Samples:        stats.Samples,
-			Conversions:    stats.Conversions,
-			Revenue:        stats.Revenue,
-			AvgReward:      stats.AvgReward,
-			ConversionRate: conversionRate,
-		})
-	}
-
 	resp := StatisticsResponse{
 		ExperimentID: req.ExperimentID,
-		Arms:         arms,
+		Arms:         formatArmStatistics(armStats),
 	}
 
-	// Optionally include win probabilities
-	if queryValues, hasWinProbs := c.Request.URL.Query()["win_probs"]; hasWinProbs {
-		rawWinProbs := ""
-		if len(queryValues) > 0 {
-			rawWinProbs = strings.TrimSpace(queryValues[0])
-		}
-		if rawWinProbs == "" {
-			response.BadRequest(c, "Invalid win_probs value")
-			return
-		}
-		if !strings.EqualFold(rawWinProbs, "true") && !strings.EqualFold(rawWinProbs, "false") {
-			response.BadRequest(c, "Invalid win_probs value")
-			return
-		}
-
-		includeWinProbs, parseErr := strconv.ParseBool(rawWinProbs)
-		if parseErr != nil {
-			response.BadRequest(c, "Invalid win_probs value")
-			return
-		}
-
-		if !includeWinProbs {
-			response.OK(c, resp)
-			return
-		}
-
-		winProbs, err := h.banditService.CalculateWinProbability(c.Request.Context(), experimentID, 1000)
-		if err == nil {
-			probs := make(map[string]float64)
+	includeWinProbs, specified, errStr := parseWinProbsOption(c)
+	if errStr != "" {
+		response.BadRequest(c, errStr)
+		return
+	}
+	if specified && !includeWinProbs {
+		response.OK(c, resp)
+		return
+	}
+	if includeWinProbs {
+		if winProbs, err := h.banditService.CalculateWinProbability(c.Request.Context(), experimentID, 1000); err == nil {
+			probs := make(map[string]float64, len(winProbs))
 			for armID, prob := range winProbs {
 				probs[armID.String()] = prob
 			}

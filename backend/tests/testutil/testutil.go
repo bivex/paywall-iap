@@ -247,7 +247,11 @@ func SetupTestRedis(t *testing.T) *redis.Client {
 		Addr: fmt.Sprintf("%s:%s", host, port.Port()),
 	})
 
-	t.Cleanup(func() { _ = client.Close() })
+	t.Cleanup(func() {
+		if err := client.Close(); err != nil {
+			t.Logf("SetupTestRedis: failed to close client: %v", err)
+		}
+	})
 
 	return client
 }

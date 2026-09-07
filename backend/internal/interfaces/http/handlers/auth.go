@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -175,43 +176,65 @@ func (h *AuthHandler) AdminLogin(c *gin.Context) {
 // @Success 200 {object} response.SuccessResponse
 // @Failure 400 {object} response.ErrorResponse
 // @Failure 401 {object} response.ErrorResponse
+func extractLogoutRefreshToken(r io.Reader) (string, bool, error) {
+	if r == nil {
+		return "", false, nil
+	}
+	body, err := io.ReadAll(r)
+	if err != nil {
+		return "", false, errors.New("Failed to read request body")
+	}
+	trimmed := strings.TrimSpace(string(body))
+	if trimmed == "" {
+		return "", false, nil
+	}
+	if trimmed == "null" {
+		return "", false, errors.New("Invalid request body")
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return "", false, errors.New("Invalid request body")
+	}
+	rawToken, ok := raw["refresh_token"]
+	if !ok {
+		return "", false, nil
+	}
+	if strings.TrimSpace(string(rawToken)) == "null" {
+		return "", false, errors.New("Invalid request body")
+	}
+	var token string
+	if err := json.Unmarshal(rawToken, &token); err != nil || strings.TrimSpace(token) == "" {
+		return "", false, errors.New("Invalid request body")
+	}
+	return token, true, nil
+}
+
+func (h *AuthHandler) revokeTokenIfValid(ctx context.Context, tokenString string) error {
+	claims, err := h.jwtMiddleware.ParseToken(tokenString)
+	if err != nil {
+		return err
+	}
+	if remainingTTL := time.Until(claims.ExpiresAt.Time); remainingTTL > 0 {
+		_ = h.jwtMiddleware.RevokeToken(ctx, claims.JTI, remainingTTL)
+	}
+	return nil
+}
+
+// AdminLogout handles admin logout by revoking access and refresh tokens
+// @Summary Admin logout
+// @Tags admin-auth
+// @Produce json
+// @Param request body dto.AdminLogoutRequest false "Admin logout request"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
 // @Router /admin/auth/logout [post]
 func (h *AuthHandler) AdminLogout(c *gin.Context) {
-	var req dto.AdminLogoutRequest
-	hasRefreshTokenField := false
-	if c.Request.Body != nil {
-		body, err := io.ReadAll(c.Request.Body)
-		if err != nil {
-			response.BadRequest(c, "Failed to read request body")
-			return
-		}
-		if strings.TrimSpace(string(body)) != "" {
-			if strings.TrimSpace(string(body)) == "null" {
-				response.BadRequest(c, "Invalid request body")
-				return
-			}
-
-			var raw map[string]json.RawMessage
-			if err := json.Unmarshal(body, &raw); err != nil {
-				response.BadRequest(c, "Invalid request body")
-				return
-			}
-			if rawToken, ok := raw["refresh_token"]; ok {
-				hasRefreshTokenField = true
-				if strings.TrimSpace(string(rawToken)) == "null" {
-					response.BadRequest(c, "Invalid request body")
-					return
-				}
-				if err := json.Unmarshal(rawToken, &req.RefreshToken); err != nil {
-					response.BadRequest(c, "Invalid request body")
-					return
-				}
-				if strings.TrimSpace(req.RefreshToken) == "" {
-					response.BadRequest(c, "Invalid request body")
-					return
-				}
-			}
-		}
+	refreshToken, hasRefreshTokenField, err := extractLogoutRefreshToken(c.Request.Body)
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
 	}
 
 	ctx := c.Request.Context()
@@ -223,15 +246,9 @@ func (h *AuthHandler) AdminLogout(c *gin.Context) {
 			response.Unauthorized(c, "Invalid authorization header format")
 			return
 		}
-
-		claims, err := h.jwtMiddleware.ParseToken(tokenString)
-		if err != nil {
+		if err := h.revokeTokenIfValid(ctx, tokenString); err != nil {
 			response.Unauthorized(c, "Invalid token")
 			return
-		}
-
-		if remainingTTL := time.Until(claims.ExpiresAt.Time); remainingTTL > 0 {
-			_ = h.jwtMiddleware.RevokeToken(ctx, claims.JTI, remainingTTL)
 		}
 	}
 
@@ -241,14 +258,9 @@ func (h *AuthHandler) AdminLogout(c *gin.Context) {
 	}
 
 	if hasRefreshTokenField {
-		claims, err := h.jwtMiddleware.ParseToken(req.RefreshToken)
-		if err != nil {
+		if err := h.revokeTokenIfValid(ctx, refreshToken); err != nil {
 			response.Unauthorized(c, "Invalid refresh token")
 			return
-		}
-
-		if remainingTTL := time.Until(claims.ExpiresAt.Time); remainingTTL > 0 {
-			_ = h.jwtMiddleware.RevokeToken(ctx, claims.JTI, remainingTTL)
 		}
 	}
 

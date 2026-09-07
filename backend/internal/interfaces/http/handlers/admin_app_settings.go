@@ -57,6 +57,47 @@ func (h *AppSettingsHandler) GetAppSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"settings": s})
 }
 
+func applySettingsUpdates(current *entity.AppSettings, req appSettingsRequest) string {
+	if req.GracePeriodDays != nil {
+		if *req.GracePeriodDays < 0 || *req.GracePeriodDays > 90 {
+			return "grace_period_days must be 0–90"
+		}
+		current.GracePeriodDays = *req.GracePeriodDays
+	}
+	if req.TrialEnabled != nil {
+		current.TrialEnabled = *req.TrialEnabled
+	}
+	if req.TrialDays != nil {
+		if *req.TrialDays < 0 || *req.TrialDays > 365 {
+			return "trial_days must be 0–365"
+		}
+		current.TrialDays = *req.TrialDays
+	}
+	if req.DefaultCurrency != nil {
+		cur := strings.ToUpper(strings.TrimSpace(*req.DefaultCurrency))
+		if len(cur) != 3 {
+			return "default_currency must be a 3-letter ISO-4217 code"
+		}
+		current.DefaultCurrency = cur
+	}
+	if req.WebhookURL != nil {
+		current.WebhookURL = *req.WebhookURL
+	}
+	if req.WebhookSecret != nil {
+		current.WebhookSecret = *req.WebhookSecret
+	}
+	if req.StoreEnvironment != nil {
+		current.StoreEnvironment = *req.StoreEnvironment
+	}
+	if req.Entitlements != nil {
+		current.Entitlements = req.Entitlements
+	}
+	if req.SubscriptionRequiredFor != nil {
+		current.SubscriptionRequiredFor = req.SubscriptionRequiredFor
+	}
+	return ""
+}
+
 // PutAppSettings PUT /v1/admin/apps/:id/settings
 func (h *AppSettingsHandler) PutAppSettings(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -81,45 +122,9 @@ func (h *AppSettingsHandler) PutAppSettings(c *gin.Context) {
 		return
 	}
 
-	if req.GracePeriodDays != nil {
-		if *req.GracePeriodDays < 0 || *req.GracePeriodDays > 90 {
-			response.UnprocessableEntity(c, "grace_period_days must be 0–90")
-			return
-		}
-		current.GracePeriodDays = *req.GracePeriodDays
-	}
-	if req.TrialEnabled != nil {
-		current.TrialEnabled = *req.TrialEnabled
-	}
-	if req.TrialDays != nil {
-		if *req.TrialDays < 0 || *req.TrialDays > 365 {
-			response.UnprocessableEntity(c, "trial_days must be 0–365")
-			return
-		}
-		current.TrialDays = *req.TrialDays
-	}
-	if req.DefaultCurrency != nil {
-		cur := strings.ToUpper(strings.TrimSpace(*req.DefaultCurrency))
-		if len(cur) != 3 {
-			response.UnprocessableEntity(c, "default_currency must be a 3-letter ISO-4217 code")
-			return
-		}
-		current.DefaultCurrency = cur
-	}
-	if req.WebhookURL != nil {
-		current.WebhookURL = *req.WebhookURL
-	}
-	if req.WebhookSecret != nil {
-		current.WebhookSecret = *req.WebhookSecret
-	}
-	if req.StoreEnvironment != nil {
-		current.StoreEnvironment = *req.StoreEnvironment
-	}
-	if req.Entitlements != nil {
-		current.Entitlements = req.Entitlements
-	}
-	if req.SubscriptionRequiredFor != nil {
-		current.SubscriptionRequiredFor = req.SubscriptionRequiredFor
+	if errMsg := applySettingsUpdates(current, req); errMsg != "" {
+		response.UnprocessableEntity(c, errMsg)
+		return
 	}
 
 	if err := h.appRepo.UpdateSettings(c.Request.Context(), id, current); err != nil {

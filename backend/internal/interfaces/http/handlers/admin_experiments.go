@@ -626,70 +626,96 @@ func (h *AdminHandler) logHoldExperimentForReviewAction(c *gin.Context, experime
 	_ = h.auditService.LogAction(c.Request.Context(), *adminID, "hold_experiment_for_review", "experiment", nil, details)
 }
 
-func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) string {
-	if req.Name == "" {
+func validateExperimentBasicInfo(name string, description *string, algorithmType *string, isBandit *bool) string {
+	if name == "" {
 		return "Experiment name is required"
 	}
-	if containsNullByte(req.Name) {
+	if containsNullByte(name) {
 		return "Experiment name cannot contain null bytes"
 	}
-	if containsControlCharacter(req.Name) {
+	if containsControlCharacter(name) {
 		return "Experiment name cannot contain control characters"
 	}
-	if req.Description == nil {
+	if description == nil {
 		return "Experiment description is required"
 	}
-	if containsNullByte(*req.Description) {
+	if containsNullByte(*description) {
 		return "Experiment description cannot contain null bytes"
 	}
-	if req.AlgorithmType == nil {
+	if algorithmType == nil {
 		return "Algorithm type is required"
 	}
-	if containsNullByte(*req.AlgorithmType) {
+	if containsNullByte(*algorithmType) {
 		return "Algorithm type cannot contain null bytes"
+	}
+	switch *algorithmType {
+	case "thompson_sampling", "ucb", "epsilon_greedy":
+	default:
+		return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
+	}
+	if isBandit == nil {
+		return "Bandit flag is required"
+	}
+	return ""
+}
+
+func validateExperimentConfigBounds(minSampleSize int, confidenceThresholdPercent float64, startAt, endAt *time.Time) string {
+	if minSampleSize <= 0 {
+		return "Minimum sample size must be greater than zero"
+	}
+	if minSampleSize > adminExperimentMaxMinSampleSize {
+		return "Minimum sample size must be less than or equal to 2147483647"
+	}
+	if confidenceThresholdPercent <= 0 || confidenceThresholdPercent > 100 {
+		return "Confidence threshold must be between 0 and 100"
+	}
+	if startAt != nil && endAt != nil && endAt.Before(*startAt) {
+		return "End time must be after start time"
+	}
+	return ""
+}
+
+func validateExperimentArmFields(name string, description *string, trafficWeight float64) string {
+	if name == "" {
+		return "Every experiment arm must have a name"
+	}
+	if containsNullByte(name) {
+		return "Experiment arm names cannot contain null bytes"
+	}
+	if containsControlCharacter(name) {
+		return "Experiment arm names cannot contain control characters"
+	}
+	if description == nil {
+		return "Every experiment arm must include a description"
+	}
+	if containsNullByte(*description) {
+		return "Experiment arm descriptions cannot contain null bytes"
+	}
+	if trafficWeight <= 0 {
+		return "Traffic weight must be greater than zero"
+	}
+	return ""
+}
+
+func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) string {
+	if msg := validateExperimentBasicInfo(req.Name, req.Description, req.AlgorithmType, req.IsBandit); msg != "" {
+		return msg
 	}
 	switch req.Status {
 	case "draft", "running", "paused", "completed":
 	default:
 		return "Status must be draft, running, paused, or completed"
 	}
-	if req.MinSampleSize <= 0 {
-		return "Minimum sample size must be greater than zero"
-	}
-	if req.IsBandit == nil {
-		return "Bandit flag is required"
-	}
-	if req.MinSampleSize > adminExperimentMaxMinSampleSize {
-		return "Minimum sample size must be less than or equal to 2147483647"
-	}
-	if req.ConfidenceThresholdPercent <= 0 || req.ConfidenceThresholdPercent > 100 {
-		return "Confidence threshold must be between 0 and 100"
-	}
-	if req.StartAt != nil && req.EndAt != nil && req.EndAt.Before(*req.StartAt) {
-		return "End time must be after start time"
+	if msg := validateExperimentConfigBounds(req.MinSampleSize, req.ConfidenceThresholdPercent, req.StartAt, req.EndAt); msg != "" {
+		return msg
 	}
 	if len(req.Arms) < 2 {
 		return "At least two experiment arms are required"
 	}
 	controlCount := 0
 	for _, arm := range req.Arms {
-		if arm.Name == "" {
-			return "Every experiment arm must have a name"
-		}
-		if containsNullByte(arm.Name) {
-			return "Experiment arm names cannot contain null bytes"
-		}
-		if containsControlCharacter(arm.Name) {
-			return "Experiment arm names cannot contain control characters"
-		}
-		if arm.Description == nil {
-			return "Every experiment arm must include a description"
-		}
-		if containsNullByte(*arm.Description) {
-			return "Experiment arm descriptions cannot contain null bytes"
-		}
-		if arm.TrafficWeight <= 0 {
-			return "Traffic weight must be greater than zero"
+		if msg := validateExperimentArmFields(arm.Name, arm.Description, arm.TrafficWeight); msg != "" {
+			return msg
 		}
 		if arm.IsControl {
 			controlCount++
@@ -698,55 +724,15 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	if controlCount != 1 {
 		return "Exactly one control arm is required"
 	}
-	switch *req.AlgorithmType {
-	case "thompson_sampling", "ucb", "epsilon_greedy":
-	default:
-		return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
-	}
 	return ""
 }
 
 func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) string {
-	if req.Name == "" {
-		return "Experiment name is required"
+	if msg := validateExperimentBasicInfo(req.Name, req.Description, req.AlgorithmType, req.IsBandit); msg != "" {
+		return msg
 	}
-	if containsNullByte(req.Name) {
-		return "Experiment name cannot contain null bytes"
-	}
-	if containsControlCharacter(req.Name) {
-		return "Experiment name cannot contain control characters"
-	}
-	if req.Description == nil {
-		return "Experiment description is required"
-	}
-	if containsNullByte(*req.Description) {
-		return "Experiment description cannot contain null bytes"
-	}
-	if req.AlgorithmType == nil {
-		return "Algorithm type is required"
-	}
-	if containsNullByte(*req.AlgorithmType) {
-		return "Algorithm type cannot contain null bytes"
-	}
-	if req.IsBandit == nil {
-		return "Bandit flag is required"
-	}
-	if req.MinSampleSize <= 0 {
-		return "Minimum sample size must be greater than zero"
-	}
-	if req.MinSampleSize > adminExperimentMaxMinSampleSize {
-		return "Minimum sample size must be less than or equal to 2147483647"
-	}
-	if req.ConfidenceThresholdPercent <= 0 || req.ConfidenceThresholdPercent > 100 {
-		return "Confidence threshold must be between 0 and 100"
-	}
-	if req.StartAt != nil && req.EndAt != nil && req.EndAt.Before(*req.StartAt) {
-		return "End time must be after start time"
-	}
-	switch *req.AlgorithmType {
-	case "thompson_sampling", "ucb", "epsilon_greedy":
-	default:
-		return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
+	if msg := validateExperimentConfigBounds(req.MinSampleSize, req.ConfidenceThresholdPercent, req.StartAt, req.EndAt); msg != "" {
+		return msg
 	}
 	if req.Arms != nil {
 		if len(req.Arms) < 2 {
@@ -755,23 +741,8 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 		controlCount := 0
 		seenIDs := make(map[uuid.UUID]struct{}, len(req.Arms))
 		for _, arm := range req.Arms {
-			if arm.Name == "" {
-				return "Every experiment arm must have a name"
-			}
-			if containsNullByte(arm.Name) {
-				return "Experiment arm names cannot contain null bytes"
-			}
-			if containsControlCharacter(arm.Name) {
-				return "Experiment arm names cannot contain control characters"
-			}
-			if arm.Description == nil {
-				return "Every experiment arm must include a description"
-			}
-			if containsNullByte(*arm.Description) {
-				return "Experiment arm descriptions cannot contain null bytes"
-			}
-			if arm.TrafficWeight <= 0 {
-				return "Traffic weight must be greater than zero"
+			if msg := validateExperimentArmFields(arm.Name, arm.Description, arm.TrafficWeight); msg != "" {
+				return msg
 			}
 			if arm.ID != nil {
 				if _, exists := seenIDs[*arm.ID]; exists {
@@ -825,45 +796,110 @@ func validateUpdateAdminExperimentArmPricingTiersRequest(req updateAdminExperime
 	return ""
 }
 
+type experimentScannedNullables struct {
+	description      sql.NullString
+	algorithmType    sql.NullString
+	winnerConfidence sql.NullFloat64
+	startAt          sql.NullTime
+	endAt            sql.NullTime
+}
+
+type experimentScannedAudit struct {
+	createdAt      sql.NullTime
+	actorType      sql.NullString
+	source         sql.NullString
+	action         sql.NullString
+	fromStatus     sql.NullString
+	toStatus       sql.NullString
+	idempotencyKey sql.NullString
+	detailsJSON    []byte
+}
+
+func hydrateAdminExperimentNullableFields(experiment *AdminExperiment, n experimentScannedNullables) {
+	if n.description.Valid {
+		experiment.Description = n.description.String
+	}
+	if n.algorithmType.Valid {
+		experiment.AlgorithmType = &n.algorithmType.String
+	}
+	if n.winnerConfidence.Valid {
+		value := n.winnerConfidence.Float64 * 100
+		experiment.WinnerConfidencePercent = &value
+	}
+	if n.startAt.Valid {
+		value := n.startAt.Time
+		experiment.StartAt = &value
+	}
+	if n.endAt.Valid {
+		value := n.endAt.Time
+		experiment.EndAt = &value
+	}
+}
+
+func parseAdminExperimentAutomationPolicy(rawJSON []byte) (service.ExperimentAutomationPolicy, error) {
+	policy := service.DefaultExperimentAutomationPolicy()
+	if len(rawJSON) > 0 {
+		var parsed service.ExperimentAutomationPolicy
+		if err := json.Unmarshal(rawJSON, &parsed); err != nil {
+			return policy, err
+		}
+		policy = service.NormalizeExperimentAutomationPolicy(&parsed)
+	}
+	return policy, nil
+}
+
+func parseAdminExperimentLifecycleAudit(a experimentScannedAudit) (*AdminExperimentLifecycleAudit, error) {
+	if !a.createdAt.Valid {
+		return nil, nil
+	}
+	audit := &AdminExperimentLifecycleAudit{
+		ActorType:  a.actorType.String,
+		Source:     a.source.String,
+		Action:     a.action.String,
+		FromStatus: a.fromStatus.String,
+		ToStatus:   a.toStatus.String,
+		CreatedAt:  a.createdAt.Time,
+	}
+	if a.idempotencyKey.Valid {
+		value := a.idempotencyKey.String
+		audit.IdempotencyKey = &value
+	}
+	if len(a.detailsJSON) > 0 {
+		if err := json.Unmarshal(a.detailsJSON, &audit.Details); err != nil {
+			return nil, err
+		}
+	}
+	return audit, nil
+}
+
 func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExperiment, error) {
 	var experiment AdminExperiment
-	var description sql.NullString
-	var algorithmType sql.NullString
-	var winnerConfidence sql.NullFloat64
-	var startAt sql.NullTime
-	var endAt sql.NullTime
+	var n experimentScannedNullables
+	var a experimentScannedAudit
 	var automationPolicyJSON []byte
-	var latestActorType sql.NullString
-	var latestSource sql.NullString
-	var latestAction sql.NullString
-	var latestFromStatus sql.NullString
-	var latestToStatus sql.NullString
-	var latestIdempotencyKey sql.NullString
-	var latestDetailsJSON []byte
-	var latestCreatedAt sql.NullTime
 	var confidenceThreshold float64
 
 	err := scanner.Scan(
 		&experiment.ID,
 		&experiment.Name,
-		&description,
+		&n.description,
 		&experiment.Status,
-		&algorithmType,
+		&n.algorithmType,
 		&experiment.IsBandit,
 		&experiment.MinSampleSize,
 		&confidenceThreshold,
-		&winnerConfidence,
-		&startAt,
-		&endAt,
+		&n.winnerConfidence,
+		&n.startAt,
+		&n.endAt,
 		&automationPolicyJSON,
-		&latestActorType,
-		&latestSource,
-		&latestAction,
-		&latestFromStatus,
-		&latestToStatus,
-		&latestIdempotencyKey,
-		&latestDetailsJSON,
-		&latestCreatedAt,
+		&a.actorType,
+		&a.source,
+		&a.action,
+		&a.fromStatus,
+		&a.toStatus,
+		&a.idempotencyKey,
+		&a.detailsJSON,
+		&a.createdAt,
 		&experiment.CreatedAt,
 		&experiment.UpdatedAt,
 		&experiment.ArmCount,
@@ -877,53 +913,20 @@ func scanAdminExperiment(scanner interface{ Scan(dest ...any) error }) (AdminExp
 		return AdminExperiment{}, err
 	}
 
-	if description.Valid {
-		experiment.Description = description.String
-	}
-	if algorithmType.Valid {
-		experiment.AlgorithmType = &algorithmType.String
-	}
 	experiment.ConfidenceThresholdPercent = confidenceThreshold * 100
-	if winnerConfidence.Valid {
-		value := winnerConfidence.Float64 * 100
-		experiment.WinnerConfidencePercent = &value
+	hydrateAdminExperimentNullableFields(&experiment, n)
+
+	policy, err := parseAdminExperimentAutomationPolicy(automationPolicyJSON)
+	if err != nil {
+		return AdminExperiment{}, err
 	}
-	if startAt.Valid {
-		value := startAt.Time
-		experiment.StartAt = &value
+	experiment.AutomationPolicy = policy
+
+	audit, err := parseAdminExperimentLifecycleAudit(a)
+	if err != nil {
+		return AdminExperiment{}, err
 	}
-	if endAt.Valid {
-		value := endAt.Time
-		experiment.EndAt = &value
-	}
-	experiment.AutomationPolicy = service.DefaultExperimentAutomationPolicy()
-	if len(automationPolicyJSON) > 0 {
-		var policy service.ExperimentAutomationPolicy
-		if err := json.Unmarshal(automationPolicyJSON, &policy); err != nil {
-			return AdminExperiment{}, err
-		}
-		experiment.AutomationPolicy = service.NormalizeExperimentAutomationPolicy(&policy)
-	}
-	if latestCreatedAt.Valid {
-		audit := &AdminExperimentLifecycleAudit{
-			ActorType:  latestActorType.String,
-			Source:     latestSource.String,
-			Action:     latestAction.String,
-			FromStatus: latestFromStatus.String,
-			ToStatus:   latestToStatus.String,
-			CreatedAt:  latestCreatedAt.Time,
-		}
-		if latestIdempotencyKey.Valid {
-			value := latestIdempotencyKey.String
-			audit.IdempotencyKey = &value
-		}
-		if len(latestDetailsJSON) > 0 {
-			if err := json.Unmarshal(latestDetailsJSON, &audit.Details); err != nil {
-				return AdminExperiment{}, err
-			}
-		}
-		experiment.LatestLifecycleAudit = audit
-	}
+	experiment.LatestLifecycleAudit = audit
 
 	return experiment, nil
 }

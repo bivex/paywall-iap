@@ -104,22 +104,30 @@ func (h *AdminPaywallsHandler) GetPaywall(c *gin.Context) {
 	response.OK(c, p)
 }
 
-// CreatePaywall POST /v1/admin/paywalls
-func (h *AdminPaywallsHandler) CreatePaywall(c *gin.Context) {
-	appID := httpmiddleware.GetAppID(c)
-
+func parsePaywallUpsertRequest(c *gin.Context) (*paywallUpsertRequest, bool) {
 	var req paywallUpsertRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid request body")
-		return
+		return nil, false
 	}
 	req.Name = strings.TrimSpace(req.Name)
 	if req.Name == "" {
 		response.BadRequest(c, "name is required")
-		return
+		return nil, false
 	}
 	if req.Definition == nil {
 		req.Definition = json.RawMessage("{}")
+	}
+	return &req, true
+}
+
+// CreatePaywall POST /v1/admin/paywalls
+func (h *AdminPaywallsHandler) CreatePaywall(c *gin.Context) {
+	appID := httpmiddleware.GetAppID(c)
+
+	req, ok := parsePaywallUpsertRequest(c)
+	if !ok {
+		return
 	}
 
 	tx, err := h.pool.Begin(c.Request.Context())
@@ -160,18 +168,9 @@ func (h *AdminPaywallsHandler) UpdatePaywall(c *gin.Context) {
 	appID := httpmiddleware.GetAppID(c)
 	id := c.Param("id")
 
-	var req paywallUpsertRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request body")
+	req, ok := parsePaywallUpsertRequest(c)
+	if !ok {
 		return
-	}
-	req.Name = strings.TrimSpace(req.Name)
-	if req.Name == "" {
-		response.BadRequest(c, "name is required")
-		return
-	}
-	if req.Definition == nil {
-		req.Definition = json.RawMessage("{}")
 	}
 
 	tx, err := h.pool.Begin(c.Request.Context())

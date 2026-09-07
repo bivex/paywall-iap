@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -419,6 +420,28 @@ func (h *BanditAdvancedHandler) GetMetrics(w http.ResponseWriter, r *http.Reques
 	respondJSON(w, http.StatusOK, metrics)
 }
 
+func executeMaintenanceTask(ctx context.Context, engine *service.AdvancedBanditEngine, scope string, olderThanHours int) (any, bool, error) {
+	switch scope {
+	case "full":
+		summary, err := engine.RunMaintenanceDetailed(ctx)
+		return summary, true, err
+	case "cleanup_old_context_data":
+		deleted, err := engine.CleanupOldContextData(ctx, hoursToDuration(olderThanHours))
+		if err != nil {
+			return nil, true, err
+		}
+		return map[string]any{"stale_contexts_deleted": deleted}, true, nil
+	case "cleanup_expired_assignments":
+		deleted, err := engine.CleanupExpiredAssignments(ctx, hoursToDuration(olderThanHours))
+		if err != nil {
+			return nil, true, err
+		}
+		return map[string]any{"expired_assignments_deleted": deleted}, true, nil
+	default:
+		return nil, false, nil
+	}
+}
+
 // RunMaintenance triggers maintenance tasks
 func (h *BanditAdvancedHandler) RunMaintenance(w http.ResponseWriter, r *http.Request) {
 	if h.engine == nil {
@@ -437,32 +460,8 @@ func (h *BanditAdvancedHandler) RunMaintenance(w http.ResponseWriter, r *http.Re
 		scope = "full"
 	}
 
-	var (
-		summary any
-		err     error
-	)
-	switch scope {
-	case "full":
-		summary, err = h.engine.RunMaintenanceDetailed(r.Context())
-	case "cleanup_old_context_data":
-		deleted, cleanupErr := h.engine.CleanupOldContextData(r.Context(), hoursToDuration(req.OlderThanHours))
-		if cleanupErr != nil {
-			err = cleanupErr
-			break
-		}
-		summary = map[string]any{
-			"stale_contexts_deleted": deleted,
-		}
-	case "cleanup_expired_assignments":
-		deleted, cleanupErr := h.engine.CleanupExpiredAssignments(r.Context(), hoursToDuration(req.OlderThanHours))
-		if cleanupErr != nil {
-			err = cleanupErr
-			break
-		}
-		summary = map[string]any{
-			"expired_assignments_deleted": deleted,
-		}
-	default:
+	summary, validScope, err := executeMaintenanceTask(r.Context(), h.engine, scope, req.OlderThanHours)
+	if !validScope {
 		respondError(w, http.StatusBadRequest, "Invalid maintenance scope")
 		return
 	}

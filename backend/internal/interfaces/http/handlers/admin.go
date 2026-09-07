@@ -413,27 +413,7 @@ func (h *AdminHandler) GetAuditLog(c *gin.Context) {
 	})
 }
 
-// SearchUsers returns a filtered, paginated list of users.
-// Query: page, limit, search (email/platform_user_id), platform (ios/android/web), role
-func (h *AdminHandler) SearchUsers(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page < 1 {
-		page = 1
-	}
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	if limit < 1 || limit > 200 {
-		limit = 20
-	}
-	offset := (page - 1) * limit
-
-	search := c.Query("search")
-	platform := c.Query("platform")
-	role := c.Query("role")
-
-	// app_id is always the first bound parameter — mandatory scope filter.
-	appID := appctx.MustAppIDFromCtx(ctx)
+func buildUserSearchFilter(search, platform, role string, appID uuid.UUID) (string, []interface{}) {
 	args := []interface{}{appID}
 	where := []string{"u.app_id = $1"}
 	idx := 2
@@ -454,7 +434,30 @@ func (h *AdminHandler) SearchUsers(c *gin.Context) {
 		idx++
 	}
 
-	whereSQL := "WHERE " + strings.Join(where, " AND ")
+	return "WHERE " + strings.Join(where, " AND "), args
+}
+
+// SearchUsers returns a filtered, paginated list of users.
+// Query: page, limit, search (email/platform_user_id), platform (ios/android/web), role
+func (h *AdminHandler) SearchUsers(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 200 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	search := c.Query("search")
+	platform := c.Query("platform")
+	role := c.Query("role")
+
+	appID := appctx.MustAppIDFromCtx(ctx)
+	whereSQL, args := buildUserSearchFilter(search, platform, role, appID)
 
 	var total int64
 	countQ := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s`, whereSQL)
@@ -463,24 +466,28 @@ func (h *AdminHandler) SearchUsers(c *gin.Context) {
 		return
 	}
 
+	limitIdx := len(args) + 1
+	offsetIdx := len(args) + 2
 	args = append(args, limit, offset)
 	dataQ := fmt.Sprintf(`
 SELECT
 u.id, u.platform_user_id, u.platform, u.email, u.role,
 u.ltv, u.app_version, u.created_at,
 COALESCE(s.status, 'none') AS sub_status,
-COALESCE(s.expires_at::text, '') AS sub_expires_at
+COALESCE(s.plan_type, '') AS plan_type,
+s.expires_at AS sub_expires_at
 FROM users u
 LEFT JOIN LATERAL (
-SELECT status, expires_at FROM subscriptions
-WHERE user_id = u.id
+SELECT status, plan_type, expires_at
+FROM subscriptions
+WHERE user_id = u.id AND deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT 1
 ) s ON true
 %s
 ORDER BY u.created_at DESC
 LIMIT $%d OFFSET $%d
-`, whereSQL, idx, idx+1)
+`, whereSQL, limitIdx, offsetIdx)
 
 	rows, err := h.dbPool.Query(ctx, dataQ, args...)
 	if err != nil {
@@ -582,51 +589,72 @@ func (h *AdminHandler) ForceRenew(c *gin.Context) {
 		req.Reason = "admin_force_renew"
 	}
 
-	sub, err := h.subscriptionRepo.GetActiveByUserID(ctx, userID)
-	if err != nil {
-		// No active sub → try to find latest expired and reactivate
-		var subID uuid.UUID
-		var expiresAt time.Time
-		err2 := h.dbPool.QueryRow(ctx,
-			`SELECT id, expires_at FROM subscriptions WHERE user_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, userID,
-		).Scan(&subID, &expiresAt)
-		if err2 != nil {
-			response.NotFound(c, "No subscription found")
-			return
-		}
-		newExpires := time.Now().UTC().AddDate(0, 0, req.Days)
-		_, err3 := h.dbPool.Exec(ctx,
-			`UPDATE subscriptions SET status='active', expires_at=$1, updated_at=now() WHERE id=$2`,
-			newExpires, subID)
-		if err3 != nil {
-			response.InternalError(c, "Failed to renew subscription")
-			return
-		}
-		adminID, _ := c.Get("admin_id")
-		if aid, ok := adminID.(uuid.UUID); ok {
-			_ = h.auditService.LogAction(ctx, aid, "manual_renewal", "subscription", &userID, map[string]interface{}{
-				"reason": req.Reason, "days": req.Days, "sub_id": subID,
-			})
-		}
-		c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
-		return
+	p := manualRenewalParams{
+		userID: userID,
+		days:   req.Days,
+		reason: req.Reason,
 	}
 
-	// Active sub: extend expires_at
-	newExpires := sub.ExpiresAt.AddDate(0, 0, req.Days)
+	sub, err := h.subscriptionRepo.GetActiveByUserID(ctx, userID)
+	if err != nil {
+		h.reactivateExpiredSubscription(c, p)
+		return
+	}
+	p.subID = sub.ID
+	h.extendActiveSubscription(c, sub, p)
+}
+
+type manualRenewalParams struct {
+	userID uuid.UUID
+	subID  uuid.UUID
+	days   int
+	reason string
+}
+
+func (h *AdminHandler) logManualRenewal(c *gin.Context, p manualRenewalParams) {
+	adminID, _ := c.Get("admin_id")
+	if aid, ok := adminID.(uuid.UUID); ok {
+		_ = h.auditService.LogAction(c.Request.Context(), aid, "manual_renewal", "subscription", &p.userID, map[string]interface{}{
+			"reason": p.reason, "days": p.days, "sub_id": p.subID,
+		})
+	}
+}
+
+func (h *AdminHandler) reactivateExpiredSubscription(c *gin.Context, p manualRenewalParams) {
+	ctx := c.Request.Context()
+	var subID uuid.UUID
+	var expiresAt time.Time
+	err := h.dbPool.QueryRow(ctx,
+		`SELECT id, expires_at FROM subscriptions WHERE user_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`, p.userID,
+	).Scan(&subID, &expiresAt)
+	if err != nil {
+		response.NotFound(c, "No subscription found")
+		return
+	}
+	p.subID = subID
+	newExpires := time.Now().UTC().AddDate(0, 0, p.days)
 	_, err = h.dbPool.Exec(ctx,
+		`UPDATE subscriptions SET status='active', expires_at=$1, updated_at=now() WHERE id=$2`,
+		newExpires, subID)
+	if err != nil {
+		response.InternalError(c, "Failed to renew subscription")
+		return
+	}
+	h.logManualRenewal(c, p)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
+}
+
+func (h *AdminHandler) extendActiveSubscription(c *gin.Context, sub *entity.Subscription, p manualRenewalParams) {
+	ctx := c.Request.Context()
+	newExpires := sub.ExpiresAt.AddDate(0, 0, p.days)
+	_, err := h.dbPool.Exec(ctx,
 		`UPDATE subscriptions SET expires_at=$1, updated_at=now() WHERE id=$2`,
 		newExpires, sub.ID)
 	if err != nil {
 		response.InternalError(c, "Failed to extend subscription")
 		return
 	}
-	adminID, _ := c.Get("admin_id")
-	if aid, ok := adminID.(uuid.UUID); ok {
-		_ = h.auditService.LogAction(ctx, aid, "manual_renewal", "subscription", &userID, map[string]interface{}{
-			"reason": req.Reason, "days": req.Days, "sub_id": sub.ID,
-		})
-	}
+	h.logManualRenewal(c, p)
 	c.JSON(http.StatusOK, gin.H{"ok": true, "new_expires_at": newExpires.Format(time.RFC3339)})
 }
 
@@ -744,21 +772,7 @@ func (h *AdminHandler) GetRevenueOps(c *gin.Context) {
 	c.JSON(200, report)
 }
 
-// ListWebhooks returns paginated, filterable webhook events.
-// GET /admin/webhooks?page=1&limit=20&provider=stripe&status=pending&search=evt_id
-func (h *AdminHandler) ListWebhooks(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page < 1 {
-		page = 1
-	}
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	if limit < 1 || limit > 200 {
-		limit = 20
-	}
-	offset := (page - 1) * limit
-
+func buildWebhookFilter(c *gin.Context) (string, []interface{}) {
 	provider := c.Query("provider")
 	status := c.Query("status") // "pending" | "processed" | "failed"
 	search := c.Query("search")
@@ -799,6 +813,25 @@ func (h *AdminHandler) ListWebhooks(c *gin.Context) {
 	if len(where) > 0 {
 		whereSQL = "WHERE " + strings.Join(where, " AND ")
 	}
+	return whereSQL, args
+}
+
+// ListWebhooks returns paginated, filterable webhook events.
+// GET /admin/webhooks?page=1&limit=20&provider=stripe&status=pending&search=evt_id
+func (h *AdminHandler) ListWebhooks(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 200 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	whereSQL, args := buildWebhookFilter(c)
 
 	type Summary struct {
 		Total     int64 `json:"total"`
@@ -817,13 +850,15 @@ func (h *AdminHandler) ListWebhooks(c *gin.Context) {
 		return
 	}
 
+	limitIdx := len(args) + 1
+	offsetIdx := len(args) + 2
 	dataArgs := append(args, limit, offset)
 	dataQ := fmt.Sprintf(`
 		SELECT id, provider, event_type, COALESCE(event_id,''), processed_at, created_at
 		FROM webhook_events
 		%s
 		ORDER BY created_at DESC
-		LIMIT $%d OFFSET $%d`, whereSQL, idx, idx+1)
+		LIMIT $%d OFFSET $%d`, whereSQL, limitIdx, offsetIdx)
 
 	rows, err := h.dbPool.Query(ctx, dataQ, dataArgs...)
 	if err != nil {
@@ -1007,21 +1042,7 @@ func (h *AdminHandler) GetSubscriptionDetail(c *gin.Context) {
 }
 
 // ListSubscriptions returns a paginated, filterable list of all subscriptions.
-// GET /admin/subscriptions?page=1&limit=20&status=active&source=iap&platform=ios&plan_type=monthly&search=email&date_from=2024-01-01&date_to=2024-12-31
-func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
-	ctx := c.Request.Context()
-	appID := httpmiddleware.GetAppID(c)
-
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page < 1 {
-		page = 1
-	}
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	if limit < 1 || limit > 200 {
-		limit = 20
-	}
-	offset := (page - 1) * limit
-
+func buildSubscriptionFilter(c *gin.Context, appID uuid.UUID) (string, []interface{}) {
 	status := c.Query("status")
 	source := c.Query("source")
 	platform := c.Query("platform")
@@ -1030,7 +1051,6 @@ func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
 	dateFrom := c.Query("date_from")
 	dateTo := c.Query("date_to")
 
-	// app_id is always the first bound parameter — mandatory scope filter.
 	args := []interface{}{appID}
 	where := []string{"s.app_id = $1", "s.deleted_at IS NULL"}
 	idx := 2
@@ -1071,7 +1091,25 @@ func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
 		idx++
 	}
 
-	whereSQL := "WHERE " + strings.Join(where, " AND ")
+	return "WHERE " + strings.Join(where, " AND "), args
+}
+
+// GET /admin/subscriptions?page=1&limit=20&status=active&source=iap&platform=ios&plan_type=monthly&search=email&date_from=2024-01-01&date_to=2024-12-31
+func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
+	ctx := c.Request.Context()
+	appID := httpmiddleware.GetAppID(c)
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 200 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	whereSQL, args := buildSubscriptionFilter(c, appID)
 
 	var total int64
 	countQ := fmt.Sprintf(
@@ -1083,6 +1121,8 @@ func (h *AdminHandler) ListSubscriptions(c *gin.Context) {
 		return
 	}
 
+	limitIdx := len(args) + 1
+	offsetIdx := len(args) + 2
 	args = append(args, limit, offset)
 	dataQ := fmt.Sprintf(`
 SELECT
@@ -1095,7 +1135,7 @@ JOIN users u ON u.id = s.user_id
 %s
 ORDER BY s.created_at DESC
 LIMIT $%d OFFSET $%d
-`, whereSQL, idx, idx+1)
+`, whereSQL, limitIdx, offsetIdx)
 
 	rows, err := h.dbPool.Query(ctx, dataQ, args...)
 	if err != nil {
@@ -1234,20 +1274,7 @@ func (h *AdminHandler) GetTransactionDetail(c *gin.Context) {
 	c.JSON(200, d)
 }
 
-// GET /admin/transactions?page=1&limit=20&status=success&source=iap&platform=ios&search=email&date_from=2024-01-01&date_to=2024-12-31
-func (h *AdminHandler) ListTransactions(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if page < 1 {
-		page = 1
-	}
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	if limit < 1 || limit > 200 {
-		limit = 20
-	}
-	offset := (page - 1) * limit
-
+func buildTransactionFilter(c *gin.Context, appID uuid.UUID) (string, []interface{}) {
 	status := c.Query("status")
 	source := c.Query("source")
 	platform := c.Query("platform")
@@ -1255,7 +1282,6 @@ func (h *AdminHandler) ListTransactions(c *gin.Context) {
 	dateFrom := c.Query("date_from")
 	dateTo := c.Query("date_to")
 
-	appID := httpmiddleware.GetAppID(c)
 	args := []interface{}{appID}
 	where := []string{"t.app_id = $1"}
 	idx := 2
@@ -1291,7 +1317,25 @@ func (h *AdminHandler) ListTransactions(c *gin.Context) {
 		idx++
 	}
 
-	whereSQL := "WHERE " + strings.Join(where, " AND ")
+	return "WHERE " + strings.Join(where, " AND "), args
+}
+
+// GET /admin/transactions?page=1&limit=20&status=success&source=iap&platform=ios&search=email&date_from=2024-01-01&date_to=2024-12-31
+func (h *AdminHandler) ListTransactions(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 || limit > 200 {
+		limit = 20
+	}
+	offset := (page - 1) * limit
+
+	appID := httpmiddleware.GetAppID(c)
+	whereSQL, args := buildTransactionFilter(c, appID)
 
 	baseQ := fmt.Sprintf(`
 FROM transactions t
@@ -1326,6 +1370,8 @@ COALESCE(SUM(t.amount) FILTER (WHERE t.status = 'refunded'), 0)
 		return
 	}
 
+	limitIdx := len(args) + 1
+	offsetIdx := len(args) + 2
 	args = append(args, limit, offset)
 	dataQ := fmt.Sprintf(`
 SELECT
@@ -1338,7 +1384,7 @@ s.source, s.platform, s.plan_type,
 s.id AS subscription_id
 %s
 ORDER BY t.created_at DESC
-LIMIT $%d OFFSET $%d`, baseQ, idx, idx+1)
+LIMIT $%d OFFSET $%d`, baseQ, limitIdx, offsetIdx)
 
 	rows, err := h.dbPool.Query(ctx, dataQ, args...)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/bivex/paywall-iap/internal/domain/entity"
 	domainRepo "github.com/bivex/paywall-iap/internal/domain/repository"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
@@ -127,6 +128,24 @@ func (h *AppsHandler) CreateApp(c *gin.Context) {
 	})
 }
 
+func applyAppUpdates(app *entity.App, req updateAppRequest) {
+	if req.Name != nil {
+		app.Name = *req.Name
+	}
+	if req.DisplayName != nil {
+		app.DisplayName = *req.DisplayName
+	}
+	if req.BundleID != nil {
+		app.BundleID = *req.BundleID
+	}
+	if req.Platform != nil {
+		app.Platform = *req.Platform
+	}
+	if req.IsActive != nil {
+		app.IsActive = *req.IsActive
+	}
+}
+
 // UpdateApp PUT /v1/admin/apps/:id
 func (h *AppsHandler) UpdateApp(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
@@ -144,21 +163,7 @@ func (h *AppsHandler) UpdateApp(c *gin.Context) {
 		response.NotFound(c, "app not found")
 		return
 	}
-	if req.Name != nil {
-		app.Name = *req.Name
-	}
-	if req.DisplayName != nil {
-		app.DisplayName = *req.DisplayName
-	}
-	if req.BundleID != nil {
-		app.BundleID = *req.BundleID
-	}
-	if req.Platform != nil {
-		app.Platform = *req.Platform
-	}
-	if req.IsActive != nil {
-		app.IsActive = *req.IsActive
-	}
+	applyAppUpdates(app, req)
 	if err := h.appRepo.Update(c.Request.Context(), app); err != nil {
 		response.InternalError(c, "failed to update app")
 		return
