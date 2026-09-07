@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { apiFetch } from "@/lib/api-fetch";
 import type { BanditArmStatistics } from "@/lib/bandit";
 import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
 import type {
@@ -26,7 +27,6 @@ import type {
   ObjectiveEndpointProbe,
   ObjectiveType,
 } from "@/lib/multi-objective";
-import { apiFetch } from "@/lib/api-fetch";
 import { useAppStore } from "@/stores/app-store";
 
 const DEFAULT_OBJECTIVE_TYPE: ObjectiveType = "conversion";
@@ -193,7 +193,7 @@ export function MultiObjectivePageClient({
         setIsBootstrapping(false);
       }
     });
-  }, [isBootstrapping, selectedAppId]);
+  }, [isBootstrapping]);
 
   useEffect(() => {
     setObjectiveType(snapshot?.currentConfig?.objectiveType ?? DEFAULT_OBJECTIVE_TYPE);

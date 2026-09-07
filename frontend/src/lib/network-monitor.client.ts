@@ -26,12 +26,7 @@ export function installNetworkMonitor(): void {
   const _origFetch = window.fetch.bind(window);
 
   window.fetch = async (input, init) => {
-    const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : (input as Request).url;
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : (input as Request).url;
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
 
     try {

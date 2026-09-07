@@ -14,22 +14,26 @@
  */
 
 import { Suspense } from "react";
+
 import Link from "next/link";
+
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+
+import type { SubscriptionsParams } from "@/actions/subscriptions";
+import { getSubscriptions } from "@/actions/subscriptions";
+import { RetryError } from "@/components/retry-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SortHeader } from "@/components/ui/sort-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { getSubscriptions } from "@/actions/subscriptions";
-import type { SubscriptionsParams } from "@/actions/subscriptions";
-import { RetryError } from "@/components/retry-error";
 import { isFetchError } from "@/lib/server-fetch";
-import { formatSource, formatPlanType } from "@/lib/subscriptions/format";
+import { formatPlanType, formatSource } from "@/lib/subscriptions/format";
+
 import { SubscriptionDetailSheet } from "./_components/subscription-detail-sheet";
 import { SubscriptionRow as SubRow } from "./_components/subscription-row";
 import { SubscriptionsFilters } from "./_components/subscriptions-filters";
-import { SortHeader } from "@/components/ui/sort-header";
 
 const statusClassMap: Record<string, string> = {
   active: "bg-green-100 text-green-800",
@@ -45,10 +49,7 @@ interface Props {
 }
 
 export default async function SubscriptionsPage({ searchParams }: Props) {
-  const [t, sp] = await Promise.all([
-    getTranslations("subscriptions"),
-    searchParams,
-  ]);
+  const [t, sp] = await Promise.all([getTranslations("subscriptions"), searchParams]);
 
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const sort = sp.sort ?? "date_desc"; // default: newest first
@@ -163,10 +164,26 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
               </p>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
-                  {page > 1 ? <Link href={buildPageUrl(1)}><ChevronsLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronsLeft className="h-3.5 w-3.5" /></span>}
+                  {page > 1 ? (
+                    <Link href={buildPageUrl(1)}>
+                      <ChevronsLeft className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : (
+                    <span>
+                      <ChevronsLeft className="h-3.5 w-3.5" />
+                    </span>
+                  )}
                 </Button>
                 <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} asChild={page > 1}>
-                  {page > 1 ? <Link href={buildPageUrl(page - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Link> : <span><ChevronLeft className="h-3.5 w-3.5" /></span>}
+                  {page > 1 ? (
+                    <Link href={buildPageUrl(page - 1)}>
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : (
+                    <span>
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </span>
+                  )}
                 </Button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   let p: number;
@@ -175,16 +192,50 @@ export default async function SubscriptionsPage({ searchParams }: Props) {
                   else if (page >= totalPages - 2) p = totalPages - 4 + i;
                   else p = page - 2 + i;
                   return (
-                    <Button key={p} variant={p === page ? "default" : "outline"} size="icon" className="h-7 w-7 text-xs" asChild={p !== page}>
+                    <Button
+                      key={p}
+                      variant={p === page ? "default" : "outline"}
+                      size="icon"
+                      className="h-7 w-7 text-xs"
+                      asChild={p !== page}
+                    >
                       {p !== page ? <Link href={buildPageUrl(p)}>{p}</Link> : <span>{p}</span>}
                     </Button>
                   );
                 })}
-                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
-                  {page < totalPages ? <Link href={buildPageUrl(page + 1)}><ChevronRight className="h-3.5 w-3.5" /></Link> : <span><ChevronRight className="h-3.5 w-3.5" /></span>}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={page >= totalPages}
+                  asChild={page < totalPages}
+                >
+                  {page < totalPages ? (
+                    <Link href={buildPageUrl(page + 1)}>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : (
+                    <span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </span>
+                  )}
                 </Button>
-                <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} asChild={page < totalPages}>
-                  {page < totalPages ? <Link href={buildPageUrl(totalPages)}><ChevronsRight className="h-3.5 w-3.5" /></Link> : <span><ChevronsRight className="h-3.5 w-3.5" /></span>}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={page >= totalPages}
+                  asChild={page < totalPages}
+                >
+                  {page < totalPages ? (
+                    <Link href={buildPageUrl(totalPages)}>
+                      <ChevronsRight className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : (
+                    <span>
+                      <ChevronsRight className="h-3.5 w-3.5" />
+                    </span>
+                  )}
                 </Button>
               </div>
             </div>

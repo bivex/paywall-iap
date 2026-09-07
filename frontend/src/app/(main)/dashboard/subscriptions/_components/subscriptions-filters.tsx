@@ -15,8 +15,9 @@
 
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useTransition, useCallback } from "react";
+import { useCallback, useTransition } from "react";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,10 +75,7 @@ export function SubscriptionsFilters() {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Select
-        value={searchParams.get("status") ?? "all"}
-        onValueChange={(v) => updateParam("status", v)}
-      >
+      <Select value={searchParams.get("status") ?? "all"} onValueChange={(v) => updateParam("status", v)}>
         <SelectTrigger className="w-40">
           <SelectValue placeholder="Status: All" />
         </SelectTrigger>
@@ -103,10 +101,7 @@ export function SubscriptionsFilters() {
         </SelectContent>
       </Select>
 
-      <Select
-        value={searchParams.get("plan_type") ?? "all"}
-        onValueChange={(v) => updateParam("plan_type", v)}
-      >
+      <Select value={searchParams.get("plan_type") ?? "all"} onValueChange={(v) => updateParam("plan_type", v)}>
         <SelectTrigger className="w-36">
           <SelectValue placeholder="Plan: All" />
         </SelectTrigger>
@@ -145,11 +140,7 @@ export function SubscriptionsFilters() {
       />
 
       {Array.from(searchParams.keys()).length > 0 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => startTransition(() => router.push(pathname))}
-        >
+        <Button variant="ghost" size="sm" onClick={() => startTransition(() => router.push(pathname))}>
           Clear
         </Button>
       )}

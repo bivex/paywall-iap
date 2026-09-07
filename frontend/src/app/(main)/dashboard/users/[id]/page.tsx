@@ -1,36 +1,45 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+import { getUserProfile } from "@/actions/user-profile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getUserProfile } from "@/actions/user-profile";
+
 import { UserActionBar } from "./_components/user-action-bar";
 
 const subStatusMeta: Record<string, { label: string; className: string }> = {
-  active:    { label: "Active",     className: "bg-emerald-100 text-emerald-800" },
-  grace:     { label: "Grace",      className: "bg-yellow-100 text-yellow-800" },
-  dunning:   { label: "Dunning",    className: "bg-orange-100 text-orange-800" },
-  expired:   { label: "Expired",    className: "bg-red-100 text-red-800" },
-  cancelled: { label: "Cancelled",  className: "bg-gray-100 text-gray-600" },
+  active: { label: "Active", className: "bg-emerald-100 text-emerald-800" },
+  grace: { label: "Grace", className: "bg-yellow-100 text-yellow-800" },
+  dunning: { label: "Dunning", className: "bg-orange-100 text-orange-800" },
+  expired: { label: "Expired", className: "bg-red-100 text-red-800" },
+  cancelled: { label: "Cancelled", className: "bg-gray-100 text-gray-600" },
 };
 
 const txStatusMeta: Record<string, { label: string; className: string }> = {
-  success:  { label: "✅ Success",  className: "bg-emerald-100 text-emerald-800" },
-  failed:   { label: "❌ Failed",   className: "bg-red-100 text-red-800" },
+  success: { label: "✅ Success", className: "bg-emerald-100 text-emerald-800" },
+  failed: { label: "❌ Failed", className: "bg-red-100 text-red-800" },
   refunded: { label: "↩ Refunded", className: "bg-blue-100 text-blue-800" },
 };
 
 const dunStatusMeta: Record<string, { label: string; className: string }> = {
-  pending:     { label: "Pending",     className: "bg-yellow-100 text-yellow-800" },
+  pending: { label: "Pending", className: "bg-yellow-100 text-yellow-800" },
   in_progress: { label: "In Progress", className: "bg-orange-100 text-orange-800" },
-  recovered:   { label: "Recovered",   className: "bg-emerald-100 text-emerald-800" },
-  failed:      { label: "Failed",      className: "bg-red-100 text-red-800" },
+  recovered: { label: "Recovered", className: "bg-emerald-100 text-emerald-800" },
+  failed: { label: "Failed", className: "bg-red-100 text-red-800" },
 };
 
 function fmt(iso: string) {
-  return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -49,7 +58,9 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     <div className="flex flex-col gap-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm">
-        <Link href="/dashboard/users" className="text-muted-foreground hover:text-foreground">← Users</Link>
+        <Link href="/dashboard/users" className="text-muted-foreground hover:text-foreground">
+          ← Users
+        </Link>
         <span className="text-muted-foreground">/</span>
         <span className="font-medium">{user.email}</span>
       </div>
@@ -57,7 +68,9 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
       {/* Identity + Stats */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="text-sm">Identity</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-sm">Identity</CardTitle>
+          </CardHeader>
           <CardContent className="grid grid-cols-2 gap-y-2 text-sm">
             <span className="text-muted-foreground">Email</span>
             <span className="font-medium">{user.email}</span>
@@ -66,11 +79,15 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
             <span className="text-muted-foreground">Device ID</span>
             <span className="font-mono text-xs">{user.device_id ?? "—"}</span>
             <span className="text-muted-foreground">Platform</span>
-            <span><Badge variant="outline">{user.platform}</Badge></span>
+            <span>
+              <Badge variant="outline">{user.platform}</Badge>
+            </span>
             <span className="text-muted-foreground">App Version</span>
             <span>{user.app_version}</span>
             <span className="text-muted-foreground">Role</span>
-            <span><Badge variant="outline">{user.role}</Badge></span>
+            <span>
+              <Badge variant="outline">{user.role}</Badge>
+            </span>
             <span className="text-muted-foreground">Joined</span>
             <span>{fmtDate(user.created_at)}</span>
             <span className="text-muted-foreground">User ID</span>
@@ -136,18 +153,30 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                 </TableHeader>
                 <TableBody>
                   {subscriptions.length === 0 ? (
-                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No subscriptions.</TableCell></TableRow>
-                  ) : subscriptions.map((s) => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-mono text-xs">{s.product_id}</TableCell>
-                      <TableCell><Badge variant="outline">{s.plan_type}</Badge></TableCell>
-                      <TableCell className="text-sm">{s.source}</TableCell>
-                      <TableCell><Badge className={subStatusMeta[s.status]?.className ?? ""}>{subStatusMeta[s.status]?.label ?? s.status}</Badge></TableCell>
-                      <TableCell>{s.auto_renew ? "✅" : "❌"}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{fmtDate(s.expires_at)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{fmtDate(s.created_at)}</TableCell>
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No subscriptions.
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    subscriptions.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-mono text-xs">{s.product_id}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{s.plan_type}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{s.source}</TableCell>
+                        <TableCell>
+                          <Badge className={subStatusMeta[s.status]?.className ?? ""}>
+                            {subStatusMeta[s.status]?.label ?? s.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{s.auto_renew ? "✅" : "❌"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{fmtDate(s.expires_at)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{fmtDate(s.created_at)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -166,26 +195,41 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                     <TableHead>Currency</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Provider TX ID</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No transactions.</TableCell></TableRow>
-                  ) : transactions.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(t.date)}</TableCell>
-                      <TableCell className="text-right font-mono font-medium">${t.amount.toFixed(2)}</TableCell>
-                      <TableCell className="text-sm">{t.currency}</TableCell>
-                      <TableCell><Badge className={txStatusMeta[t.status]?.className ?? ""}>{txStatusMeta[t.status]?.label ?? t.status}</Badge></TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{t.provider_tx_id ?? "—"}</TableCell>
-                      <TableCell>
-                        <Link href={`/dashboard/transactions?id=${t.id}`} className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">
-                          View
-                        </Link>
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        No transactions.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    transactions.map((t) => (
+                      <TableRow key={t.id}>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(t.date)}</TableCell>
+                        <TableCell className="text-right font-mono font-medium">${t.amount.toFixed(2)}</TableCell>
+                        <TableCell className="text-sm">{t.currency}</TableCell>
+                        <TableCell>
+                          <Badge className={txStatusMeta[t.status]?.className ?? ""}>
+                            {txStatusMeta[t.status]?.label ?? t.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">
+                          {t.provider_tx_id ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            href={`/dashboard/transactions?id=${t.id}`}
+                            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+                          >
+                            View
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -207,15 +251,29 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                 </TableHeader>
                 <TableBody>
                   {dunning.length === 0 ? (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No dunning records.</TableCell></TableRow>
-                  ) : dunning.map((d, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Badge className={dunStatusMeta[d.status]?.className ?? ""}>{dunStatusMeta[d.status]?.label ?? d.status}</Badge></TableCell>
-                      <TableCell>{d.attempt_count} / {d.max_attempts}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{d.next_attempt_at ? fmt(d.next_attempt_at) : "—"}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{fmtDate(d.created_at)}</TableCell>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No dunning records.
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    dunning.map((d, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <Badge className={dunStatusMeta[d.status]?.className ?? ""}>
+                            {dunStatusMeta[d.status]?.label ?? d.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {d.attempt_count} / {d.max_attempts}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {d.next_attempt_at ? fmt(d.next_attempt_at) : "—"}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{fmtDate(d.created_at)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -237,15 +295,25 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                 </TableHeader>
                 <TableBody>
                   {audit_log.length === 0 ? (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">No admin actions recorded.</TableCell></TableRow>
-                  ) : audit_log.map((a, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(a.date)}</TableCell>
-                      <TableCell><Badge variant="outline">{a.action}</Badge></TableCell>
-                      <TableCell className="text-sm">{a.admin_email}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={a.detail}>{a.detail || "—"}</TableCell>
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No admin actions recorded.
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    audit_log.map((a, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(a.date)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{a.action}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{a.admin_email}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={a.detail}>
+                          {a.detail || "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -258,4 +326,3 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     </div>
   );
 }
-

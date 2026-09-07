@@ -1,15 +1,11 @@
 "use client";
 
 import * as React from "react";
+
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import type { MonthlyMRR } from "@/actions/dashboard";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   type ChartConfig,
   ChartContainer,
@@ -18,14 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type { MonthlyMRR } from "@/actions/dashboard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MrrTrendChartProps {
   data: MonthlyMRR[];
@@ -59,15 +48,16 @@ export function MrrTrendChart({ data, activeSubs }: MrrTrendChartProps) {
           <CardDescription>Last 6 months</CardDescription>
         </div>
         <Select value={metric} onValueChange={(v) => setMetric(v as "mrr" | "subs")}>
-          <SelectTrigger
-            className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
-            aria-label="Select metric"
-          >
+          <SelectTrigger className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex" aria-label="Select metric">
             <SelectValue placeholder="MRR (USD)" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="mrr" className="rounded-lg">MRR (USD)</SelectItem>
-            <SelectItem value="subs" className="rounded-lg">Active Subs</SelectItem>
+            <SelectItem value="mrr" className="rounded-lg">
+              MRR (USD)
+            </SelectItem>
+            <SelectItem value="subs" className="rounded-lg">
+              Active Subs
+            </SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>

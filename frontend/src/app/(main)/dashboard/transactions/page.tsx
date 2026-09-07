@@ -1,42 +1,61 @@
 import { Suspense } from "react";
+
 import Link from "next/link";
+
+import {
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  DollarSign,
+  RefreshCw,
+  TrendingDown,
+  TrendingUp,
+  XCircle,
+} from "lucide-react";
+
+import type { TransactionSummary, TransactionsParams } from "@/actions/transactions";
+import { getTransactions } from "@/actions/transactions";
+import { RetryError } from "@/components/retry-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SortHeader } from "@/components/ui/sort-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  CheckCircle, XCircle, RefreshCw,
-  DollarSign, TrendingUp, TrendingDown,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-} from "lucide-react";
-import { getTransactions } from "@/actions/transactions";
-import type { TransactionsParams, TransactionSummary } from "@/actions/transactions";
-import { RetryError } from "@/components/retry-error";
 import { isFetchError } from "@/lib/server-fetch";
 import { formatSource } from "@/lib/subscriptions/format";
-import { TransactionsFilters } from "./_components/transactions-filters";
+
 import { CopyTxId } from "./_components/copy-tx-id";
-import { TxRow } from "./_components/tx-row";
 import { TransactionDetailSheet } from "./_components/transaction-detail-sheet";
-import { SortHeader } from "@/components/ui/sort-header";
+import { TransactionsFilters } from "./_components/transactions-filters";
+import { TxRow } from "./_components/tx-row";
 
 const PAGE_SIZE = 20;
 
 const STATUS_STYLE: Record<string, string> = {
-  success:  "bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20",
-  failed:   "bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20",
+  success: "bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20",
+  failed: "bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20",
   refunded: "bg-slate-500/10 text-slate-500 hover:bg-slate-500/20 border-slate-500/20",
 };
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
 function KPICard({
-  title, value, icon: Icon, iconColor, bgColor, sub,
+  title,
+  value,
+  icon: Icon,
+  iconColor,
+  bgColor,
+  sub,
 }: {
   title: string;
   value: string | number;
@@ -118,9 +137,14 @@ export default async function TransactionsPage({ searchParams }: Props) {
   const sort = sp.sort ?? "date_desc"; // default: newest first
 
   const params: TransactionsParams = {
-    page, limit: PAGE_SIZE,
-    status: sp.status, source: sp.source, platform: sp.platform,
-    search: sp.search, date_from: sp.date_from, date_to: sp.date_to,
+    page,
+    limit: PAGE_SIZE,
+    status: sp.status,
+    source: sp.source,
+    platform: sp.platform,
+    search: sp.search,
+    date_from: sp.date_from,
+    date_to: sp.date_to,
   };
 
   const data = await getTransactions(params);
@@ -166,13 +190,7 @@ export default async function TransactionsPage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       {/* Auto-open sheet when ?id= is in URL (e.g. from user profile "View" link) */}
-      {sp.id && (
-        <TransactionDetailSheet
-          transactionId={sp.id}
-          initialOpen
-          trigger={<span className="hidden" />}
-        />
-      )}
+      {sp.id && <TransactionDetailSheet transactionId={sp.id} initialOpen trigger={<span className="hidden" />} />}
 
       {/* Header */}
       <div>
@@ -227,7 +245,9 @@ export default async function TransactionsPage({ searchParams }: Props) {
                     <TableCell className="text-muted-foreground whitespace-nowrap">{fmt(tx.created_at)}</TableCell>
                     <TableCell className="font-medium">{tx.email || tx.user_id.slice(0, 8) + "…"}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="font-medium">{formatSource(tx.source, tx.platform)}</Badge>
+                      <Badge variant="outline" className="font-medium">
+                        {formatSource(tx.source, tx.platform)}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground capitalize">{tx.plan_type}</TableCell>
                     <TableCell className="text-right font-semibold">
@@ -244,7 +264,11 @@ export default async function TransactionsPage({ searchParams }: Props) {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {tx.provider_tx_id ? <CopyTxId txId={tx.provider_tx_id} /> : <span className="text-muted-foreground">—</span>}
+                      {tx.provider_tx_id ? (
+                        <CopyTxId txId={tx.provider_tx_id} />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                   </TxRow>
                 ))
@@ -256,19 +280,39 @@ export default async function TransactionsPage({ searchParams }: Props) {
         {/* Pagination */}
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-muted-foreground">
-            {total > 0
-              ? <>Showing <span className="font-medium text-foreground">{(page - 1) * PAGE_SIZE + 1}</span> to{" "}
-                  <span className="font-medium text-foreground">{Math.min(page * PAGE_SIZE, total)}</span> of{" "}
-                  <span className="font-medium text-foreground">{total}</span> transactions</>
-              : "No transactions found"}
+            {total > 0 ? (
+              <>
+                Showing <span className="font-medium text-foreground">{(page - 1) * PAGE_SIZE + 1}</span> to{" "}
+                <span className="font-medium text-foreground">{Math.min(page * PAGE_SIZE, total)}</span> of{" "}
+                <span className="font-medium text-foreground">{total}</span> transactions
+              </>
+            ) : (
+              "No transactions found"
+            )}
           </p>
           {totalPages > 1 && (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" disabled={page <= 1} asChild={page > 1}>
-                {page > 1 ? <Link href={buildPageUrl(1)}><ChevronsLeft className="h-4 w-4" /></Link> : <span><ChevronsLeft className="h-4 w-4" /></span>}
+                {page > 1 ? (
+                  <Link href={buildPageUrl(1)}>
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span>
+                    <ChevronsLeft className="h-4 w-4" />
+                  </span>
+                )}
               </Button>
               <Button variant="outline" size="icon" disabled={page <= 1} asChild={page > 1}>
-                {page > 1 ? <Link href={buildPageUrl(page - 1)}><ChevronLeft className="h-4 w-4" /></Link> : <span><ChevronLeft className="h-4 w-4" /></span>}
+                {page > 1 ? (
+                  <Link href={buildPageUrl(page - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </span>
+                )}
               </Button>
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                 let p: number;
@@ -283,10 +327,26 @@ export default async function TransactionsPage({ searchParams }: Props) {
                 );
               })}
               <Button variant="outline" size="icon" disabled={page >= totalPages} asChild={page < totalPages}>
-                {page < totalPages ? <Link href={buildPageUrl(page + 1)}><ChevronRight className="h-4 w-4" /></Link> : <span><ChevronRight className="h-4 w-4" /></span>}
+                {page < totalPages ? (
+                  <Link href={buildPageUrl(page + 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span>
+                    <ChevronRight className="h-4 w-4" />
+                  </span>
+                )}
               </Button>
               <Button variant="outline" size="icon" disabled={page >= totalPages} asChild={page < totalPages}>
-                {page < totalPages ? <Link href={buildPageUrl(totalPages)}><ChevronsRight className="h-4 w-4" /></Link> : <span><ChevronsRight className="h-4 w-4" /></span>}
+                {page < totalPages ? (
+                  <Link href={buildPageUrl(totalPages)}>
+                    <ChevronsRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <span>
+                    <ChevronsRight className="h-4 w-4" />
+                  </span>
+                )}
               </Button>
             </div>
           )}

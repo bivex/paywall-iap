@@ -1,9 +1,6 @@
-import { describe, it, expect } from "vitest";
-import {
-  parsePaywallDefinition,
-  stringifyPaywallDefinition,
-  DEFAULT_PAYWALL_TEMPLATE,
-} from "@/lib/paywall-schema";
+import { describe, expect, it } from "vitest";
+
+import { DEFAULT_PAYWALL_TEMPLATE, parsePaywallDefinition, stringifyPaywallDefinition } from "@/lib/paywall-schema";
 
 describe("parsePaywallDefinition", () => {
   it("parses valid paywall JSON", () => {

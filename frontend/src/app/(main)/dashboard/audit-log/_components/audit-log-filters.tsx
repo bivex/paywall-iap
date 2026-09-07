@@ -1,10 +1,12 @@
 "use client";
 
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 
 const ACTION_OPTIONS = [
   { value: "all", label: "All Actions" },
@@ -22,6 +24,7 @@ export function AuditLogFilters() {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const update = useCallback(
     (key: string, value: string) => {
@@ -34,7 +37,7 @@ export function AuditLogFilters() {
       params.delete("page");
       router.push(`${pathname}?${params.toString()}`);
     },
-    [router, pathname, sp]
+    [router, pathname, sp],
   );
 
   return (
@@ -44,8 +47,10 @@ export function AuditLogFilters() {
         className="w-52"
         defaultValue={sp.get("search") ?? ""}
         onChange={(e) => {
-          clearTimeout((window as any)._auditSearchTimer);
-          (window as any)._auditSearchTimer = setTimeout(() => update("search", e.target.value), 400);
+          if (searchTimerRef.current) {
+            clearTimeout(searchTimerRef.current);
+          }
+          searchTimerRef.current = setTimeout(() => update("search", e.target.value), 400);
         }}
       />
       <Select value={sp.get("action") ?? "all"} onValueChange={(v) => update("action", v)}>
@@ -54,7 +59,9 @@ export function AuditLogFilters() {
         </SelectTrigger>
         <SelectContent>
           {ACTION_OPTIONS.map((o) => (
-            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -62,17 +69,13 @@ export function AuditLogFilters() {
         type="date"
         className="w-40"
         defaultValue={sp.get("from") ?? ""}
-        onChange={(e) =>
-          update("from", e.target.value ? new Date(e.target.value).toISOString() : "")
-        }
+        onChange={(e) => update("from", e.target.value ? new Date(e.target.value).toISOString() : "")}
       />
       <Input
         type="date"
         className="w-40"
         defaultValue={sp.get("to") ?? ""}
-        onChange={(e) =>
-          update("to", e.target.value ? new Date(e.target.value + "T23:59:59Z").toISOString() : "")
-        }
+        onChange={(e) => update("to", e.target.value ? new Date(e.target.value + "T23:59:59Z").toISOString() : "")}
       />
       {(sp.get("search") || sp.get("action") || sp.get("from") || sp.get("to")) && (
         <Button variant="ghost" size="sm" onClick={() => router.push(pathname)}>

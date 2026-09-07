@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check } from "lucide-react";
+
+import { Check, Copy } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
 export function CopyTxId({ txId }: { txId: string }) {
   const [copied, setCopied] = useState(false);
 
-  const truncate = (id: string) =>
-    id.length <= 20 ? id : `${id.slice(0, 10)}...${id.slice(-6)}`;
+  const truncate = (id: string) => (id.length <= 20 ? id : `${id.slice(0, 10)}...${id.slice(-6)}`);
 
   return (
     <div className="flex items-center gap-2">

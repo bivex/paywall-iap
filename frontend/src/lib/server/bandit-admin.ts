@@ -59,7 +59,9 @@ function appIdHeaders(appId: string | null): Record<string, string> {
   return appId ? { "X-App-ID": appId } : {};
 }
 
-export async function getBanditExperimentsFromCookies(appId: string | null = null): Promise<ExperimentSummary[] | null> {
+export async function getBanditExperimentsFromCookies(
+  appId: string | null = null,
+): Promise<ExperimentSummary[] | null> {
   const [token, resolvedAppId] = await Promise.all([getAdminToken(), getAppId(appId)]);
   if (!token) return null;
 
@@ -76,7 +78,10 @@ export async function getBanditExperimentsFromCookies(appId: string | null = nul
   }
 }
 
-export async function getBanditSnapshotFromCookies(experimentId: string, appId: string | null = null): Promise<BanditSnapshot | null> {
+export async function getBanditSnapshotFromCookies(
+  experimentId: string,
+  appId: string | null = null,
+): Promise<BanditSnapshot | null> {
   const resolvedAppId = await getAppId(appId);
   const experiments = await getBanditExperimentsFromCookies(resolvedAppId);
   const experiment = experiments?.find((item) => item.id === experimentId);

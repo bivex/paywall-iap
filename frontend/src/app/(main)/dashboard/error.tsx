@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Wifi } from "lucide-react";
+
+import { AlertTriangle, ChevronDown, ChevronUp, RefreshCw, Wifi } from "lucide-react";
+
 import { getFailedRequests } from "@/lib/network-monitor.client";
 
 export default function DashboardError({
@@ -51,9 +53,7 @@ export default function DashboardError({
           <div className="rounded-lg border bg-muted/30 overflow-hidden">
             <div className="px-4 py-2 text-xs font-medium text-muted-foreground border-b">
               📍 Component path
-              {!compStack && (
-                <span className="ml-2 text-slate-400">(server error — synthesised from stack)</span>
-              )}
+              {!compStack && <span className="ml-2 text-slate-400">(server error — synthesised from stack)</span>}
             </div>
             {compStack ? (
               <pre className="bg-slate-950 px-4 py-3 text-emerald-400 text-xs overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap">
@@ -64,7 +64,9 @@ export default function DashboardError({
                 {componentPath.map((seg, i) => (
                   <span key={i} className="flex items-center gap-1">
                     {i > 0 && <span className="text-slate-600">›</span>}
-                    <code className={`text-xs px-1.5 py-0.5 rounded ${seg.isPage ? "bg-orange-900/40 text-orange-300 font-bold" : "bg-slate-800 text-slate-300"}`}>
+                    <code
+                      className={`text-xs px-1.5 py-0.5 rounded ${seg.isPage ? "bg-orange-900/40 text-orange-300 font-bold" : "bg-slate-800 text-slate-300"}`}
+                    >
                       {seg.label}
                     </code>
                     {seg.line && <span className="text-slate-600 text-[10px]">:{seg.line}</span>}
@@ -95,15 +97,17 @@ export default function DashboardError({
                 {failedRequests.map((r, i) => (
                   <div key={i} className="px-4 py-2.5 font-mono">
                     <div className="flex items-center gap-2 text-xs">
-                      <span className={`font-bold ${r.status >= 500 ? "text-red-400" : r.status >= 400 ? "text-amber-400" : r.status === 0 ? "text-red-400" : "text-slate-400"}`}>
+                      <span
+                        className={`font-bold ${r.status >= 500 ? "text-red-400" : r.status >= 400 ? "text-amber-400" : r.status === 0 ? "text-red-400" : "text-slate-400"}`}
+                      >
                         {r.status || "NET ERR"}
                       </span>
-                      <span className="text-slate-300 truncate">{r.method} {r.url}</span>
+                      <span className="text-slate-300 truncate">
+                        {r.method} {r.url}
+                      </span>
                       <span className="ml-auto text-slate-600 text-[10px] shrink-0">{r.time}</span>
                     </div>
-                    {r.body && (
-                      <pre className="mt-1 text-[10px] text-slate-500 truncate">{r.body}</pre>
-                    )}
+                    {r.body && <pre className="mt-1 text-[10px] text-slate-500 truncate">{r.body}</pre>}
                   </div>
                 ))}
               </div>
@@ -118,6 +122,7 @@ export default function DashboardError({
           {lines.length > 0 && (
             <div className="rounded-lg border bg-muted/30 overflow-hidden">
               <button
+                type="button"
                 className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setStackExpanded((v) => !v)}
               >
@@ -135,7 +140,7 @@ export default function DashboardError({
               {stackExpanded && (
                 <div className="bg-slate-950 px-4 py-3 overflow-x-auto max-h-80 overflow-y-auto">
                   {lines.map((line, i) => (
-                    <div key={i} className="leading-5">
+                    <div key={`${line.raw}-${i}`} className="leading-5">
                       {line.isApp ? (
                         <span className="text-orange-400 font-semibold text-xs">{line.raw}</span>
                       ) : (
@@ -151,6 +156,7 @@ export default function DashboardError({
       )}
 
       <button
+        type="button"
         onClick={reset}
         className="flex items-center gap-2 self-start rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
       >

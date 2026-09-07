@@ -1,7 +1,8 @@
+import type { WebhooksParams } from "@/actions/webhooks";
 import { getWebhooks } from "@/actions/webhooks";
 import { RetryError } from "@/components/retry-error";
 import { isFetchError } from "@/lib/server-fetch";
-import type { WebhooksParams } from "@/actions/webhooks";
+
 import { WebhookEventsTable } from "./_components/webhook-events-table";
 
 const PAGE_SIZE = 20;
@@ -15,7 +16,8 @@ export default async function WebhooksPage({ searchParams }: Props) {
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
 
   const params: WebhooksParams = {
-    page, limit: PAGE_SIZE,
+    page,
+    limit: PAGE_SIZE,
     provider: sp.provider,
     status: sp.status,
     search: sp.search,
@@ -49,4 +51,3 @@ export default async function WebhooksPage({ searchParams }: Props) {
     </div>
   );
 }
-

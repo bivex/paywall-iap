@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import { useTranslations } from "next-intl";
 
 import {
@@ -34,9 +35,7 @@ export function DashboardBreadcrumb() {
   const matched = routeMap[pathname];
 
   // Always show: Admin > [Group] > Page  (or just Admin > Page for top-level)
-  const crumbs: { label: string; href?: string }[] = [
-    { label: t("home"), href: "/dashboard/default" },
-  ];
+  const crumbs: { label: string; href?: string }[] = [{ label: t("home"), href: "/dashboard/default" }];
 
   if (matched) {
     if (matched.groupLabel && matched.groupLabel !== "Admin Dashboard") {
@@ -55,7 +54,7 @@ export function DashboardBreadcrumb() {
         {crumbs.map((crumb, i) => {
           const isLast = i === crumbs.length - 1;
           return (
-            <span key={i} className="flex items-center gap-1.5">
+            <span key={`${crumb.label}-${crumb.href ?? i}`} className="flex items-center gap-1.5">
               {i > 0 && <BreadcrumbSeparator />}
               <BreadcrumbItem>
                 {isLast || !crumb.href ? (

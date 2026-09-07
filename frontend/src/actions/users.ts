@@ -27,24 +27,20 @@ export interface UsersResponse {
 
 const EMPTY: UsersResponse = { users: [], total: 0, page: 1, limit: 20, total_pages: 0 };
 
-export async function getUsers(params: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  platform?: string;
-  role?: string;
-} = {}): Promise<UsersResponse> {
+export async function getUsers(
+  params: { page?: number; limit?: number; search?: string; platform?: string; role?: string } = {},
+): Promise<UsersResponse> {
   const cookieStore = await cookies();
   const token = cookieStore.get("admin_access_token")?.value;
   const appId = cookieStore.get("admin_app_id")?.value;
   if (!token) return EMPTY;
 
   const qs = new URLSearchParams();
-  if (params.page)     qs.set("page", String(params.page));
-  if (params.limit)    qs.set("limit", String(params.limit));
-  if (params.search)   qs.set("search", params.search);
+  if (params.page) qs.set("page", String(params.page));
+  if (params.limit) qs.set("limit", String(params.limit));
+  if (params.search) qs.set("search", params.search);
   if (params.platform) qs.set("platform", params.platform);
-  if (params.role)     qs.set("role", params.role);
+  if (params.role) qs.set("role", params.role);
 
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/users/search?${qs}`, {

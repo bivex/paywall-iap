@@ -1,6 +1,8 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+
+import { useRouter } from "next/navigation";
+
 import { setLocaleAction } from "@/actions/locale";
 import { Button } from "@/components/ui/button";
 import {

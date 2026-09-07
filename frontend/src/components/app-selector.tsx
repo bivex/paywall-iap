@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { Check, ChevronsUpDown, Smartphone } from "lucide-react";
+
 import { useRouter } from "next/navigation";
+
+import { Check, ChevronsUpDown, Smartphone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +21,7 @@ export function AppSelector() {
   const router = useRouter();
   const { apps, selectedAppId, setApps, setSelectedAppId } = useAppStore();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initial load on mount
   useEffect(() => {
     let cancelled = false;
 
@@ -27,7 +30,12 @@ export function AppSelector() {
         const r = await fetch("/api/admin/apps");
         // Turbopack lazy-compiles routes on first hit — retry on 404 up to 5x
         if (r.status === 404 && attempt < 5) {
-          setTimeout(() => { if (!cancelled) load(attempt + 1); }, 300 * (attempt + 1));
+          setTimeout(
+            () => {
+              if (!cancelled) load(attempt + 1);
+            },
+            300 * (attempt + 1),
+          );
           return;
         }
         if (!r.ok) return;
@@ -45,8 +53,10 @@ export function AppSelector() {
     };
 
     load();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Mirror the selected app into a cookie so Server Components can attach the
@@ -68,9 +78,7 @@ export function AppSelector() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="w-full justify-between gap-2 truncate">
           <Smartphone className="size-4 shrink-0 text-muted-foreground" />
-          <span className="truncate text-left">
-            {selected ? (selected.display_name || selected.name) : "Select app"}
-          </span>
+          <span className="truncate text-left">{selected ? selected.display_name || selected.name : "Select app"}</span>
           <ChevronsUpDown className="size-3.5 shrink-0 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -78,11 +86,7 @@ export function AppSelector() {
         <DropdownMenuLabel className="text-xs text-muted-foreground">Switch app</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {apps.map((app) => (
-          <DropdownMenuItem
-            key={app.id}
-            onSelect={() => setSelectedAppId(app.id)}
-            className="flex items-center gap-2"
-          >
+          <DropdownMenuItem key={app.id} onSelect={() => setSelectedAppId(app.id)} className="flex items-center gap-2">
             <Check
               className={`size-3.5 shrink-0 transition-opacity ${app.id === selectedAppId ? "opacity-100" : "opacity-0"}`}
             />
@@ -90,9 +94,7 @@ export function AppSelector() {
               <span className="truncate font-medium">{app.display_name || app.name}</span>
               <span className="truncate text-xs text-muted-foreground">{app.bundle_id}</span>
             </span>
-            {!app.is_active && (
-              <span className="ml-auto text-xs text-muted-foreground">inactive</span>
-            )}
+            {!app.is_active && <span className="ml-auto text-xs text-muted-foreground">inactive</span>}
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />

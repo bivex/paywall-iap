@@ -119,7 +119,10 @@ async function getBanditHealth(appId: string | null = null) {
   };
 }
 
-export async function getStudioSnapshotFromCookies(experimentId: string, appId: string | null = null): Promise<ExperimentStudioSnapshot | null> {
+export async function getStudioSnapshotFromCookies(
+  experimentId: string,
+  appId: string | null = null,
+): Promise<ExperimentStudioSnapshot | null> {
   const resolvedAppId = await getAppId(appId);
   const experiments = await getAdminExperimentsFromCookies(resolvedAppId);
   const experiment = experiments?.find((item) => item.id === experimentId);
@@ -214,7 +217,9 @@ export async function getStudioSnapshotFromCookies(experimentId: string, appId: 
   };
 }
 
-export async function getStudioDashboardFromCookies(appId: string | null = null): Promise<ExperimentStudioDashboardData> {
+export async function getStudioDashboardFromCookies(
+  appId: string | null = null,
+): Promise<ExperimentStudioDashboardData> {
   const resolvedAppId = await getAppId(appId);
   if (!resolvedAppId) {
     // No app selected yet — return empty state, not a failure.

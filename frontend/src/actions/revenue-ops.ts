@@ -17,7 +17,7 @@
 
 import { cookies } from "next/headers";
 
-import { serverFetch, type ServerFetchResult } from "@/lib/server-fetch";
+import { type ServerFetchResult, serverFetch } from "@/lib/server-fetch";
 
 export interface DunningRow {
   id: string;
@@ -84,9 +84,7 @@ export interface RevenueOpsReport {
 }
 
 export async function getRevenueOps(whPage = 1): Promise<ServerFetchResult<RevenueOpsReport>> {
-  return serverFetch<RevenueOpsReport>(
-    `/v1/admin/revenue-ops?wh_page=${whPage}&wh_page_size=20`,
-  );
+  return serverFetch<RevenueOpsReport>(`/v1/admin/revenue-ops?wh_page=${whPage}&wh_page_size=20`);
 }
 
 export async function replayWebhook(webhookId: string): Promise<boolean> {
@@ -99,7 +97,10 @@ export async function replayWebhook(webhookId: string): Promise<boolean> {
   try {
     const res = await fetch(`${base}/v1/admin/webhooks/${webhookId}/replay`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+      },
       cache: "no-store",
     });
     return res.ok;

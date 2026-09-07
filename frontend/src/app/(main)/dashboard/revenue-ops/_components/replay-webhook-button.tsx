@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+
+import { AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
+
 import { replayWebhook } from "@/actions/revenue-ops";
+import { Button } from "@/components/ui/button";
 
 export function ReplayWebhookButton({ webhookId }: { webhookId: string }) {
   const [status, setStatus] = useState<"idle" | "ok" | "error">("idle");
@@ -34,13 +36,7 @@ export function ReplayWebhookButton({ webhookId }: { webhookId: string }) {
   }
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="h-7 text-xs"
-      disabled={isPending}
-      onClick={handleClick}
-    >
+    <Button variant="outline" size="sm" className="h-7 text-xs" disabled={isPending} onClick={handleClick}>
       <RefreshCw className={`h-3 w-3 mr-1 ${isPending ? "animate-spin" : ""}`} />
       Replay
     </Button>

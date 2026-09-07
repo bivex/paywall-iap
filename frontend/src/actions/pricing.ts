@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getAuth } from "@/lib/server-fetch";
 
 import type { PricingTier, PricingTierInput } from "@/lib/pricing-tiers";
+import { getAuth } from "@/lib/server-fetch";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -30,7 +30,11 @@ async function mutate<T>(path: string, method: "POST" | "PUT", payload?: Pricing
   try {
     const res = await fetch(`${BACKEND_URL}${path}`, {
       method,
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: payload ? JSON.stringify(payload) : undefined,
     });
     const parsed = await parseResponse<T>(res);

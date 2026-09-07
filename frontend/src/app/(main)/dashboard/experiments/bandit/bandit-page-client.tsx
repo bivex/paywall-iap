@@ -18,7 +18,6 @@ import {
 } from "@/actions/experiments";
 import { AppScopeBadge } from "@/components/app-scope-badge";
 import { NoAppSelected } from "@/components/no-app-selected";
-import { useAppStore } from "@/stores/app-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +35,7 @@ import {
   getExperimentWinnerRecommendationSourceKey,
 } from "@/lib/experiments";
 import { formatAdminDateTime } from "@/lib/time";
+import { useAppStore } from "@/stores/app-store";
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value === null || value === undefined || !Number.isFinite(value)) return "—";

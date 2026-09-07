@@ -1,20 +1,13 @@
-import { getTranslations } from "next-intl/server";
 import { AlertTriangle, CheckCircle2, TrendingUp } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { getDashboardMetrics } from "@/actions/dashboard";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { AuditLogTable } from "./_components/audit-log-table";
 import { MrrTrendChart } from "./_components/mrr-trend-chart";
 import { SubStatusChart } from "./_components/sub-status-chart";
-import { AuditLogTable } from "./_components/audit-log-table";
 
 // Fallback values when the API is unavailable (e.g. first load before backend starts)
 const FALLBACK = {
@@ -39,10 +32,7 @@ function fmtUSD(n: number) {
 }
 
 export default async function DashboardPage() {
-  const [t, metrics] = await Promise.all([
-    getTranslations("dashboard"),
-    getDashboardMetrics(),
-  ]);
+  const [t, metrics] = await Promise.all([getTranslations("dashboard"), getDashboardMetrics()]);
 
   const d = metrics ?? FALLBACK;
 
@@ -105,17 +95,11 @@ export default async function DashboardPage() {
             </CardContent>
             <CardFooter className="pt-0">
               {badge === "orange" ? (
-                <Badge
-                  variant="outline"
-                  className="text-xs text-orange-600 border-orange-200 bg-orange-50"
-                >
+                <Badge variant="outline" className="text-xs text-orange-600 border-orange-200 bg-orange-50">
                   {t("kpi.dunningInProgress")}
                 </Badge>
               ) : (
-                <Badge
-                  variant="outline"
-                  className="gap-1 text-xs text-green-600 border-green-200 bg-green-50"
-                >
+                <Badge variant="outline" className="gap-1 text-xs text-green-600 border-green-200 bg-green-50">
                   <TrendingUp className="h-3 w-3" />
                   {t("kpi.vsLastMonth")}
                 </Badge>
@@ -145,10 +129,7 @@ export default async function DashboardPage() {
             <AuditLogTable entries={d.audit_log} />
           </CardContent>
           <CardFooter>
-            <a
-              href="/dashboard/audit-log"
-              className="text-xs text-primary hover:underline"
-            >
+            <a href="/dashboard/audit-log" className="text-xs text-primary hover:underline">
               {t("recentActions.viewFullLog")} →
             </a>
           </CardFooter>
@@ -177,17 +158,11 @@ export default async function DashboardPage() {
                       {p.Provider}
                     </div>
                     {ok ? (
-                      <Badge
-                        variant="outline"
-                        className="text-xs text-green-600 border-green-200 bg-green-50"
-                      >
+                      <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50">
                         Healthy
                       </Badge>
                     ) : (
-                      <Badge
-                        variant="outline"
-                        className="text-xs text-yellow-600 border-yellow-200 bg-yellow-50"
-                      >
+                      <Badge variant="outline" className="text-xs text-yellow-600 border-yellow-200 bg-yellow-50">
                         {p.Unprocessed} pending
                       </Badge>
                     )}
@@ -198,8 +173,7 @@ export default async function DashboardPage() {
           </CardContent>
           <CardFooter>
             <p className="text-xs text-muted-foreground">
-              {d.webhook_health.reduce((a, p) => a + p.Unprocessed, 0)}{" "}
-              {t("webhookHealth.unprocessed")}
+              {d.webhook_health.reduce((a, p) => a + p.Unprocessed, 0)} {t("webhookHealth.unprocessed")}
             </p>
           </CardFooter>
         </Card>

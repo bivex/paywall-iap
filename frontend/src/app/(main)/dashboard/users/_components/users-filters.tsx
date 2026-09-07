@@ -1,10 +1,12 @@
 "use client";
 
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 
 export function UsersFilters() {
   const router = useRouter();
@@ -22,7 +24,7 @@ export function UsersFilters() {
       params.delete("page");
       router.push(`${pathname}?${params.toString()}`);
     },
-    [router, pathname, sp]
+    [router, pathname, sp],
   );
 
   const hasFilters = sp.get("search") || sp.get("platform") || sp.get("role");

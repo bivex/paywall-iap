@@ -9,7 +9,7 @@ import type {
   ObjectiveScoresByArm,
   ObjectiveServiceHealth,
 } from "@/lib/multi-objective";
-import { getBanditExperimentsFromCookies, getBanditSnapshotFromCookies, getAppId } from "@/lib/server/bandit-admin";
+import { getAppId, getBanditExperimentsFromCookies, getBanditSnapshotFromCookies } from "@/lib/server/bandit-admin";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -95,7 +95,10 @@ function appIdHeaders(appId: string | null): Record<string, string> {
   return appId ? { "X-App-ID": appId } : {};
 }
 
-async function fetchProbe<T>(url: string, appId: string | null = null): Promise<{ probe: ObjectiveEndpointProbe; data: T | null }> {
+async function fetchProbe<T>(
+  url: string,
+  appId: string | null = null,
+): Promise<{ probe: ObjectiveEndpointProbe; data: T | null }> {
   try {
     const res = await fetch(url, { cache: "no-store", headers: { ...appIdHeaders(appId) } });
     const parsed = await parseResponse<T>(res);
@@ -151,7 +154,9 @@ export async function getMultiObjectiveSnapshotFromCookies(
   };
 }
 
-export async function getMultiObjectiveDashboardFromCookies(appId: string | null = null): Promise<MultiObjectiveDashboardData> {
+export async function getMultiObjectiveDashboardFromCookies(
+  appId: string | null = null,
+): Promise<MultiObjectiveDashboardData> {
   const resolvedAppId = await getAppId(appId);
   if (!resolvedAppId) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: false };

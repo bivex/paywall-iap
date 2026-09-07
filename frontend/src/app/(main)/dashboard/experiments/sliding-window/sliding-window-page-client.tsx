@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { apiFetch } from "@/lib/api-fetch";
 import type { BanditArmStatistics } from "@/lib/bandit";
 import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
 import type {
@@ -25,7 +26,6 @@ import type {
   SlidingWindowSnapshot,
   TrimWindowResult,
 } from "@/lib/sliding-window";
-import { apiFetch } from "@/lib/api-fetch";
 import { useAppStore } from "@/stores/app-store";
 
 const WINDOW_EVENT_LIMITS = [25, 50, 100, 250] as const;
@@ -228,7 +228,7 @@ export function SlidingWindowPageClient({
         setIsBootstrapping(false);
       }
     });
-  }, [isBootstrapping, selectedAppId]);
+  }, [isBootstrapping]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,

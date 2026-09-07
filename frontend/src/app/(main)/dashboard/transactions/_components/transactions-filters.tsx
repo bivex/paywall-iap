@@ -1,10 +1,13 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
-import { Search, Filter, Calendar } from "lucide-react";
-import { Input } from "@/components/ui/input";
+
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { Calendar, Filter, Search } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function TransactionsFilters() {
@@ -38,7 +41,9 @@ export function TransactionsFilters() {
       </div>
       <div className="flex flex-wrap gap-3">
         <Select value={sp.get("status") ?? "all"} onValueChange={(v) => update("status", v)}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="success">Success</SelectItem>
@@ -47,7 +52,9 @@ export function TransactionsFilters() {
           </SelectContent>
         </Select>
         <Select value={sp.get("source") ?? "all"} onValueChange={(v) => update("source", v)}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Source" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Source" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Sources</SelectItem>
             <SelectItem value="stripe">Stripe</SelectItem>
@@ -55,7 +62,9 @@ export function TransactionsFilters() {
           </SelectContent>
         </Select>
         <Select value={sp.get("platform") ?? "all"} onValueChange={(v) => update("platform", v)}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Platform" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Platform" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Platforms</SelectItem>
             <SelectItem value="ios">iOS</SelectItem>
@@ -64,10 +73,22 @@ export function TransactionsFilters() {
           </SelectContent>
         </Select>
         <div className="flex gap-2">
-          <Input type="date" className="w-40" value={sp.get("date_from") ?? ""} onChange={(e) => update("date_from", e.target.value)} />
-          <Input type="date" className="w-40" value={sp.get("date_to") ?? ""} onChange={(e) => update("date_to", e.target.value)} />
+          <Input
+            type="date"
+            className="w-40"
+            value={sp.get("date_from") ?? ""}
+            onChange={(e) => update("date_from", e.target.value)}
+          />
+          <Input
+            type="date"
+            className="w-40"
+            value={sp.get("date_to") ?? ""}
+            onChange={(e) => update("date_to", e.target.value)}
+          />
         </div>
-        <Button variant="outline" size="icon"><Filter className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon">
+          <Filter className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

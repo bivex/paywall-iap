@@ -20,10 +20,9 @@ import {
   updateExperimentAction,
   updateExperimentAutomationPolicyAction,
 } from "@/actions/experiments";
-import { PricingTierManager } from "@/components/pricing/pricing-tier-manager";
 import { AppScopeBadge } from "@/components/app-scope-badge";
 import { NoAppSelected } from "@/components/no-app-selected";
-import { useAppStore } from "@/stores/app-store";
+import { PricingTierManager } from "@/components/pricing/pricing-tier-manager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,6 +60,7 @@ import {
 } from "@/lib/experiments";
 import type { PricingTier } from "@/lib/pricing-tiers";
 import { formatAdminDateTime as formatDate, toDateTimeLocalInputValue } from "@/lib/time";
+import { useAppStore } from "@/stores/app-store";
 
 async function fetchStudioJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store" });

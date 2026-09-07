@@ -1,35 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import Link from "next/link";
+
 import { Pencil, Plus, Settings2, Smartphone, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { type App, useAppStore } from "@/stores/app-store";
 
 type FormState = {
@@ -213,12 +196,12 @@ export function AppsPageClient() {
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="size-8" onClick={() => openEdit(app)}>
-                    	<Pencil className="size-3.5" />
+                      <Pencil className="size-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="size-8" asChild>
-                    	<Link href={`/dashboard/apps/${app.id}/settings`}>
-                    		<Settings2 className="size-3.5" />
-                    	</Link>
+                      <Link href={`/dashboard/apps/${app.id}/settings`}>
+                        <Settings2 className="size-3.5" />
+                      </Link>
                     </Button>
                     <Button
                       variant="ghost"
@@ -281,10 +264,7 @@ export function AppsPageClient() {
             </div>
             <div className="grid gap-1.5">
               <Label>Platform</Label>
-              <Select
-                value={form.platform}
-                onValueChange={(v) => setForm({ ...form, platform: v })}
-              >
+              <Select value={form.platform} onValueChange={(v) => setForm({ ...form, platform: v })}>
                 <SelectTrigger className={errors.platform ? "border-destructive" : ""}>
                   <SelectValue />
                 </SelectTrigger>
@@ -326,17 +306,12 @@ export function AppsPageClient() {
           <DialogHeader>
             <DialogTitle>Delete app?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            This will deactivate the app. Existing data is preserved.
-          </p>
+          <p className="text-sm text-muted-foreground">This will deactivate the app. Existing data is preserved.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteId && handleDelete(deleteId)}
-            >
+            <Button variant="destructive" onClick={() => deleteId && handleDelete(deleteId)}>
               Delete
             </Button>
           </DialogFooter>

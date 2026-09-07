@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useParams } from "next/navigation";
-import { toast } from "sonner";
+
 import {
   Apple,
   CheckCircle2,
@@ -16,6 +17,7 @@ import {
   Smartphone,
   Webhook,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,10 +25,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { useAppStore } from "@/stores/app-store";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -69,7 +71,9 @@ const ConfiguredBadge = ({ set }: { set: boolean }) =>
       <CheckCircle2 className="h-3 w-3" /> Configured
     </Badge>
   ) : (
-    <Badge variant="secondary" className="text-xs">Not set</Badge>
+    <Badge variant="secondary" className="text-xs">
+      Not set
+    </Badge>
   );
 
 // ── Settings tab ──────────────────────────────────────────────────────────────
@@ -191,10 +195,7 @@ function SettingsTab({ appId }: { appId: string }) {
                 <Label>Trial Enabled</Label>
                 <p className="text-xs text-muted-foreground mt-0.5">Allow free trial for new users</p>
               </div>
-              <Switch
-                checked={s.trial_enabled}
-                onCheckedChange={(v) => setS({ ...s, trial_enabled: v })}
-              />
+              <Switch checked={s.trial_enabled} onCheckedChange={(v) => setS({ ...s, trial_enabled: v })} />
             </div>
             {s.trial_enabled && (
               <div className="space-y-2">
@@ -259,9 +260,7 @@ function SettingsTab({ appId }: { appId: string }) {
             value={entitlementsRaw}
             onChange={(e) => setEntitlementsRaw(e.target.value)}
           />
-          {entitlementsError && (
-            <p className="text-sm text-destructive mt-1">{entitlementsError}</p>
-          )}
+          {entitlementsError && <p className="text-sm text-destructive mt-1">{entitlementsError}</p>}
         </CardContent>
       </Card>
 
@@ -329,17 +328,18 @@ function CredentialSection({
   const isConfigured = status !== undefined;
   return (
     <Card>
-      <CardHeader
-        className="cursor-pointer select-none"
-        onClick={onToggle}
-      >
+      <CardHeader className="cursor-pointer select-none" onClick={onToggle}>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <Icon className="h-4 w-4" />
             {title}
             {isConfigured && <ConfiguredBadge set={true} />}
           </CardTitle>
-          {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          {expanded ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
         </div>
       </CardHeader>
       {expanded && (
@@ -481,26 +481,44 @@ function CredentialsTab({ appId }: { appId: string }) {
         <div className="grid gap-4 sm:grid-cols-2">
           {statusFor("apple") && (
             <div className="sm:col-span-2 flex gap-3 text-sm text-muted-foreground">
-              <span>Shared secret: <ConfiguredBadge set={statusFor("apple")!.apple_shared_secret_set} /></span>
-              <span>Private key: <ConfiguredBadge set={statusFor("apple")!.apple_private_key_set} /></span>
+              <span>
+                Shared secret: <ConfiguredBadge set={statusFor("apple")!.apple_shared_secret_set} />
+              </span>
+              <span>
+                Private key: <ConfiguredBadge set={statusFor("apple")!.apple_private_key_set} />
+              </span>
             </div>
           )}
           <div className="space-y-2">
             <Label>Team ID</Label>
-            <Input value={form.apple_team_id} onChange={(e) => setForm({ ...form, apple_team_id: e.target.value })} placeholder="ABCD1234EF" />
+            <Input
+              value={form.apple_team_id}
+              onChange={(e) => setForm({ ...form, apple_team_id: e.target.value })}
+              placeholder="ABCD1234EF"
+            />
           </div>
           <div className="space-y-2">
             <Label>Key ID</Label>
-            <Input value={form.apple_key_id} onChange={(e) => setForm({ ...form, apple_key_id: e.target.value })} placeholder="ABCD1234EF" />
+            <Input
+              value={form.apple_key_id}
+              onChange={(e) => setForm({ ...form, apple_key_id: e.target.value })}
+              placeholder="ABCD1234EF"
+            />
           </div>
           <div className="space-y-2">
             <Label>Bundle ID</Label>
-            <Input value={form.apple_bundle_id} onChange={(e) => setForm({ ...form, apple_bundle_id: e.target.value })} placeholder="com.company.app" />
+            <Input
+              value={form.apple_bundle_id}
+              onChange={(e) => setForm({ ...form, apple_bundle_id: e.target.value })}
+              placeholder="com.company.app"
+            />
           </div>
           <div className="space-y-2">
             <Label>Environment</Label>
             <Select value={form.apple_environment} onValueChange={(v) => setForm({ ...form, apple_environment: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="production">Production</SelectItem>
                 <SelectItem value="sandbox">Sandbox</SelectItem>
@@ -508,12 +526,33 @@ function CredentialsTab({ appId }: { appId: string }) {
             </Select>
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label>Shared Secret {statusFor("apple")?.apple_shared_secret_set && <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>}</Label>
-            <Input type="password" value={form.apple_shared_secret} onChange={(e) => setForm({ ...form, apple_shared_secret: e.target.value })} placeholder="••••••••" />
+            <Label>
+              Shared Secret{" "}
+              {statusFor("apple")?.apple_shared_secret_set && (
+                <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>
+              )}
+            </Label>
+            <Input
+              type="password"
+              value={form.apple_shared_secret}
+              onChange={(e) => setForm({ ...form, apple_shared_secret: e.target.value })}
+              placeholder="••••••••"
+            />
           </div>
           <div className="space-y-2 sm:col-span-2">
-            <Label>Private Key (.p8) {statusFor("apple")?.apple_private_key_set && <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>}</Label>
-            <Textarea rows={5} className="font-mono text-xs" value={form.apple_private_key} onChange={(e) => setForm({ ...form, apple_private_key: e.target.value })} placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" />
+            <Label>
+              Private Key (.p8){" "}
+              {statusFor("apple")?.apple_private_key_set && (
+                <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>
+              )}
+            </Label>
+            <Textarea
+              rows={5}
+              className="font-mono text-xs"
+              value={form.apple_private_key}
+              onChange={(e) => setForm({ ...form, apple_private_key: e.target.value })}
+              placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
+            />
           </div>
         </div>
         <div className="flex justify-end mt-4">
@@ -540,11 +579,26 @@ function CredentialsTab({ appId }: { appId: string }) {
           )}
           <div className="space-y-2">
             <Label>Package Name</Label>
-            <Input value={form.google_package_name} onChange={(e) => setForm({ ...form, google_package_name: e.target.value })} placeholder="com.company.app" />
+            <Input
+              value={form.google_package_name}
+              onChange={(e) => setForm({ ...form, google_package_name: e.target.value })}
+              placeholder="com.company.app"
+            />
           </div>
           <div className="space-y-2">
-            <Label>Service Account JSON {statusFor("google")?.google_service_account_set && <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>}</Label>
-            <Textarea rows={8} className="font-mono text-xs" value={form.google_service_account} onChange={(e) => setForm({ ...form, google_service_account: e.target.value })} placeholder='{"type":"service_account",...}' />
+            <Label>
+              Service Account JSON{" "}
+              {statusFor("google")?.google_service_account_set && (
+                <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>
+              )}
+            </Label>
+            <Textarea
+              rows={8}
+              className="font-mono text-xs"
+              value={form.google_service_account}
+              onChange={(e) => setForm({ ...form, google_service_account: e.target.value })}
+              placeholder='{"type":"service_account",...}'
+            />
           </div>
         </div>
         <div className="flex justify-end mt-4">
@@ -566,21 +620,49 @@ function CredentialsTab({ appId }: { appId: string }) {
         <div className="grid gap-4 sm:grid-cols-2">
           {statusFor("stripe") && (
             <div className="sm:col-span-2 flex gap-3 text-sm text-muted-foreground">
-              <span>Secret key: <ConfiguredBadge set={statusFor("stripe")!.stripe_secret_key_set} /></span>
-              <span>Webhook secret: <ConfiguredBadge set={statusFor("stripe")!.stripe_webhook_secret_set} /></span>
+              <span>
+                Secret key: <ConfiguredBadge set={statusFor("stripe")!.stripe_secret_key_set} />
+              </span>
+              <span>
+                Webhook secret: <ConfiguredBadge set={statusFor("stripe")!.stripe_webhook_secret_set} />
+              </span>
             </div>
           )}
           <div className="space-y-2 sm:col-span-2">
             <Label>Publishable Key</Label>
-            <Input value={form.stripe_publishable_key} onChange={(e) => setForm({ ...form, stripe_publishable_key: e.target.value })} placeholder="pk_live_..." />
+            <Input
+              value={form.stripe_publishable_key}
+              onChange={(e) => setForm({ ...form, stripe_publishable_key: e.target.value })}
+              placeholder="pk_live_..."
+            />
           </div>
           <div className="space-y-2">
-            <Label>Secret Key {statusFor("stripe")?.stripe_secret_key_set && <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>}</Label>
-            <Input type="password" value={form.stripe_secret_key} onChange={(e) => setForm({ ...form, stripe_secret_key: e.target.value })} placeholder="sk_live_..." />
+            <Label>
+              Secret Key{" "}
+              {statusFor("stripe")?.stripe_secret_key_set && (
+                <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>
+              )}
+            </Label>
+            <Input
+              type="password"
+              value={form.stripe_secret_key}
+              onChange={(e) => setForm({ ...form, stripe_secret_key: e.target.value })}
+              placeholder="sk_live_..."
+            />
           </div>
           <div className="space-y-2">
-            <Label>Webhook Secret {statusFor("stripe")?.stripe_webhook_secret_set && <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>}</Label>
-            <Input type="password" value={form.stripe_webhook_secret} onChange={(e) => setForm({ ...form, stripe_webhook_secret: e.target.value })} placeholder="whsec_..." />
+            <Label>
+              Webhook Secret{" "}
+              {statusFor("stripe")?.stripe_webhook_secret_set && (
+                <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>
+              )}
+            </Label>
+            <Input
+              type="password"
+              value={form.stripe_webhook_secret}
+              onChange={(e) => setForm({ ...form, stripe_webhook_secret: e.target.value })}
+              placeholder="whsec_..."
+            />
           </div>
         </div>
         <div className="flex justify-end mt-4">
@@ -602,21 +684,49 @@ function CredentialsTab({ appId }: { appId: string }) {
         <div className="grid gap-4 sm:grid-cols-2">
           {statusFor("paddle") && (
             <div className="sm:col-span-2 flex gap-3 text-sm text-muted-foreground">
-              <span>API key: <ConfiguredBadge set={statusFor("paddle")!.paddle_api_key_set} /></span>
-              <span>Webhook secret: <ConfiguredBadge set={statusFor("paddle")!.paddle_webhook_secret_set} /></span>
+              <span>
+                API key: <ConfiguredBadge set={statusFor("paddle")!.paddle_api_key_set} />
+              </span>
+              <span>
+                Webhook secret: <ConfiguredBadge set={statusFor("paddle")!.paddle_webhook_secret_set} />
+              </span>
             </div>
           )}
           <div className="space-y-2 sm:col-span-2">
             <Label>Vendor ID</Label>
-            <Input value={form.paddle_vendor_id} onChange={(e) => setForm({ ...form, paddle_vendor_id: e.target.value })} placeholder="12345" />
+            <Input
+              value={form.paddle_vendor_id}
+              onChange={(e) => setForm({ ...form, paddle_vendor_id: e.target.value })}
+              placeholder="12345"
+            />
           </div>
           <div className="space-y-2">
-            <Label>API Key {statusFor("paddle")?.paddle_api_key_set && <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>}</Label>
-            <Input type="password" value={form.paddle_api_key} onChange={(e) => setForm({ ...form, paddle_api_key: e.target.value })} placeholder="••••••••" />
+            <Label>
+              API Key{" "}
+              {statusFor("paddle")?.paddle_api_key_set && (
+                <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>
+              )}
+            </Label>
+            <Input
+              type="password"
+              value={form.paddle_api_key}
+              onChange={(e) => setForm({ ...form, paddle_api_key: e.target.value })}
+              placeholder="••••••••"
+            />
           </div>
           <div className="space-y-2">
-            <Label>Webhook Secret {statusFor("paddle")?.paddle_webhook_secret_set && <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>}</Label>
-            <Input type="password" value={form.paddle_webhook_secret} onChange={(e) => setForm({ ...form, paddle_webhook_secret: e.target.value })} placeholder="••••••••" />
+            <Label>
+              Webhook Secret{" "}
+              {statusFor("paddle")?.paddle_webhook_secret_set && (
+                <span className="text-xs text-muted-foreground ml-1">(leave blank to keep existing)</span>
+              )}
+            </Label>
+            <Input
+              type="password"
+              value={form.paddle_webhook_secret}
+              onChange={(e) => setForm({ ...form, paddle_webhook_secret: e.target.value })}
+              placeholder="••••••••"
+            />
           </div>
         </div>
         <div className="flex justify-end mt-4">

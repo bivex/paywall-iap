@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { useTranslations } from "next-intl";
 
+import type { AppPaywall } from "@/actions/paywalls";
+import { activatePaywall, createPaywall, deletePaywall, updatePaywall } from "@/actions/paywalls";
 import { AppScopeBadge } from "@/components/app-scope-badge";
 import { NoAppSelected } from "@/components/no-app-selected";
-import { useAppStore } from "@/stores/app-store";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +29,8 @@ import {
   stringifyPaywallDefinition,
 } from "@/lib/paywall-schema";
 import type { PricingTier } from "@/lib/pricing-tiers";
-import type { AppPaywall } from "@/actions/paywalls";
-import { createPaywall, updatePaywall, activatePaywall, deletePaywall } from "@/actions/paywalls";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/stores/app-store";
 
 function formatTierPrice(amount: number, currency: string) {
   try {
@@ -157,7 +157,12 @@ function PaywallPreviewModal({
   }, [paywall]);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent
         className={cn("w-full p-0 overflow-hidden", mode === "desktop" && "!max-w-5xl")}
         style={mode === "phone" ? { maxWidth: "358px" } : undefined}
@@ -166,7 +171,9 @@ function PaywallPreviewModal({
           <DialogTitle className="flex items-center gap-3">
             <span>Preview</span>
             <span className="text-muted-foreground font-normal text-base">{name}</span>
-            <Badge variant="outline" className="ml-auto">{paywall.platform}</Badge>
+            <Badge variant="outline" className="ml-auto">
+              {paywall.platform}
+            </Badge>
           </DialogTitle>
           {invalid && (
             <p className="text-destructive text-xs mt-1">Schema is incomplete — showing default template preview.</p>
@@ -186,10 +193,12 @@ function PaywallPreviewModal({
             </div>
           </div>
 
-          <div className={cn(
-            "overflow-hidden border-primary/20 bg-linear-to-b from-primary/5 via-background to-background",
-            mode === "phone" ? "p-4" : "p-0"
-          )}>
+          <div
+            className={cn(
+              "overflow-hidden border-primary/20 bg-linear-to-b from-primary/5 via-background to-background",
+              mode === "phone" ? "p-4" : "p-0",
+            )}
+          >
             <ScrollArea className="h-[min(78vh,860px)]">
               <TabsContent value="desktop" className="mt-0">
                 <div className="rounded-[32px] bg-muted/30 p-3 sm:p-4">
@@ -549,18 +558,32 @@ export function PaywallCreatorPageClient({
 
   // Save current editor content as a new or updated paywall
   function handleSave(isActive: boolean) {
-    if (!saveName.trim()) { setSaveError("Name is required"); return; }
-    if (!parsed.success) { setSaveError("Fix JSON errors before saving"); return; }
+    if (!saveName.trim()) {
+      setSaveError("Name is required");
+      return;
+    }
+    if (!parsed.success) {
+      setSaveError("Fix JSON errors before saving");
+      return;
+    }
     setSaveError(null);
     startTransition(async () => {
       const def = parsed.data as unknown as Record<string, unknown>;
-      let result;
+      let result: Awaited<ReturnType<typeof updatePaywall>>;
       if (editingId) {
-        result = await updatePaywall(editingId, { name: saveName, description: saveDesc, definition: def, is_active: isActive });
+        result = await updatePaywall(editingId, {
+          name: saveName,
+          description: saveDesc,
+          definition: def,
+          is_active: isActive,
+        });
       } else {
         result = await createPaywall({ name: saveName, description: saveDesc, definition: def, is_active: isActive });
       }
-      if (!result.ok) { setSaveError(result.error); return; }
+      if (!result.ok) {
+        setSaveError(result.error);
+        return;
+      }
       const updated = result.data;
       setPaywalls((prev) => {
         const without = prev.filter((p) => p.id !== updated.id);
@@ -575,7 +598,10 @@ export function PaywallCreatorPageClient({
   function handleActivate(id: string) {
     startTransition(async () => {
       const result = await activatePaywall(id);
-      if (!result.ok) { setSaveError(result.error); return; }
+      if (!result.ok) {
+        setSaveError(result.error);
+        return;
+      }
       setPaywalls((prev) => prev.map((p) => ({ ...p, is_active: p.id === id })));
     });
   }
@@ -583,9 +609,16 @@ export function PaywallCreatorPageClient({
   function handleDelete(id: string) {
     startTransition(async () => {
       const result = await deletePaywall(id);
-      if (!result.ok) { setSaveError(result.error ?? "Failed to delete paywall"); return; }
+      if (!result.ok) {
+        setSaveError(result.error ?? "Failed to delete paywall");
+        return;
+      }
       setPaywalls((prev) => prev.filter((p) => p.id !== id));
-      if (editingId === id) { setEditingId(null); setSaveName(""); setSaveDesc(""); }
+      if (editingId === id) {
+        setEditingId(null);
+        setSaveName("");
+        setSaveDesc("");
+      }
     });
   }
 
@@ -902,7 +935,9 @@ export function PaywallCreatorPageClient({
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Saved Paywalls</CardTitle>
-          <CardDescription>Save the current editor config as a named paywall for this app. Only one can be active at a time.</CardDescription>
+          <CardDescription>
+            Save the current editor config as a named paywall for this app. Only one can be active at a time.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {saveError && (
@@ -934,11 +969,24 @@ export function PaywallCreatorPageClient({
             <Button size="sm" disabled={isPending || !parsed.success} onClick={() => handleSave(false)}>
               {editingId ? "Update" : "Save"}
             </Button>
-            <Button size="sm" variant="outline" disabled={isPending || !parsed.success} onClick={() => handleSave(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isPending || !parsed.success}
+              onClick={() => handleSave(true)}
+            >
               {editingId ? "Update & Activate" : "Save & Activate"}
             </Button>
             {editingId && (
-              <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setSaveName(""); setSaveDesc(""); }}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setEditingId(null);
+                  setSaveName("");
+                  setSaveDesc("");
+                }}
+              >
                 New
               </Button>
             )}
@@ -954,26 +1002,52 @@ export function PaywallCreatorPageClient({
                     <div
                       key={p.id}
                       className={cn(
-                        "flex items-center justify-between rounded-md border px-3 py-2 text-sm cursor-pointer hover:bg-muted/50",
+                        "flex items-center justify-between rounded-md border px-3 py-2 text-sm hover:bg-muted/50",
                         editingId === p.id && "border-primary bg-muted/30",
                       )}
-                      onClick={() => loadPaywall(p)}
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {p.is_active && <Badge className="bg-green-500/10 text-green-500 border-green-500/20 border shrink-0">Active</Badge>}
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 min-w-0 flex-1 text-left bg-transparent border-0 p-0 font-inherit cursor-pointer"
+                        onClick={() => loadPaywall(p)}
+                      >
+                        {p.is_active && (
+                          <Badge className="bg-green-500/10 text-green-500 border-green-500/20 border shrink-0">
+                            Active
+                          </Badge>
+                        )}
                         <span className="font-medium truncate">{p.name}</span>
-                        {p.description && <span className="text-muted-foreground truncate hidden sm:block">{p.description}</span>}
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setPreviewPaywall(p)}>
+                        {p.description && (
+                          <span className="text-muted-foreground truncate hidden sm:block">{p.description}</span>
+                        )}
+                      </button>
+                      <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => setPreviewPaywall(p)}
+                        >
                           Preview
                         </Button>
                         {!p.is_active && (
-                          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" disabled={isPending} onClick={() => handleActivate(p.id)}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs"
+                            disabled={isPending}
+                            onClick={() => handleActivate(p.id)}
+                          >
                             Activate
                           </Button>
                         )}
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive" disabled={isPending} onClick={() => handleDelete(p.id)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                          disabled={isPending}
+                          onClick={() => handleDelete(p.id)}
+                        >
                           Delete
                         </Button>
                       </div>
@@ -985,18 +1059,19 @@ export function PaywallCreatorPageClient({
           )}
 
           {/* Preview modal for saved paywalls */}
-          {previewPaywall && (() => {
-            const parsedModal = parsePaywallDefinition(JSON.stringify(previewPaywall.definition));
-            return (
-              <PaywallPreviewModal
-                paywall={parsedModal.success ? parsedModal.data : DEFAULT_PAYWALL_TEMPLATE}
-                name={previewPaywall.name}
-                open={true}
-                onClose={() => setPreviewPaywall(null)}
-                invalid={!parsedModal.success}
-              />
-            );
-          })()}
+          {previewPaywall &&
+            (() => {
+              const parsedModal = parsePaywallDefinition(JSON.stringify(previewPaywall.definition));
+              return (
+                <PaywallPreviewModal
+                  paywall={parsedModal.success ? parsedModal.data : DEFAULT_PAYWALL_TEMPLATE}
+                  name={previewPaywall.name}
+                  open={true}
+                  onClose={() => setPreviewPaywall(null)}
+                  invalid={!parsedModal.success}
+                />
+              );
+            })()}
         </CardContent>
       </Card>
     </div>

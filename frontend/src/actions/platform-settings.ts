@@ -63,7 +63,7 @@ export async function updatePlatformSettings(payload: PlatformSettings) {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/settings`, {
       method: "PUT",
-      headers: { ...await getAdminHeaders(), "Content-Type": "application/json" },
+      headers: { ...(await getAdminHeaders()), "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<PlatformSettings>(res);
@@ -85,7 +85,7 @@ export async function changeAdminPasswordAction(input: {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/settings/password`, {
       method: "POST",
-      headers: { ...await getAdminHeaders(), "Content-Type": "application/json" },
+      headers: { ...(await getAdminHeaders()), "Content-Type": "application/json" },
       body: JSON.stringify({
         current_password: input.currentPassword,
         new_password: input.newPassword,

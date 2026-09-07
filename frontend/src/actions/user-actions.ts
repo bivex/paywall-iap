@@ -1,7 +1,7 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
@@ -22,8 +22,10 @@ async function adminFetch(path: string, body: object) {
       body: JSON.stringify(body),
     });
     if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      return { ok: false, error: (d as any).message ?? `HTTP ${res.status}` };
+      const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      const errorMsg =
+        typeof d.error === "string" ? d.error : typeof d.message === "string" ? d.message : `HTTP ${res.status}`;
+      return { ok: false, error: errorMsg };
     }
     const data = await res.json().catch(() => ({}));
     return { ok: true, data };

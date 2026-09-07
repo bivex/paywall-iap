@@ -1,22 +1,8 @@
-import {
-  ShieldCheck,
-  RotateCcw,
-  XCircle,
-  DollarSign,
-  RefreshCw,
-  Settings,
-  Activity,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Activity, DollarSign, RefreshCw, RotateCcw, Settings, ShieldCheck, XCircle } from "lucide-react";
+
 import type { AuditLogEntry } from "@/actions/dashboard";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 type ActionMeta = {
   label: string;
@@ -76,11 +62,7 @@ function formatTime(iso: string) {
 
 export function AuditLogTable({ entries }: { entries: AuditLogEntry[] }) {
   if (entries.length === 0) {
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        No recent actions.
-      </p>
-    );
+    return <p className="py-6 text-center text-sm text-muted-foreground">No recent actions.</p>;
   }
 
   return (
@@ -101,10 +83,7 @@ export function AuditLogTable({ entries }: { entries: AuditLogEntry[] }) {
                 {formatTime(entry.Time)}
               </TableCell>
               <TableCell>
-                <Badge
-                  variant="outline"
-                  className={`gap-1 border-0 text-[11px] font-medium px-2 py-0.5 ${meta.badge}`}
-                >
+                <Badge variant="outline" className={`gap-1 border-0 text-[11px] font-medium px-2 py-0.5 ${meta.badge}`}>
                   {meta.icon}
                   {meta.label}
                 </Badge>

@@ -85,7 +85,7 @@ export async function updatePaywall(
     description?: string;
     definition: Record<string, unknown>;
     is_active?: boolean;
-  }
+  },
 ): Promise<{ ok: true; data: AppPaywall } | { ok: false; error: string }> {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/paywalls/${id}`, {
@@ -102,7 +102,7 @@ export async function updatePaywall(
 }
 
 export async function activatePaywall(
-  id: string
+  id: string,
 ): Promise<{ ok: true; data: AppPaywall } | { ok: false; error: string }> {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/paywalls/${id}/activate`, {
@@ -117,9 +117,7 @@ export async function activatePaywall(
   }
 }
 
-export async function deletePaywall(
-  id: string
-): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function deletePaywall(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/paywalls/${id}`, {
       method: "DELETE",

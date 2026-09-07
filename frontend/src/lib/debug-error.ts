@@ -13,10 +13,7 @@ export function logError(error: unknown, context: string): void {
 
   const err = error instanceof Error ? error : new Error(String(error));
 
-  console.group(
-    `%c💥 ${context}`,
-    "color: #dc2626; font-weight: bold; font-size: 13px"
-  );
+  console.group(`%c💥 ${context}`, "color: #dc2626; font-weight: bold; font-size: 13px");
   console.error(`${err.name}: ${err.message}`);
 
   // Component stack (React error boundary provides this)
@@ -35,21 +32,21 @@ export function logError(error: unknown, context: string): void {
       .map((f) => f.trim());
 
     const appFrames = frames.filter(
-      (f) =>
-        /\bsrc\/|\/app\/|\/actions\/|\/components\//.test(f) &&
-        !f.includes("node_modules")
+      (f) => /\bsrc\/|\/app\/|\/actions\/|\/components\//.test(f) && !f.includes("node_modules"),
     );
 
     if (appFrames.length > 0) {
       console.group("🔥 Your code frames:");
-      appFrames.forEach((f) =>
-        console.log("%c" + f, "color: #f97316; font-weight: 600")
-      );
+      appFrames.forEach((f) => {
+        console.log("%c" + f, "color: #f97316; font-weight: 600");
+      });
       console.groupEnd();
     }
 
     console.groupCollapsed("Full JS stack:");
-    frames.forEach((f) => console.log(f));
+    frames.forEach((f) => {
+      console.log(f);
+    });
     console.groupEnd();
   }
 

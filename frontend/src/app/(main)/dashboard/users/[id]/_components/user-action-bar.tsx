@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+
 import { useRouter } from "next/navigation";
+
+import { forceCancelAction, forceRenewAction, grantGraceAction } from "@/actions/user-actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { forceCancelAction, forceRenewAction, grantGraceAction } from "@/actions/user-actions";
 
 interface Props {
   userId: string;
@@ -49,14 +51,14 @@ function ForceCancelDialog({ userId }: { userId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm">Force Cancel</Button>
+        <Button variant="destructive" size="sm">
+          Force Cancel
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Force Cancel Subscription</DialogTitle>
-          <DialogDescription>
-            Immediately cancels the active subscription. This action is logged.
-          </DialogDescription>
+          <DialogDescription>Immediately cancels the active subscription. This action is logged.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <Label htmlFor="cancel-reason">Reason</Label>
@@ -64,13 +66,20 @@ function ForceCancelDialog({ userId }: { userId: string }) {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button variant="destructive" disabled={isPending}
-            onClick={() => run(async () => {
-              const r = await forceCancelAction(userId, reason);
-              if (r.ok) setOpen(false);
-              return r;
-            })}>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={isPending}
+            onClick={() =>
+              run(async () => {
+                const r = await forceCancelAction(userId, reason);
+                if (r.ok) setOpen(false);
+                return r;
+              })
+            }
+          >
             {isPending ? "Cancelling…" : "Confirm Cancel"}
           </Button>
         </DialogFooter>
@@ -88,7 +97,9 @@ function ForceRenewDialog({ userId }: { userId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">Force Renew</Button>
+        <Button variant="outline" size="sm">
+          Force Renew
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -101,8 +112,14 @@ function ForceRenewDialog({ userId }: { userId: string }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="renew-days">Days to extend</Label>
-              <Input id="renew-days" type="number" min={1} max={365} value={days}
-                onChange={(e) => setDays(parseInt(e.target.value) || 30)} />
+              <Input
+                id="renew-days"
+                type="number"
+                min={1}
+                max={365}
+                value={days}
+                onChange={(e) => setDays(parseInt(e.target.value) || 30)}
+              />
             </div>
             <div>
               <Label htmlFor="renew-reason">Reason</Label>
@@ -112,13 +129,19 @@ function ForceRenewDialog({ userId }: { userId: string }) {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button disabled={isPending}
-            onClick={() => run(async () => {
-              const r = await forceRenewAction(userId, days, reason);
-              if (r.ok) setOpen(false);
-              return r;
-            })}>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={isPending}
+            onClick={() =>
+              run(async () => {
+                const r = await forceRenewAction(userId, days, reason);
+                if (r.ok) setOpen(false);
+                return r;
+              })
+            }
+          >
             {isPending ? "Renewing…" : `Extend +${days} days`}
           </Button>
         </DialogFooter>
@@ -136,7 +159,9 @@ function GrantGraceDialog({ userId }: { userId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">Grant Grace Period</Button>
+        <Button variant="outline" size="sm">
+          Grant Grace Period
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -149,8 +174,14 @@ function GrantGraceDialog({ userId }: { userId: string }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="grace-days">Grace days</Label>
-              <Input id="grace-days" type="number" min={1} max={90} value={days}
-                onChange={(e) => setDays(parseInt(e.target.value) || 7)} />
+              <Input
+                id="grace-days"
+                type="number"
+                min={1}
+                max={90}
+                value={days}
+                onChange={(e) => setDays(parseInt(e.target.value) || 7)}
+              />
             </div>
             <div>
               <Label htmlFor="grace-reason">Reason</Label>
@@ -160,13 +191,19 @@ function GrantGraceDialog({ userId }: { userId: string }) {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button disabled={isPending}
-            onClick={() => run(async () => {
-              const r = await grantGraceAction(userId, days, reason);
-              if (r.ok) setOpen(false);
-              return r;
-            })}>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={isPending}
+            onClick={() =>
+              run(async () => {
+                const r = await grantGraceAction(userId, days, reason);
+                if (r.ok) setOpen(false);
+                return r;
+              })
+            }
+          >
             {isPending ? "Granting…" : `Grant ${days}-day grace`}
           </Button>
         </DialogFooter>

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { apiFetch } from "@/lib/api-fetch";
 import type { BanditArmStatistics } from "@/lib/bandit";
 import type {
   DelayedConversionPayload,
@@ -27,7 +28,6 @@ import type {
   DelayedPendingRewardsByUser,
 } from "@/lib/delayed-feedback";
 import type { ExperimentAlgorithm, ExperimentStatus, ExperimentSummary } from "@/lib/experiments";
-import { apiFetch } from "@/lib/api-fetch";
 import { useAppStore } from "@/stores/app-store";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -230,7 +230,7 @@ export function DelayedFeedbackPageClient({
         setIsBootstrapping(false);
       }
     });
-  }, [isBootstrapping, selectedAppId]);
+  }, [isBootstrapping]);
 
   const selectedExperiment = useMemo(
     () => experiments.find((experiment) => experiment.id === selectedId) ?? snapshot?.experiment ?? null,
@@ -306,9 +306,12 @@ export function DelayedFeedbackPageClient({
 
     setIsLookingUpUserPending(true);
     try {
-      const res = await apiFetch(`/api/admin/delayed-feedback/users/${encodeURIComponent(pendingUserId.trim())}/pending`, {
-        cache: "no-store",
-      });
+      const res = await apiFetch(
+        `/api/admin/delayed-feedback/users/${encodeURIComponent(pendingUserId.trim())}/pending`,
+        {
+          cache: "no-store",
+        },
+      );
       const body = await res.json().catch(() => ({}));
       const result: UserPendingLookupResult = {
         ok: res.ok,

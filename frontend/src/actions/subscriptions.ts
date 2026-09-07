@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 
-import { serverFetch, type ServerFetchResult } from "@/lib/server-fetch";
+import { type ServerFetchResult, serverFetch } from "@/lib/server-fetch";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -55,8 +55,6 @@ export async function getSubscriptions(
 
   return serverFetch<SubscriptionsResponse>(`/v1/admin/subscriptions?${qs.toString()}`);
 }
-
-
 
 export interface TransactionRow {
   id: string;

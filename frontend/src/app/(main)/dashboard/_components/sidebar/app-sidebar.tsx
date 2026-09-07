@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
 import { CircleHelp, ClipboardList, Command, Database, File, Search, Settings } from "lucide-react";
@@ -17,8 +18,6 @@ import {
 import { APP_CONFIG } from "@/config/app-config";
 import { rootUser } from "@/data/users";
 import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
-
-import dynamic from "next/dynamic";
 
 const AppSelector = dynamic(() => import("@/components/app-selector").then((m) => m.AppSelector), {
   ssr: false,
@@ -65,7 +64,10 @@ const _data = {
   ],
 };
 
-export function AppSidebar({ user, ...props }: React.ComponentProps<typeof Sidebar> & { user?: { name: string; email: string; avatar: string } }) {
+export function AppSidebar({
+  user,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { user?: { name: string; email: string; avatar: string } }) {
   const { sidebarVariant, sidebarCollapsible, isSynced } = usePreferencesStore(
     useShallow((s) => ({
       sidebarVariant: s.sidebarVariant,

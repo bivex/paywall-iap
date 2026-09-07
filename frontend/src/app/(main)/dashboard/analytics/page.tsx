@@ -1,10 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, CheckCircle2, Clock, XCircle, AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, TrendingDown, TrendingUp, XCircle } from "lucide-react";
+
 import { getAnalyticsReport } from "@/actions/analytics";
 import { RetryError } from "@/components/retry-error";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { isFetchError } from "@/lib/server-fetch";
+
 import { KpiAreaChart } from "./_components/mrr-chart";
 import { PlatformBarChart } from "./_components/platform-bar-chart";
 import { RevenueDonutChart } from "./_components/revenue-donut-chart";
@@ -16,22 +18,65 @@ export default async function AnalyticsPage() {
     return <RetryError message={report.message} />;
   }
 
-  const { mrr, arr, ltv, total_revenue, churn_rate, new_subs_month, trend, by_platform, by_plan, status_counts } = report;
+  const { mrr, arr, ltv, total_revenue, churn_rate, new_subs_month, trend, by_platform, by_plan, status_counts } =
+    report;
 
   const statusRows = [
-    { label: "Active",    value: status_counts.active,    icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-    { label: "Grace",     value: status_counts.grace,     icon: Clock,        color: "text-amber-500",   bg: "bg-amber-500/10"   },
-    { label: "Cancelled", value: status_counts.cancelled, icon: XCircle,      color: "text-slate-400",   bg: "bg-slate-500/10"   },
-    { label: "Expired",   value: status_counts.expired,   icon: AlertTriangle,color: "text-red-500",     bg: "bg-red-500/10"     },
+    {
+      label: "Active",
+      value: status_counts.active,
+      icon: CheckCircle2,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+    },
+    { label: "Grace", value: status_counts.grace, icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10" },
+    {
+      label: "Cancelled",
+      value: status_counts.cancelled,
+      icon: XCircle,
+      color: "text-slate-400",
+      bg: "bg-slate-500/10",
+    },
+    { label: "Expired", value: status_counts.expired, icon: AlertTriangle, color: "text-red-500", bg: "bg-red-500/10" },
   ];
 
   const metricsTable = [
-    { metric: "mrr",            formula: "Σ(active subs × monthly price)",       value: `$${mrr.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,           up: true             },
-    { metric: "arr",            formula: "MRR × 12",                              value: `$${arr.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,           up: true             },
-    { metric: "ltv",            formula: "total_revenue / distinct paying users", value: `$${ltv.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,           up: true             },
-    { metric: "total_revenue",  formula: "Σ successful transactions",             value: `$${total_revenue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, up: true             },
-    { metric: "churn_rate",     formula: "churned_mo / (active + churned) × 100",value: `${churn_rate}%`,                                                           up: churn_rate < 5   },
-    { metric: "new_subs_month", formula: "COUNT new subs created this month",     value: String(new_subs_month),                                                     up: new_subs_month > 0 },
+    {
+      metric: "mrr",
+      formula: "Σ(active subs × monthly price)",
+      value: `$${mrr.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+      up: true,
+    },
+    {
+      metric: "arr",
+      formula: "MRR × 12",
+      value: `$${arr.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+      up: true,
+    },
+    {
+      metric: "ltv",
+      formula: "total_revenue / distinct paying users",
+      value: `$${ltv.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+      up: true,
+    },
+    {
+      metric: "total_revenue",
+      formula: "Σ successful transactions",
+      value: `$${total_revenue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+      up: true,
+    },
+    {
+      metric: "churn_rate",
+      formula: "churned_mo / (active + churned) × 100",
+      value: `${churn_rate}%`,
+      up: churn_rate < 5,
+    },
+    {
+      metric: "new_subs_month",
+      formula: "COUNT new subs created this month",
+      value: String(new_subs_month),
+      up: new_subs_month > 0,
+    },
   ];
 
   return (
@@ -51,13 +96,7 @@ export default async function AnalyticsPage() {
       </div>
 
       {/* KPI cards + trend chart */}
-      <KpiAreaChart
-        trend={trend ?? []}
-        mrr={mrr}
-        ltv={ltv}
-        churnRate={churn_rate}
-        newSubsMonth={new_subs_month}
-      />
+      <KpiAreaChart trend={trend ?? []} mrr={mrr} ltv={ltv} churnRate={churn_rate} newSubsMonth={new_subs_month} />
 
       {/* Subscription status row */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -67,7 +106,9 @@ export default async function AnalyticsPage() {
             <Card key={s.label} className="py-4">
               <CardContent className="px-4 py-0 flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{s.label}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">
+                    {s.label}
+                  </p>
                   <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
                 <div className={`flex h-9 w-9 items-center justify-center rounded-full ${s.bg}`}>
@@ -92,7 +133,9 @@ export default async function AnalyticsPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <CardTitle className="text-sm font-semibold">Metrics & Formulas</CardTitle>
-            <Badge variant="secondary" className="text-xs">computed from DB</Badge>
+            <Badge variant="secondary" className="text-xs">
+              computed from DB
+            </Badge>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
@@ -108,11 +151,15 @@ export default async function AnalyticsPage() {
               {metricsTable.map((row) => (
                 <TableRow key={row.metric}>
                   <TableCell>
-                    <Badge variant="secondary" className="font-mono text-xs">{row.metric}</Badge>
+                    <Badge variant="secondary" className="font-mono text-xs">
+                      {row.metric}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground font-mono">{row.formula}</TableCell>
                   <TableCell className="text-right">
-                    <span className={`inline-flex items-center gap-1 text-sm font-semibold tabular-nums ${row.up ? "text-emerald-500" : "text-red-500"}`}>
+                    <span
+                      className={`inline-flex items-center gap-1 text-sm font-semibold tabular-nums ${row.up ? "text-emerald-500" : "text-red-500"}`}
+                    >
                       {row.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                       {row.value}
                     </span>

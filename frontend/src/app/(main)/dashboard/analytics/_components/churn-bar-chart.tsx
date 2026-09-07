@@ -1,12 +1,9 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig,
-} from "@/components/ui/chart";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const data = [
   { month: "Aug", ios: 2.4, android: 2.9, web: 1.8 },
@@ -18,9 +15,9 @@ const data = [
 ];
 
 const chartConfig = {
-  ios:     { label: "iOS",     color: "var(--chart-1)" },
+  ios: { label: "iOS", color: "var(--chart-1)" },
   android: { label: "Android", color: "var(--chart-2)" },
-  web:     { label: "Web",     color: "var(--chart-3)" },
+  web: { label: "Web", color: "var(--chart-3)" },
 } satisfies ChartConfig;
 
 export function ChurnBarChart() {
@@ -36,16 +33,10 @@ export function ChurnBarChart() {
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
             <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} width={36} />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => [`${value}%`, ""]}
-                />
-              }
-            />
-            <Bar dataKey="ios"     fill="var(--color-ios)"     radius={[3, 3, 0, 0]} />
+            <ChartTooltip content={<ChartTooltipContent formatter={(value) => [`${value}%`, ""]} />} />
+            <Bar dataKey="ios" fill="var(--color-ios)" radius={[3, 3, 0, 0]} />
             <Bar dataKey="android" fill="var(--color-android)" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="web"     fill="var(--color-web)"     radius={[3, 3, 0, 0]} />
+            <Bar dataKey="web" fill="var(--color-web)" radius={[3, 3, 0, 0]} />
           </BarChart>
         </ChartContainer>
       </CardContent>

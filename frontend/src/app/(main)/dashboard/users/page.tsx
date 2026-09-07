@@ -1,28 +1,42 @@
 import { Suspense } from "react";
+
 import Link from "next/link";
+
+import { getUsers } from "@/actions/users";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getUsers } from "@/actions/users";
+
 import { UsersFilters } from "./_components/users-filters";
 
 const subStatusMeta: Record<string, { label: string; className: string }> = {
-  active:       { label: "Active",       className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
-  grace_period: { label: "Grace",        className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
-  dunning:      { label: "Dunning",      className: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
-  expired:      { label: "Expired",      className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
-  cancelled:    { label: "Cancelled",    className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" },
-  none:         { label: "No Sub",       className: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" },
+  active: {
+    label: "Active",
+    className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+  },
+  grace_period: {
+    label: "Grace",
+    className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  },
+  dunning: { label: "Dunning", className: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400" },
+  expired: { label: "Expired", className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  cancelled: { label: "Cancelled", className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" },
+  none: { label: "No Sub", className: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" },
 };
 
 const platformMeta: Record<string, { label: string; className: string }> = {
-  ios:     { label: "iOS",     className: "bg-blue-100 text-blue-700" },
+  ios: { label: "iOS", className: "bg-blue-100 text-blue-700" },
   android: { label: "Android", className: "bg-green-100 text-green-700" },
-  web:     { label: "Web",     className: "bg-violet-100 text-violet-700" },
+  web: { label: "Web", className: "bg-violet-100 text-violet-700" },
 };
 
-interface SearchParams { page?: string; search?: string; platform?: string; role?: string; }
+interface SearchParams {
+  page?: string;
+  search?: string;
+  platform?: string;
+  role?: string;
+}
 
 export default async function UsersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
@@ -31,16 +45,16 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   const data = await getUsers({
     page,
     limit: 20,
-    search:   sp.search,
+    search: sp.search,
     platform: sp.platform,
-    role:     sp.role,
+    role: sp.role,
   });
 
   const buildPageUrl = (p: number) => {
     const params = new URLSearchParams();
-    if (sp.search)   params.set("search",   sp.search);
+    if (sp.search) params.set("search", sp.search);
     if (sp.platform) params.set("platform", sp.platform);
-    if (sp.role)     params.set("role",     sp.role);
+    if (sp.role) params.set("role", sp.role);
     params.set("page", String(p));
     return `/dashboard/users?${params.toString()}`;
   };
@@ -69,7 +83,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 <TableHead className="w-24 text-right">LTV</TableHead>
                 <TableHead className="w-24">Role</TableHead>
                 <TableHead className="w-36">Joined</TableHead>
-                <TableHead className="w-20"></TableHead>
+                <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -92,14 +106,18 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                       <TableCell>
                         <Badge className={sub.className}>{sub.label}</Badge>
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        ${u.ltv.toFixed(2)}
-                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">${u.ltv.toFixed(2)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs">{u.role}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {u.role}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        {new Date(u.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" asChild>
@@ -132,4 +150,3 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
     </div>
   );
 }
-

@@ -1,14 +1,17 @@
 "use client";
 
-import * as React from "react";
 import { Label, Pie, PieChart } from "recharts";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+
 import type { PlanRow } from "@/actions/analytics";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)"];
 
-interface Props { data: PlanRow[]; totalMrr: number }
+interface Props {
+  data: PlanRow[];
+  totalMrr: number;
+}
 
 export function RevenueDonutChart({ data, totalMrr }: Props) {
   const chartData = data.map((d, i) => ({
@@ -18,7 +21,7 @@ export function RevenueDonutChart({ data, totalMrr }: Props) {
   }));
 
   const config: ChartConfig = Object.fromEntries(
-    data.map((d, i) => [d.plan_type, { label: d.plan_type, color: COLORS[i % COLORS.length] }])
+    data.map((d, i) => [d.plan_type, { label: d.plan_type, color: COLORS[i % COLORS.length] }]),
   );
   config.value = { label: "MRR" };
 
@@ -31,20 +34,35 @@ export function RevenueDonutChart({ data, totalMrr }: Props) {
       <CardContent className="flex-1 pb-0">
         <ChartContainer config={config} className="mx-auto aspect-square max-h-[220px]">
           <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent formatter={(v) => [`$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, ""]} hideLabel />} />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  formatter={(v) => [
+                    `$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    "",
+                  ]}
+                  hideLabel
+                />
+              }
+            />
             <Pie data={chartData} dataKey="value" nameKey="name" innerRadius={58} strokeWidth={4}>
-              <Label content={({ viewBox }) => {
-                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                  return (
-                    <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                      <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-xl font-bold">
-                        ${totalMrr.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </tspan>
-                      <tspan x={viewBox.cx} y={(viewBox.cy ?? 0) + 18} className="fill-muted-foreground text-xs">MRR</tspan>
-                    </text>
-                  );
-                }
-              }} />
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
+                        <tspan x={viewBox.cx} y={viewBox.cy} className="fill-foreground text-xl font-bold">
+                          ${totalMrr.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </tspan>
+                        <tspan x={viewBox.cx} y={(viewBox.cy ?? 0) + 18} className="fill-muted-foreground text-xs">
+                          MRR
+                        </tspan>
+                      </text>
+                    );
+                  }
+                }}
+              />
             </Pie>
           </PieChart>
         </ChartContainer>
@@ -56,7 +74,9 @@ export function RevenueDonutChart({ data, totalMrr }: Props) {
               <span className="h-2 w-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
               {d.plan_type} ({d.count} subs)
             </span>
-            <span className="font-medium">${d.mrr.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="font-medium">
+              ${d.mrr.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </div>
         ))}
       </CardFooter>

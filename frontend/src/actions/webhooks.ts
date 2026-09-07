@@ -1,6 +1,6 @@
 "use server";
 
-import { serverFetch, type ServerFetchResult } from "@/lib/server-fetch";
+import { type ServerFetchResult, serverFetch } from "@/lib/server-fetch";
 
 export interface WebhookEvent {
   id: string;

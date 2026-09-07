@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getBanditExperimentsFromCookies, getBanditSnapshotFromCookies, getAppId } from "@/lib/server/bandit-admin";
+import { getAppId, getBanditExperimentsFromCookies, getBanditSnapshotFromCookies } from "@/lib/server/bandit-admin";
 import type {
   SlidingWindowDashboardData,
   SlidingWindowEndpointProbe,
@@ -37,7 +37,10 @@ function appIdHeaders(appId: string | null): Record<string, string> {
   return appId ? { "X-App-ID": appId } : {};
 }
 
-async function fetchProbe<T>(url: string, appId: string | null = null): Promise<{ probe: SlidingWindowEndpointProbe; data: T | null }> {
+async function fetchProbe<T>(
+  url: string,
+  appId: string | null = null,
+): Promise<{ probe: SlidingWindowEndpointProbe; data: T | null }> {
   try {
     const res = await fetch(url, { cache: "no-store", headers: { ...appIdHeaders(appId) } });
     const parsed = await parseResponse<T>(res);
@@ -65,7 +68,10 @@ async function getServiceHealth(appId: string | null = null) {
   return result.data;
 }
 
-export async function getSlidingWindowSnapshotFromCookies(experimentId: string, appId: string | null = null): Promise<SlidingWindowSnapshot | null> {
+export async function getSlidingWindowSnapshotFromCookies(
+  experimentId: string,
+  appId: string | null = null,
+): Promise<SlidingWindowSnapshot | null> {
   const experiments = await getBanditExperimentsFromCookies(appId);
   const experiment = experiments?.find((item) => item.id === experimentId);
   if (!experiment) return null;
@@ -89,7 +95,9 @@ export async function getSlidingWindowSnapshotFromCookies(experimentId: string, 
   };
 }
 
-export async function getSlidingWindowDashboardFromCookies(appId: string | null = null): Promise<SlidingWindowDashboardData> {
+export async function getSlidingWindowDashboardFromCookies(
+  appId: string | null = null,
+): Promise<SlidingWindowDashboardData> {
   const resolvedAppId = await getAppId(appId);
   if (!resolvedAppId) {
     return { experiments: [], selectedExperimentId: null, snapshot: null, loadFailed: false };

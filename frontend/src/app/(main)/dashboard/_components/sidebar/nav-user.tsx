@@ -1,8 +1,10 @@
 "use client";
 
-import { EllipsisVertical, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { EllipsisVertical, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { logoutAction } from "@/actions/auth";

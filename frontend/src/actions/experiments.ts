@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getAuth } from "@/lib/server-fetch";
 
 import type {
   ExperimentAutomationPolicyUpdateInput,
@@ -10,6 +9,7 @@ import type {
   ExperimentSummary,
   ExperimentUpdateInput,
 } from "@/lib/experiments";
+import { getAuth } from "@/lib/server-fetch";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -58,7 +58,11 @@ export async function createExperimentAction(payload: ExperimentInput) {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
@@ -76,7 +80,11 @@ export async function updateExperimentAction(id: string, payload: ExperimentUpda
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}`, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
@@ -97,7 +105,11 @@ async function postExperimentLifecycleAction(
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/${action}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
@@ -135,7 +147,11 @@ export async function lockExperimentAction(id: string, payload?: { locked_until?
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/lock`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         locked_until: payload?.locked_until ?? null,
         reason: payload?.reason?.trim() ? payload.reason.trim() : undefined,
@@ -156,7 +172,11 @@ export async function unlockExperimentAction(id: string) {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/unlock`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);
@@ -174,7 +194,11 @@ export async function repairExperimentAction(id: string) {
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/repair`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({}),
     });
     const parsed = await parseResponse<ExperimentRepairResult>(res);
@@ -195,7 +219,11 @@ export async function updateExperimentAutomationPolicyAction(
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/experiments/${id}/automation-policy`, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<ExperimentSummary>(res);

@@ -1,23 +1,29 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+
+import { ArrowDown, ArrowUp, ArrowUpDown, CheckCircle2, Clock, Filter, X } from "lucide-react";
+
+import type { WebhookRow } from "@/actions/revenue-ops";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, Clock, ArrowUpDown, ArrowUp, ArrowDown, Filter, X } from "lucide-react";
-import type { WebhookRow } from "@/actions/revenue-ops";
+
 import { ReplayWebhookButton } from "./replay-webhook-button";
 
 const PROVIDER_COLOR: Record<string, string> = {
   stripe: "bg-violet-500/10 text-violet-600 border-violet-500/20",
-  apple:  "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  apple: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   google: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
 };
 
 function fmtDate(iso: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("en-US", {
-    month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -26,12 +32,18 @@ type SortDir = "asc" | "desc";
 
 function SortIndicator({ active, dir }: { active: boolean; dir: SortDir }) {
   if (!active) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30 inline-block" />;
-  return dir === "asc"
-    ? <ArrowUp   className="ml-1 h-3 w-3 inline-block" />
-    : <ArrowDown className="ml-1 h-3 w-3 inline-block" />;
+  return dir === "asc" ? (
+    <ArrowUp className="ml-1 h-3 w-3 inline-block" />
+  ) : (
+    <ArrowDown className="ml-1 h-3 w-3 inline-block" />
+  );
 }
 
-export function WebhookTable({ rows, initialSort, initialFilterPending }: {
+export function WebhookTable({
+  rows,
+  initialSort,
+  initialFilterPending,
+}: {
   rows: WebhookRow[];
   initialSort?: SortKey;
   initialFilterPending?: boolean;
@@ -52,7 +64,7 @@ export function WebhookTable({ rows, initialSort, initialFilterPending }: {
   const pendingCount = useMemo(() => rows.filter((r) => !r.processed).length, [rows]);
 
   const sorted = useMemo(() => {
-    let list = pendingOnly ? rows.filter((r) => !r.processed) : [...rows];
+    const list = pendingOnly ? rows.filter((r) => !r.processed) : [...rows];
     list.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
@@ -91,9 +103,15 @@ export function WebhookTable({ rows, initialSort, initialFilterPending }: {
           className="h-7 gap-1.5 text-xs"
           onClick={() => setPendingOnly((v) => !v)}
         >
-          {pendingOnly
-            ? <><X className="h-3 w-3" /> Clear filter</>
-            : <><Filter className="h-3 w-3" /> Pending only</>}
+          {pendingOnly ? (
+            <>
+              <X className="h-3 w-3" /> Clear filter
+            </>
+          ) : (
+            <>
+              <Filter className="h-3 w-3" /> Pending only
+            </>
+          )}
           {!pendingOnly && pendingCount > 0 && (
             <span className="ml-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white px-1">
               {pendingCount}
@@ -135,48 +153,54 @@ export function WebhookTable({ rows, initialSort, initialFilterPending }: {
                 No pending webhooks 🎉
               </TableCell>
             </TableRow>
-          ) : sorted.map((w) => (
-            <TableRow key={w.id}>
-              <TableCell>
-                <Badge className={`${PROVIDER_COLOR[w.provider.toLowerCase()] ?? "bg-muted text-foreground"} border text-xs capitalize`}>
-                  {w.provider}
-                </Badge>
-              </TableCell>
-              <TableCell className="font-mono text-xs">{w.event_type}</TableCell>
-              <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">{w.event_id}</TableCell>
-              <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(w.created_at)}</TableCell>
-              <TableCell>
-                {w.processed ? (
-                  <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-600 bg-emerald-500/5">
-                    <CheckCircle2 className="h-3 w-3 mr-1" /> processed
+          ) : (
+            sorted.map((w) => (
+              <TableRow key={w.id}>
+                <TableCell>
+                  <Badge
+                    className={`${PROVIDER_COLOR[w.provider.toLowerCase()] ?? "bg-muted text-foreground"} border text-xs capitalize`}
+                  >
+                    {w.provider}
                   </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-600 bg-amber-500/5 animate-pulse">
-                    <Clock className="h-3 w-3 mr-1" /> pending
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                {!w.processed && <ReplayWebhookButton webhookId={w.id} />}
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell className="font-mono text-xs">{w.event_type}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">
+                  {w.event_id}
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                  {fmtDate(w.created_at)}
+                </TableCell>
+                <TableCell>
+                  {w.processed ? (
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
+                    >
+                      <CheckCircle2 className="h-3 w-3 mr-1" /> processed
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-amber-500/30 text-amber-600 bg-amber-500/5 animate-pulse"
+                    >
+                      <Clock className="h-3 w-3 mr-1" /> pending
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>{!w.processed && <ReplayWebhookButton webhookId={w.id} />}</TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>
   );
 }
 
-
-
 // Simple pending-only table — no sort, no pagination, server already filtered
 export function PendingWebhookTable({ rows }: { rows: WebhookRow[] }) {
   if (rows.length === 0) {
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        No pending webhooks 🎉
-      </p>
-    );
+    return <p className="py-6 text-center text-sm text-muted-foreground">No pending webhooks 🎉</p>;
   }
   return (
     <Table>
@@ -193,12 +217,16 @@ export function PendingWebhookTable({ rows }: { rows: WebhookRow[] }) {
         {rows.map((w) => (
           <TableRow key={w.id} className="bg-amber-500/[0.03]">
             <TableCell>
-              <Badge className={`${PROVIDER_COLOR[w.provider.toLowerCase()] ?? "bg-muted text-foreground"} border text-xs capitalize`}>
+              <Badge
+                className={`${PROVIDER_COLOR[w.provider.toLowerCase()] ?? "bg-muted text-foreground"} border text-xs capitalize`}
+              >
                 {w.provider}
               </Badge>
             </TableCell>
             <TableCell className="font-mono text-xs">{w.event_type}</TableCell>
-            <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">{w.event_id}</TableCell>
+            <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">
+              {w.event_id}
+            </TableCell>
             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(w.created_at)}</TableCell>
             <TableCell>
               <ReplayWebhookButton webhookId={w.id} />

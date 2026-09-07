@@ -1,32 +1,48 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Search, Copy, Eye, RotateCw, ChevronLeft, ChevronRight, Check, X, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React, { useMemo, useState } from "react";
+
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Copy,
+  Eye,
+  RotateCw,
+  Search,
+  X,
+} from "lucide-react";
+
 import { replayWebhook } from "@/actions/revenue-ops";
 import type { WebhookEvent, WebhookSummary } from "@/actions/webhooks";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const providerColor: Record<string, string> = {
   stripe: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-  apple:  "bg-gray-500/10 text-gray-400 border-gray-500/20",
+  apple: "bg-gray-500/10 text-gray-400 border-gray-500/20",
   google: "bg-blue-500/10 text-blue-500 border-blue-500/20",
 };
 
 const statusColor: Record<string, string> = {
-  pending:   "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   processed: "bg-green-500/10 text-green-500 border-green-500/20",
 };
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -42,8 +58,14 @@ interface Props {
 }
 
 export function WebhookEventsTable({
-  webhooks, summary, total, page, totalPages,
-  initialProvider = "all", initialStatus = "all", initialSearch = "",
+  webhooks,
+  summary,
+  total,
+  page,
+  totalPages,
+  initialProvider = "all",
+  initialStatus = "all",
+  initialSearch = "",
 }: Props) {
   const [search, setSearch] = useState(initialSearch);
   const [provider, setProvider] = useState(initialProvider);
@@ -56,12 +78,12 @@ export function WebhookEventsTable({
   const filtered = useMemo(() => {
     return webhooks.filter((e) => {
       const matchProvider = provider === "all" || e.provider.toLowerCase() === provider.toLowerCase();
-      const matchStatus = status === "all"
-        || (status === "pending" && !e.processed)
-        || (status === "processed" && e.processed);
-      const matchSearch = !search
-        || e.event_id.toLowerCase().includes(search.toLowerCase())
-        || e.event_type.toLowerCase().includes(search.toLowerCase());
+      const matchStatus =
+        status === "all" || (status === "pending" && !e.processed) || (status === "processed" && e.processed);
+      const matchSearch =
+        !search ||
+        e.event_id.toLowerCase().includes(search.toLowerCase()) ||
+        e.event_type.toLowerCase().includes(search.toLowerCase());
       return matchProvider && matchStatus && matchSearch;
     });
   }, [webhooks, provider, status, search]);
@@ -143,6 +165,7 @@ export function WebhookEventsTable({
                 />
                 {search && (
                   <button
+                    type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     onClick={() => setSearch("")}
                   >
@@ -200,7 +223,10 @@ export function WebhookEventsTable({
                     return (
                       <TableRow key={event.id} className="hover:bg-muted/30">
                         <TableCell>
-                          <Badge variant="outline" className={`${providerColor[event.provider.toLowerCase()] ?? "bg-muted"} capitalize text-xs`}>
+                          <Badge
+                            variant="outline"
+                            className={`${providerColor[event.provider.toLowerCase()] ?? "bg-muted"} capitalize text-xs`}
+                          >
                             {event.provider}
                           </Badge>
                         </TableCell>
@@ -209,21 +235,30 @@ export function WebhookEventsTable({
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">{event.event_id || event.id.slice(0, 8)}</span>
+                            <span className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">
+                              {event.event_id || event.id.slice(0, 8)}
+                            </span>
                             <button
+                              type="button"
                               className="text-muted-foreground hover:text-foreground transition-colors"
                               onClick={() => handleCopy(event.event_id || event.id)}
                             >
-                              {copiedId === (event.event_id || event.id)
-                                ? <Check className="h-3 w-3 text-green-500" />
-                                : <Copy className="h-3 w-3" />}
+                              {copiedId === (event.event_id || event.id) ? (
+                                <Check className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
                             </button>
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>{fmt(event.created_at)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
+                          {fmt(event.created_at)}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`${statusColor[statusKey]} text-xs`}>
-                            <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${statusKey === "pending" ? "bg-yellow-500 animate-pulse" : "bg-green-500"}`} />
+                            <span
+                              className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${statusKey === "pending" ? "bg-yellow-500 animate-pulse" : "bg-green-500"}`}
+                            />
                             {statusKey}
                           </Badge>
                         </TableCell>
@@ -239,9 +274,11 @@ export function WebhookEventsTable({
                               disabled={replayingId === event.id || replayedIds.has(event.id)}
                               onClick={() => handleReplay(event.id)}
                             >
-                              {replayedIds.has(event.id)
-                                ? <Check className="h-3.5 w-3.5 text-green-500" />
-                                : <RotateCw className={`h-3.5 w-3.5 ${replayingId === event.id ? "animate-spin" : ""}`} />}
+                              {replayedIds.has(event.id) ? (
+                                <Check className="h-3.5 w-3.5 text-green-500" />
+                              ) : (
+                                <RotateCw className={`h-3.5 w-3.5 ${replayingId === event.id ? "animate-spin" : ""}`} />
+                              )}
                             </Button>
                           </div>
                         </TableCell>
@@ -257,24 +294,69 @@ export function WebhookEventsTable({
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-5">
               <p className="text-sm text-muted-foreground">
-                Showing{" "}
-                <span className="font-medium text-foreground">{(page - 1) * 20 + 1}</span>–
+                Showing <span className="font-medium text-foreground">{(page - 1) * 20 + 1}</span>–
                 <span className="font-medium text-foreground">{Math.min(page * 20, total)}</span> of{" "}
                 <span className="font-medium text-foreground">{total.toLocaleString()}</span>
               </p>
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} asChild={page > 1}>
-                  {page > 1 ? <a href={buildUrl(1)}><ChevronsLeft className="h-4 w-4" /></a> : <span><ChevronsLeft className="h-4 w-4" /></span>}
+                  {page > 1 ? (
+                    <a href={buildUrl(1)}>
+                      <ChevronsLeft className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <span>
+                      <ChevronsLeft className="h-4 w-4" />
+                    </span>
+                  )}
                 </Button>
                 <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} asChild={page > 1}>
-                  {page > 1 ? <a href={buildUrl(page - 1)}><ChevronLeft className="h-4 w-4" /></a> : <span><ChevronLeft className="h-4 w-4" /></span>}
+                  {page > 1 ? (
+                    <a href={buildUrl(page - 1)}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <span>
+                      <ChevronLeft className="h-4 w-4" />
+                    </span>
+                  )}
                 </Button>
-                <span className="text-sm px-2 text-muted-foreground tabular-nums">Page {page} of {totalPages}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} asChild={page < totalPages}>
-                  {page < totalPages ? <a href={buildUrl(page + 1)}><ChevronRight className="h-4 w-4" /></a> : <span><ChevronRight className="h-4 w-4" /></span>}
+                <span className="text-sm px-2 text-muted-foreground tabular-nums">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={page >= totalPages}
+                  asChild={page < totalPages}
+                >
+                  {page < totalPages ? (
+                    <a href={buildUrl(page + 1)}>
+                      <ChevronRight className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <span>
+                      <ChevronRight className="h-4 w-4" />
+                    </span>
+                  )}
                 </Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} asChild={page < totalPages}>
-                  {page < totalPages ? <a href={buildUrl(totalPages)}><ChevronsRight className="h-4 w-4" /></a> : <span><ChevronsRight className="h-4 w-4" /></span>}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={page >= totalPages}
+                  asChild={page < totalPages}
+                >
+                  {page < totalPages ? (
+                    <a href={buildUrl(totalPages)}>
+                      <ChevronsRight className="h-4 w-4" />
+                    </a>
+                  ) : (
+                    <span>
+                      <ChevronsRight className="h-4 w-4" />
+                    </span>
+                  )}
                 </Button>
               </div>
             </div>
@@ -293,50 +375,90 @@ export function WebhookEventsTable({
               </SheetHeader>
               <div className="space-y-5 pb-6">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`${providerColor[selected.provider.toLowerCase()] ?? "bg-muted"} capitalize font-semibold px-3 py-0.5 text-xs rounded-full`}>
+                  <Badge
+                    variant="outline"
+                    className={`${providerColor[selected.provider.toLowerCase()] ?? "bg-muted"} capitalize font-semibold px-3 py-0.5 text-xs rounded-full`}
+                  >
                     {selected.provider}
                   </Badge>
-                  <Badge variant="outline" className={`${statusColor[selected.processed ? "processed" : "pending"]} text-xs rounded-full`}>
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${!selected.processed ? "bg-yellow-500 animate-pulse" : "bg-green-500"}`} />
+                  <Badge
+                    variant="outline"
+                    className={`${statusColor[selected.processed ? "processed" : "pending"]} text-xs rounded-full`}
+                  >
+                    <span
+                      className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${!selected.processed ? "bg-yellow-500 animate-pulse" : "bg-green-500"}`}
+                    />
                     {selected.processed ? "processed" : "pending"}
                   </Badge>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Event Type</span>
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">
+                    Event Type
+                  </span>
                   <code className="text-xs bg-muted px-3 py-2 rounded block font-mono">{selected.event_type}</code>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Received</span>
-                  <span className="text-sm" suppressHydrationWarning>{fmt(selected.created_at)}</span>
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">
+                    Received
+                  </span>
+                  <span className="text-sm" suppressHydrationWarning>
+                    {fmt(selected.created_at)}
+                  </span>
                 </div>
 
                 {selected.processed_at && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Processed At</span>
-                    <span className="text-sm" suppressHydrationWarning>{fmt(selected.processed_at)}</span>
+                    <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">
+                      Processed At
+                    </span>
+                    <span className="text-sm" suppressHydrationWarning>
+                      {fmt(selected.processed_at)}
+                    </span>
                   </div>
                 )}
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Event ID</span>
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">
+                    Event ID
+                  </span>
                   <div className="flex items-center gap-2 bg-muted rounded p-2">
                     <code className="font-mono text-xs flex-1 break-all">{selected.event_id || "—"}</code>
                     {selected.event_id && (
-                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(selected.event_id)}>
-                        {copiedId === selected.event_id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0"
+                        onClick={() => handleCopy(selected.event_id)}
+                      >
+                        {copiedId === selected.event_id ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
                       </Button>
                     )}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">Internal ID</span>
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70">
+                    Internal ID
+                  </span>
                   <div className="flex items-center gap-2 bg-muted rounded p-2">
                     <code className="font-mono text-xs flex-1 break-all">{selected.id}</code>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleCopy(selected.id)}>
-                      {copiedId === selected.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() => handleCopy(selected.id)}
+                    >
+                      {copiedId === selected.id ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -348,9 +470,14 @@ export function WebhookEventsTable({
                   onClick={() => handleReplay(selected.id)}
                 >
                   {replayedIds.has(selected.id) ? (
-                    <><Check className="h-4 w-4 mr-2 text-green-500" /> Queued for replay</>
+                    <>
+                      <Check className="h-4 w-4 mr-2 text-green-500" /> Queued for replay
+                    </>
                   ) : (
-                    <><RotateCw className={`h-4 w-4 mr-2 ${replayingId === selected.id ? "animate-spin" : ""}`} /> Replay Event</>
+                    <>
+                      <RotateCw className={`h-4 w-4 mr-2 ${replayingId === selected.id ? "animate-spin" : ""}`} />{" "}
+                      Replay Event
+                    </>
                   )}
                 </Button>
               </div>

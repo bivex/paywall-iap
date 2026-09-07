@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { backendFetch } from "@/lib/server/backend-fetch";
 
@@ -10,11 +10,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const res = await backendFetch(
-      `/v1/bandit/experiments/${body.experimentId}/window/trim`,
-      req,
-      { method: "POST" }
-    );
+    const res = await backendFetch(`/v1/bandit/experiments/${body.experimentId}/window/trim`, req, { method: "POST" });
     const responseBody = await res.json().catch(() => ({}));
     return NextResponse.json(responseBody, { status: res.status });
   } catch {

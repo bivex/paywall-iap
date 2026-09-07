@@ -338,7 +338,9 @@ export function PricingTierManager({
                       {formatMoney(tier.monthly_price, tier.currency)}
                     </TableCell>
                     <TableCell className="font-mono text-sm">{formatMoney(tier.annual_price, tier.currency)}</TableCell>
-                    <TableCell className="font-mono text-sm">{formatMoney(tier.lifetime_price, tier.currency)}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {formatMoney(tier.lifetime_price, tier.currency)}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline">{tier.currency}</Badge>
                     </TableCell>

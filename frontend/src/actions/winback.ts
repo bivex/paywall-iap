@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import type { LaunchWinbackCampaignInput, WinbackCampaign } from "@/lib/winback";
 import { getAuth } from "@/lib/server-fetch";
+import type { LaunchWinbackCampaignInput, WinbackCampaign } from "@/lib/winback";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://api:8080";
 
@@ -46,7 +46,11 @@ export async function launchWinbackCampaignAction(payload: LaunchWinbackCampaign
   try {
     const res = await fetch(`${BACKEND_URL}/v1/admin/winback-campaigns`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, ...(appId ? { "X-App-ID": appId } : {}), "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(appId ? { "X-App-ID": appId } : {}),
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(payload),
     });
     const parsed = await parseResponse<WinbackCampaign>(res);

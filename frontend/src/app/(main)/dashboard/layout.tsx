@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cookies } from "next/headers";
+
 import { getLocale } from "next-intl/server";
 
 import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar";
@@ -11,11 +12,11 @@ import { SIDEBAR_COLLAPSIBLE_VALUES, SIDEBAR_VARIANT_VALUES } from "@/lib/prefer
 import { cn } from "@/lib/utils";
 import { getPreference } from "@/server/server-actions";
 
+import { NetworkMonitor } from "./_components/network-monitor";
 import { DashboardBreadcrumb } from "./_components/sidebar/dashboard-breadcrumb";
 import { LayoutControls } from "./_components/sidebar/layout-controls";
 import { SearchDialog } from "./_components/sidebar/search-dialog";
 import { ThemeSwitcher } from "./_components/sidebar/theme-switcher";
-import { NetworkMonitor } from "./_components/network-monitor";
 
 export default async function Layout({ children }: Readonly<{ children: ReactNode }>) {
   const cookieStore = await cookies();
@@ -28,7 +29,10 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
 
   const adminEmail = cookieStore.get("admin_email")?.value ?? "admin@paywall.local";
   const adminRole = cookieStore.get("admin_role")?.value ?? "admin";
-  const adminName = adminEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const adminName = adminEmail
+    .split("@")[0]
+    .replace(/[._-]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
   const currentUser = { name: adminName, email: adminEmail, avatar: "", role: adminRole };
 

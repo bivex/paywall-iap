@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { addDays, format } from "date-fns";
 import { Home, Receipt, Sparkles, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
 import { siApple, siMastercard } from "simple-icons";
 
 import { SimpleIcon } from "@/components/simple-icon";
