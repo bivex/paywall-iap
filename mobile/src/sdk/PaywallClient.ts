@@ -282,7 +282,7 @@ class PaywallClient {
       this.customerInfo = {
         userId: 'current-user',
         status: 'active',
-        planType: productId.includes('annual') ? 'annual' : 'monthly',
+        planType: productId.includes('annual') || productId.includes('year') ? 'annual' : 'monthly',
         entitlements: { premium: true },
         hasActiveSubscription: true,
       };

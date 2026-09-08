@@ -22,6 +22,18 @@ WHERE app_id = $1
   AND deleted_at IS NULL
 LIMIT 1;
 
+-- name: UpdateSubscription :one
+UPDATE subscriptions
+SET status = $2,
+    platform = $3,
+    product_id = $4,
+    plan_type = $5,
+    expires_at = $6,
+    auto_renew = $7,
+    updated_at = now()
+WHERE id = $1
+RETURNING *;
+
 -- name: UpdateSubscriptionStatus :one
 UPDATE subscriptions
 SET status = $2, updated_at = now()

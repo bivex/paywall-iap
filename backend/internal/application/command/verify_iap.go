@@ -114,6 +114,10 @@ func (c *VerifyIAPCommand) upsertSubscription(ctx context.Context, p upsertSubsc
 	existingSub, err := c.subscriptionRepo.GetActiveByUserID(ctx, p.userUUID)
 	if err == nil && existingSub != nil {
 		existingSub.ExpiresAt = p.expiresAt
+		existingSub.ProductID = p.productID
+		existingSub.PlanType = p.planType
+		existingSub.Platform = p.platform
+		existingSub.Status = entity.StatusActive
 		if err := c.subscriptionRepo.Update(ctx, existingSub); err != nil {
 			return nil, false, fmt.Errorf("failed to update subscription: %w", err)
 		}
