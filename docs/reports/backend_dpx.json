@@ -2,7 +2,7 @@
   "project_path": "/Volumes/External/Code/paywall-iap/backend",
   "scanned_files_count": 148,
   "total_detections_count": 676,
-  "elapsed_seconds": 0.1833,
+  "elapsed_seconds": 0.359,
   "summary_by_category": {
     "creational": 105,
     "structural": 12,

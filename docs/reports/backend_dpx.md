@@ -1,19 +1,19 @@
 # 🐹 DPX-Go: Software Design Pattern & Architecture Report
 
 - **Target Path:** `/Volumes/External/Code/paywall-iap/backend`
-- **Files Scanned:** `149`
-- **Total Patterns & Findings:** `675`
-- **Analysis Elapsed Time:** `0.157s`
+- **Files Scanned:** `148`
+- **Total Patterns & Findings:** `676`
+- **Analysis Elapsed Time:** `0.359s`
 
 ## 📊 Breakdown by Category
 
 | Category | Count |
 |---|:---:|
-| **CREATIONAL** | 106 |
-| **STRUCTURAL** | 5 |
+| **CREATIONAL** | 105 |
+| **STRUCTURAL** | 12 |
 | **BEHAVIORAL** | 15 |
-| **IDIOM** | 412 |
-| **PRINCIPLE** | 137 |
+| **IDIOM** | 498 |
+| **PRINCIPLE** | 46 |
 
 ## 📋 Detailed Pattern Findings
 
@@ -110,22 +110,22 @@
 ### #10 FACTORY_METHOD on `NewVerifyIAPCommand`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:58:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:67:1`
 - **Summary:** Factory constructor function 'NewVerifyIAPCommand()' encapsulates instantiation of '*VerifyIAPCommand'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewVerifyIAPCommand()' encapsulates instantiation of '*VerifyIAPCommand' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:58:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:58:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewVerifyIAPCommand()' encapsulates instantiation of '*VerifyIAPCommand' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:67:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:67:1`
 
 ### #11 FACTORY_METHOD on `NewVerifyIAPCommandLegacy`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:75:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:87:1`
 - **Summary:** Factory constructor function 'NewVerifyIAPCommandLegacy()' encapsulates instantiation of '*VerifyIAPCommand'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewVerifyIAPCommandLegacy()' encapsulates instantiation of '*VerifyIAPCommand' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:75:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:75:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewVerifyIAPCommandLegacy()' encapsulates instantiation of '*VerifyIAPCommand' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:87:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:87:1`
 
 ### #12 FACTORY_METHOD on `NewCreateGracePeriodCommand`
 - **Category:** `creational`
@@ -200,12 +200,12 @@
 ### #19 FACTORY_METHOD on `NewTaskHandlers`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:44:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:53:1`
 - **Summary:** Factory constructor function 'NewTaskHandlers()' encapsulates instantiation of '*TaskHandlers'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewTaskHandlers()' encapsulates instantiation of '*TaskHandlers' -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:44:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 2 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:44:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewTaskHandlers()' encapsulates instantiation of '*TaskHandlers' -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:53:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 2 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:53:1`
 
 ### #20 FACTORY_METHOD on `NewDunningJobHandler`
 - **Category:** `creational`
@@ -300,12 +300,12 @@
 ### #29 FACTORY_METHOD on `NewSendEcommerceTask`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:176:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:183:1`
 - **Summary:** Factory constructor function 'NewSendEcommerceTask()' encapsulates instantiation of '(*asynq.Task, error)'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewSendEcommerceTask()' encapsulates instantiation of '(*asynq.Task, error)' -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:176:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:176:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewSendEcommerceTask()' encapsulates instantiation of '(*asynq.Task, error)' -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:183:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:183:1`
 
 ### #30 FACTORY_METHOD on `NewRedisBanditCache`
 - **Category:** `creational`
@@ -320,12 +320,12 @@
 ### #31 FACTORY_METHOD on `NewAnalyticsCache`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:21:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:40:1`
 - **Summary:** Factory constructor function 'NewAnalyticsCache()' encapsulates instantiation of '*AnalyticsCache'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAnalyticsCache()' encapsulates instantiation of '*AnalyticsCache' -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:21:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 2 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:21:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAnalyticsCache()' encapsulates instantiation of '*AnalyticsCache' -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:40:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 2 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:40:1`
 
 ### #32 FACTORY_METHOD on `NewPostgresMatomoEventRepository`
 - **Category:** `creational`
@@ -340,12 +340,12 @@
 ### #33 FACTORY_METHOD on `NewPostgresBanditRepository`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:33:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:86:1`
 - **Summary:** Factory constructor function 'NewPostgresBanditRepository()' encapsulates instantiation of '*PostgresBanditRepository'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewPostgresBanditRepository()' encapsulates instantiation of '*PostgresBanditRepository' -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:33:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 2 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:33:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewPostgresBanditRepository()' encapsulates instantiation of '*PostgresBanditRepository' -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:86:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 2 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:86:1`
 
 ### #34 FACTORY_METHOD on `NewExperimentAdminRepository`
 - **Category:** `creational`
@@ -530,22 +530,22 @@
 ### #52 FACTORY_METHOD on `NewSubscription`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:50:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:60:1`
 - **Summary:** Factory constructor function 'NewSubscription()' encapsulates instantiation of '*Subscription'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewSubscription()' encapsulates instantiation of '*Subscription' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:50:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 6 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:50:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewSubscription()' encapsulates instantiation of '*Subscription' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:60:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:60:1`
 
 ### #53 FACTORY_METHOD on `NewUser`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/user.go:47:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/user.go:57:1`
 - **Summary:** Factory constructor function 'NewUser()' encapsulates instantiation of '*User'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewUser()' encapsulates instantiation of '*User' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/user.go:47:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 6 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/user.go:47:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewUser()' encapsulates instantiation of '*User' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/user.go:57:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/user.go:57:1`
 
 ### #54 FACTORY_METHOD on `NewDunning`
 - **Category:** `creational`
@@ -560,12 +560,12 @@
 ### #55 FACTORY_METHOD on `NewTransaction`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/transaction.go:31:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/transaction.go:40:1`
 - **Summary:** Factory constructor function 'NewTransaction()' encapsulates instantiation of '*Transaction'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewTransaction()' encapsulates instantiation of '*Transaction' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/transaction.go:31:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/transaction.go:31:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewTransaction()' encapsulates instantiation of '*Transaction' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/transaction.go:40:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/transaction.go:40:1`
 
 ### #56 FACTORY_METHOD on `NewGracePeriod`
 - **Category:** `creational`
@@ -580,12 +580,12 @@
 ### #57 FACTORY_METHOD on `NewWinbackOffer`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/winback_offer.go:43:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/winback_offer.go:52:1`
 - **Summary:** Factory constructor function 'NewWinbackOffer()' encapsulates instantiation of '*WinbackOffer'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewWinbackOffer()' encapsulates instantiation of '*WinbackOffer' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/winback_offer.go:43:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/winback_offer.go:43:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewWinbackOffer()' encapsulates instantiation of '*WinbackOffer' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/winback_offer.go:52:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/winback_offer.go:52:1`
 
 ### #58 FACTORY_METHOD on `NewValidationError`
 - **Category:** `creational`
@@ -610,22 +610,22 @@
 ### #60 FACTORY_METHOD on `NewAdvancedBanditEngine`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:72:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:180:1`
 - **Summary:** Factory constructor function 'NewAdvancedBanditEngine()' encapsulates instantiation of '*AdvancedBanditEngine'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAdvancedBanditEngine()' encapsulates instantiation of '*AdvancedBanditEngine' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:72:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 7 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:72:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAdvancedBanditEngine()' encapsulates instantiation of '*AdvancedBanditEngine' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:180:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:180:1`
 
 ### #61 FACTORY_METHOD on `NewExperimentAdminService`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:165:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:194:1`
 - **Summary:** Factory constructor function 'NewExperimentAdminService()' encapsulates instantiation of '*ExperimentAdminService'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewExperimentAdminService()' encapsulates instantiation of '*ExperimentAdminService' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:165:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:165:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewExperimentAdminService()' encapsulates instantiation of '*ExperimentAdminService' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:194:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:194:1`
 
 ### #62 FACTORY_METHOD on `NewFeatureFlagService`
 - **Category:** `creational`
@@ -699,22 +699,22 @@
 ### #69 FACTORY_METHOD on `NewThompsonSamplingBandit`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:229:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:265:1`
 - **Summary:** Factory constructor function 'NewThompsonSamplingBandit()' encapsulates instantiation of '*ThompsonSamplingBandit'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewThompsonSamplingBandit()' encapsulates instantiation of '*ThompsonSamplingBandit' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:229:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 3 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:229:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewThompsonSamplingBandit()' encapsulates instantiation of '*ThompsonSamplingBandit' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:265:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 3 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:265:1`
 
 ### #70 FACTORY_METHOD on `NewHybridObjectiveStrategy`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:54:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:89:1`
 - **Summary:** Factory constructor function 'NewHybridObjectiveStrategy()' encapsulates instantiation of '*HybridObjectiveStrategy'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewHybridObjectiveStrategy()' encapsulates instantiation of '*HybridObjectiveStrategy' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:54:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:54:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewHybridObjectiveStrategy()' encapsulates instantiation of '*HybridObjectiveStrategy' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:89:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:89:1`
 
 ### #71 FACTORY_METHOD on `NewAutomationJobExecutionService`
 - **Category:** `creational`
@@ -729,12 +729,12 @@
 ### #72 FACTORY_METHOD on `NewDelayedRewardStrategy`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:65:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:102:1`
 - **Summary:** Factory constructor function 'NewDelayedRewardStrategy()' encapsulates instantiation of '*DelayedRewardStrategy'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewDelayedRewardStrategy()' encapsulates instantiation of '*DelayedRewardStrategy' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:65:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 3 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:65:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewDelayedRewardStrategy()' encapsulates instantiation of '*DelayedRewardStrategy' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:102:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 3 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:102:1`
 
 ### #73 FACTORY_METHOD on `NewWinbackService`
 - **Category:** `creational`
@@ -759,12 +759,12 @@
 ### #75 FACTORY_METHOD on `NewLTVService`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:55:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:64:1`
 - **Summary:** Factory constructor function 'NewLTVService()' encapsulates instantiation of '*LTVService'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewLTVService()' encapsulates instantiation of '*LTVService' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:55:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:55:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewLTVService()' encapsulates instantiation of '*LTVService' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:64:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:64:1`
 
 ### #76 FACTORY_METHOD on `NewNotificationService`
 - **Category:** `creational`
@@ -778,12 +778,12 @@
 ### #77 FACTORY_METHOD on `NewLinUCBSelectionStrategy`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:33:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:42:1`
 - **Summary:** Factory constructor function 'NewLinUCBSelectionStrategy()' encapsulates instantiation of '*LinUCBSelectionStrategy'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewLinUCBSelectionStrategy()' encapsulates instantiation of '*LinUCBSelectionStrategy' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:33:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:33:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewLinUCBSelectionStrategy()' encapsulates instantiation of '*LinUCBSelectionStrategy' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:42:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:42:1`
 
 ### #78 FACTORY_METHOD on `NewAuditService`
 - **Category:** `creational`
@@ -887,12 +887,12 @@
 ### #88 FACTORY_METHOD on `NewSlidingWindowStrategy`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:38:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:47:1`
 - **Summary:** Factory constructor function 'NewSlidingWindowStrategy()' encapsulates instantiation of '*SlidingWindowStrategy'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewSlidingWindowStrategy()' encapsulates instantiation of '*SlidingWindowStrategy' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:38:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:38:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewSlidingWindowStrategy()' encapsulates instantiation of '*SlidingWindowStrategy' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:47:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:47:1`
 
 ### #89 FACTORY_METHOD on `NewExperimentRepairService`
 - **Category:** `creational`
@@ -917,12 +917,12 @@
 ### #91 FACTORY_METHOD on `NewWebhookHandler`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:34:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:45:1`
 - **Summary:** Factory constructor function 'NewWebhookHandler()' encapsulates instantiation of '*WebhookHandler'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewWebhookHandler()' encapsulates instantiation of '*WebhookHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:34:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 5 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:34:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewWebhookHandler()' encapsulates instantiation of '*WebhookHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:45:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:45:1`
 
 ### #92 FACTORY_METHOD on `NewPaywallHandler`
 - **Category:** `creational`
@@ -977,12 +977,12 @@
 ### #97 FACTORY_METHOD on `NewAuthHandler`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:27:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:28:1`
 - **Summary:** Factory constructor function 'NewAuthHandler()' encapsulates instantiation of '*AuthHandler'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAuthHandler()' encapsulates instantiation of '*AuthHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:27:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 3 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:27:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAuthHandler()' encapsulates instantiation of '*AuthHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:28:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 3 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:28:1`
 
 ### #98 FACTORY_METHOD on `NewAppSettingsHandler`
 - **Category:** `creational`
@@ -997,12 +997,12 @@
 ### #99 FACTORY_METHOD on `NewAppsHandler`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_apps.go:20:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_apps.go:21:1`
 - **Summary:** Factory constructor function 'NewAppsHandler()' encapsulates instantiation of '*AppsHandler'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAppsHandler()' encapsulates instantiation of '*AppsHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_apps.go:20:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_apps.go:20:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAppsHandler()' encapsulates instantiation of '*AppsHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_apps.go:21:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_apps.go:21:1`
 
 ### #100 FACTORY_METHOD on `NewAnalyticsHandlersExtended`
 - **Category:** `creational`
@@ -1017,12 +1017,12 @@
 ### #101 FACTORY_METHOD on `NewAdminHandler`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:50:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:127:1`
 - **Summary:** Factory constructor function 'NewAdminHandler()' encapsulates instantiation of '*AdminHandler'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAdminHandler()' encapsulates instantiation of '*AdminHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:50:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 12 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:50:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAdminHandler()' encapsulates instantiation of '*AdminHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:127:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 1 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:127:1`
 
 ### #102 FACTORY_METHOD on `NewBanditHandler`
 - **Category:** `creational`
@@ -1047,12 +1047,12 @@
 ### #104 FACTORY_METHOD on `NewBanditAdvancedHandler`
 - **Category:** `creational`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:37:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:66:1`
 - **Summary:** Factory constructor function 'NewBanditAdvancedHandler()' encapsulates instantiation of '*BanditAdvancedHandler'
 
 #### Evidence Trail:
-- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewBanditAdvancedHandler()' encapsulates instantiation of '*BanditAdvancedHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:37:1`
-- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 3 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:37:1`
+- `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewBanditAdvancedHandler()' encapsulates instantiation of '*BanditAdvancedHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:66:1`
+- `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 3 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:66:1`
 
 ### #105 FACTORY_METHOD on `NewAnalyticsHandler`
 - **Category:** `creational`
@@ -1064,16 +1064,7 @@
 - `+65%` **[FACTORY_METHOD_CONSTRUCTOR]** Factory constructor function 'NewAnalyticsHandler()' encapsulates instantiation of '*AnalyticsHandler' -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/analytics.go:25:1`
 - `+30%` **[FACTORY_METHOD_PARAMETERIZED]** Encapsulates parameterized construction across 4 input parameter(s) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/analytics.go:25:1`
 
-### #106 ABSTRACT_FACTORY on `Querier`
-- **Category:** `creational`
-- **Confidence:** **55%** [MEDIUM]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/sqlc/generated/querier.go:13:1`
-- **Summary:** Declares family of 3 product creation method(s) (CreateSubscription, CreateTransaction, CreateUser)
-
-#### Evidence Trail:
-- `+55%` **[ABSTRACT_FACTORY_METHODS]** Declares family of 3 product creation method(s) (CreateSubscription, CreateTransaction, CreateUser) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/sqlc/generated/querier.go:13:1`
-
-### #107 DECORATOR on `numericStringPatcher`
+### #106 DECORATOR on `numericStringPatcher`
 - **Category:** `structural`
 - **Confidence:** **50%** [MEDIUM]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/verifier.go:18:1`
@@ -1082,7 +1073,7 @@
 #### Evidence Trail:
 - `+50%` **[DECORATOR_WRAPS_COMPONENT]** Wraps inner component 'wrapped: http.RoundTripper' to decorate behavior -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/verifier.go:18:1`
 
-### #108 FACADE on `Client`
+### #107 FACADE on `Client`
 - **Category:** `structural`
 - **Confidence:** **67%** [MEDIUM]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:35:1`
@@ -1092,17 +1083,87 @@
 - `+40%` **[FACADE_NAMING]** Struct 'Client' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:35:1`
 - `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 3 subsystem services (config, httpClient, logger) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:35:1`
 
-### #109 FACADE on `AdvancedBanditEngine`
+### #108 FACADE on `BanditSelectionEngine`
 - **Category:** `structural`
 - **Confidence:** **67%** [MEDIUM]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:16:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:40:1`
+- **Summary:** Struct 'BanditSelectionEngine' follows Facade / High-Level Client naming convention
+
+#### Evidence Trail:
+- `+40%` **[FACADE_NAMING]** Struct 'BanditSelectionEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:40:1`
+- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 4 subsystem services (base, repo, cache) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:40:1`
+
+### #109 FACADE on `BanditRewardExecutionEngine`
+- **Category:** `structural`
+- **Confidence:** **67%** [MEDIUM]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:50:1`
+- **Summary:** Struct 'BanditRewardExecutionEngine' follows Facade / High-Level Client naming convention
+
+#### Evidence Trail:
+- `+40%` **[FACADE_NAMING]** Struct 'BanditRewardExecutionEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:50:1`
+- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 4 subsystem services (base, repo, currencyService) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:50:1`
+
+### #110 FACADE on `BanditMetricsEngine`
+- **Category:** `structural`
+- **Confidence:** **67%** [MEDIUM]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:63:1`
+- **Summary:** Struct 'BanditMetricsEngine' follows Facade / High-Level Client naming convention
+
+#### Evidence Trail:
+- `+40%` **[FACADE_NAMING]** Struct 'BanditMetricsEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:63:1`
+- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 4 subsystem services (base, repo, cache) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:63:1`
+
+### #111 FACADE on `BanditRewardEngine`
+- **Category:** `structural`
+- **Confidence:** **67%** [MEDIUM]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:74:1`
+- **Summary:** Struct 'BanditRewardEngine' follows Facade / High-Level Client naming convention
+
+#### Evidence Trail:
+- `+40%` **[FACADE_NAMING]** Struct 'BanditRewardEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:74:1`
+- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 3 subsystem services (BanditSelectionEngine, BanditRewardExecutionEngine, BanditMetricsEngine) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:74:1`
+
+### #112 FACADE on `BanditWindowEngine`
+- **Category:** `structural`
+- **Confidence:** **67%** [MEDIUM]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:81:1`
+- **Summary:** Struct 'BanditWindowEngine' follows Facade / High-Level Client naming convention
+
+#### Evidence Trail:
+- `+40%` **[FACADE_NAMING]** Struct 'BanditWindowEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:81:1`
+- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 3 subsystem services (repo, redisClient, logger) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:81:1`
+
+### #113 FACADE on `BanditObjectiveEngine`
+- **Category:** `structural`
+- **Confidence:** **67%** [MEDIUM]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:89:1`
+- **Summary:** Struct 'BanditObjectiveEngine' follows Facade / High-Level Client naming convention
+
+#### Evidence Trail:
+- `+40%` **[FACADE_NAMING]** Struct 'BanditObjectiveEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:89:1`
+- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 5 subsystem services (repo, cache, logger) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:89:1`
+
+### #114 FACADE on `BanditMaintenanceEngine`
+- **Category:** `structural`
+- **Confidence:** **67%** [MEDIUM]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:99:1`
+- **Summary:** Struct 'BanditMaintenanceEngine' follows Facade / High-Level Client naming convention
+
+#### Evidence Trail:
+- `+40%` **[FACADE_NAMING]** Struct 'BanditMaintenanceEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:99:1`
+- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 7 subsystem services (repo, logger, currencyService) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:99:1`
+
+### #115 FACADE on `AdvancedBanditEngine`
+- **Category:** `structural`
+- **Confidence:** **67%** [MEDIUM]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:111:1`
 - **Summary:** Struct 'AdvancedBanditEngine' follows Facade / High-Level Client naming convention
 
 #### Evidence Trail:
-- `+40%` **[FACADE_NAMING]** Struct 'AdvancedBanditEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:16:1`
-- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 11 subsystem services (base, rewardStrategy, selectionStrategy) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:16:1`
+- `+40%` **[FACADE_NAMING]** Struct 'AdvancedBanditEngine' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:111:1`
+- `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 4 subsystem services (BanditRewardEngine, BanditWindowEngine, BanditObjectiveEngine) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:111:1`
 
-### #110 FACADE on `LTVService`
+### #116 FACADE on `LTVService`
 - **Category:** `structural`
 - **Confidence:** **67%** [MEDIUM]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:29:1`
@@ -1112,7 +1173,7 @@
 - `+40%` **[FACADE_NAMING]** Struct 'LTVService' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:29:1`
 - `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 4 subsystem services (matomoClient, cohortWorker, subscriptionRepo) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:29:1`
 
-### #111 FACADE on `CurrencyRateService`
+### #117 FACADE on `CurrencyRateService`
 - **Category:** `structural`
 - **Confidence:** **67%** [MEDIUM]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:22:1`
@@ -1122,34 +1183,34 @@
 - `+40%` **[FACADE_NAMING]** Struct 'CurrencyRateService' follows Facade / High-Level Client naming convention -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:22:1`
 - `+45%` **[FACADE_AGGREGATES_SUBSYSTEMS]** Aggregates 3 subsystem services (redisClient, logger, httpClient) behind unified API -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:22:1`
 
-### #112 STRATEGY on `RewardStrategy`
+### #118 STRATEGY on `RewardStrategy`
 - **Category:** `behavioral`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:101:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:109:1`
 - **Summary:** Interface 'RewardStrategy' defines polymorphic Strategy algorithm interface
 
 #### Evidence Trail:
-- `+75%` **[STRATEGY_INTERFACE_NAMING]** Interface 'RewardStrategy' defines polymorphic Strategy algorithm interface -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:101:1`
+- `+75%` **[STRATEGY_INTERFACE_NAMING]** Interface 'RewardStrategy' defines polymorphic Strategy algorithm interface -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:109:1`
 
-### #113 STRATEGY on `SelectionStrategy`
+### #119 STRATEGY on `SelectionStrategy`
 - **Category:** `behavioral`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:107:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:115:1`
 - **Summary:** Interface 'SelectionStrategy' defines polymorphic Strategy algorithm interface
 
 #### Evidence Trail:
-- `+75%` **[STRATEGY_INTERFACE_NAMING]** Interface 'SelectionStrategy' defines polymorphic Strategy algorithm interface -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:107:1`
+- `+75%` **[STRATEGY_INTERFACE_NAMING]** Interface 'SelectionStrategy' defines polymorphic Strategy algorithm interface -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:115:1`
 
-### #114 STRATEGY on `WindowStrategy`
+### #120 STRATEGY on `WindowStrategy`
 - **Category:** `behavioral`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:113:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:121:1`
 - **Summary:** Interface 'WindowStrategy' defines polymorphic Strategy algorithm interface
 
 #### Evidence Trail:
-- `+75%` **[STRATEGY_INTERFACE_NAMING]** Interface 'WindowStrategy' defines polymorphic Strategy algorithm interface -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:113:1`
+- `+75%` **[STRATEGY_INTERFACE_NAMING]** Interface 'WindowStrategy' defines polymorphic Strategy algorithm interface -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:121:1`
 
-### #115 COMMAND on `RegisterCommand`
+### #121 COMMAND on `RegisterCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:17:1`
@@ -1158,7 +1219,7 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'RegisterCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:17:1`
 
-### #116 COMMAND on `ResolveGracePeriodCommand`
+### #122 COMMAND on `ResolveGracePeriodCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/resolve_grace_period.go:12:1`
@@ -1167,7 +1228,7 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'ResolveGracePeriodCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/resolve_grace_period.go:12:1`
 
-### #117 COMMAND on `TrackSessionCommand`
+### #123 COMMAND on `TrackSessionCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/track_session.go:13:1`
@@ -1176,7 +1237,7 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'TrackSessionCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/track_session.go:13:1`
 
-### #118 COMMAND on `CaptureEmailCommand`
+### #124 COMMAND on `CaptureEmailCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/capture_email.go:14:1`
@@ -1185,7 +1246,7 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'CaptureEmailCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/capture_email.go:14:1`
 
-### #119 COMMAND on `AdminLoginCommand`
+### #125 COMMAND on `AdminLoginCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/admin_login.go:16:1`
@@ -1194,7 +1255,7 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'AdminLoginCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/admin_login.go:16:1`
 
-### #120 COMMAND on `CancelSubscriptionCommand`
+### #126 COMMAND on `CancelSubscriptionCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/cancel_subscription.go:13:1`
@@ -1203,7 +1264,7 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'CancelSubscriptionCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/cancel_subscription.go:13:1`
 
-### #121 COMMAND on `AcceptWinbackOfferCommand`
+### #127 COMMAND on `AcceptWinbackOfferCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/accept_winback_offer.go:12:1`
@@ -1212,7 +1273,7 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'AcceptWinbackOfferCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/accept_winback_offer.go:12:1`
 
-### #122 COMMAND on `VerifyIAPCommand`
+### #128 COMMAND on `VerifyIAPCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:49:1`
@@ -1221,7 +1282,7 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'VerifyIAPCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:49:1`
 
-### #123 COMMAND on `CreateGracePeriodCommand`
+### #129 COMMAND on `CreateGracePeriodCommand`
 - **Category:** `behavioral`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/create_grace_period.go:13:1`
@@ -1230,16 +1291,16 @@
 #### Evidence Trail:
 - `+70%` **[COMMAND_STRUCT]** Struct 'CreateGracePeriodCommand' encapsulates executable command operation with 'Execute()' -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/create_grace_period.go:13:1`
 
-### #124 MEDIATOR on `Experiment`
+### #130 MEDIATOR on `Experiment`
 - **Category:** `behavioral`
 - **Confidence:** **55%** [MEDIUM]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:912:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1043:1`
 - **Summary:** Maintains decoupled participant registry 'ObjectiveWeights: *map[string]float64'
 
 #### Evidence Trail:
-- `+55%` **[MEDIATOR_PARTICIPANTS_MAP]** Maintains decoupled participant registry 'ObjectiveWeights: *map[string]float64' -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:912:1`
+- `+55%` **[MEDIATOR_PARTICIPANTS_MAP]** Maintains decoupled participant registry 'ObjectiveWeights: *map[string]float64' -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1043:1`
 
-### #125 MEDIATOR on `CredentialResolver`
+### #131 MEDIATOR on `CredentialResolver`
 - **Category:** `behavioral`
 - **Confidence:** **55%** [MEDIUM]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/credential_resolver.go:22:1`
@@ -1248,7 +1309,7 @@
 #### Evidence Trail:
 - `+55%` **[MEDIATOR_PARTICIPANTS_MAP]** Maintains decoupled participant registry 'cache: map[string]*cachedCred' -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/credential_resolver.go:22:1`
 
-### #126 MEDIATOR on `FeatureFlagService`
+### #132 MEDIATOR on `FeatureFlagService`
 - **Category:** `behavioral`
 - **Confidence:** **55%** [MEDIUM]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:24:1`
@@ -1257,25 +1318,34 @@
 #### Evidence Trail:
 - `+55%` **[MEDIATOR_PARTICIPANTS_MAP]** Maintains decoupled participant registry 'flags: map[string]*FeatureFlag' -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:24:1`
 
-### #127 CONTEXT_PROPAGATION on `mustInitDB`
+### #133 CONTEXT_PROPAGATION on `ensureSuperAdminUser`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:159:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/seed/main.go:38:1`
+- **Summary:** Function 'ensureSuperAdminUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ensureSuperAdminUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/cmd/seed/main.go:38:1`
+
+### #134 CONTEXT_PROPAGATION on `mustInitDB`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:166:1`
 - **Summary:** Function 'mustInitDB' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'mustInitDB' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:159:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'mustInitDB' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:166:1`
 
-### #128 CONTEXT_PROPAGATION on `mustInitRedis`
+### #135 CONTEXT_PROPAGATION on `mustInitRedis`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:174:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:181:1`
 - **Summary:** Function 'mustInitRedis' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'mustInitRedis' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:174:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'mustInitRedis' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:181:1`
 
-### #129 CONTEXT_PROPAGATION on `WithAppID`
+### #136 CONTEXT_PROPAGATION on `WithAppID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/appctx/appctx.go:12:1`
@@ -1284,7 +1354,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'WithAppID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/appctx/appctx.go:12:1`
 
-### #130 CONTEXT_PROPAGATION on `AppIDFromCtx`
+### #137 CONTEXT_PROPAGATION on `AppIDFromCtx`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/appctx/appctx.go:17:1`
@@ -1293,7 +1363,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AppIDFromCtx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/appctx/appctx.go:17:1`
 
-### #131 CONTEXT_PROPAGATION on `MustAppIDFromCtx`
+### #138 CONTEXT_PROPAGATION on `MustAppIDFromCtx`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/appctx/appctx.go:23:1`
@@ -1302,34 +1372,52 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'MustAppIDFromCtx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/appctx/appctx.go:23:1`
 
-### #132 CONTEXT_PROPAGATION on `RevokeToken`
+### #139 CONTEXT_PROPAGATION on `checkTokenBlocklist`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:267:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:60:1`
+- **Summary:** Function 'checkTokenBlocklist' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'checkTokenBlocklist' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:60:1`
+
+### #140 CONTEXT_PROPAGATION on `RevokeToken`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:264:1`
 - **Summary:** Function 'RevokeToken' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RevokeToken' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:267:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RevokeToken' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:264:1`
 
-### #133 CONTEXT_PROPAGATION on `IsRevoked`
+### #141 CONTEXT_PROPAGATION on `IsRevoked`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:272:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:269:1`
 - **Summary:** Function 'IsRevoked' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'IsRevoked' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:272:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'IsRevoked' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:269:1`
 
-### #134 CONTEXT_PROPAGATION on `Execute`
+### #142 CONTEXT_PROPAGATION on `checkUserAvailability`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:31:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:48:1`
+- **Summary:** Function 'checkUserAvailability' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'checkUserAvailability' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:48:1`
+
+### #143 CONTEXT_PROPAGATION on `Execute`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:76:1`
 - **Summary:** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:31:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:76:1`
 
-### #135 CONTEXT_PROPAGATION on `Execute`
+### #144 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/resolve_grace_period.go:36:1`
@@ -1338,7 +1426,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/resolve_grace_period.go:36:1`
 
-### #136 CONTEXT_PROPAGATION on `Execute`
+### #145 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/track_session.go:22:1`
@@ -1347,7 +1435,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/track_session.go:22:1`
 
-### #137 CONTEXT_PROPAGATION on `Execute`
+### #146 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/capture_email.go:22:1`
@@ -1356,7 +1444,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/capture_email.go:22:1`
 
-### #138 CONTEXT_PROPAGATION on `Execute`
+### #147 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/admin_login.go:36:1`
@@ -1365,7 +1453,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/admin_login.go:36:1`
 
-### #139 CONTEXT_PROPAGATION on `Execute`
+### #148 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/cancel_subscription.go:25:1`
@@ -1374,7 +1462,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/cancel_subscription.go:25:1`
 
-### #140 CONTEXT_PROPAGATION on `Execute`
+### #149 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/accept_winback_offer.go:40:1`
@@ -1383,7 +1471,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/accept_winback_offer.go:40:1`
 
-### #141 CONTEXT_PROPAGATION on `VerifyReceipt`
+### #150 CONTEXT_PROPAGATION on `VerifyReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:44:1`
@@ -1392,16 +1480,52 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:44:1`
 
-### #142 CONTEXT_PROPAGATION on `Execute`
+### #151 CONTEXT_PROPAGATION on `handleDuplicateReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:91:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:97:1`
+- **Summary:** Function 'handleDuplicateReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'handleDuplicateReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:97:1`
+
+### #152 CONTEXT_PROPAGATION on `upsertSubscription`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:113:1`
+- **Summary:** Function 'upsertSubscription' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'upsertSubscription' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:113:1`
+
+### #153 CONTEXT_PROPAGATION on `Execute`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:140:1`
 - **Summary:** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:91:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:140:1`
 
-### #143 CONTEXT_PROPAGATION on `Execute`
+### #154 CONTEXT_PROPAGATION on `validateUserAndRequest`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:196:1`
+- **Summary:** Function 'validateUserAndRequest' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'validateUserAndRequest' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:196:1`
+
+### #155 CONTEXT_PROPAGATION on `verifyPlatformReceipt`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:213:1`
+- **Summary:** Function 'verifyPlatformReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'verifyPlatformReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:213:1`
+
+### #156 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/create_grace_period.go:42:1`
@@ -1410,7 +1534,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/create_grace_period.go:42:1`
 
-### #144 CONTEXT_PROPAGATION on `Execute`
+### #157 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/query/subscription.go:27:1`
@@ -1419,7 +1543,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/query/subscription.go:27:1`
 
-### #145 CONTEXT_PROPAGATION on `Execute`
+### #158 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/query/subscription.go:69:1`
@@ -1428,7 +1552,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/query/subscription.go:69:1`
 
-### #146 CONTEXT_PROPAGATION on `Execute`
+### #159 CONTEXT_PROPAGATION on `Execute`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/query/get_trigger_status.go:22:1`
@@ -1437,7 +1561,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Execute' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/application/query/get_trigger_status.go:22:1`
 
-### #147 CONTEXT_PROPAGATION on `HandleCohortAggregation`
+### #160 CONTEXT_PROPAGATION on `HandleCohortAggregation`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/cohort_jobs.go:83:1`
@@ -1446,7 +1570,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleCohortAggregation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/cohort_jobs.go:83:1`
 
-### #148 CONTEXT_PROPAGATION on `CalculateLTVFromCohorts`
+### #161 CONTEXT_PROPAGATION on `CalculateLTVFromCohorts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/cohort_jobs.go:203:1`
@@ -1455,16 +1579,16 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateLTVFromCohorts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/cohort_jobs.go:203:1`
 
-### #149 CONTEXT_PROPAGATION on `GetCohortMetrics`
+### #162 CONTEXT_PROPAGATION on `GetCohortMetrics`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/cohort_jobs.go:236:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/cohort_jobs.go:244:1`
 - **Summary:** Function 'GetCohortMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCohortMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/cohort_jobs.go:236:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCohortMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/cohort_jobs.go:244:1`
 
-### #150 CONTEXT_PROPAGATION on `ProcessExpiredPendingRewards`
+### #163 CONTEXT_PROPAGATION on `ProcessExpiredPendingRewards`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:47:1`
@@ -1473,7 +1597,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:47:1`
 
-### #151 CONTEXT_PROPAGATION on `TrimSlidingWindows`
+### #164 CONTEXT_PROPAGATION on `TrimSlidingWindows`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:83:1`
@@ -1482,7 +1606,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrimSlidingWindows' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:83:1`
 
-### #152 CONTEXT_PROPAGATION on `CleanupOldContextData`
+### #165 CONTEXT_PROPAGATION on `CleanupOldContextData`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:126:1`
@@ -1491,79 +1615,151 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupOldContextData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:126:1`
 
-### #153 CONTEXT_PROPAGATION on `CalculateWinProbabilities`
+### #166 CONTEXT_PROPAGATION on `CalculateWinProbabilities`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:163:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:211:1`
 - **Summary:** Function 'CalculateWinProbabilities' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateWinProbabilities' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:163:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateWinProbabilities' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:211:1`
 
-### #154 CONTEXT_PROPAGATION on `RunFullMaintenance`
+### #167 CONTEXT_PROPAGATION on `RunFullMaintenance`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:242:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:256:1`
 - **Summary:** Function 'RunFullMaintenance' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RunFullMaintenance' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:242:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RunFullMaintenance' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:256:1`
 
-### #155 CONTEXT_PROPAGATION on `SyncObjectiveStats`
+### #168 CONTEXT_PROPAGATION on `SyncObjectiveStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:290:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:304:1`
 - **Summary:** Function 'SyncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SyncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:290:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SyncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:304:1`
 
-### #156 CONTEXT_PROPAGATION on `HandleUpdateLTV`
+### #169 CONTEXT_PROPAGATION on `dispatchWebhookByProvider`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:111:1`
-- **Summary:** Function 'HandleUpdateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:235:1`
+- **Summary:** Function 'dispatchWebhookByProvider' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleUpdateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:111:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'dispatchWebhookByProvider' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:235:1`
 
-### #157 CONTEXT_PROPAGATION on `HandleComputeAnalytics`
+### #170 CONTEXT_PROPAGATION on `HandleProcessWebhook`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:152:1`
-- **Summary:** Function 'HandleComputeAnalytics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleComputeAnalytics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:152:1`
-
-### #158 CONTEXT_PROPAGATION on `HandleProcessWebhook`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:221:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:254:1`
 - **Summary:** Function 'HandleProcessWebhook' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleProcessWebhook' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:221:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleProcessWebhook' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:254:1`
 
-### #159 CONTEXT_PROPAGATION on `handleStripeEvent`
+### #171 CONTEXT_PROPAGATION on `handleStripeEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:273:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:300:1`
 - **Summary:** Function 'handleStripeEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'handleStripeEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:273:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'handleStripeEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:300:1`
 
-### #160 CONTEXT_PROPAGATION on `HandleSendNotification`
+### #172 CONTEXT_PROPAGATION on `handleGoogleRTDNEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:328:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:598:1`
+- **Summary:** Function 'handleGoogleRTDNEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'handleGoogleRTDNEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:598:1`
+
+### #173 CONTEXT_PROPAGATION on `applyRTDNStatusAndExpiry`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:643:1`
+- **Summary:** Function 'applyRTDNStatusAndExpiry' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'applyRTDNStatusAndExpiry' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:643:1`
+
+### #174 CONTEXT_PROPAGATION on `acquireSubscriptionLock`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:713:1`
+- **Summary:** Function 'acquireSubscriptionLock' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'acquireSubscriptionLock' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:713:1`
+
+### #175 CONTEXT_PROPAGATION on `handleAppleS2SEvent`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:757:1`
+- **Summary:** Function 'handleAppleS2SEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'handleAppleS2SEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:757:1`
+
+### #176 CONTEXT_PROPAGATION on `updateAppleSubscriptionState`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:808:1`
+- **Summary:** Function 'updateAppleSubscriptionState' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'updateAppleSubscriptionState' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:808:1`
+
+### #177 CONTEXT_PROPAGATION on `HandleUpdateLTV`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:126:1`
+- **Summary:** Function 'HandleUpdateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleUpdateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:126:1`
+
+### #178 CONTEXT_PROPAGATION on `HandleComputeAnalytics`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:167:1`
+- **Summary:** Function 'HandleComputeAnalytics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleComputeAnalytics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:167:1`
+
+### #179 CONTEXT_PROPAGATION on `HandleSendNotification`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:355:1`
 - **Summary:** Function 'HandleSendNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleSendNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:328:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleSendNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:355:1`
 
-### #161 CONTEXT_PROPAGATION on `HandleProcessDunningAttempt`
+### #180 CONTEXT_PROPAGATION on `HandleSyncLago`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:421:1`
+- **Summary:** Function 'HandleSyncLago' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleSyncLago' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:421:1`
+
+### #181 CONTEXT_PROPAGATION on `HandleExpireGracePeriod`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:484:1`
+- **Summary:** Function 'HandleExpireGracePeriod' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleExpireGracePeriod' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:484:1`
+
+### #182 CONTEXT_PROPAGATION on `HandleProcessDunningAttempt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/dunning_jobs.go:44:1`
@@ -1572,7 +1768,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleProcessDunningAttempt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/dunning_jobs.go:44:1`
 
-### #162 CONTEXT_PROPAGATION on `HandleCheckPendingDunning`
+### #183 CONTEXT_PROPAGATION on `HandleCheckPendingDunning`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/dunning_jobs.go:58:1`
@@ -1581,7 +1777,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleCheckPendingDunning' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/dunning_jobs.go:58:1`
 
-### #163 CONTEXT_PROPAGATION on `HandleCalculateABTestStats`
+### #184 CONTEXT_PROPAGATION on `HandleCalculateABTestStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/ab_test_jobs.go:35:1`
@@ -1590,7 +1786,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleCalculateABTestStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/ab_test_jobs.go:35:1`
 
-### #164 CONTEXT_PROPAGATION on `HandleProcessExpiredWinbackOffers`
+### #185 CONTEXT_PROPAGATION on `HandleProcessExpiredWinbackOffers`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/winback_jobs.go:52:1`
@@ -1599,7 +1795,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleProcessExpiredWinbackOffers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/winback_jobs.go:52:1`
 
-### #165 CONTEXT_PROPAGATION on `HandleCreateWinbackCampaign`
+### #186 CONTEXT_PROPAGATION on `HandleCreateWinbackCampaign`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/winback_jobs.go:75:1`
@@ -1608,7 +1804,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleCreateWinbackCampaign' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/winback_jobs.go:75:1`
 
-### #166 CONTEXT_PROPAGATION on `HandleProcessExpiredGracePeriods`
+### #187 CONTEXT_PROPAGATION on `HandleProcessExpiredGracePeriods`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/grace_period_jobs.go:46:1`
@@ -1617,7 +1813,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleProcessExpiredGracePeriods' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/grace_period_jobs.go:46:1`
 
-### #167 CONTEXT_PROPAGATION on `HandleNotifyExpiringGracePeriods`
+### #188 CONTEXT_PROPAGATION on `HandleNotifyExpiringGracePeriods`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/grace_period_jobs.go:67:1`
@@ -1626,7 +1822,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleNotifyExpiringGracePeriods' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/grace_period_jobs.go:67:1`
 
-### #168 CONTEXT_PROPAGATION on `HandleAggregateDailyMetrics`
+### #189 CONTEXT_PROPAGATION on `HandleAggregateDailyMetrics`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/analytics_jobs.go:30:1`
@@ -1635,7 +1831,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleAggregateDailyMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/analytics_jobs.go:30:1`
 
-### #169 CONTEXT_PROPAGATION on `UpdateExchangeRates`
+### #190 CONTEXT_PROPAGATION on `UpdateExchangeRates`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/currency_jobs.go:36:1`
@@ -1644,7 +1840,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExchangeRates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/currency_jobs.go:36:1`
 
-### #170 CONTEXT_PROPAGATION on `GetSupportedCurrencies`
+### #191 CONTEXT_PROPAGATION on `GetSupportedCurrencies`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/currency_jobs.go:61:1`
@@ -1653,7 +1849,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetSupportedCurrencies' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/currency_jobs.go:61:1`
 
-### #171 CONTEXT_PROPAGATION on `HandleProcessBatch`
+### #192 CONTEXT_PROPAGATION on `HandleProcessBatch`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:55:1`
@@ -1662,7 +1858,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleProcessBatch' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:55:1`
 
-### #172 CONTEXT_PROPAGATION on `HandleSendEvent`
+### #193 CONTEXT_PROPAGATION on `HandleSendEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:130:1`
@@ -1671,16 +1867,16 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleSendEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:130:1`
 
-### #173 CONTEXT_PROPAGATION on `HandleSendEcommerce`
+### #194 CONTEXT_PROPAGATION on `HandleSendEcommerce`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:186:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:193:1`
 - **Summary:** Function 'HandleSendEcommerce' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleSendEcommerce' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:186:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleSendEcommerce' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/matomo_jobs.go:193:1`
 
-### #174 CONTEXT_PROPAGATION on `GetArmStats`
+### #195 CONTEXT_PROPAGATION on `GetArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:47:1`
@@ -1689,7 +1885,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:47:1`
 
-### #175 CONTEXT_PROPAGATION on `SetArmStats`
+### #196 CONTEXT_PROPAGATION on `SetArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:74:1`
@@ -1698,7 +1894,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:74:1`
 
-### #176 CONTEXT_PROPAGATION on `GetAssignment`
+### #197 CONTEXT_PROPAGATION on `GetAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:105:1`
@@ -1707,7 +1903,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:105:1`
 
-### #177 CONTEXT_PROPAGATION on `SetAssignment`
+### #198 CONTEXT_PROPAGATION on `SetAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:124:1`
@@ -1716,7 +1912,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:124:1`
 
-### #178 CONTEXT_PROPAGATION on `InvalidateArmStats`
+### #199 CONTEXT_PROPAGATION on `InvalidateArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:139:1`
@@ -1725,7 +1921,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'InvalidateArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:139:1`
 
-### #179 CONTEXT_PROPAGATION on `SetBytes`
+### #200 CONTEXT_PROPAGATION on `SetBytes`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:150:1`
@@ -1734,7 +1930,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetBytes' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:150:1`
 
-### #180 CONTEXT_PROPAGATION on `GetBytes`
+### #201 CONTEXT_PROPAGATION on `GetBytes`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:158:1`
@@ -1743,7 +1939,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetBytes' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:158:1`
 
-### #181 CONTEXT_PROPAGATION on `DeleteKey`
+### #202 CONTEXT_PROPAGATION on `DeleteKey`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:170:1`
@@ -1752,7 +1948,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'DeleteKey' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:170:1`
 
-### #182 CONTEXT_PROPAGATION on `InvalidateAssignment`
+### #203 CONTEXT_PROPAGATION on `InvalidateAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:178:1`
@@ -1761,7 +1957,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'InvalidateAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:178:1`
 
-### #183 CONTEXT_PROPAGATION on `BulkInvalidateAssignments`
+### #204 CONTEXT_PROPAGATION on `BulkInvalidateAssignments`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:192:1`
@@ -1770,7 +1966,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'BulkInvalidateAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:192:1`
 
-### #184 CONTEXT_PROPAGATION on `GetArmStatsBatch`
+### #205 CONTEXT_PROPAGATION on `GetArmStatsBatch`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:218:1`
@@ -1779,7 +1975,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStatsBatch' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:218:1`
 
-### #185 CONTEXT_PROPAGATION on `SetArmStatsBatch`
+### #206 CONTEXT_PROPAGATION on `SetArmStatsBatch`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:272:1`
@@ -1788,7 +1984,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetArmStatsBatch' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:272:1`
 
-### #186 CONTEXT_PROPAGATION on `Ping`
+### #207 CONTEXT_PROPAGATION on `Ping`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:311:1`
@@ -1797,142 +1993,142 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Ping' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/bandit_cache.go:311:1`
 
-### #187 CONTEXT_PROPAGATION on `SetRealtimeMetric`
+### #208 CONTEXT_PROPAGATION on `SetRealtimeMetric`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:55:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:75:1`
 - **Summary:** Function 'SetRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:55:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:75:1`
 
-### #188 CONTEXT_PROPAGATION on `GetRealtimeMetric`
+### #209 CONTEXT_PROPAGATION on `GetRealtimeMetric`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:76:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:99:1`
 - **Summary:** Function 'GetRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:76:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:99:1`
 
-### #189 CONTEXT_PROPAGATION on `IncrementRealtimeMetric`
+### #210 CONTEXT_PROPAGATION on `IncrementRealtimeMetric`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:96:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:126:1`
 - **Summary:** Function 'IncrementRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'IncrementRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:96:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'IncrementRealtimeMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:126:1`
 
-### #190 CONTEXT_PROPAGATION on `SetRealtimeMetrics`
+### #211 CONTEXT_PROPAGATION on `SetRealtimeMetrics`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:114:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:144:1`
 - **Summary:** Function 'SetRealtimeMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetRealtimeMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:114:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetRealtimeMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:144:1`
 
-### #191 CONTEXT_PROPAGATION on `GetRealtimeMetrics`
+### #212 CONTEXT_PROPAGATION on `GetRealtimeMetrics`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:140:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:170:1`
 - **Summary:** Function 'GetRealtimeMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRealtimeMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:140:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRealtimeMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:170:1`
 
-### #192 CONTEXT_PROPAGATION on `SetCohortData`
+### #213 CONTEXT_PROPAGATION on `SetCohortData`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:193:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:223:1`
 - **Summary:** Function 'SetCohortData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetCohortData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:193:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetCohortData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:223:1`
 
-### #193 CONTEXT_PROPAGATION on `GetCohortData`
+### #214 CONTEXT_PROPAGATION on `GetCohortData`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:215:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:245:1`
 - **Summary:** Function 'GetCohortData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCohortData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:215:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCohortData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:245:1`
 
-### #194 CONTEXT_PROPAGATION on `InvalidateCohort`
+### #215 CONTEXT_PROPAGATION on `InvalidateCohort`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:235:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:265:1`
 - **Summary:** Function 'InvalidateCohort' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'InvalidateCohort' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:235:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'InvalidateCohort' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:265:1`
 
-### #195 CONTEXT_PROPAGATION on `SetFunnelData`
+### #216 CONTEXT_PROPAGATION on `SetFunnelData`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:281:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:319:1`
 - **Summary:** Function 'SetFunnelData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetFunnelData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:281:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetFunnelData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:319:1`
 
-### #196 CONTEXT_PROPAGATION on `GetFunnelData`
+### #217 CONTEXT_PROPAGATION on `GetFunnelData`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:299:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:339:1`
 - **Summary:** Function 'GetFunnelData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetFunnelData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:299:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetFunnelData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:339:1`
 
-### #197 CONTEXT_PROPAGATION on `SetLTV`
+### #218 CONTEXT_PROPAGATION on `SetLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:331:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:371:1`
 - **Summary:** Function 'SetLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:331:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:371:1`
 
-### #198 CONTEXT_PROPAGATION on `GetLTV`
+### #219 CONTEXT_PROPAGATION on `GetLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:348:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:388:1`
 - **Summary:** Function 'GetLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:348:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:388:1`
 
-### #199 CONTEXT_PROPAGATION on `InvalidateLTV`
+### #220 CONTEXT_PROPAGATION on `InvalidateLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:368:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:408:1`
 - **Summary:** Function 'InvalidateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'InvalidateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:368:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'InvalidateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:408:1`
 
-### #200 CONTEXT_PROPAGATION on `GetCacheStats`
+### #221 CONTEXT_PROPAGATION on `GetCacheStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:380:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:420:1`
 - **Summary:** Function 'GetCacheStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCacheStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:380:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCacheStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:420:1`
 
-### #201 CONTEXT_PROPAGATION on `FlushPattern`
+### #222 CONTEXT_PROPAGATION on `FlushPattern`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:423:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:463:1`
 - **Summary:** Function 'FlushPattern' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'FlushPattern' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:423:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'FlushPattern' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:463:1`
 
-### #202 CONTEXT_PROPAGATION on `EnqueueEvent`
+### #223 CONTEXT_PROPAGATION on `EnqueueEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:32:1`
@@ -1941,7 +2137,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'EnqueueEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:32:1`
 
-### #203 CONTEXT_PROPAGATION on `GetPendingEvents`
+### #224 CONTEXT_PROPAGATION on `GetPendingEvents`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:72:1`
@@ -1950,16 +2146,34 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:72:1`
 
-### #204 CONTEXT_PROPAGATION on `UpdateEventStatus`
+### #225 CONTEXT_PROPAGATION on `markEventSent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:132:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:131:1`
+- **Summary:** Function 'markEventSent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'markEventSent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:131:1`
+
+### #226 CONTEXT_PROPAGATION on `handleEventRetryOrFail`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:146:1`
+- **Summary:** Function 'handleEventRetryOrFail' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'handleEventRetryOrFail' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:146:1`
+
+### #227 CONTEXT_PROPAGATION on `UpdateEventStatus`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:196:1`
 - **Summary:** Function 'UpdateEventStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateEventStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:132:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateEventStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:196:1`
 
-### #205 CONTEXT_PROPAGATION on `GetFailedEvents`
+### #228 CONTEXT_PROPAGATION on `GetFailedEvents`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:220:1`
@@ -1968,7 +2182,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetFailedEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:220:1`
 
-### #206 CONTEXT_PROPAGATION on `DeleteEvent`
+### #229 CONTEXT_PROPAGATION on `DeleteEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:275:1`
@@ -1977,7 +2191,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'DeleteEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:275:1`
 
-### #207 CONTEXT_PROPAGATION on `RetryFailedEvent`
+### #230 CONTEXT_PROPAGATION on `RetryFailedEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:285:1`
@@ -1986,7 +2200,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RetryFailedEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:285:1`
 
-### #208 CONTEXT_PROPAGATION on `CleanupOldSentEvents`
+### #231 CONTEXT_PROPAGATION on `CleanupOldSentEvents`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:304:1`
@@ -1995,7 +2209,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupOldSentEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:304:1`
 
-### #209 CONTEXT_PROPAGATION on `GetEventStats`
+### #232 CONTEXT_PROPAGATION on `GetEventStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:322:1`
@@ -2004,7 +2218,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetEventStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:322:1`
 
-### #210 CONTEXT_PROPAGATION on `GetEventByID`
+### #233 CONTEXT_PROPAGATION on `GetEventByID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:359:1`
@@ -2013,7 +2227,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetEventByID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:359:1`
 
-### #211 CONTEXT_PROPAGATION on `Create`
+### #234 CONTEXT_PROPAGATION on `Create`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:26:1`
@@ -2022,7 +2236,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Create' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:26:1`
 
-### #212 CONTEXT_PROPAGATION on `GetByID`
+### #235 CONTEXT_PROPAGATION on `GetByID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:49:1`
@@ -2031,7 +2245,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:49:1`
 
-### #213 CONTEXT_PROPAGATION on `GetActiveByUserID`
+### #236 CONTEXT_PROPAGATION on `GetActiveByUserID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:61:1`
@@ -2040,7 +2254,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveByUserID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:61:1`
 
-### #214 CONTEXT_PROPAGATION on `GetByUserID`
+### #237 CONTEXT_PROPAGATION on `GetByUserID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:77:1`
@@ -2049,7 +2263,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByUserID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:77:1`
 
-### #215 CONTEXT_PROPAGATION on `Update`
+### #238 CONTEXT_PROPAGATION on `Update`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:93:1`
@@ -2058,7 +2272,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Update' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:93:1`
 
-### #216 CONTEXT_PROPAGATION on `UpdateStatus`
+### #239 CONTEXT_PROPAGATION on `UpdateStatus`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:113:1`
@@ -2067,7 +2281,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:113:1`
 
-### #217 CONTEXT_PROPAGATION on `UpdateExpiry`
+### #240 CONTEXT_PROPAGATION on `UpdateExpiry`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:127:1`
@@ -2076,7 +2290,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExpiry' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:127:1`
 
-### #218 CONTEXT_PROPAGATION on `Cancel`
+### #241 CONTEXT_PROPAGATION on `Cancel`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:141:1`
@@ -2085,7 +2299,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Cancel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:141:1`
 
-### #219 CONTEXT_PROPAGATION on `CanAccess`
+### #242 CONTEXT_PROPAGATION on `CanAccess`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:150:1`
@@ -2094,7 +2308,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CanAccess' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:150:1`
 
-### #220 CONTEXT_PROPAGATION on `GetUsersWithCancelledSubscriptions`
+### #243 CONTEXT_PROPAGATION on `GetUsersWithCancelledSubscriptions`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:166:1`
@@ -2103,7 +2317,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetUsersWithCancelledSubscriptions' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:166:1`
 
-### #221 CONTEXT_PROPAGATION on `GetTotalRevenue`
+### #244 CONTEXT_PROPAGATION on `GetTotalRevenue`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:174:1`
@@ -2112,7 +2326,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetTotalRevenue' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/subscription_repository_impl.go:174:1`
 
-### #222 CONTEXT_PROPAGATION on `Create`
+### #245 CONTEXT_PROPAGATION on `Create`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:24:1`
@@ -2121,7 +2335,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Create' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:24:1`
 
-### #223 CONTEXT_PROPAGATION on `GetByID`
+### #246 CONTEXT_PROPAGATION on `GetByID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:44:1`
@@ -2130,7 +2344,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:44:1`
 
-### #224 CONTEXT_PROPAGATION on `GetByUserID`
+### #247 CONTEXT_PROPAGATION on `GetByUserID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:56:1`
@@ -2139,7 +2353,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByUserID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:56:1`
 
-### #225 CONTEXT_PROPAGATION on `GetBySubscriptionID`
+### #248 CONTEXT_PROPAGATION on `GetBySubscriptionID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:77:1`
@@ -2148,7 +2362,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetBySubscriptionID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:77:1`
 
-### #226 CONTEXT_PROPAGATION on `GetSegmentedLTV`
+### #249 CONTEXT_PROPAGATION on `GetSegmentedLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:91:1`
@@ -2157,7 +2371,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetSegmentedLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:91:1`
 
-### #227 CONTEXT_PROPAGATION on `CheckDuplicateReceipt`
+### #250 CONTEXT_PROPAGATION on `CheckDuplicateReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:116:1`
@@ -2166,340 +2380,376 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CheckDuplicateReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/transaction_repository_impl.go:116:1`
 
-### #228 CONTEXT_PROPAGATION on `GetArms`
+### #251 CONTEXT_PROPAGATION on `GetArms`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:82:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:142:1`
 - **Summary:** Function 'GetArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:82:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:142:1`
 
-### #229 CONTEXT_PROPAGATION on `GetArmStats`
+### #252 CONTEXT_PROPAGATION on `GetArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:120:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:180:1`
 - **Summary:** Function 'GetArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:120:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:180:1`
 
-### #230 CONTEXT_PROPAGATION on `UpdateArmStats`
+### #253 CONTEXT_PROPAGATION on `UpdateArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:171:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:231:1`
 - **Summary:** Function 'UpdateArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:171:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:231:1`
 
-### #231 CONTEXT_PROPAGATION on `CreateAssignment`
+### #254 CONTEXT_PROPAGATION on `GetAllArmStatsForExperiment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:211:1`
-- **Summary:** Function 'CreateAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:211:1`
-
-### #232 CONTEXT_PROPAGATION on `GetActiveAssignment`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:287:1`
-- **Summary:** Function 'GetActiveAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:287:1`
-
-### #233 CONTEXT_PROPAGATION on `SaveConversion`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:320:1`
-- **Summary:** Function 'SaveConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SaveConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:320:1`
-
-### #234 CONTEXT_PROPAGATION on `AppendConversionEvent`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:332:1`
-- **Summary:** Function 'AppendConversionEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AppendConversionEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:332:1`
-
-### #235 CONTEXT_PROPAGATION on `AppendImpressionEvent`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:379:1`
-- **Summary:** Function 'AppendImpressionEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AppendImpressionEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:379:1`
-
-### #236 CONTEXT_PROPAGATION on `AppendWinnerRecommendationEvent`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:414:1`
-- **Summary:** Function 'AppendWinnerRecommendationEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AppendWinnerRecommendationEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:414:1`
-
-### #237 CONTEXT_PROPAGATION on `ProcessPendingConversion`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:466:1`
-- **Summary:** Function 'ProcessPendingConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessPendingConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:466:1`
-
-### #238 CONTEXT_PROPAGATION on `ProcessExpiredPendingReward`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:558:1`
-- **Summary:** Function 'ProcessExpiredPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:558:1`
-
-### #239 CONTEXT_PROPAGATION on `GetAssignmentHistory`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:627:1`
-- **Summary:** Function 'GetAssignmentHistory' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAssignmentHistory' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:627:1`
-
-### #240 CONTEXT_PROPAGATION on `CleanupExpiredAssignments`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:662:1`
-- **Summary:** Function 'CleanupExpiredAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupExpiredAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:662:1`
-
-### #241 CONTEXT_PROPAGATION on `ListWindowMaintenanceExperimentIDs`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:679:1`
-- **Summary:** Function 'ListWindowMaintenanceExperimentIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ListWindowMaintenanceExperimentIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:679:1`
-
-### #242 CONTEXT_PROPAGATION on `ListObjectiveSyncExperimentIDs`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:721:1`
-- **Summary:** Function 'ListObjectiveSyncExperimentIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ListObjectiveSyncExperimentIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:721:1`
-
-### #243 CONTEXT_PROPAGATION on `CleanupStaleUserContext`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:762:1`
-- **Summary:** Function 'CleanupStaleUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupStaleUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:762:1`
-
-### #244 CONTEXT_PROPAGATION on `GetAllArmStatsForExperiment`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:779:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:910:1`
 - **Summary:** Function 'GetAllArmStatsForExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAllArmStatsForExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:779:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAllArmStatsForExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:910:1`
 
-### #245 CONTEXT_PROPAGATION on `CreateExperiment`
+### #255 CONTEXT_PROPAGATION on `CreateArm`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:815:1`
-- **Summary:** Function 'CreateExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:815:1`
-
-### #246 CONTEXT_PROPAGATION on `GetExperiment`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:842:1`
-- **Summary:** Function 'GetExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:842:1`
-
-### #247 CONTEXT_PROPAGATION on `CreateArm`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:889:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1020:1`
 - **Summary:** Function 'CreateArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:889:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1020:1`
 
-### #248 CONTEXT_PROPAGATION on `GetExperimentConfig`
+### #256 CONTEXT_PROPAGATION on `CreateAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:944:1`
-- **Summary:** Function 'GetExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:271:1`
+- **Summary:** Function 'CreateAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:944:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:271:1`
 
-### #249 CONTEXT_PROPAGATION on `UpdateObjectiveConfig`
+### #257 CONTEXT_PROPAGATION on `GetActiveAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1003:1`
-- **Summary:** Function 'UpdateObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:347:1`
+- **Summary:** Function 'GetActiveAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1003:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:347:1`
 
-### #250 CONTEXT_PROPAGATION on `GetUserContext`
+### #258 CONTEXT_PROPAGATION on `GetAssignmentHistory`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1038:1`
-- **Summary:** Function 'GetUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:758:1`
+- **Summary:** Function 'GetAssignmentHistory' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1038:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAssignmentHistory' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:758:1`
 
-### #251 CONTEXT_PROPAGATION on `SetUserContext`
+### #259 CONTEXT_PROPAGATION on `CleanupExpiredAssignments`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1071:1`
-- **Summary:** Function 'SetUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:793:1`
+- **Summary:** Function 'CleanupExpiredAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1071:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupExpiredAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:793:1`
 
-### #252 CONTEXT_PROPAGATION on `GetObjectiveStats`
+### #260 CONTEXT_PROPAGATION on `SaveConversion`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1108:1`
-- **Summary:** Function 'GetObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:388:1`
+- **Summary:** Function 'SaveConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1108:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SaveConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:388:1`
 
-### #253 CONTEXT_PROPAGATION on `UpdateObjectiveStats`
+### #261 CONTEXT_PROPAGATION on `AppendConversionEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1149:1`
-- **Summary:** Function 'UpdateObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:400:1`
+- **Summary:** Function 'AppendConversionEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1149:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AppendConversionEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:400:1`
 
-### #254 CONTEXT_PROPAGATION on `GetAllObjectiveStats`
+### #262 CONTEXT_PROPAGATION on `AppendImpressionEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1183:1`
-- **Summary:** Function 'GetAllObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:447:1`
+- **Summary:** Function 'AppendImpressionEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAllObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1183:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AppendImpressionEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:447:1`
 
-### #255 CONTEXT_PROPAGATION on `CreatePendingReward`
+### #263 CONTEXT_PROPAGATION on `AppendWinnerRecommendationEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1222:1`
-- **Summary:** Function 'CreatePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:482:1`
+- **Summary:** Function 'AppendWinnerRecommendationEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreatePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1222:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AppendWinnerRecommendationEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:482:1`
 
-### #256 CONTEXT_PROPAGATION on `GetPendingReward`
+### #264 CONTEXT_PROPAGATION on `LinkConversion`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1245:1`
-- **Summary:** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1245:1`
-
-### #257 CONTEXT_PROPAGATION on `GetPendingRewardsByUser`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1268:1`
-- **Summary:** Function 'GetPendingRewardsByUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingRewardsByUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1268:1`
-
-### #258 CONTEXT_PROPAGATION on `GetExpiredPendingRewards`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1301:1`
-- **Summary:** Function 'GetExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1301:1`
-
-### #259 CONTEXT_PROPAGATION on `UpdatePendingReward`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1330:1`
-- **Summary:** Function 'UpdatePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdatePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1330:1`
-
-### #260 CONTEXT_PROPAGATION on `LinkConversion`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1358:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1489:1`
 - **Summary:** Function 'LinkConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'LinkConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1358:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'LinkConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1489:1`
 
-### #261 CONTEXT_PROPAGATION on `applyRewardToArmTx`
+### #265 CONTEXT_PROPAGATION on `GetByTransactionID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1373:1`
-- **Summary:** Function 'applyRewardToArmTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'applyRewardToArmTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1373:1`
-
-### #262 CONTEXT_PROPAGATION on `loadArmStatsTx`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1411:1`
-- **Summary:** Function 'loadArmStatsTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'loadArmStatsTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1411:1`
-
-### #263 CONTEXT_PROPAGATION on `insertConversionEventTx`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1437:1`
-- **Summary:** Function 'insertConversionEventTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'insertConversionEventTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1437:1`
-
-### #264 CONTEXT_PROPAGATION on `GetByTransactionID`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1499:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1630:1`
 - **Summary:** Function 'GetByTransactionID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByTransactionID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1499:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByTransactionID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1630:1`
 
-### #265 CONTEXT_PROPAGATION on `GetRevenueBetween`
+### #266 CONTEXT_PROPAGATION on `ProcessPendingConversion`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:534:1`
+- **Summary:** Function 'ProcessPendingConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessPendingConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:534:1`
+
+### #267 CONTEXT_PROPAGATION on `executePendingConversionUpdatesTx`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:581:1`
+- **Summary:** Function 'executePendingConversionUpdatesTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'executePendingConversionUpdatesTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:581:1`
+
+### #268 CONTEXT_PROPAGATION on `loadPendingRewardForConversionTx`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:625:1`
+- **Summary:** Function 'loadPendingRewardForConversionTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'loadPendingRewardForConversionTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:625:1`
+
+### #269 CONTEXT_PROPAGATION on `finalizePendingConversionTx`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:656:1`
+- **Summary:** Function 'finalizePendingConversionTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'finalizePendingConversionTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:656:1`
+
+### #270 CONTEXT_PROPAGATION on `expirePendingRewardTx`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:685:1`
+- **Summary:** Function 'expirePendingRewardTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'expirePendingRewardTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:685:1`
+
+### #271 CONTEXT_PROPAGATION on `ProcessExpiredPendingReward`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:729:1`
+- **Summary:** Function 'ProcessExpiredPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:729:1`
+
+### #272 CONTEXT_PROPAGATION on `applyRewardToArmTx`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1504:1`
+- **Summary:** Function 'applyRewardToArmTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'applyRewardToArmTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1504:1`
+
+### #273 CONTEXT_PROPAGATION on `loadArmStatsTx`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1542:1`
+- **Summary:** Function 'loadArmStatsTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'loadArmStatsTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1542:1`
+
+### #274 CONTEXT_PROPAGATION on `insertConversionEventTx`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1568:1`
+- **Summary:** Function 'insertConversionEventTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'insertConversionEventTx' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1568:1`
+
+### #275 CONTEXT_PROPAGATION on `CreateExperiment`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:946:1`
+- **Summary:** Function 'CreateExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:946:1`
+
+### #276 CONTEXT_PROPAGATION on `GetExperiment`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:973:1`
+- **Summary:** Function 'GetExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:973:1`
+
+### #277 CONTEXT_PROPAGATION on `GetExperimentConfig`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1075:1`
+- **Summary:** Function 'GetExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1075:1`
+
+### #278 CONTEXT_PROPAGATION on `UpdateObjectiveConfig`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1134:1`
+- **Summary:** Function 'UpdateObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1134:1`
+
+### #279 CONTEXT_PROPAGATION on `GetObjectiveStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1239:1`
+- **Summary:** Function 'GetObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1239:1`
+
+### #280 CONTEXT_PROPAGATION on `UpdateObjectiveStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1280:1`
+- **Summary:** Function 'UpdateObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1280:1`
+
+### #281 CONTEXT_PROPAGATION on `GetAllObjectiveStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1314:1`
+- **Summary:** Function 'GetAllObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAllObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1314:1`
+
+### #282 CONTEXT_PROPAGATION on `CreatePendingReward`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1353:1`
+- **Summary:** Function 'CreatePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreatePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1353:1`
+
+### #283 CONTEXT_PROPAGATION on `GetPendingReward`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1376:1`
+- **Summary:** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1376:1`
+
+### #284 CONTEXT_PROPAGATION on `GetPendingRewardsByUser`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1399:1`
+- **Summary:** Function 'GetPendingRewardsByUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingRewardsByUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1399:1`
+
+### #285 CONTEXT_PROPAGATION on `GetExpiredPendingRewards`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1432:1`
+- **Summary:** Function 'GetExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1432:1`
+
+### #286 CONTEXT_PROPAGATION on `UpdatePendingReward`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1461:1`
+- **Summary:** Function 'UpdatePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdatePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1461:1`
+
+### #287 CONTEXT_PROPAGATION on `ListWindowMaintenanceExperimentIDs`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:810:1`
+- **Summary:** Function 'ListWindowMaintenanceExperimentIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ListWindowMaintenanceExperimentIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:810:1`
+
+### #288 CONTEXT_PROPAGATION on `ListObjectiveSyncExperimentIDs`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:852:1`
+- **Summary:** Function 'ListObjectiveSyncExperimentIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ListObjectiveSyncExperimentIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:852:1`
+
+### #289 CONTEXT_PROPAGATION on `CleanupStaleUserContext`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:893:1`
+- **Summary:** Function 'CleanupStaleUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupStaleUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:893:1`
+
+### #290 CONTEXT_PROPAGATION on `GetUserContext`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1169:1`
+- **Summary:** Function 'GetUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1169:1`
+
+### #291 CONTEXT_PROPAGATION on `SetUserContext`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1202:1`
+- **Summary:** Function 'SetUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetUserContext' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:1202:1`
+
+### #292 CONTEXT_PROPAGATION on `GetRevenueBetween`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:26:1`
@@ -2508,7 +2758,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRevenueBetween' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:26:1`
 
-### #266 CONTEXT_PROPAGATION on `GetMRR`
+### #293 CONTEXT_PROPAGATION on `GetMRR`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:42:1`
@@ -2517,7 +2767,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetMRR' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:42:1`
 
-### #267 CONTEXT_PROPAGATION on `GetActiveSubscriptionCountAt`
+### #294 CONTEXT_PROPAGATION on `GetActiveSubscriptionCountAt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:71:1`
@@ -2526,7 +2776,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveSubscriptionCountAt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:71:1`
 
-### #268 CONTEXT_PROPAGATION on `GetChurnedCountBetween`
+### #295 CONTEXT_PROPAGATION on `GetChurnedCountBetween`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:87:1`
@@ -2535,7 +2785,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetChurnedCountBetween' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:87:1`
 
-### #269 CONTEXT_PROPAGATION on `GetMRRTrend`
+### #296 CONTEXT_PROPAGATION on `GetMRRTrend`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:104:1`
@@ -2544,7 +2794,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetMRRTrend' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:104:1`
 
-### #270 CONTEXT_PROPAGATION on `GetSubscriptionStatusCounts`
+### #297 CONTEXT_PROPAGATION on `GetSubscriptionStatusCounts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:160:1`
@@ -2553,7 +2803,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetSubscriptionStatusCounts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:160:1`
 
-### #271 CONTEXT_PROPAGATION on `GetChurnRiskCount`
+### #298 CONTEXT_PROPAGATION on `GetChurnRiskCount`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:183:1`
@@ -2562,7 +2812,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetChurnRiskCount' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:183:1`
 
-### #272 CONTEXT_PROPAGATION on `GetWebhookHealthByProvider`
+### #299 CONTEXT_PROPAGATION on `GetWebhookHealthByProvider`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:199:1`
@@ -2571,7 +2821,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetWebhookHealthByProvider' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:199:1`
 
-### #273 CONTEXT_PROPAGATION on `GetRecentAuditLog`
+### #300 CONTEXT_PROPAGATION on `GetRecentAuditLog`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:227:1`
@@ -2580,34 +2830,79 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRecentAuditLog' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:227:1`
 
-### #274 CONTEXT_PROPAGATION on `GetAuditLogPaginated`
+### #301 CONTEXT_PROPAGATION on `GetAuditLogPaginated`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:268:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:316:1`
 - **Summary:** Function 'GetAuditLogPaginated' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAuditLogPaginated' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:268:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAuditLogPaginated' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:316:1`
 
-### #275 CONTEXT_PROPAGATION on `ensureDraftExperimentPricingTiersExist`
+### #302 CONTEXT_PROPAGATION on `loadExistingArmIDs`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:193:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:112:1`
+- **Summary:** Function 'loadExistingArmIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'loadExistingArmIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:112:1`
+
+### #303 CONTEXT_PROPAGATION on `deleteRemovedDraftExperimentArms`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:146:1`
+- **Summary:** Function 'deleteRemovedDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'deleteRemovedDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:146:1`
+
+### #304 CONTEXT_PROPAGATION on `updateDraftExperimentArms`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:162:1`
+- **Summary:** Function 'updateDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'updateDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:162:1`
+
+### #305 CONTEXT_PROPAGATION on `insertNewDraftExperimentArms`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:186:1`
+- **Summary:** Function 'insertNewDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'insertNewDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:186:1`
+
+### #306 CONTEXT_PROPAGATION on `syncDraftExperimentArms`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:200:1`
+- **Summary:** Function 'syncDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'syncDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:200:1`
+
+### #307 CONTEXT_PROPAGATION on `ensureDraftExperimentPricingTiersExist`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:226:1`
 - **Summary:** Function 'ensureDraftExperimentPricingTiersExist' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ensureDraftExperimentPricingTiersExist' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:193:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ensureDraftExperimentPricingTiersExist' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:226:1`
 
-### #276 CONTEXT_PROPAGATION on `insertExperimentLifecycleAudit`
+### #308 CONTEXT_PROPAGATION on `insertExperimentLifecycleAudit`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:241:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:288:1`
 - **Summary:** Function 'insertExperimentLifecycleAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'insertExperimentLifecycleAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:241:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'insertExperimentLifecycleAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:288:1`
 
-### #277 CONTEXT_PROPAGATION on `GetExperimentMutationState`
+### #309 CONTEXT_PROPAGATION on `GetExperimentMutationState`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:27:1`
@@ -2616,7 +2911,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExperimentMutationState' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:27:1`
 
-### #278 CONTEXT_PROPAGATION on `UpdateExperimentDraft`
+### #310 CONTEXT_PROPAGATION on `UpdateExperimentDraft`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:57:1`
@@ -2625,124 +2920,115 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentDraft' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:57:1`
 
-### #279 CONTEXT_PROPAGATION on `syncDraftExperimentArms`
+### #311 CONTEXT_PROPAGATION on `UpdateExperimentStatus`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:112:1`
-- **Summary:** Function 'syncDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'syncDraftExperimentArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:112:1`
-
-### #280 CONTEXT_PROPAGATION on `UpdateExperimentStatus`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:216:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:249:1`
 - **Summary:** Function 'UpdateExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:216:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:249:1`
 
-### #281 CONTEXT_PROPAGATION on `UpdateExperimentAutomationPolicy`
+### #312 CONTEXT_PROPAGATION on `UpdateExperimentAutomationPolicy`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:299:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:346:1`
 - **Summary:** Function 'UpdateExperimentAutomationPolicy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentAutomationPolicy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:299:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentAutomationPolicy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:346:1`
 
-### #282 CONTEXT_PROPAGATION on `UpdateExperimentStatusWithAudit`
+### #313 CONTEXT_PROPAGATION on `UpdateExperimentStatusWithAudit`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:319:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:366:1`
 - **Summary:** Function 'UpdateExperimentStatusWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentStatusWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:319:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentStatusWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:366:1`
 
-### #283 CONTEXT_PROPAGATION on `UpdateExperimentStatusAndAutomationPolicyWithAudit`
+### #314 CONTEXT_PROPAGATION on `UpdateExperimentStatusAndAutomationPolicyWithAudit`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:351:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:403:1`
 - **Summary:** Function 'UpdateExperimentStatusAndAutomationPolicyWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentStatusAndAutomationPolicyWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:351:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentStatusAndAutomationPolicyWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:403:1`
 
-### #284 CONTEXT_PROPAGATION on `ListExperimentAutomationStates`
+### #315 CONTEXT_PROPAGATION on `ListExperimentAutomationStates`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:394:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:451:1`
 - **Summary:** Function 'ListExperimentAutomationStates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ListExperimentAutomationStates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:394:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ListExperimentAutomationStates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:451:1`
 
-### #285 CONTEXT_PROPAGATION on `CountExperimentAssignments`
+### #316 CONTEXT_PROPAGATION on `CountExperimentAssignments`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:463:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:520:1`
 - **Summary:** Function 'CountExperimentAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CountExperimentAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:463:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CountExperimentAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:520:1`
 
-### #286 CONTEXT_PROPAGATION on `EnsureExperimentArmStats`
+### #317 CONTEXT_PROPAGATION on `EnsureExperimentArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:474:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:531:1`
 - **Summary:** Function 'EnsureExperimentArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'EnsureExperimentArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:474:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'EnsureExperimentArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:531:1`
 
-### #287 CONTEXT_PROPAGATION on `CountExperimentPendingRewards`
+### #318 CONTEXT_PROPAGATION on `CountExperimentPendingRewards`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:488:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:545:1`
 - **Summary:** Function 'CountExperimentPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CountExperimentPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:488:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CountExperimentPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:545:1`
 
-### #288 CONTEXT_PROPAGATION on `ProcessExpiredPendingRewards`
+### #319 CONTEXT_PROPAGATION on `ProcessExpiredPendingRewards`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:501:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:558:1`
 - **Summary:** Function 'ProcessExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:501:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:558:1`
 
-### #289 CONTEXT_PROPAGATION on `UpdateExperimentWinnerConfidence`
+### #320 CONTEXT_PROPAGATION on `UpdateExperimentWinnerConfidence`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:565:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:622:1`
 - **Summary:** Function 'UpdateExperimentWinnerConfidence' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentWinnerConfidence' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:565:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentWinnerConfidence' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:622:1`
 
-### #290 CONTEXT_PROPAGATION on `GetExperimentObjectiveConfig`
+### #321 CONTEXT_PROPAGATION on `GetExperimentObjectiveConfig`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:580:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:637:1`
 - **Summary:** Function 'GetExperimentObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExperimentObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:580:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExperimentObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:637:1`
 
-### #291 CONTEXT_PROPAGATION on `ListExperimentRepairCandidateIDs`
+### #322 CONTEXT_PROPAGATION on `ListExperimentRepairCandidateIDs`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:607:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:664:1`
 - **Summary:** Function 'ListExperimentRepairCandidateIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ListExperimentRepairCandidateIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:607:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ListExperimentRepairCandidateIDs' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:664:1`
 
-### #292 CONTEXT_PROPAGATION on `ClaimAutomationJobRun`
+### #323 CONTEXT_PROPAGATION on `ClaimAutomationJobRun`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/automation_job_run_repository.go:22:1`
@@ -2751,7 +3037,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ClaimAutomationJobRun' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/automation_job_run_repository.go:22:1`
 
-### #293 CONTEXT_PROPAGATION on `FinishAutomationJobRun`
+### #324 CONTEXT_PROPAGATION on `FinishAutomationJobRun`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/automation_job_run_repository.go:72:1`
@@ -2760,7 +3046,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'FinishAutomationJobRun' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/automation_job_run_repository.go:72:1`
 
-### #294 CONTEXT_PROPAGATION on `SetPassword`
+### #325 CONTEXT_PROPAGATION on `SetPassword`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/admin_credential_repository_impl.go:22:1`
@@ -2769,7 +3055,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetPassword' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/admin_credential_repository_impl.go:22:1`
 
-### #295 CONTEXT_PROPAGATION on `GetPasswordHash`
+### #326 CONTEXT_PROPAGATION on `GetPasswordHash`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/admin_credential_repository_impl.go:33:1`
@@ -2778,7 +3064,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPasswordHash' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/admin_credential_repository_impl.go:33:1`
 
-### #296 CONTEXT_PROPAGATION on `Create`
+### #327 CONTEXT_PROPAGATION on `Create`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:24:1`
@@ -2787,7 +3073,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Create' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:24:1`
 
-### #297 CONTEXT_PROPAGATION on `GetByID`
+### #328 CONTEXT_PROPAGATION on `GetByID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:46:1`
@@ -2796,7 +3082,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:46:1`
 
-### #298 CONTEXT_PROPAGATION on `GetActiveByUserID`
+### #329 CONTEXT_PROPAGATION on `GetActiveByUserID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:75:1`
@@ -2805,7 +3091,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveByUserID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:75:1`
 
-### #299 CONTEXT_PROPAGATION on `GetActiveByUserAndCampaign`
+### #330 CONTEXT_PROPAGATION on `GetActiveByUserAndCampaign`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:114:1`
@@ -2814,7 +3100,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveByUserAndCampaign' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:114:1`
 
-### #300 CONTEXT_PROPAGATION on `GetActiveByCampaignID`
+### #331 CONTEXT_PROPAGATION on `GetActiveByCampaignID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:144:1`
@@ -2823,7 +3109,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveByCampaignID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:144:1`
 
-### #301 CONTEXT_PROPAGATION on `Update`
+### #332 CONTEXT_PROPAGATION on `Update`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:183:1`
@@ -2832,7 +3118,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Update' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:183:1`
 
-### #302 CONTEXT_PROPAGATION on `GetExpiredOffers`
+### #333 CONTEXT_PROPAGATION on `GetExpiredOffers`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:200:1`
@@ -2841,7 +3127,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExpiredOffers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/winback_offer_repository_impl.go:200:1`
 
-### #303 CONTEXT_PROPAGATION on `Create`
+### #334 CONTEXT_PROPAGATION on `Create`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:28:1`
@@ -2850,7 +3136,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Create' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:28:1`
 
-### #304 CONTEXT_PROPAGATION on `GetByID`
+### #335 CONTEXT_PROPAGATION on `GetByID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:44:1`
@@ -2859,7 +3145,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:44:1`
 
-### #305 CONTEXT_PROPAGATION on `GetActiveBySubscriptionID`
+### #336 CONTEXT_PROPAGATION on `GetActiveBySubscriptionID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:64:1`
@@ -2868,7 +3154,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveBySubscriptionID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:64:1`
 
-### #306 CONTEXT_PROPAGATION on `Update`
+### #337 CONTEXT_PROPAGATION on `Update`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:85:1`
@@ -2877,7 +3163,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Update' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:85:1`
 
-### #307 CONTEXT_PROPAGATION on `GetPendingAttempts`
+### #338 CONTEXT_PROPAGATION on `GetPendingAttempts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:101:1`
@@ -2886,7 +3172,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingAttempts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/dunning_repository_impl.go:101:1`
 
-### #308 CONTEXT_PROPAGATION on `Create`
+### #339 CONTEXT_PROPAGATION on `Create`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:24:1`
@@ -2895,7 +3181,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Create' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:24:1`
 
-### #309 CONTEXT_PROPAGATION on `GetByID`
+### #340 CONTEXT_PROPAGATION on `GetByID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:44:1`
@@ -2904,7 +3190,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:44:1`
 
-### #310 CONTEXT_PROPAGATION on `GetActiveByUserID`
+### #341 CONTEXT_PROPAGATION on `GetActiveByUserID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:71:1`
@@ -2913,7 +3199,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveByUserID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:71:1`
 
-### #311 CONTEXT_PROPAGATION on `GetActiveBySubscriptionID`
+### #342 CONTEXT_PROPAGATION on `GetActiveBySubscriptionID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:100:1`
@@ -2922,7 +3208,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveBySubscriptionID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:100:1`
 
-### #312 CONTEXT_PROPAGATION on `Update`
+### #343 CONTEXT_PROPAGATION on `Update`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:129:1`
@@ -2931,7 +3217,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Update' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:129:1`
 
-### #313 CONTEXT_PROPAGATION on `GetExpiredGracePeriods`
+### #344 CONTEXT_PROPAGATION on `GetExpiredGracePeriods`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:147:1`
@@ -2940,7 +3226,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExpiredGracePeriods' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:147:1`
 
-### #314 CONTEXT_PROPAGATION on `GetExpiringSoon`
+### #345 CONTEXT_PROPAGATION on `GetExpiringSoon`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:185:1`
@@ -2949,7 +3235,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetExpiringSoon' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/grace_period_repository_impl.go:185:1`
 
-### #315 CONTEXT_PROPAGATION on `Create`
+### #346 CONTEXT_PROPAGATION on `Create`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:26:1`
@@ -2958,7 +3244,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Create' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:26:1`
 
-### #316 CONTEXT_PROPAGATION on `GetByID`
+### #347 CONTEXT_PROPAGATION on `GetByID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:46:1`
@@ -2967,7 +3253,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:46:1`
 
-### #317 CONTEXT_PROPAGATION on `GetByPlatformID`
+### #348 CONTEXT_PROPAGATION on `GetByPlatformID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:58:1`
@@ -2976,7 +3262,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByPlatformID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:58:1`
 
-### #318 CONTEXT_PROPAGATION on `GetByEmail`
+### #349 CONTEXT_PROPAGATION on `GetByEmail`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:74:1`
@@ -2985,7 +3271,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByEmail' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:74:1`
 
-### #319 CONTEXT_PROPAGATION on `Update`
+### #350 CONTEXT_PROPAGATION on `Update`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:86:1`
@@ -2994,7 +3280,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Update' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:86:1`
 
-### #320 CONTEXT_PROPAGATION on `SoftDelete`
+### #351 CONTEXT_PROPAGATION on `SoftDelete`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:108:1`
@@ -3003,7 +3289,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SoftDelete' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:108:1`
 
-### #321 CONTEXT_PROPAGATION on `ExistsByPlatformID`
+### #352 CONTEXT_PROPAGATION on `ExistsByPlatformID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:117:1`
@@ -3012,7 +3298,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ExistsByPlatformID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:117:1`
 
-### #322 CONTEXT_PROPAGATION on `ExistsByPlatformIDAndApp`
+### #353 CONTEXT_PROPAGATION on `ExistsByPlatformIDAndApp`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:133:1`
@@ -3021,7 +3307,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ExistsByPlatformIDAndApp' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:133:1`
 
-### #323 CONTEXT_PROPAGATION on `UpdatePurchaseChannel`
+### #354 CONTEXT_PROPAGATION on `UpdatePurchaseChannel`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:147:1`
@@ -3030,7 +3316,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdatePurchaseChannel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:147:1`
 
-### #324 CONTEXT_PROPAGATION on `UpdateEmail`
+### #355 CONTEXT_PROPAGATION on `UpdateEmail`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:158:1`
@@ -3039,7 +3325,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateEmail' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:158:1`
 
-### #325 CONTEXT_PROPAGATION on `IncrementLTV`
+### #356 CONTEXT_PROPAGATION on `IncrementLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:169:1`
@@ -3048,7 +3334,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'IncrementLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:169:1`
 
-### #326 CONTEXT_PROPAGATION on `IncrementSessionCount`
+### #357 CONTEXT_PROPAGATION on `IncrementSessionCount`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:186:1`
@@ -3057,7 +3343,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'IncrementSessionCount' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:186:1`
 
-### #327 CONTEXT_PROPAGATION on `UpdateHasViewedAds`
+### #358 CONTEXT_PROPAGATION on `UpdateHasViewedAds`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:194:1`
@@ -3066,7 +3352,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateHasViewedAds' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/user_repository_impl.go:194:1`
 
-### #328 CONTEXT_PROPAGATION on `GetByID`
+### #359 CONTEXT_PROPAGATION on `GetByID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:36:1`
@@ -3075,7 +3361,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:36:1`
 
-### #329 CONTEXT_PROPAGATION on `GetByBundleID`
+### #360 CONTEXT_PROPAGATION on `GetByBundleID`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:42:1`
@@ -3084,7 +3370,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetByBundleID' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:42:1`
 
-### #330 CONTEXT_PROPAGATION on `List`
+### #361 CONTEXT_PROPAGATION on `List`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:48:1`
@@ -3093,7 +3379,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'List' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:48:1`
 
-### #331 CONTEXT_PROPAGATION on `Create`
+### #362 CONTEXT_PROPAGATION on `Create`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:90:1`
@@ -3102,7 +3388,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Create' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:90:1`
 
-### #332 CONTEXT_PROPAGATION on `Update`
+### #363 CONTEXT_PROPAGATION on `Update`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:99:1`
@@ -3111,7 +3397,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Update' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:99:1`
 
-### #333 CONTEXT_PROPAGATION on `Delete`
+### #364 CONTEXT_PROPAGATION on `Delete`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:111:1`
@@ -3120,7 +3406,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Delete' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:111:1`
 
-### #334 CONTEXT_PROPAGATION on `GetSettings`
+### #365 CONTEXT_PROPAGATION on `GetSettings`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:122:1`
@@ -3129,7 +3415,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetSettings' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:122:1`
 
-### #335 CONTEXT_PROPAGATION on `UpdateSettings`
+### #366 CONTEXT_PROPAGATION on `UpdateSettings`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:138:1`
@@ -3138,7 +3424,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateSettings' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:138:1`
 
-### #336 CONTEXT_PROPAGATION on `GetCredentials`
+### #367 CONTEXT_PROPAGATION on `GetCredentials`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:156:1`
@@ -3147,7 +3433,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCredentials' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:156:1`
 
-### #337 CONTEXT_PROPAGATION on `UpsertCredentials`
+### #368 CONTEXT_PROPAGATION on `UpsertCredentials`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:184:1`
@@ -3156,7 +3442,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpsertCredentials' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:184:1`
 
-### #338 CONTEXT_PROPAGATION on `DeleteCredentials`
+### #369 CONTEXT_PROPAGATION on `DeleteCredentials`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:266:1`
@@ -3165,7 +3451,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'DeleteCredentials' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:266:1`
 
-### #339 CONTEXT_PROPAGATION on `GetCredentialsByProvider`
+### #370 CONTEXT_PROPAGATION on `GetCredentialsByProvider`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:272:1`
@@ -3174,7 +3460,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCredentialsByProvider' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:272:1`
 
-### #340 CONTEXT_PROPAGATION on `NewPool`
+### #371 CONTEXT_PROPAGATION on `NewPool`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/pool/pgxpool.go:12:1`
@@ -3183,7 +3469,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'NewPool' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/pool/pgxpool.go:12:1`
 
-### #341 CONTEXT_PROPAGATION on `Ping`
+### #372 CONTEXT_PROPAGATION on `Ping`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/pool/pgxpool.go:36:1`
@@ -3192,7 +3478,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Ping' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/pool/pgxpool.go:36:1`
 
-### #342 CONTEXT_PROPAGATION on `Resolve`
+### #373 CONTEXT_PROPAGATION on `Resolve`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/credential_resolver.go:40:1`
@@ -3201,7 +3487,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Resolve' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/credential_resolver.go:40:1`
 
-### #343 CONTEXT_PROPAGATION on `VerifyReceipt`
+### #374 CONTEXT_PROPAGATION on `VerifyReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/google_verifier.go:33:1`
@@ -3210,7 +3496,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/google_verifier.go:33:1`
 
-### #344 CONTEXT_PROPAGATION on `VerifyReceipt`
+### #375 CONTEXT_PROPAGATION on `VerifyReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:37:1`
@@ -3219,7 +3505,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing '_: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:37:1`
 
-### #345 CONTEXT_PROPAGATION on `VerifyAppleReceipt`
+### #376 CONTEXT_PROPAGATION on `VerifyAppleReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:45:1`
@@ -3228,7 +3514,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyAppleReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:45:1`
 
-### #346 CONTEXT_PROPAGATION on `VerifyGoogleReceipt`
+### #377 CONTEXT_PROPAGATION on `VerifyGoogleReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:62:1`
@@ -3237,7 +3523,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyGoogleReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:62:1`
 
-### #347 CONTEXT_PROPAGATION on `VerifyReceipt`
+### #378 CONTEXT_PROPAGATION on `VerifyReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:87:1`
@@ -3246,7 +3532,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:87:1`
 
-### #348 CONTEXT_PROPAGATION on `VerifyReceipt`
+### #379 CONTEXT_PROPAGATION on `VerifyReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:100:1`
@@ -3255,7 +3541,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/adapter.go:100:1`
 
-### #349 CONTEXT_PROPAGATION on `VerifyReceipt`
+### #380 CONTEXT_PROPAGATION on `VerifyReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/dynamic_verifiers.go:22:1`
@@ -3264,7 +3550,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/dynamic_verifiers.go:22:1`
 
-### #350 CONTEXT_PROPAGATION on `VerifyReceipt`
+### #381 CONTEXT_PROPAGATION on `VerifyReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/dynamic_verifiers.go:54:1`
@@ -3273,16 +3559,16 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/dynamic_verifiers.go:54:1`
 
-### #351 CONTEXT_PROPAGATION on `VerifyReceipt`
+### #382 CONTEXT_PROPAGATION on `VerifyReceipt`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/verifier.go:100:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/verifier.go:152:1`
 - **Summary:** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/verifier.go:100:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'VerifyReceipt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/verifier.go:152:1`
 
-### #352 CONTEXT_PROPAGATION on `TrackEvent`
+### #383 CONTEXT_PROPAGATION on `TrackEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:71:1`
@@ -3291,7 +3577,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:71:1`
 
-### #353 CONTEXT_PROPAGATION on `TrackEcommerce`
+### #384 CONTEXT_PROPAGATION on `TrackEcommerce`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:129:1`
@@ -3300,7 +3586,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackEcommerce' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:129:1`
 
-### #354 CONTEXT_PROPAGATION on `GetCohorts`
+### #385 CONTEXT_PROPAGATION on `GetCohorts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:198:1`
@@ -3309,7 +3595,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCohorts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:198:1`
 
-### #355 CONTEXT_PROPAGATION on `GetFunnels`
+### #386 CONTEXT_PROPAGATION on `GetFunnels`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:247:1`
@@ -3318,7 +3604,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetFunnels' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:247:1`
 
-### #356 CONTEXT_PROPAGATION on `GetRealtimeVisitors`
+### #387 CONTEXT_PROPAGATION on `GetRealtimeVisitors`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:279:1`
@@ -3327,7 +3613,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRealtimeVisitors' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:279:1`
 
-### #357 CONTEXT_PROPAGATION on `doRequest`
+### #388 CONTEXT_PROPAGATION on `doRequest`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:302:1`
@@ -3336,7 +3622,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'doRequest' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:302:1`
 
-### #358 CONTEXT_PROPAGATION on `doJSONRequest`
+### #389 CONTEXT_PROPAGATION on `doJSONRequest`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:352:1`
@@ -3345,7 +3631,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'doJSONRequest' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:352:1`
 
-### #359 CONTEXT_PROPAGATION on `HealthCheck`
+### #390 CONTEXT_PROPAGATION on `HealthCheck`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:411:1`
@@ -3354,7 +3640,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HealthCheck' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:411:1`
 
-### #360 CONTEXT_PROPAGATION on `CreateGracePeriod`
+### #391 CONTEXT_PROPAGATION on `CreateGracePeriod`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:42:1`
@@ -3363,7 +3649,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateGracePeriod' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:42:1`
 
-### #361 CONTEXT_PROPAGATION on `ResolveGracePeriod`
+### #392 CONTEXT_PROPAGATION on `ResolveGracePeriod`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:79:1`
@@ -3372,7 +3658,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ResolveGracePeriod' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:79:1`
 
-### #362 CONTEXT_PROPAGATION on `ExpireGracePeriod`
+### #393 CONTEXT_PROPAGATION on `ExpireGracePeriod`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:112:1`
@@ -3381,7 +3667,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ExpireGracePeriod' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:112:1`
 
-### #363 CONTEXT_PROPAGATION on `ProcessExpiredGracePeriods`
+### #394 CONTEXT_PROPAGATION on `ProcessExpiredGracePeriods`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:145:1`
@@ -3390,7 +3676,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredGracePeriods' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:145:1`
 
-### #364 CONTEXT_PROPAGATION on `GetGracePeriodStatus`
+### #395 CONTEXT_PROPAGATION on `GetGracePeriodStatus`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:165:1`
@@ -3399,7 +3685,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetGracePeriodStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:165:1`
 
-### #365 CONTEXT_PROPAGATION on `NotifyExpiringSoon`
+### #396 CONTEXT_PROPAGATION on `NotifyExpiringSoon`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:175:1`
@@ -3408,304 +3694,439 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'NotifyExpiringSoon' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/grace_period_service.go:175:1`
 
-### #366 CONTEXT_PROPAGATION on `getExperimentConfig`
+### #397 CONTEXT_PROPAGATION on `fetchExperimentConfig`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:142:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:154:1`
+- **Summary:** Function 'fetchExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:154:1`
+
+### #398 CONTEXT_PROPAGATION on `getExperimentConfig`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:312:1`
 - **Summary:** Function 'getExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:142:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getExperimentConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:312:1`
 
-### #367 CONTEXT_PROPAGATION on `getHybridStrategy`
+### #399 CONTEXT_PROPAGATION on `SelectArm`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:173:1`
-- **Summary:** Function 'getHybridStrategy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getHybridStrategy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:173:1`
-
-### #368 CONTEXT_PROPAGATION on `getWindowStrategy`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:189:1`
-- **Summary:** Function 'getWindowStrategy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getWindowStrategy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:189:1`
-
-### #369 CONTEXT_PROPAGATION on `SelectArm`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:209:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:371:1`
 - **Summary:** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:209:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:371:1`
 
-### #370 CONTEXT_PROPAGATION on `RecordReward`
+### #400 CONTEXT_PROPAGATION on `resolveSelectedArm`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:271:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:403:1`
+- **Summary:** Function 'resolveSelectedArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'resolveSelectedArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:403:1`
+
+### #401 CONTEXT_PROPAGATION on `recordPendingRewardIfDelayed`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:430:1`
+- **Summary:** Function 'recordPendingRewardIfDelayed' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'recordPendingRewardIfDelayed' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:430:1`
+
+### #402 CONTEXT_PROPAGATION on `RecordReward`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:479:1`
 - **Summary:** Function 'RecordReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:271:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:479:1`
 
-### #371 CONTEXT_PROPAGATION on `ProcessConversion`
+### #403 CONTEXT_PROPAGATION on `normalizeRewardCurrency`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:365:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:513:1`
+- **Summary:** Function 'normalizeRewardCurrency' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'normalizeRewardCurrency' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:513:1`
+
+### #404 CONTEXT_PROPAGATION on `recordBaseRewardEvent`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:529:1`
+- **Summary:** Function 'recordBaseRewardEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'recordBaseRewardEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:529:1`
+
+### #405 CONTEXT_PROPAGATION on `updateLinUCBModelIfConfigured`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:557:1`
+- **Summary:** Function 'updateLinUCBModelIfConfigured' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'updateLinUCBModelIfConfigured' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:557:1`
+
+### #406 CONTEXT_PROPAGATION on `recordWindowEventIfConfigured`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:565:1`
+- **Summary:** Function 'recordWindowEventIfConfigured' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'recordWindowEventIfConfigured' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:565:1`
+
+### #407 CONTEXT_PROPAGATION on `recordObjectiveRewardIfConfigured`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:588:1`
+- **Summary:** Function 'recordObjectiveRewardIfConfigured' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'recordObjectiveRewardIfConfigured' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:588:1`
+
+### #408 CONTEXT_PROPAGATION on `ProcessConversion`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:621:1`
 - **Summary:** Function 'ProcessConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:365:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:621:1`
 
-### #372 CONTEXT_PROPAGATION on `GetArmStatistics`
+### #409 CONTEXT_PROPAGATION on `GetArmStatistics`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:389:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:648:1`
 - **Summary:** Function 'GetArmStatistics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStatistics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:389:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStatistics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:648:1`
 
-### #373 CONTEXT_PROPAGATION on `GetObjectiveScores`
+### #410 CONTEXT_PROPAGATION on `GetMetrics`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:397:1`
-- **Summary:** Function 'GetObjectiveScores' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetObjectiveScores' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:397:1`
-
-### #374 CONTEXT_PROPAGATION on `SetObjectiveConfig`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:428:1`
-- **Summary:** Function 'SetObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:428:1`
-
-### #375 CONTEXT_PROPAGATION on `GetMetrics`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:464:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:729:1`
 - **Summary:** Function 'GetMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:464:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:729:1`
 
-### #376 CONTEXT_PROPAGATION on `GetWindowInfo`
+### #411 CONTEXT_PROPAGATION on `populatePendingRewardsMetric`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:505:1`
-- **Summary:** Function 'GetWindowInfo' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:745:1`
+- **Summary:** Function 'populatePendingRewardsMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetWindowInfo' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:505:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'populatePendingRewardsMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:745:1`
 
-### #377 CONTEXT_PROPAGATION on `TrimWindow`
+### #412 CONTEXT_PROPAGATION on `populateWindowUtilizationMetric`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:531:1`
-- **Summary:** Function 'TrimWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:759:1`
+- **Summary:** Function 'populateWindowUtilizationMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrimWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:531:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'populateWindowUtilizationMetric' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:759:1`
 
-### #378 CONTEXT_PROPAGATION on `ProcessExpiredPendingRewards`
+### #413 CONTEXT_PROPAGATION on `GetPendingReward`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:551:1`
-- **Summary:** Function 'ProcessExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:551:1`
-
-### #379 CONTEXT_PROPAGATION on `TrimConfiguredWindows`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:571:1`
-- **Summary:** Function 'TrimConfiguredWindows' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrimConfiguredWindows' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:571:1`
-
-### #380 CONTEXT_PROPAGATION on `SyncObjectiveStats`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:608:1`
-- **Summary:** Function 'SyncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SyncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:608:1`
-
-### #381 CONTEXT_PROPAGATION on `CleanupOldContextData`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:670:1`
-- **Summary:** Function 'CleanupOldContextData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupOldContextData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:670:1`
-
-### #382 CONTEXT_PROPAGATION on `CleanupExpiredAssignments`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:683:1`
-- **Summary:** Function 'CleanupExpiredAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupExpiredAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:683:1`
-
-### #383 CONTEXT_PROPAGATION on `ExportWindowEvents`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:696:1`
-- **Summary:** Function 'ExportWindowEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ExportWindowEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:696:1`
-
-### #384 CONTEXT_PROPAGATION on `GetObjectiveConfig`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:723:1`
-- **Summary:** Function 'GetObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:723:1`
-
-### #385 CONTEXT_PROPAGATION on `GetPendingReward`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:727:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1043:1`
 - **Summary:** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:727:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1043:1`
 
-### #386 CONTEXT_PROPAGATION on `GetUserPendingRewards`
+### #414 CONTEXT_PROPAGATION on `GetUserPendingRewards`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:736:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1052:1`
 - **Summary:** Function 'GetUserPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetUserPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:736:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetUserPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1052:1`
 
-### #387 CONTEXT_PROPAGATION on `RunMaintenanceDetailed`
+### #415 CONTEXT_PROPAGATION on `getWindowStrategy`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:794:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:345:1`
+- **Summary:** Function 'getWindowStrategy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getWindowStrategy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:345:1`
+
+### #416 CONTEXT_PROPAGATION on `GetWindowInfo`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:786:1`
+- **Summary:** Function 'GetWindowInfo' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetWindowInfo' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:786:1`
+
+### #417 CONTEXT_PROPAGATION on `TrimWindow`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:812:1`
+- **Summary:** Function 'TrimWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrimWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:812:1`
+
+### #418 CONTEXT_PROPAGATION on `TrimConfiguredWindows`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:855:1`
+- **Summary:** Function 'TrimConfiguredWindows' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrimConfiguredWindows' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:855:1`
+
+### #419 CONTEXT_PROPAGATION on `trimWindowsForExperiments`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:876:1`
+- **Summary:** Function 'trimWindowsForExperiments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'trimWindowsForExperiments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:876:1`
+
+### #420 CONTEXT_PROPAGATION on `ExportWindowEvents`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1012:1`
+- **Summary:** Function 'ExportWindowEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ExportWindowEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1012:1`
+
+### #421 CONTEXT_PROPAGATION on `getHybridStrategy`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:323:1`
+- **Summary:** Function 'getHybridStrategy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getHybridStrategy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:323:1`
+
+### #422 CONTEXT_PROPAGATION on `GetObjectiveScores`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:656:1`
+- **Summary:** Function 'GetObjectiveScores' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetObjectiveScores' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:656:1`
+
+### #423 CONTEXT_PROPAGATION on `SetObjectiveConfig`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:687:1`
+- **Summary:** Function 'SetObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:687:1`
+
+### #424 CONTEXT_PROPAGATION on `SyncObjectiveStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:895:1`
+- **Summary:** Function 'SyncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SyncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:895:1`
+
+### #425 CONTEXT_PROPAGATION on `syncExperimentObjectiveStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:926:1`
+- **Summary:** Function 'syncExperimentObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'syncExperimentObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:926:1`
+
+### #426 CONTEXT_PROPAGATION on `syncArmObjectiveStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:956:1`
+- **Summary:** Function 'syncArmObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'syncArmObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:956:1`
+
+### #427 CONTEXT_PROPAGATION on `GetObjectiveConfig`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1039:1`
+- **Summary:** Function 'GetObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetObjectiveConfig' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1039:1`
+
+### #428 CONTEXT_PROPAGATION on `ProcessExpiredPendingRewards`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:832:1`
+- **Summary:** Function 'ProcessExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredPendingRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:832:1`
+
+### #429 CONTEXT_PROPAGATION on `CleanupOldContextData`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:986:1`
+- **Summary:** Function 'CleanupOldContextData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupOldContextData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:986:1`
+
+### #430 CONTEXT_PROPAGATION on `CleanupExpiredAssignments`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:999:1`
+- **Summary:** Function 'CleanupExpiredAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CleanupExpiredAssignments' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:999:1`
+
+### #431 CONTEXT_PROPAGATION on `RunMaintenanceDetailed`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1110:1`
 - **Summary:** Function 'RunMaintenanceDetailed' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RunMaintenanceDetailed' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:794:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RunMaintenanceDetailed' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1110:1`
 
-### #388 CONTEXT_PROPAGATION on `RunMaintenance`
+### #432 CONTEXT_PROPAGATION on `runCurrencyMaintenance`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:852:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1150:1`
+- **Summary:** Function 'runCurrencyMaintenance' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'runCurrencyMaintenance' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1150:1`
+
+### #433 CONTEXT_PROPAGATION on `runWindowAndObjectiveInspection`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1161:1`
+- **Summary:** Function 'runWindowAndObjectiveInspection' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'runWindowAndObjectiveInspection' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1161:1`
+
+### #434 CONTEXT_PROPAGATION on `RunMaintenance`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1190:1`
 - **Summary:** Function 'RunMaintenance' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RunMaintenance' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:852:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RunMaintenance' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:1190:1`
 
-### #389 CONTEXT_PROPAGATION on `UpdateDraftExperiment`
+### #435 CONTEXT_PROPAGATION on `UpdateDraftExperiment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:172:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:201:1`
 - **Summary:** Function 'UpdateDraftExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateDraftExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:172:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateDraftExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:201:1`
 
-### #390 CONTEXT_PROPAGATION on `UpdateExperimentAutomationPolicy`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:183:1`
-- **Summary:** Function 'UpdateExperimentAutomationPolicy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentAutomationPolicy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:183:1`
-
-### #391 CONTEXT_PROPAGATION on `TransitionExperimentStatus`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:204:1`
-- **Summary:** Function 'TransitionExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TransitionExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:204:1`
-
-### #392 CONTEXT_PROPAGATION on `TransitionExperimentStatusWithAudit`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:208:1`
-- **Summary:** Function 'TransitionExperimentStatusWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TransitionExperimentStatusWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:208:1`
-
-### #393 CONTEXT_PROPAGATION on `LockExperimentAutomation`
+### #436 CONTEXT_PROPAGATION on `UpdateExperimentAutomationPolicy`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:212:1`
+- **Summary:** Function 'UpdateExperimentAutomationPolicy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateExperimentAutomationPolicy' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:212:1`
+
+### #437 CONTEXT_PROPAGATION on `TransitionExperimentStatus`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:233:1`
+- **Summary:** Function 'TransitionExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TransitionExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:233:1`
+
+### #438 CONTEXT_PROPAGATION on `TransitionExperimentStatusWithAudit`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:237:1`
+- **Summary:** Function 'TransitionExperimentStatusWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TransitionExperimentStatusWithAudit' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:237:1`
+
+### #439 CONTEXT_PROPAGATION on `LockExperimentAutomation`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:241:1`
 - **Summary:** Function 'LockExperimentAutomation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'LockExperimentAutomation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:212:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'LockExperimentAutomation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:241:1`
 
-### #394 CONTEXT_PROPAGATION on `UnlockExperimentAutomation`
+### #440 CONTEXT_PROPAGATION on `UnlockExperimentAutomation`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:238:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:267:1`
 - **Summary:** Function 'UnlockExperimentAutomation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UnlockExperimentAutomation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:238:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UnlockExperimentAutomation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:267:1`
 
-### #395 CONTEXT_PROPAGATION on `HoldExperimentForReview`
+### #441 CONTEXT_PROPAGATION on `HoldExperimentForReview`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:253:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:282:1`
 - **Summary:** Function 'HoldExperimentForReview' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HoldExperimentForReview' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:253:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HoldExperimentForReview' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:282:1`
 
-### #396 CONTEXT_PROPAGATION on `transitionExperimentStatus`
+### #442 CONTEXT_PROPAGATION on `transitionExperimentStatus`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:305:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:333:1`
 - **Summary:** Function 'transitionExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'transitionExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:305:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'transitionExperimentStatus' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:333:1`
 
-### #397 CONTEXT_PROPAGATION on `IsFeatureEnabled`
+### #443 CONTEXT_PROPAGATION on `IsFeatureEnabled`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:52:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:61:1`
 - **Summary:** Function 'IsFeatureEnabled' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'IsFeatureEnabled' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:52:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'IsFeatureEnabled' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:61:1`
 
-### #398 CONTEXT_PROPAGATION on `EvaluatePaywallTest`
+### #444 CONTEXT_PROPAGATION on `EvaluatePaywallTest`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:159:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:168:1`
 - **Summary:** Function 'EvaluatePaywallTest' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'EvaluatePaywallTest' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:159:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'EvaluatePaywallTest' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:168:1`
 
-### #399 CONTEXT_PROPAGATION on `GetUserSubscriptions`
+### #445 CONTEXT_PROPAGATION on `GetUserSubscriptions`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_subscription_adapter.go:22:1`
@@ -3714,7 +4135,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetUserSubscriptions' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_subscription_adapter.go:22:1`
 
-### #400 CONTEXT_PROPAGATION on `GetTotalRevenue`
+### #446 CONTEXT_PROPAGATION on `GetTotalRevenue`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_subscription_adapter.go:44:1`
@@ -3723,7 +4144,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetTotalRevenue' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_subscription_adapter.go:44:1`
 
-### #401 CONTEXT_PROPAGATION on `GetReport`
+### #447 CONTEXT_PROPAGATION on `GetReport`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:67:1`
@@ -3732,7 +4153,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetReport' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:67:1`
 
-### #402 CONTEXT_PROPAGATION on `fetchMRR`
+### #448 CONTEXT_PROPAGATION on `fetchMRR`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:123:1`
@@ -3741,7 +4162,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchMRR' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:123:1`
 
-### #403 CONTEXT_PROPAGATION on `fetchLTV`
+### #449 CONTEXT_PROPAGATION on `fetchLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:138:1`
@@ -3750,7 +4171,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:138:1`
 
-### #404 CONTEXT_PROPAGATION on `fetchNewSubsMonth`
+### #450 CONTEXT_PROPAGATION on `fetchNewSubsMonth`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:147:1`
@@ -3759,7 +4180,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchNewSubsMonth' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:147:1`
 
-### #405 CONTEXT_PROPAGATION on `fetchChurnRate`
+### #451 CONTEXT_PROPAGATION on `fetchChurnRate`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:158:1`
@@ -3768,7 +4189,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchChurnRate' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:158:1`
 
-### #406 CONTEXT_PROPAGATION on `fetchTrend`
+### #452 CONTEXT_PROPAGATION on `fetchTrend`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:178:1`
@@ -3777,7 +4198,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchTrend' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:178:1`
 
-### #407 CONTEXT_PROPAGATION on `fetchByPlatform`
+### #453 CONTEXT_PROPAGATION on `fetchByPlatform`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:227:1`
@@ -3786,7 +4207,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchByPlatform' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:227:1`
 
-### #408 CONTEXT_PROPAGATION on `fetchByPlan`
+### #454 CONTEXT_PROPAGATION on `fetchByPlan`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:253:1`
@@ -3795,7 +4216,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchByPlan' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:253:1`
 
-### #409 CONTEXT_PROPAGATION on `fetchStatusCounts`
+### #455 CONTEXT_PROPAGATION on `fetchStatusCounts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:279:1`
@@ -3804,7 +4225,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchStatusCounts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_report_service.go:279:1`
 
-### #410 CONTEXT_PROPAGATION on `GetReport`
+### #456 CONTEXT_PROPAGATION on `GetReport`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:98:1`
@@ -3813,7 +4234,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetReport' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:98:1`
 
-### #411 CONTEXT_PROPAGATION on `fetchDunningData`
+### #457 CONTEXT_PROPAGATION on `fetchDunningData`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:123:1`
@@ -3822,7 +4243,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchDunningData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:123:1`
 
-### #412 CONTEXT_PROPAGATION on `fetchDunningQueue`
+### #458 CONTEXT_PROPAGATION on `fetchDunningQueue`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:138:1`
@@ -3831,7 +4252,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchDunningQueue' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:138:1`
 
-### #413 CONTEXT_PROPAGATION on `fetchDunningStats`
+### #459 CONTEXT_PROPAGATION on `fetchDunningStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:191:1`
@@ -3840,7 +4261,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchDunningStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:191:1`
 
-### #414 CONTEXT_PROPAGATION on `fetchWebhookData`
+### #460 CONTEXT_PROPAGATION on `fetchWebhookData`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:223:1`
@@ -3849,7 +4270,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchWebhookData' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:223:1`
 
-### #415 CONTEXT_PROPAGATION on `fetchWebhookEvents`
+### #461 CONTEXT_PROPAGATION on `fetchWebhookEvents`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:261:1`
@@ -3858,7 +4279,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchWebhookEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:261:1`
 
-### #416 CONTEXT_PROPAGATION on `fetchPendingWebhooks`
+### #462 CONTEXT_PROPAGATION on `fetchPendingWebhooks`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:304:1`
@@ -3867,7 +4288,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchPendingWebhooks' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:304:1`
 
-### #417 CONTEXT_PROPAGATION on `fetchWebhookCounts`
+### #463 CONTEXT_PROPAGATION on `fetchWebhookCounts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:336:1`
@@ -3876,7 +4297,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchWebhookCounts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:336:1`
 
-### #418 CONTEXT_PROPAGATION on `fetchWebhookProviderStats`
+### #464 CONTEXT_PROPAGATION on `fetchWebhookProviderStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:343:1`
@@ -3885,7 +4306,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchWebhookProviderStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:343:1`
 
-### #419 CONTEXT_PROPAGATION on `fetchMatomoStats`
+### #465 CONTEXT_PROPAGATION on `fetchMatomoStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:369:1`
@@ -3894,7 +4315,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchMatomoStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/revenue_ops_service.go:369:1`
 
-### #420 CONTEXT_PROPAGATION on `GetProfile`
+### #466 CONTEXT_PROPAGATION on `GetProfile`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:85:1`
@@ -3903,7 +4324,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetProfile' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:85:1`
 
-### #421 CONTEXT_PROPAGATION on `fetchUserInfo`
+### #467 CONTEXT_PROPAGATION on `fetchUserInfo`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:121:1`
@@ -3912,7 +4333,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchUserInfo' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:121:1`
 
-### #422 CONTEXT_PROPAGATION on `fetchSubscriptions`
+### #468 CONTEXT_PROPAGATION on `fetchSubscriptions`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:140:1`
@@ -3921,7 +4342,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchSubscriptions' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:140:1`
 
-### #423 CONTEXT_PROPAGATION on `fetchTransactions`
+### #469 CONTEXT_PROPAGATION on `fetchTransactions`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:167:1`
@@ -3930,7 +4351,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchTransactions' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:167:1`
 
-### #424 CONTEXT_PROPAGATION on `fetchAuditLog`
+### #470 CONTEXT_PROPAGATION on `fetchAuditLog`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:195:1`
@@ -3939,7 +4360,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchAuditLog' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:195:1`
 
-### #425 CONTEXT_PROPAGATION on `fetchDunning`
+### #471 CONTEXT_PROPAGATION on `fetchDunning`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:220:1`
@@ -3948,88 +4369,88 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchDunning' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/user_profile_service.go:220:1`
 
-### #426 CONTEXT_PROPAGATION on `TrackEvent`
+### #472 CONTEXT_PROPAGATION on `TrackEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:66:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:76:1`
 - **Summary:** Function 'TrackEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:66:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:76:1`
 
-### #427 CONTEXT_PROPAGATION on `TrackPurchase`
+### #473 CONTEXT_PROPAGATION on `TrackPurchase`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:100:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:119:1`
 - **Summary:** Function 'TrackPurchase' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackPurchase' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:100:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackPurchase' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:119:1`
 
-### #428 CONTEXT_PROPAGATION on `ProcessBatch`
+### #474 CONTEXT_PROPAGATION on `ProcessBatch`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:134:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:157:1`
 - **Summary:** Function 'ProcessBatch' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessBatch' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:134:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessBatch' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:157:1`
 
-### #429 CONTEXT_PROPAGATION on `processEvent`
+### #475 CONTEXT_PROPAGATION on `processEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:171:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:194:1`
 - **Summary:** Function 'processEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'processEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:171:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'processEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:194:1`
 
-### #430 CONTEXT_PROPAGATION on `sendEvent`
+### #476 CONTEXT_PROPAGATION on `sendEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:196:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:219:1`
 - **Summary:** Function 'sendEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'sendEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:196:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'sendEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:219:1`
 
-### #431 CONTEXT_PROPAGATION on `sendEcommerce`
+### #477 CONTEXT_PROPAGATION on `sendEcommerce`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:240:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:263:1`
 - **Summary:** Function 'sendEcommerce' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'sendEcommerce' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:240:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'sendEcommerce' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:263:1`
 
-### #432 CONTEXT_PROPAGATION on `HandleError`
+### #478 CONTEXT_PROPAGATION on `HandleError`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:298:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:321:1`
 - **Summary:** Function 'HandleError' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleError' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:298:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HandleError' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:321:1`
 
-### #433 CONTEXT_PROPAGATION on `GetQueueSize`
+### #479 CONTEXT_PROPAGATION on `GetQueueSize`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:309:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:332:1`
 - **Summary:** Function 'GetQueueSize' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetQueueSize' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:309:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetQueueSize' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:332:1`
 
-### #434 CONTEXT_PROPAGATION on `GetFailedEventsCount`
+### #480 CONTEXT_PROPAGATION on `GetFailedEventsCount`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:320:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:343:1`
 - **Summary:** Function 'GetFailedEventsCount' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetFailedEventsCount' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:320:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetFailedEventsCount' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:343:1`
 
-### #435 CONTEXT_PROPAGATION on `Evaluate`
+### #481 CONTEXT_PROPAGATION on `Evaluate`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/paywall_trigger_service.go:31:1`
@@ -4038,133 +4459,232 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Evaluate' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/paywall_trigger_service.go:31:1`
 
-### #436 CONTEXT_PROPAGATION on `SelectArm`
+### #482 CONTEXT_PROPAGATION on `SelectArm`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:245:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:299:1`
 - **Summary:** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:245:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:299:1`
 
-### #437 CONTEXT_PROPAGATION on `SelectArmWithMeta`
+### #483 CONTEXT_PROPAGATION on `sampleCandidateArms`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:360:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:335:1`
+- **Summary:** Function 'sampleCandidateArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'sampleCandidateArms' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:335:1`
+
+### #484 CONTEXT_PROPAGATION on `resolveArmStatsForSampling`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:377:1`
+- **Summary:** Function 'resolveArmStatsForSampling' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'resolveArmStatsForSampling' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:377:1`
+
+### #485 CONTEXT_PROPAGATION on `persistAndCacheAssignment`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:409:1`
+- **Summary:** Function 'persistAndCacheAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'persistAndCacheAssignment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:409:1`
+
+### #486 CONTEXT_PROPAGATION on `SelectArmWithMeta`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:441:1`
 - **Summary:** Function 'SelectArmWithMeta' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SelectArmWithMeta' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:360:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SelectArmWithMeta' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:441:1`
 
-### #438 CONTEXT_PROPAGATION on `UpdateReward`
+### #487 CONTEXT_PROPAGATION on `UpdateReward`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:372:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:469:1`
 - **Summary:** Function 'UpdateReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:372:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:469:1`
 
-### #439 CONTEXT_PROPAGATION on `TrackImpression`
+### #488 CONTEXT_PROPAGATION on `TrackImpression`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:376:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:478:1`
 - **Summary:** Function 'TrackImpression' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackImpression' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:376:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackImpression' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:478:1`
 
-### #440 CONTEXT_PROPAGATION on `UpdateRewardWithEvent`
+### #489 CONTEXT_PROPAGATION on `validateArmExists`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:438:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:499:1`
+- **Summary:** Function 'validateArmExists' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'validateArmExists' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:499:1`
+
+### #490 CONTEXT_PROPAGATION on `UpdateRewardWithEvent`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:546:1`
 - **Summary:** Function 'UpdateRewardWithEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateRewardWithEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:438:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateRewardWithEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:546:1`
 
-### #441 CONTEXT_PROPAGATION on `GetArmStatistics`
+### #491 CONTEXT_PROPAGATION on `appendConversionEventIfSupported`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:647:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:596:1`
+- **Summary:** Function 'appendConversionEventIfSupported' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'appendConversionEventIfSupported' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:596:1`
+
+### #492 CONTEXT_PROPAGATION on `GetArmStatistics`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:767:1`
 - **Summary:** Function 'GetArmStatistics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStatistics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:647:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStatistics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:767:1`
 
-### #442 CONTEXT_PROPAGATION on `CalculateWinProbability`
+### #493 CONTEXT_PROPAGATION on `CalculateWinProbability`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:668:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:788:1`
 - **Summary:** Function 'CalculateWinProbability' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateWinProbability' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:668:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateWinProbability' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:788:1`
 
-### #443 CONTEXT_PROPAGATION on `CalculateScore`
+### #494 CONTEXT_PROPAGATION on `loadArmStatsForSimulation`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:86:1`
-- **Summary:** Function 'CalculateScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:804:1`
+- **Summary:** Function 'loadArmStatsForSimulation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:86:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'loadArmStatsForSimulation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:804:1`
 
-### #444 CONTEXT_PROPAGATION on `calculateConversionScore`
+### #495 CONTEXT_PROPAGATION on `RecordObjectiveReward`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:105:1`
-- **Summary:** Function 'calculateConversionScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateConversionScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:105:1`
-
-### #445 CONTEXT_PROPAGATION on `calculateLVTScore`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:116:1`
-- **Summary:** Function 'calculateLVTScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateLVTScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:116:1`
-
-### #446 CONTEXT_PROPAGATION on `calculateRevenueScore`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:149:1`
-- **Summary:** Function 'calculateRevenueScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateRevenueScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:149:1`
-
-### #447 CONTEXT_PROPAGATION on `calculateHybridScore`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:166:1`
-- **Summary:** Function 'calculateHybridScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateHybridScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:166:1`
-
-### #448 CONTEXT_PROPAGATION on `RecordObjectiveReward`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:258:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:331:1`
 - **Summary:** Function 'RecordObjectiveReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordObjectiveReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:258:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordObjectiveReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:331:1`
 
-### #449 CONTEXT_PROPAGATION on `GetObjectiveScores`
+### #496 CONTEXT_PROPAGATION on `CalculateScore`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:315:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:142:1`
+- **Summary:** Function 'CalculateScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:142:1`
+
+### #497 CONTEXT_PROPAGATION on `calculateConversionScore`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:161:1`
+- **Summary:** Function 'calculateConversionScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateConversionScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:161:1`
+
+### #498 CONTEXT_PROPAGATION on `calculateLVTScore`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:172:1`
+- **Summary:** Function 'calculateLVTScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateLVTScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:172:1`
+
+### #499 CONTEXT_PROPAGATION on `calculateRevenueScore`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:205:1`
+- **Summary:** Function 'calculateRevenueScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateRevenueScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:205:1`
+
+### #500 CONTEXT_PROPAGATION on `calculateHybridScore`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:222:1`
+- **Summary:** Function 'calculateHybridScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateHybridScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:222:1`
+
+### #501 CONTEXT_PROPAGATION on `evaluateObjectiveScore`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:262:1`
+- **Summary:** Function 'evaluateObjectiveScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'evaluateObjectiveScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:262:1`
+
+### #502 CONTEXT_PROPAGATION on `GetObjectiveScores`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:390:1`
 - **Summary:** Function 'GetObjectiveScores' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetObjectiveScores' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:315:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetObjectiveScores' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:390:1`
 
-### #450 CONTEXT_PROPAGATION on `ExecuteScheduled`
+### #503 CONTEXT_PROPAGATION on `resolveObjectiveStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:436:1`
+- **Summary:** Function 'resolveObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'resolveObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:436:1`
+
+### #504 CONTEXT_PROPAGATION on `populateLTVScore`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:463:1`
+- **Summary:** Function 'populateLTVScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'populateLTVScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:463:1`
+
+### #505 CONTEXT_PROPAGATION on `populateRevenueScore`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:483:1`
+- **Summary:** Function 'populateRevenueScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'populateRevenueScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:483:1`
+
+### #506 CONTEXT_PROPAGATION on `populateHybridScore`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:503:1`
+- **Summary:** Function 'populateHybridScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'populateHybridScore' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:503:1`
+
+### #507 CONTEXT_PROPAGATION on `ExecuteScheduled`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/automation_job_execution_service.go:58:1`
@@ -4173,151 +4693,205 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ExecuteScheduled' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/automation_job_execution_service.go:58:1`
 
-### #451 CONTEXT_PROPAGATION on `RecordPendingReward`
+### #508 CONTEXT_PROPAGATION on `recordJobRunCompletion`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:80:1`
-- **Summary:** Function 'RecordPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/automation_job_execution_service.go:118:1`
+- **Summary:** Function 'recordJobRunCompletion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:80:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'recordJobRunCompletion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/automation_job_execution_service.go:118:1`
 
-### #452 CONTEXT_PROPAGATION on `ProcessConversion`
+### #509 CONTEXT_PROPAGATION on `cachePendingReward`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:124:1`
-- **Summary:** Function 'ProcessConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:124:1`
-
-### #453 CONTEXT_PROPAGATION on `ProcessExpiredRewards`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:253:1`
-- **Summary:** Function 'ProcessExpiredRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:253:1`
-
-### #454 CONTEXT_PROPAGATION on `GetPendingReward`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:346:1`
-- **Summary:** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:346:1`
-
-### #455 CONTEXT_PROPAGATION on `GetPendingRewardsByUser`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:372:1`
-- **Summary:** Function 'GetPendingRewardsByUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingRewardsByUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:372:1`
-
-### #456 CONTEXT_PROPAGATION on `GetStats`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:385:1`
-- **Summary:** Function 'GetStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
-
-#### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:385:1`
-
-### #457 CONTEXT_PROPAGATION on `cachePendingReward`
-- **Category:** `idiom`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:429:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:597:1`
 - **Summary:** Function 'cachePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'cachePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:429:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'cachePendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:597:1`
 
-### #458 CONTEXT_PROPAGATION on `getCachedPendingReward`
+### #510 CONTEXT_PROPAGATION on `getCachedPendingReward`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:437:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:605:1`
 - **Summary:** Function 'getCachedPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getCachedPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:437:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getCachedPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:605:1`
 
-### #459 CONTEXT_PROPAGATION on `invalidatePendingCache`
+### #511 CONTEXT_PROPAGATION on `invalidatePendingCache`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:449:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:617:1`
 - **Summary:** Function 'invalidatePendingCache' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'invalidatePendingCache' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:449:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'invalidatePendingCache' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:617:1`
 
-### #460 CONTEXT_PROPAGATION on `GetConversionLinks`
+### #512 CONTEXT_PROPAGATION on `RecordPendingReward`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:454:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:136:1`
+- **Summary:** Function 'RecordPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:136:1`
+
+### #513 CONTEXT_PROPAGATION on `GetPendingReward`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:513:1`
+- **Summary:** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:513:1`
+
+### #514 CONTEXT_PROPAGATION on `GetPendingRewardsByUser`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:539:1`
+- **Summary:** Function 'GetPendingRewardsByUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingRewardsByUser' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:539:1`
+
+### #515 CONTEXT_PROPAGATION on `GetStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:552:1`
+- **Summary:** Function 'GetStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:552:1`
+
+### #516 CONTEXT_PROPAGATION on `GetConversionLinks`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:622:1`
 - **Summary:** Function 'GetConversionLinks' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetConversionLinks' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:454:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetConversionLinks' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:622:1`
 
-### #461 CONTEXT_PROPAGATION on `CreateWinbackOffer`
+### #517 CONTEXT_PROPAGATION on `ProcessConversion`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:42:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:217:1`
+- **Summary:** Function 'ProcessConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:217:1`
+
+### #518 CONTEXT_PROPAGATION on `processConversionViaProcessor`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:249:1`
+- **Summary:** Function 'processConversionViaProcessor' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'processConversionViaProcessor' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:249:1`
+
+### #519 CONTEXT_PROPAGATION on `processConversionFallback`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:286:1`
+- **Summary:** Function 'processConversionFallback' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'processConversionFallback' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:286:1`
+
+### #520 CONTEXT_PROPAGATION on `applyConversionReward`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:327:1`
+- **Summary:** Function 'applyConversionReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'applyConversionReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:327:1`
+
+### #521 CONTEXT_PROPAGATION on `ProcessExpiredRewards`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:398:1`
+- **Summary:** Function 'ProcessExpiredRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredRewards' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:398:1`
+
+### #522 CONTEXT_PROPAGATION on `processSingleExpiredReward`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:432:1`
+- **Summary:** Function 'processSingleExpiredReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'processSingleExpiredReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:432:1`
+
+### #523 CONTEXT_PROPAGATION on `processExpiredRewardFallback`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:467:1`
+- **Summary:** Function 'processExpiredRewardFallback' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'processExpiredRewardFallback' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:467:1`
+
+### #524 CONTEXT_PROPAGATION on `CreateWinbackOffer`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:60:1`
 - **Summary:** Function 'CreateWinbackOffer' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateWinbackOffer' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:42:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateWinbackOffer' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:60:1`
 
-### #462 CONTEXT_PROPAGATION on `AcceptWinbackOffer`
+### #525 CONTEXT_PROPAGATION on `AcceptWinbackOffer`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:76:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:96:1`
 - **Summary:** Function 'AcceptWinbackOffer' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AcceptWinbackOffer' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:76:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'AcceptWinbackOffer' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:96:1`
 
-### #463 CONTEXT_PROPAGATION on `GetActiveWinbackOffers`
+### #526 CONTEXT_PROPAGATION on `GetActiveWinbackOffers`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:104:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:124:1`
 - **Summary:** Function 'GetActiveWinbackOffers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveWinbackOffers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:104:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetActiveWinbackOffers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:124:1`
 
-### #464 CONTEXT_PROPAGATION on `ProcessExpiredWinbackOffers`
+### #527 CONTEXT_PROPAGATION on `ProcessExpiredWinbackOffers`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:109:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:129:1`
 - **Summary:** Function 'ProcessExpiredWinbackOffers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredWinbackOffers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:109:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessExpiredWinbackOffers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:129:1`
 
-### #465 CONTEXT_PROPAGATION on `CreateWinbackCampaignForChurnedUsers`
+### #528 CONTEXT_PROPAGATION on `CreateWinbackCampaignForChurnedUsers`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:133:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:153:1`
 - **Summary:** Function 'CreateWinbackCampaignForChurnedUsers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateWinbackCampaignForChurnedUsers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:133:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CreateWinbackCampaignForChurnedUsers' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:153:1`
 
-### #466 CONTEXT_PROPAGATION on `DeactivateCampaign`
+### #529 CONTEXT_PROPAGATION on `DeactivateCampaign`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:161:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:183:1`
 - **Summary:** Function 'DeactivateCampaign' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'DeactivateCampaign' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:161:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'DeactivateCampaign' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:183:1`
 
-### #467 CONTEXT_PROPAGATION on `CalculateReward`
+### #530 CONTEXT_PROPAGATION on `CalculateReward`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:41:1`
@@ -4326,88 +4900,106 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateReward' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:41:1`
 
-### #468 CONTEXT_PROPAGATION on `RecordRewardWithCurrency`
+### #531 CONTEXT_PROPAGATION on `RecordRewardWithCurrency`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:157:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:167:1`
 - **Summary:** Function 'RecordRewardWithCurrency' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordRewardWithCurrency' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:157:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordRewardWithCurrency' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:167:1`
 
-### #469 CONTEXT_PROPAGATION on `GetConversionRate`
+### #532 CONTEXT_PROPAGATION on `GetConversionRate`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:205:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:213:1`
 - **Summary:** Function 'GetConversionRate' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetConversionRate' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:205:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetConversionRate' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:213:1`
 
-### #470 CONTEXT_PROPAGATION on `EstimateRevenueUSD`
+### #533 CONTEXT_PROPAGATION on `EstimateRevenueUSD`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:218:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:226:1`
 - **Summary:** Function 'EstimateRevenueUSD' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'EstimateRevenueUSD' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:218:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'EstimateRevenueUSD' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:226:1`
 
-### #471 CONTEXT_PROPAGATION on `CalculateLTV`
+### #534 CONTEXT_PROPAGATION on `populatePredictedLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:91:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:114:1`
+- **Summary:** Function 'populatePredictedLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'populatePredictedLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:114:1`
+
+### #535 CONTEXT_PROPAGATION on `loadSubscriptionsAndRevenue`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:135:1`
+- **Summary:** Function 'loadSubscriptionsAndRevenue' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'loadSubscriptionsAndRevenue' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:135:1`
+
+### #536 CONTEXT_PROPAGATION on `CalculateLTV`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:152:1`
 - **Summary:** Function 'CalculateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:91:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:152:1`
 
-### #472 CONTEXT_PROPAGATION on `predictLTVFromCohorts`
+### #537 CONTEXT_PROPAGATION on `predictLTVFromCohorts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:178:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:183:1`
 - **Summary:** Function 'predictLTVFromCohorts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'predictLTVFromCohorts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:178:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'predictLTVFromCohorts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:183:1`
 
-### #473 CONTEXT_PROPAGATION on `GetCohortLTV`
+### #538 CONTEXT_PROPAGATION on `GetCohortLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:313:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:327:1`
 - **Summary:** Function 'GetCohortLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCohortLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:313:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetCohortLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:327:1`
 
-### #474 CONTEXT_PROPAGATION on `UpdateUserLTV`
+### #539 CONTEXT_PROPAGATION on `UpdateUserLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:370:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:371:1`
 - **Summary:** Function 'UpdateUserLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateUserLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:370:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateUserLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:371:1`
 
-### #475 CONTEXT_PROPAGATION on `GetSegmentedLTV`
+### #540 CONTEXT_PROPAGATION on `GetSegmentedLTV`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:388:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:389:1`
 - **Summary:** Function 'GetSegmentedLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetSegmentedLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:388:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetSegmentedLTV' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:389:1`
 
-### #476 CONTEXT_PROPAGATION on `PredictChurnRisk`
+### #541 CONTEXT_PROPAGATION on `PredictChurnRisk`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:405:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:406:1`
 - **Summary:** Function 'PredictChurnRisk' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'PredictChurnRisk' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:405:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'PredictChurnRisk' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:406:1`
 
-### #477 CONTEXT_PROPAGATION on `sendEmail`
+### #542 CONTEXT_PROPAGATION on `sendEmail`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:44:1`
@@ -4416,7 +5008,16 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'sendEmail' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:44:1`
 
-### #478 CONTEXT_PROPAGATION on `SendGracePeriodExpiringNotification`
+### #543 CONTEXT_PROPAGATION on `sendPush`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:86:1`
+- **Summary:** Function 'sendPush' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'sendPush' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:86:1`
+
+### #544 CONTEXT_PROPAGATION on `SendGracePeriodExpiringNotification`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:121:1`
@@ -4425,7 +5026,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SendGracePeriodExpiringNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:121:1`
 
-### #479 CONTEXT_PROPAGATION on `SendWinbackOfferNotification`
+### #545 CONTEXT_PROPAGATION on `SendWinbackOfferNotification`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:137:1`
@@ -4434,7 +5035,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SendWinbackOfferNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:137:1`
 
-### #480 CONTEXT_PROPAGATION on `SendSubscriptionExpiredNotification`
+### #546 CONTEXT_PROPAGATION on `SendSubscriptionExpiredNotification`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:149:1`
@@ -4443,7 +5044,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SendSubscriptionExpiredNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:149:1`
 
-### #481 CONTEXT_PROPAGATION on `SendPaymentRetryNotification`
+### #547 CONTEXT_PROPAGATION on `SendPaymentRetryNotification`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:160:1`
@@ -4452,7 +5053,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SendPaymentRetryNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:160:1`
 
-### #482 CONTEXT_PROPAGATION on `SendPaymentSuccessNotification`
+### #548 CONTEXT_PROPAGATION on `SendPaymentSuccessNotification`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:171:1`
@@ -4461,7 +5062,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SendPaymentSuccessNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:171:1`
 
-### #483 CONTEXT_PROPAGATION on `SendAllRetriesFailedNotification`
+### #549 CONTEXT_PROPAGATION on `SendAllRetriesFailedNotification`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:181:1`
@@ -4470,7 +5071,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SendAllRetriesFailedNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:181:1`
 
-### #484 CONTEXT_PROPAGATION on `SendPaymentFinalFailureNotification`
+### #550 CONTEXT_PROPAGATION on `SendPaymentFinalFailureNotification`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:191:1`
@@ -4479,61 +5080,61 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SendPaymentFinalFailureNotification' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/notification_service.go:191:1`
 
-### #485 CONTEXT_PROPAGATION on `SelectArm`
+### #551 CONTEXT_PROPAGATION on `SelectArm`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:58:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:63:1`
 - **Summary:** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:58:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SelectArm' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:63:1`
 
-### #486 CONTEXT_PROPAGATION on `UpdateModel`
+### #552 CONTEXT_PROPAGATION on `UpdateModel`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:117:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:122:1`
 - **Summary:** Function 'UpdateModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:117:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:122:1`
 
-### #487 CONTEXT_PROPAGATION on `getOrCreateModel`
+### #553 CONTEXT_PROPAGATION on `getOrCreateModel`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:188:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:193:1`
 - **Summary:** Function 'getOrCreateModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getOrCreateModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:188:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'getOrCreateModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:193:1`
 
-### #488 CONTEXT_PROPAGATION on `saveModel`
+### #554 CONTEXT_PROPAGATION on `saveModel`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:217:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:222:1`
 - **Summary:** Function 'saveModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'saveModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:217:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'saveModel' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:222:1`
 
-### #489 CONTEXT_PROPAGATION on `GetModelStats`
+### #555 CONTEXT_PROPAGATION on `GetModelStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:351:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:356:1`
 - **Summary:** Function 'GetModelStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetModelStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:351:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetModelStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:356:1`
 
-### #490 CONTEXT_PROPAGATION on `LogAction`
+### #556 CONTEXT_PROPAGATION on `LogAction`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/audit_service.go:23:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/audit_service.go:32:1`
 - **Summary:** Function 'LogAction' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'LogAction' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/audit_service.go:23:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'LogAction' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/audit_service.go:32:1`
 
-### #491 CONTEXT_PROPAGATION on `Recommend`
+### #557 CONTEXT_PROPAGATION on `Recommend`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:124:1`
@@ -4542,16 +5143,16 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Recommend' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:124:1`
 
-### #492 CONTEXT_PROPAGATION on `finalizeRecommendation`
+### #558 CONTEXT_PROPAGATION on `finalizeRecommendation`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:192:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:202:1`
 - **Summary:** Function 'finalizeRecommendation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'finalizeRecommendation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:192:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'finalizeRecommendation' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:202:1`
 
-### #493 CONTEXT_PROPAGATION on `GetArmStats`
+### #559 CONTEXT_PROPAGATION on `GetArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:83:1`
@@ -4560,7 +5161,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStats' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:83:1`
 
-### #494 CONTEXT_PROPAGATION on `SetArmStats`
+### #560 CONTEXT_PROPAGATION on `SetArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:87:1`
@@ -4569,7 +5170,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetArmStats' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:87:1`
 
-### #495 CONTEXT_PROPAGATION on `GetAssignment`
+### #561 CONTEXT_PROPAGATION on `GetAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:91:1`
@@ -4578,7 +5179,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAssignment' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:91:1`
 
-### #496 CONTEXT_PROPAGATION on `SetAssignment`
+### #562 CONTEXT_PROPAGATION on `SetAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:95:1`
@@ -4587,7 +5188,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetAssignment' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:95:1`
 
-### #497 CONTEXT_PROPAGATION on `SetBytes`
+### #563 CONTEXT_PROPAGATION on `SetBytes`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:99:1`
@@ -4596,7 +5197,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetBytes' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:99:1`
 
-### #498 CONTEXT_PROPAGATION on `GetBytes`
+### #564 CONTEXT_PROPAGATION on `GetBytes`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:102:1`
@@ -4605,7 +5206,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetBytes' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:102:1`
 
-### #499 CONTEXT_PROPAGATION on `DeleteKey`
+### #565 CONTEXT_PROPAGATION on `DeleteKey`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:105:1`
@@ -4614,7 +5215,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'DeleteKey' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:105:1`
 
-### #500 CONTEXT_PROPAGATION on `CalculateRevenueMetrics`
+### #566 CONTEXT_PROPAGATION on `CalculateRevenueMetrics`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:42:1`
@@ -4623,7 +5224,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateRevenueMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:42:1`
 
-### #501 CONTEXT_PROPAGATION on `CalculateChurnMetrics`
+### #567 CONTEXT_PROPAGATION on `CalculateChurnMetrics`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:63:1`
@@ -4632,7 +5233,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'CalculateChurnMetrics' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:63:1`
 
-### #502 CONTEXT_PROPAGATION on `GetMRRTrend`
+### #568 CONTEXT_PROPAGATION on `GetMRRTrend`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:90:1`
@@ -4641,7 +5242,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetMRRTrend' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:90:1`
 
-### #503 CONTEXT_PROPAGATION on `GetSubscriptionStatusCounts`
+### #569 CONTEXT_PROPAGATION on `GetSubscriptionStatusCounts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:95:1`
@@ -4650,7 +5251,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetSubscriptionStatusCounts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:95:1`
 
-### #504 CONTEXT_PROPAGATION on `GetChurnRiskCount`
+### #570 CONTEXT_PROPAGATION on `GetChurnRiskCount`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:100:1`
@@ -4659,7 +5260,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetChurnRiskCount' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:100:1`
 
-### #505 CONTEXT_PROPAGATION on `GetWebhookHealthByProvider`
+### #571 CONTEXT_PROPAGATION on `GetWebhookHealthByProvider`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:105:1`
@@ -4668,7 +5269,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetWebhookHealthByProvider' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:105:1`
 
-### #506 CONTEXT_PROPAGATION on `GetRecentAuditLog`
+### #572 CONTEXT_PROPAGATION on `GetRecentAuditLog`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:110:1`
@@ -4677,7 +5278,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRecentAuditLog' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:110:1`
 
-### #507 CONTEXT_PROPAGATION on `GetAuditLogPaginated`
+### #573 CONTEXT_PROPAGATION on `GetAuditLogPaginated`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:116:1`
@@ -4686,7 +5287,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAuditLogPaginated' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:116:1`
 
-### #508 CONTEXT_PROPAGATION on `StartDunning`
+### #574 CONTEXT_PROPAGATION on `StartDunning`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:39:1`
@@ -4695,25 +5296,106 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'StartDunning' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:39:1`
 
-### #509 CONTEXT_PROPAGATION on `ProcessDunningAttempt`
+### #575 CONTEXT_PROPAGATION on `handlePaymentSuccess`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:63:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:62:1`
+- **Summary:** Function 'handlePaymentSuccess' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'handlePaymentSuccess' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:62:1`
+
+### #576 CONTEXT_PROPAGATION on `handlePaymentFailure`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:74:1`
+- **Summary:** Function 'handlePaymentFailure' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'handlePaymentFailure' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:74:1`
+
+### #577 CONTEXT_PROPAGATION on `ProcessDunningAttempt`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:96:1`
 - **Summary:** Function 'ProcessDunningAttempt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessDunningAttempt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:63:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ProcessDunningAttempt' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:96:1`
 
-### #510 CONTEXT_PROPAGATION on `GetPendingDunningAttempts`
+### #578 CONTEXT_PROPAGATION on `GetPendingDunningAttempts`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:129:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:116:1`
 - **Summary:** Function 'GetPendingDunningAttempts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingDunningAttempts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:129:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetPendingDunningAttempts' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:116:1`
 
-### #511 CONTEXT_PROPAGATION on `Reconcile`
+### #579 CONTEXT_PROPAGATION on `ConvertToUSD`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:85:1`
+- **Summary:** Function 'ConvertToUSD' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ConvertToUSD' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:85:1`
+
+### #580 CONTEXT_PROPAGATION on `GetRate`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:111:1`
+- **Summary:** Function 'GetRate' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetRate' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:111:1`
+
+### #581 CONTEXT_PROPAGATION on `parseECBRatesFromHTTP`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:154:1`
+- **Summary:** Function 'parseECBRatesFromHTTP' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'parseECBRatesFromHTTP' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:154:1`
+
+### #582 CONTEXT_PROPAGATION on `fetchRateFromECB`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:200:1`
+- **Summary:** Function 'fetchRateFromECB' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'fetchRateFromECB' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:200:1`
+
+### #583 CONTEXT_PROPAGATION on `cacheFetchedRates`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:216:1`
+- **Summary:** Function 'cacheFetchedRates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'cacheFetchedRates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:216:1`
+
+### #584 CONTEXT_PROPAGATION on `UpdateRates`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:252:1`
+- **Summary:** Function 'UpdateRates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'UpdateRates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:252:1`
+
+### #585 CONTEXT_PROPAGATION on `HealthCheck`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:316:1`
+- **Summary:** Function 'HealthCheck' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HealthCheck' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:316:1`
+
+### #586 CONTEXT_PROPAGATION on `Reconcile`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_reconciler.go:38:1`
@@ -4722,7 +5404,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Reconcile' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_reconciler.go:38:1`
 
-### #512 CONTEXT_PROPAGATION on `Reconcile`
+### #587 CONTEXT_PROPAGATION on `Reconcile`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_automation_service.go:51:1`
@@ -4731,7 +5413,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'Reconcile' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_automation_service.go:51:1`
 
-### #513 CONTEXT_PROPAGATION on `TrackExposure`
+### #588 CONTEXT_PROPAGATION on `TrackExposure`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:36:1`
@@ -4740,7 +5422,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackExposure' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:36:1`
 
-### #514 CONTEXT_PROPAGATION on `TrackConversion`
+### #589 CONTEXT_PROPAGATION on `TrackConversion`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:51:1`
@@ -4749,106 +5431,106 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackConversion' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:51:1`
 
-### #515 CONTEXT_PROPAGATION on `TrackRevenue`
+### #590 CONTEXT_PROPAGATION on `TrackRevenue`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:66:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:74:1`
 - **Summary:** Function 'TrackRevenue' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackRevenue' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:66:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrackRevenue' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:74:1`
 
-### #516 CONTEXT_PROPAGATION on `GetArmStats`
+### #591 CONTEXT_PROPAGATION on `GetArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:63:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:67:1`
 - **Summary:** Function 'GetArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:63:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:67:1`
 
-### #517 CONTEXT_PROPAGATION on `RecordEvent`
+### #592 CONTEXT_PROPAGATION on `RecordEvent`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:93:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:97:1`
 - **Summary:** Function 'RecordEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:93:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RecordEvent' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:97:1`
 
-### #518 CONTEXT_PROPAGATION on `calculateWindowStats`
+### #593 CONTEXT_PROPAGATION on `calculateWindowStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:142:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:146:1`
 - **Summary:** Function 'calculateWindowStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateWindowStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:142:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'calculateWindowStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:146:1`
 
-### #519 CONTEXT_PROPAGATION on `cacheStats`
+### #594 CONTEXT_PROPAGATION on `cacheWindowStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:221:1`
-- **Summary:** Function 'cacheStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:225:1`
+- **Summary:** Function 'cacheWindowStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'cacheStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:221:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'cacheWindowStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:225:1`
 
-### #520 CONTEXT_PROPAGATION on `GetWindowInfo`
+### #595 CONTEXT_PROPAGATION on `GetWindowInfo`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:260:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:264:1`
 - **Summary:** Function 'GetWindowInfo' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetWindowInfo' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:260:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetWindowInfo' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:264:1`
 
-### #521 CONTEXT_PROPAGATION on `TrimWindow`
+### #596 CONTEXT_PROPAGATION on `TrimWindow`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:314:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:318:1`
 - **Summary:** Function 'TrimWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrimWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:314:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'TrimWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:318:1`
 
-### #522 CONTEXT_PROPAGATION on `ClearWindow`
+### #597 CONTEXT_PROPAGATION on `ClearWindow`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:331:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:335:1`
 - **Summary:** Function 'ClearWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ClearWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:331:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ClearWindow' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:335:1`
 
-### #523 CONTEXT_PROPAGATION on `HasEnoughSamples`
+### #598 CONTEXT_PROPAGATION on `HasEnoughSamples`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:348:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:352:1`
 - **Summary:** Function 'HasEnoughSamples' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HasEnoughSamples' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:348:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'HasEnoughSamples' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:352:1`
 
-### #524 CONTEXT_PROPAGATION on `GetUtilization`
+### #599 CONTEXT_PROPAGATION on `GetUtilization`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:364:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:368:1`
 - **Summary:** Function 'GetUtilization' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetUtilization' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:364:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetUtilization' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:368:1`
 
-### #525 CONTEXT_PROPAGATION on `ExportEvents`
+### #600 CONTEXT_PROPAGATION on `ExportEvents`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:384:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:388:1`
 - **Summary:** Function 'ExportEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ExportEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:384:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'ExportEvents' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:388:1`
 
-### #526 CONTEXT_PROPAGATION on `GetArmStats`
+### #601 CONTEXT_PROPAGATION on `GetArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:45:1`
@@ -4857,7 +5539,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetArmStats' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:45:1`
 
-### #527 CONTEXT_PROPAGATION on `SetArmStats`
+### #602 CONTEXT_PROPAGATION on `SetArmStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:48:1`
@@ -4866,7 +5548,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetArmStats' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:48:1`
 
-### #528 CONTEXT_PROPAGATION on `GetAssignment`
+### #603 CONTEXT_PROPAGATION on `GetAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:51:1`
@@ -4875,7 +5557,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetAssignment' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:51:1`
 
-### #529 CONTEXT_PROPAGATION on `SetAssignment`
+### #604 CONTEXT_PROPAGATION on `SetAssignment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:54:1`
@@ -4884,7 +5566,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetAssignment' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:54:1`
 
-### #530 CONTEXT_PROPAGATION on `SetBytes`
+### #605 CONTEXT_PROPAGATION on `SetBytes`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:57:1`
@@ -4893,7 +5575,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'SetBytes' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:57:1`
 
-### #531 CONTEXT_PROPAGATION on `GetBytes`
+### #606 CONTEXT_PROPAGATION on `GetBytes`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:58:1`
@@ -4902,7 +5584,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'GetBytes' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:58:1`
 
-### #532 CONTEXT_PROPAGATION on `DeleteKey`
+### #607 CONTEXT_PROPAGATION on `DeleteKey`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:61:1`
@@ -4911,7 +5593,7 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'DeleteKey' adheres to idiomatic Go context propagation passing ': context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:61:1`
 
-### #533 CONTEXT_PROPAGATION on `RepairExperiment`
+### #608 CONTEXT_PROPAGATION on `RepairExperiment`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:73:1`
@@ -4920,43 +5602,79 @@
 #### Evidence Trail:
 - `+70%` **[CONTEXT_FIRST_PARAM]** Function 'RepairExperiment' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:73:1`
 
-### #534 CONTEXT_PROPAGATION on `syncObjectiveStats`
+### #609 CONTEXT_PROPAGATION on `updateAndFormatWinnerConfidence`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:124:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:115:1`
+- **Summary:** Function 'updateAndFormatWinnerConfidence' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'updateAndFormatWinnerConfidence' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:115:1`
+
+### #610 CONTEXT_PROPAGATION on `syncObjectiveStats`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:130:1`
 - **Summary:** Function 'syncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'syncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:124:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'syncObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:130:1`
 
-### #535 CONTEXT_PROPAGATION on `recalculateWinnerConfidence`
+### #611 CONTEXT_PROPAGATION on `syncSingleArmObjectiveStats`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:166:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:157:1`
+- **Summary:** Function 'syncSingleArmObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'syncSingleArmObjectiveStats' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:157:1`
+
+### #612 CONTEXT_PROPAGATION on `recalculateWinnerConfidence`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:182:1`
 - **Summary:** Function 'recalculateWinnerConfidence' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'recalculateWinnerConfidence' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:166:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'recalculateWinnerConfidence' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:182:1`
 
-### #536 CONTEXT_PROPAGATION on `validatePricingTiersExist`
+### #613 CONTEXT_PROPAGATION on `validatePricingTiersExist`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:989:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:1040:1`
 - **Summary:** Function 'validatePricingTiersExist' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'validatePricingTiersExist' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:989:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'validatePricingTiersExist' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:1040:1`
 
-### #537 CONTEXT_PROPAGATION on `applyExperimentArmPricingTierUpdates`
+### #614 CONTEXT_PROPAGATION on `applyExperimentArmPricingTierUpdates`
 - **Category:** `idiom`
 - **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:1004:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:1055:1`
 - **Summary:** Function 'applyExperimentArmPricingTierUpdates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
 
 #### Evidence Trail:
-- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'applyExperimentArmPricingTierUpdates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:1004:1`
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'applyExperimentArmPricingTierUpdates' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:1055:1`
 
-### #538 STRUCT_EMBEDDING on `JWTClaims`
+### #615 CONTEXT_PROPAGATION on `revokeTokenIfValid`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:213:1`
+- **Summary:** Function 'revokeTokenIfValid' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'revokeTokenIfValid' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:213:1`
+
+### #616 CONTEXT_PROPAGATION on `executeMaintenanceTask`
+- **Category:** `idiom`
+- **Confidence:** **70%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:455:1`
+- **Summary:** Function 'executeMaintenanceTask' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter
+
+#### Evidence Trail:
+- `+70%` **[CONTEXT_FIRST_PARAM]** Function 'executeMaintenanceTask' adheres to idiomatic Go context propagation passing 'ctx: context.Context' as first parameter -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:455:1`
+
+### #617 STRUCT_EMBEDDING on `JWTClaims`
 - **Category:** `idiom`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:21:1`
@@ -4965,151 +5683,142 @@
 #### Evidence Trail:
 - `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'JWTClaims' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (jwt.RegisteredClaims, jwt.RegisteredClaims) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:21:1`
 
-### #539 SINGLE_RESPONSIBILITY on `AnalyticsCache`
-- **Category:** `principle`
-- **Confidence:** **85%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:15:1`
-- **Summary:** SRP Violation (God Struct): Struct 'AnalyticsCache' has 15 methods and 2 fields, indicating mixed domain responsibilities
+### #618 STRUCT_EMBEDDING on `TaskHandlers`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:42:1`
+- **Summary:** Struct 'TaskHandlers' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*WebhookTaskHandler, *WebhookTaskHandler)
 
 #### Evidence Trail:
-- `+85%` **[SRP_GOD_STRUCT]** SRP Violation (God Struct): Struct 'AnalyticsCache' has 15 methods and 2 fields, indicating mixed domain responsibilities -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:15:1`
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'TaskHandlers' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*WebhookTaskHandler, *WebhookTaskHandler) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:42:1`
 
-### #540 SINGLE_RESPONSIBILITY on `PostgresBanditRepository`
-- **Category:** `principle`
-- **Confidence:** **85%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:23:1`
-- **Summary:** SRP Violation (God Struct): Struct 'PostgresBanditRepository' has 37 methods and 2 fields, indicating mixed domain responsibilities
-
-#### Evidence Trail:
-- `+85%` **[SRP_GOD_STRUCT]** SRP Violation (God Struct): Struct 'PostgresBanditRepository' has 37 methods and 2 fields, indicating mixed domain responsibilities -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:23:1`
-
-### #541 SINGLE_RESPONSIBILITY on `ExperimentAdminRepository`
-- **Category:** `principle`
-- **Confidence:** **85%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:19:1`
-- **Summary:** SRP Violation (God Struct): Struct 'ExperimentAdminRepository' has 15 methods and 1 fields, indicating mixed domain responsibilities
+### #619 STRUCT_EMBEDDING on `AnalyticsCache`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:33:1`
+- **Summary:** Struct 'AnalyticsCache' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*MetricCache, *CohortFunnelCache, *LTVAdminCache)
 
 #### Evidence Trail:
-- `+85%` **[SRP_GOD_STRUCT]** SRP Violation (God Struct): Struct 'ExperimentAdminRepository' has 15 methods and 1 fields, indicating mixed domain responsibilities -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:19:1`
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'AnalyticsCache' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*MetricCache, *CohortFunnelCache, *LTVAdminCache) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:33:1`
 
-### #542 SINGLE_RESPONSIBILITY on `AdvancedBanditEngine`
-- **Category:** `principle`
-- **Confidence:** **85%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:16:1`
-- **Summary:** SRP Violation (God Struct): Struct 'AdvancedBanditEngine' has 25 methods and 16 fields, indicating mixed domain responsibilities
-
-#### Evidence Trail:
-- `+85%` **[SRP_GOD_STRUCT]** SRP Violation (God Struct): Struct 'AdvancedBanditEngine' has 25 methods and 16 fields, indicating mixed domain responsibilities -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:16:1`
-
-### #543 SINGLE_RESPONSIBILITY on `SlidingWindowStrategy`
-- **Category:** `principle`
-- **Confidence:** **85%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:16:1`
-- **Summary:** SRP Violation (God Struct): Struct 'SlidingWindowStrategy' has 17 methods and 5 fields, indicating mixed domain responsibilities
+### #620 STRUCT_EMBEDDING on `Config`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/config/config.go:19:1`
+- **Summary:** Struct 'Config' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (ExternalServicesConfig, ExternalServicesConfig)
 
 #### Evidence Trail:
-- `+85%` **[SRP_GOD_STRUCT]** SRP Violation (God Struct): Struct 'SlidingWindowStrategy' has 17 methods and 5 fields, indicating mixed domain responsibilities -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:16:1`
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'Config' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (ExternalServicesConfig, ExternalServicesConfig) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/config/config.go:19:1`
 
-### #544 SINGLE_RESPONSIBILITY on `AdminHandler`
-- **Category:** `principle`
-- **Confidence:** **85%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:31:1`
-- **Summary:** SRP Violation (God Struct): Struct 'AdminHandler' has 19 methods and 15 fields, indicating mixed domain responsibilities
-
-#### Evidence Trail:
-- `+85%` **[SRP_GOD_STRUCT]** SRP Violation (God Struct): Struct 'AdminHandler' has 19 methods and 15 fields, indicating mixed domain responsibilities -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:31:1`
-
-### #545 SINGLE_RESPONSIBILITY on `BanditAdvancedHandler`
-- **Category:** `principle`
-- **Confidence:** **85%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:23:1`
-- **Summary:** SRP Violation (God Struct): Struct 'BanditAdvancedHandler' has 15 methods and 3 fields, indicating mixed domain responsibilities
+### #621 STRUCT_EMBEDDING on `PostgresBanditConversionRepository`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:47:1`
+- **Summary:** Struct 'PostgresBanditConversionRepository' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*PostgresBanditEventRepository, *PostgresBanditConversionTxRepository, *PostgresBanditEventRepository)
 
 #### Evidence Trail:
-- `+85%` **[SRP_GOD_STRUCT]** SRP Violation (God Struct): Struct 'BanditAdvancedHandler' has 15 methods and 3 fields, indicating mixed domain responsibilities -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:23:1`
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'PostgresBanditConversionRepository' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*PostgresBanditEventRepository, *PostgresBanditConversionTxRepository, *PostgresBanditEventRepository) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:47:1`
 
-### #546 INTERFACE_POLLUTION on `Querier`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/sqlc/generated/querier.go:13:1`
-- **Summary:** Interface Pollution (ISP Violation): Interface 'Querier' declares 42 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods)
-
-#### Evidence Trail:
-- `+80%` **[INTERFACE_POLLUTION_FAT_INTERFACE]** Interface Pollution (ISP Violation): Interface 'Querier' declares 42 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/sqlc/generated/querier.go:13:1`
-
-### #547 INTERFACE_POLLUTION on `AppRepository`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/repository/app_repository.go:11:1`
-- **Summary:** Interface Pollution (ISP Violation): Interface 'AppRepository' declares 12 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods)
+### #622 STRUCT_EMBEDDING on `PostgresBanditRepository`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:72:1`
+- **Summary:** Struct 'PostgresBanditRepository' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*PostgresBanditArmRepository, *PostgresBanditAssignmentRepository, *PostgresBanditConversionRepository)
 
 #### Evidence Trail:
-- `+80%` **[INTERFACE_POLLUTION_FAT_INTERFACE]** Interface Pollution (ISP Violation): Interface 'AppRepository' declares 12 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/repository/app_repository.go:11:1`
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'PostgresBanditRepository' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*PostgresBanditArmRepository, *PostgresBanditAssignmentRepository, *PostgresBanditConversionRepository) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:72:1`
 
-### #548 INTERFACE_POLLUTION on `UserRepository`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/repository/user_repository.go:11:1`
-- **Summary:** Interface Pollution (ISP Violation): Interface 'UserRepository' declares 13 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods)
-
-#### Evidence Trail:
-- `+80%` **[INTERFACE_POLLUTION_FAT_INTERFACE]** Interface Pollution (ISP Violation): Interface 'UserRepository' declares 13 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/repository/user_repository.go:11:1`
-
-### #549 INTERFACE_POLLUTION on `SubscriptionRepository`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/repository/subscription_repository.go:11:1`
-- **Summary:** Interface Pollution (ISP Violation): Interface 'SubscriptionRepository' declares 11 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods)
+### #623 STRUCT_EMBEDDING on `BanditRewardEngine`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:74:1`
+- **Summary:** Struct 'BanditRewardEngine' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*BanditSelectionEngine, *BanditRewardExecutionEngine, *BanditMetricsEngine)
 
 #### Evidence Trail:
-- `+80%` **[INTERFACE_POLLUTION_FAT_INTERFACE]** Interface Pollution (ISP Violation): Interface 'SubscriptionRepository' declares 11 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/repository/subscription_repository.go:11:1`
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'BanditRewardEngine' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*BanditSelectionEngine, *BanditRewardExecutionEngine, *BanditMetricsEngine) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:74:1`
 
-### #550 INTERFACE_POLLUTION on `AnalyticsRepository`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/repository/analytics_repository.go:54:1`
-- **Summary:** Interface Pollution (ISP Violation): Interface 'AnalyticsRepository' declares 10 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods)
-
-#### Evidence Trail:
-- `+80%` **[INTERFACE_POLLUTION_FAT_INTERFACE]** Interface Pollution (ISP Violation): Interface 'AnalyticsRepository' declares 10 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/repository/analytics_repository.go:54:1`
-
-### #551 INTERFACE_POLLUTION on `BanditRepository`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:25:1`
-- **Summary:** Interface Pollution (ISP Violation): Interface 'BanditRepository' declares 9 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods)
+### #624 STRUCT_EMBEDDING on `AdvancedBanditEngine`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:111:1`
+- **Summary:** Struct 'AdvancedBanditEngine' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*BanditRewardEngine, *BanditWindowEngine, *BanditObjectiveEngine)
 
 #### Evidence Trail:
-- `+80%` **[INTERFACE_POLLUTION_FAT_INTERFACE]** Interface Pollution (ISP Violation): Interface 'BanditRepository' declares 9 methods; idiomatic Go encourages small, single-purpose interfaces (1-2 methods) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:25:1`
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'AdvancedBanditEngine' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*BanditRewardEngine, *BanditWindowEngine, *BanditObjectiveEngine) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:111:1`
 
-### #552 OPEN_CLOSED on `HandleSendNotification`
+### #625 STRUCT_EMBEDDING on `ThompsonSamplingBandit`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:257:1`
+- **Summary:** Struct 'ThompsonSamplingBandit' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*BetaDistributionSampler, *BanditArmSelector, *BanditRewardTracker)
+
+#### Evidence Trail:
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'ThompsonSamplingBandit' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*BetaDistributionSampler, *BanditArmSelector, *BanditRewardTracker) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:257:1`
+
+### #626 STRUCT_EMBEDDING on `HybridObjectiveStrategy`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:42:1`
+- **Summary:** Struct 'HybridObjectiveStrategy' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*HybridObjectiveConfigManager, *HybridObjectiveCalculator, *HybridObjectiveReporter)
+
+#### Evidence Trail:
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'HybridObjectiveStrategy' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*HybridObjectiveConfigManager, *HybridObjectiveCalculator, *HybridObjectiveReporter) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:42:1`
+
+### #627 STRUCT_EMBEDDING on `DelayedRewardStrategy`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:44:1`
+- **Summary:** Struct 'DelayedRewardStrategy' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*DelayedRewardCache, *DelayedRewardPendingStore, *DelayedRewardConversionProcessorComponent)
+
+#### Evidence Trail:
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'DelayedRewardStrategy' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*DelayedRewardCache, *DelayedRewardPendingStore, *DelayedRewardConversionProcessorComponent) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:44:1`
+
+### #628 STRUCT_EMBEDDING on `AdminHandler`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:88:1`
+- **Summary:** Struct 'AdminHandler' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*AdminSubscriptionHandler, *AdminUserHandler, *AdminMetricsHandler)
+
+#### Evidence Trail:
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'AdminHandler' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*AdminSubscriptionHandler, *AdminUserHandler, *AdminMetricsHandler) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:88:1`
+
+### #629 STRUCT_EMBEDDING on `AdminHandlerDeps`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:121:1`
+- **Summary:** Struct 'AdminHandlerDeps' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (AdminInfraDeps, AdminServiceDeps, AdminInfraDeps)
+
+#### Evidence Trail:
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'AdminHandlerDeps' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (AdminInfraDeps, AdminServiceDeps, AdminInfraDeps) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:121:1`
+
+### #630 STRUCT_EMBEDDING on `BanditAdvancedHandler`
+- **Category:** `idiom`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:50:1`
+- **Summary:** Struct 'BanditAdvancedHandler' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*BanditCurrencyHandler, *BanditObjectiveHandler, *BanditWindowHandler)
+
+#### Evidence Trail:
+- `+75%` **[STRUCT_EMBEDDING_COMPOSITION]** Struct 'BanditAdvancedHandler' implements idiomatic Go Composition Over Inheritance via anonymous embedding of (*BanditCurrencyHandler, *BanditObjectiveHandler, *BanditWindowHandler) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:50:1`
+
+### #631 DEPENDENCY_INVERSION on `SetFunnelData`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:328:1`
-- **Summary:** OCP Violation: Function 'HandleSendNotification' uses type switch with 18 branches; consider interface method polymorphism for open extensibility
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:319:1`
+- **Summary:** DIP Adherence: Function 'SetFunnelData' depends on interface abstraction(s) (ctx context.Context, params SetFunnelDataParams) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[OCP_TYPE_SWITCH_CASCADE]** OCP Violation: Function 'HandleSendNotification' uses type switch with 18 branches; consider interface method polymorphism for open extensibility -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:328:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'SetFunnelData' depends on interface abstraction(s) (ctx context.Context, params SetFunnelDataParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:319:1`
 
-### #553 DEPENDENCY_INVERSION on `NewVerifyIAPCommand`
+### #632 DEPENDENCY_INVERSION on `SaveConversion`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:58:1`
-- **Summary:** DIP Adherence: Function 'NewVerifyIAPCommand' depends on interface abstraction(s) (iosVerifier DynamicIAPVerifier, androidVerifier DynamicIAPVerifier) rather than concrete struct pointers
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:388:1`
+- **Summary:** DIP Adherence: Function 'SaveConversion' depends on interface abstraction(s) (ctx context.Context, params SaveConversionParams) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewVerifyIAPCommand' depends on interface abstraction(s) (iosVerifier DynamicIAPVerifier, androidVerifier DynamicIAPVerifier) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:58:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'SaveConversion' depends on interface abstraction(s) (ctx context.Context, params SaveConversionParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:388:1`
 
-### #554 DEPENDENCY_INVERSION on `NewVerifyIAPCommandLegacy`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:75:1`
-- **Summary:** DIP Adherence: Function 'NewVerifyIAPCommandLegacy' depends on interface abstraction(s) (iosVerifier IAPVerifier, androidVerifier IAPVerifier) rather than concrete struct pointers
-
-#### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewVerifyIAPCommandLegacy' depends on interface abstraction(s) (iosVerifier IAPVerifier, androidVerifier IAPVerifier) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:75:1`
-
-### #555 DEPENDENCY_INVERSION on `TrackEvent`
+### #633 DEPENDENCY_INVERSION on `TrackEvent`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:71:1`
@@ -5118,7 +5827,7 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'TrackEvent' depends on interface abstraction(s) (ctx context.Context, req TrackEventRequest) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:71:1`
 
-### #556 DEPENDENCY_INVERSION on `TrackEcommerce`
+### #634 DEPENDENCY_INVERSION on `TrackEcommerce`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:129:1`
@@ -5127,7 +5836,7 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'TrackEcommerce' depends on interface abstraction(s) (ctx context.Context, req TrackEcommerceRequest) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:129:1`
 
-### #557 DEPENDENCY_INVERSION on `GetCohorts`
+### #635 DEPENDENCY_INVERSION on `GetCohorts`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:198:1`
@@ -5136,7 +5845,7 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'GetCohorts' depends on interface abstraction(s) (ctx context.Context, req CohortRequest) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:198:1`
 
-### #558 DEPENDENCY_INVERSION on `GetFunnels`
+### #636 DEPENDENCY_INVERSION on `GetFunnels`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:247:1`
@@ -5145,115 +5854,205 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'GetFunnels' depends on interface abstraction(s) (ctx context.Context, req FunnelRequest) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/matomo/client.go:247:1`
 
-### #559 DEPENDENCY_INVERSION on `NewSubscription`
+### #637 DEPENDENCY_INVERSION on `fetchExperimentConfig`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:50:1`
-- **Summary:** DIP Adherence: Function 'NewSubscription' depends on interface abstraction(s) (source SubscriptionSource, planType PlanType) rather than concrete struct pointers
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:154:1`
+- **Summary:** DIP Adherence: Function 'fetchExperimentConfig' depends on interface abstraction(s) (ctx context.Context, repo BanditRepository) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewSubscription' depends on interface abstraction(s) (source SubscriptionSource, planType PlanType) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:50:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'fetchExperimentConfig' depends on interface abstraction(s) (ctx context.Context, repo BanditRepository) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:154:1`
 
-### #560 DEPENDENCY_INVERSION on `NewAdvancedBanditEngine`
+### #638 DEPENDENCY_INVERSION on `getDelayedStrategy`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:72:1`
-- **Summary:** DIP Adherence: Function 'NewAdvancedBanditEngine' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:28:1`
+- **Summary:** DIP Adherence: Function 'getDelayedStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewAdvancedBanditEngine' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:72:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'getDelayedStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:28:1`
 
-### #561 DEPENDENCY_INVERSION on `SelectArm`
+### #639 DEPENDENCY_INVERSION on `SelectArm`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:209:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:371:1`
 - **Summary:** DIP Adherence: Function 'SelectArm' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'SelectArm' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:209:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'SelectArm' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:371:1`
 
-### #562 DEPENDENCY_INVERSION on `RecordReward`
+### #640 DEPENDENCY_INVERSION on `RecordReward`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:271:1`
-- **Summary:** DIP Adherence: Function 'RecordReward' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:479:1`
+- **Summary:** DIP Adherence: Function 'RecordReward' depends on interface abstraction(s) (ctx context.Context, p RecordRewardParams) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'RecordReward' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:271:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'RecordReward' depends on interface abstraction(s) (ctx context.Context, p RecordRewardParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:479:1`
 
-### #563 DEPENDENCY_INVERSION on `SetObjectiveConfig`
+### #641 DEPENDENCY_INVERSION on `updateLinUCBModelIfConfigured`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:428:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:557:1`
+- **Summary:** DIP Adherence: Function 'updateLinUCBModelIfConfigured' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'updateLinUCBModelIfConfigured' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:557:1`
+
+### #642 DEPENDENCY_INVERSION on `ProcessConversion`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:621:1`
+- **Summary:** DIP Adherence: Function 'ProcessConversion' depends on interface abstraction(s) (ctx context.Context, p ConversionRewardParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'ProcessConversion' depends on interface abstraction(s) (ctx context.Context, p ConversionRewardParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:621:1`
+
+### #643 DEPENDENCY_INVERSION on `SetObjectiveConfig`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:687:1`
 - **Summary:** DIP Adherence: Function 'SetObjectiveConfig' depends on interface abstraction(s) (ctx context.Context, objectiveType ObjectiveType) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'SetObjectiveConfig' depends on interface abstraction(s) (ctx context.Context, objectiveType ObjectiveType) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:428:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'SetObjectiveConfig' depends on interface abstraction(s) (ctx context.Context, objectiveType ObjectiveType) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:687:1`
 
-### #564 DEPENDENCY_INVERSION on `UpdateDraftExperiment`
+### #644 DEPENDENCY_INVERSION on `syncExperimentObjectiveStats`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:172:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:926:1`
+- **Summary:** DIP Adherence: Function 'syncExperimentObjectiveStats' depends on interface abstraction(s) (ctx context.Context, objectiveRepo ObjectiveRepository) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'syncExperimentObjectiveStats' depends on interface abstraction(s) (ctx context.Context, objectiveRepo ObjectiveRepository) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:926:1`
+
+### #645 DEPENDENCY_INVERSION on `syncArmObjectiveStats`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:956:1`
+- **Summary:** DIP Adherence: Function 'syncArmObjectiveStats' depends on interface abstraction(s) (ctx context.Context, objectiveRepo ObjectiveRepository) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'syncArmObjectiveStats' depends on interface abstraction(s) (ctx context.Context, objectiveRepo ObjectiveRepository) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:956:1`
+
+### #646 DEPENDENCY_INVERSION on `UpdateDraftExperiment`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:201:1`
 - **Summary:** DIP Adherence: Function 'UpdateDraftExperiment' depends on interface abstraction(s) (ctx context.Context, input UpdateExperimentInput) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'UpdateDraftExperiment' depends on interface abstraction(s) (ctx context.Context, input UpdateExperimentInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:172:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'UpdateDraftExperiment' depends on interface abstraction(s) (ctx context.Context, input UpdateExperimentInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:201:1`
 
-### #565 DEPENDENCY_INVERSION on `UpdateExperimentAutomationPolicy`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:183:1`
-- **Summary:** DIP Adherence: Function 'UpdateExperimentAutomationPolicy' depends on interface abstraction(s) (ctx context.Context, input UpdateExperimentAutomationPolicyInput) rather than concrete struct pointers
-
-#### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'UpdateExperimentAutomationPolicy' depends on interface abstraction(s) (ctx context.Context, input UpdateExperimentAutomationPolicyInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:183:1`
-
-### #566 DEPENDENCY_INVERSION on `LockExperimentAutomation`
+### #647 DEPENDENCY_INVERSION on `UpdateExperimentAutomationPolicy`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:212:1`
+- **Summary:** DIP Adherence: Function 'UpdateExperimentAutomationPolicy' depends on interface abstraction(s) (ctx context.Context, input UpdateExperimentAutomationPolicyInput) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'UpdateExperimentAutomationPolicy' depends on interface abstraction(s) (ctx context.Context, input UpdateExperimentAutomationPolicyInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:212:1`
+
+### #648 DEPENDENCY_INVERSION on `LockExperimentAutomation`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:241:1`
 - **Summary:** DIP Adherence: Function 'LockExperimentAutomation' depends on interface abstraction(s) (ctx context.Context, input ExperimentLockInput) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'LockExperimentAutomation' depends on interface abstraction(s) (ctx context.Context, input ExperimentLockInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:212:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'LockExperimentAutomation' depends on interface abstraction(s) (ctx context.Context, input ExperimentLockInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:241:1`
 
-### #567 DEPENDENCY_INVERSION on `HoldExperimentForReview`
+### #649 DEPENDENCY_INVERSION on `HoldExperimentForReview`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:253:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:282:1`
 - **Summary:** DIP Adherence: Function 'HoldExperimentForReview' depends on interface abstraction(s) (ctx context.Context, input ExperimentLockInput) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'HoldExperimentForReview' depends on interface abstraction(s) (ctx context.Context, input ExperimentLockInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:253:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'HoldExperimentForReview' depends on interface abstraction(s) (ctx context.Context, input ExperimentLockInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_admin_service.go:282:1`
 
-### #568 DEPENDENCY_INVERSION on `NewThompsonSamplingBandit`
+### #650 DEPENDENCY_INVERSION on `TrackEvent`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:229:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:76:1`
+- **Summary:** DIP Adherence: Function 'TrackEvent' depends on interface abstraction(s) (ctx context.Context, params MatomoTrackEventParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'TrackEvent' depends on interface abstraction(s) (ctx context.Context, params MatomoTrackEventParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:76:1`
+
+### #651 DEPENDENCY_INVERSION on `TrackPurchase`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:119:1`
+- **Summary:** DIP Adherence: Function 'TrackPurchase' depends on interface abstraction(s) (ctx context.Context, params MatomoTrackPurchaseParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'TrackPurchase' depends on interface abstraction(s) (ctx context.Context, params MatomoTrackPurchaseParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:119:1`
+
+### #652 DEPENDENCY_INVERSION on `NewThompsonSamplingBandit`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:265:1`
 - **Summary:** DIP Adherence: Function 'NewThompsonSamplingBandit' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewThompsonSamplingBandit' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:229:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewThompsonSamplingBandit' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:265:1`
 
-### #569 DEPENDENCY_INVERSION on `NewHybridObjectiveStrategy`
+### #653 DEPENDENCY_INVERSION on `resolveArmStatsForSampling`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:54:1`
-- **Summary:** DIP Adherence: Function 'NewHybridObjectiveStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:377:1`
+- **Summary:** DIP Adherence: Function 'resolveArmStatsForSampling' depends on interface abstraction(s) (ctx context.Context, arm Arm) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewHybridObjectiveStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:54:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'resolveArmStatsForSampling' depends on interface abstraction(s) (ctx context.Context, arm Arm) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:377:1`
 
-### #570 DEPENDENCY_INVERSION on `RecordObjectiveReward`
+### #654 DEPENDENCY_INVERSION on `TrackImpression`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:258:1`
-- **Summary:** DIP Adherence: Function 'RecordObjectiveReward' depends on interface abstraction(s) (ctx context.Context, objectiveType ObjectiveType) rather than concrete struct pointers
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:478:1`
+- **Summary:** DIP Adherence: Function 'TrackImpression' depends on interface abstraction(s) (ctx context.Context, params TrackImpressionParams) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'RecordObjectiveReward' depends on interface abstraction(s) (ctx context.Context, objectiveType ObjectiveType) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:258:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'TrackImpression' depends on interface abstraction(s) (ctx context.Context, params TrackImpressionParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:478:1`
 
-### #571 DEPENDENCY_INVERSION on `ExecuteScheduled`
+### #655 DEPENDENCY_INVERSION on `UpdateRewardWithEvent`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:546:1`
+- **Summary:** DIP Adherence: Function 'UpdateRewardWithEvent' depends on interface abstraction(s) (ctx context.Context, params RewardWithEventParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'UpdateRewardWithEvent' depends on interface abstraction(s) (ctx context.Context, params RewardWithEventParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:546:1`
+
+### #656 DEPENDENCY_INVERSION on `appendConversionEventIfSupported`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:596:1`
+- **Summary:** DIP Adherence: Function 'appendConversionEventIfSupported' depends on interface abstraction(s) (ctx context.Context, params RewardWithEventParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'appendConversionEventIfSupported' depends on interface abstraction(s) (ctx context.Context, params RewardWithEventParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:596:1`
+
+### #657 DEPENDENCY_INVERSION on `RecordObjectiveReward`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:331:1`
+- **Summary:** DIP Adherence: Function 'RecordObjectiveReward' depends on interface abstraction(s) (ctx context.Context, p ObjectiveRewardParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'RecordObjectiveReward' depends on interface abstraction(s) (ctx context.Context, p ObjectiveRewardParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:331:1`
+
+### #658 DEPENDENCY_INVERSION on `resolveObjectiveStats`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:436:1`
+- **Summary:** DIP Adherence: Function 'resolveObjectiveStats' depends on interface abstraction(s) (ctx context.Context, objective ObjectiveType) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'resolveObjectiveStats' depends on interface abstraction(s) (ctx context.Context, objective ObjectiveType) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:436:1`
+
+### #659 DEPENDENCY_INVERSION on `ExecuteScheduled`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/automation_job_execution_service.go:58:1`
@@ -5262,16 +6061,52 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'ExecuteScheduled' depends on interface abstraction(s) (ctx context.Context, spec ScheduledAutomationJobSpec) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/automation_job_execution_service.go:58:1`
 
-### #572 DEPENDENCY_INVERSION on `NewDelayedRewardStrategy`
+### #660 DEPENDENCY_INVERSION on `NewDelayedRewardStrategy`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:65:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:102:1`
 - **Summary:** DIP Adherence: Function 'NewDelayedRewardStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewDelayedRewardStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:65:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewDelayedRewardStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:102:1`
 
-### #573 DEPENDENCY_INVERSION on `CalculateReward`
+### #661 DEPENDENCY_INVERSION on `ProcessConversion`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:217:1`
+- **Summary:** DIP Adherence: Function 'ProcessConversion' depends on interface abstraction(s) (ctx context.Context, p DelayedConversionParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'ProcessConversion' depends on interface abstraction(s) (ctx context.Context, p DelayedConversionParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:217:1`
+
+### #662 DEPENDENCY_INVERSION on `processSingleExpiredReward`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:432:1`
+- **Summary:** DIP Adherence: Function 'processSingleExpiredReward' depends on interface abstraction(s) (ctx context.Context, delayedRepo DelayedRewardRepository) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'processSingleExpiredReward' depends on interface abstraction(s) (ctx context.Context, delayedRepo DelayedRewardRepository) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:432:1`
+
+### #663 DEPENDENCY_INVERSION on `CreateWinbackOffer`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:60:1`
+- **Summary:** DIP Adherence: Function 'CreateWinbackOffer' depends on interface abstraction(s) (ctx context.Context, p CreateWinbackOfferParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'CreateWinbackOffer' depends on interface abstraction(s) (ctx context.Context, p CreateWinbackOfferParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:60:1`
+
+### #664 DEPENDENCY_INVERSION on `CreateWinbackCampaignForChurnedUsers`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:153:1`
+- **Summary:** DIP Adherence: Function 'CreateWinbackCampaignForChurnedUsers' depends on interface abstraction(s) (ctx context.Context, p CreateWinbackCampaignParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'CreateWinbackCampaignForChurnedUsers' depends on interface abstraction(s) (ctx context.Context, p CreateWinbackCampaignParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:153:1`
+
+### #665 DEPENDENCY_INVERSION on `CalculateReward`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:41:1`
@@ -5280,43 +6115,43 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'CalculateReward' depends on interface abstraction(s) (ctx context.Context, arm Arm) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:41:1`
 
-### #574 DEPENDENCY_INVERSION on `NewLTVService`
+### #666 DEPENDENCY_INVERSION on `RecordRewardWithCurrency`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:55:1`
-- **Summary:** DIP Adherence: Function 'NewLTVService' depends on interface abstraction(s) (cohortWorker CohortWorker, subscriptionRepo SubscriptionRepository) rather than concrete struct pointers
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:167:1`
+- **Summary:** DIP Adherence: Function 'RecordRewardWithCurrency' depends on interface abstraction(s) (ctx context.Context, p RecordRewardWithCurrencyParams) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewLTVService' depends on interface abstraction(s) (cohortWorker CohortWorker, subscriptionRepo SubscriptionRepository) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:55:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'RecordRewardWithCurrency' depends on interface abstraction(s) (ctx context.Context, p RecordRewardWithCurrencyParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:167:1`
 
-### #575 DEPENDENCY_INVERSION on `NewLinUCBSelectionStrategy`
+### #667 DEPENDENCY_INVERSION on `SelectArm`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:33:1`
-- **Summary:** DIP Adherence: Function 'NewLinUCBSelectionStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers
-
-#### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewLinUCBSelectionStrategy' depends on interface abstraction(s) (repo BanditRepository, cache BanditCache) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:33:1`
-
-### #576 DEPENDENCY_INVERSION on `SelectArm`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:58:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:63:1`
 - **Summary:** DIP Adherence: Function 'SelectArm' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'SelectArm' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:58:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'SelectArm' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:63:1`
 
-### #577 DEPENDENCY_INVERSION on `UpdateModel`
+### #668 DEPENDENCY_INVERSION on `UpdateModel`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:117:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:122:1`
 - **Summary:** DIP Adherence: Function 'UpdateModel' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'UpdateModel' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:117:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'UpdateModel' depends on interface abstraction(s) (ctx context.Context, userContext UserContext) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:122:1`
 
-### #578 DEPENDENCY_INVERSION on `Recommend`
+### #669 DEPENDENCY_INVERSION on `LogAction`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/audit_service.go:32:1`
+- **Summary:** DIP Adherence: Function 'LogAction' depends on interface abstraction(s) (ctx context.Context, p AuditActionParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'LogAction' depends on interface abstraction(s) (ctx context.Context, p AuditActionParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/audit_service.go:32:1`
+
+### #670 DEPENDENCY_INVERSION on `Recommend`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:124:1`
@@ -5325,16 +6160,25 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'Recommend' depends on interface abstraction(s) (ctx context.Context, input ExperimentWinnerRecommendationInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:124:1`
 
-### #579 DEPENDENCY_INVERSION on `finalizeRecommendation`
+### #671 DEPENDENCY_INVERSION on `finalizeRecommendation`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:192:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:202:1`
 - **Summary:** DIP Adherence: Function 'finalizeRecommendation' depends on interface abstraction(s) (ctx context.Context, input ExperimentWinnerRecommendationInput) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'finalizeRecommendation' depends on interface abstraction(s) (ctx context.Context, input ExperimentWinnerRecommendationInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:192:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'finalizeRecommendation' depends on interface abstraction(s) (ctx context.Context, input ExperimentWinnerRecommendationInput) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:202:1`
 
-### #580 DEPENDENCY_INVERSION on `NewExperimentRepairReconciler`
+### #672 DEPENDENCY_INVERSION on `cacheFetchedRates`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:216:1`
+- **Summary:** DIP Adherence: Function 'cacheFetchedRates' depends on interface abstraction(s) (ctx context.Context, ecbRates ECBCurrencyRates) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'cacheFetchedRates' depends on interface abstraction(s) (ctx context.Context, ecbRates ECBCurrencyRates) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:216:1`
+
+### #673 DEPENDENCY_INVERSION on `NewExperimentRepairReconciler`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_reconciler.go:34:1`
@@ -5343,7 +6187,7 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewExperimentRepairReconciler' depends on interface abstraction(s) (candidates ExperimentRepairCandidateRepository, repairer ExperimentRepairExecutor) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_reconciler.go:34:1`
 
-### #581 DEPENDENCY_INVERSION on `NewExperimentAutomationReconciler`
+### #674 DEPENDENCY_INVERSION on `NewExperimentAutomationReconciler`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
 - **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_automation_service.go:43:1`
@@ -5352,855 +6196,20 @@
 #### Evidence Trail:
 - `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'NewExperimentAutomationReconciler' depends on interface abstraction(s) (repo ExperimentAutomationRepository, transitions ExperimentStatusTransitioner) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_automation_service.go:43:1`
 
-### #582 DEPENDENCY_INVERSION on `RecordEvent`
+### #675 DEPENDENCY_INVERSION on `TrackRevenue`
 - **Category:** `principle`
 - **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:93:1`
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:74:1`
+- **Summary:** DIP Adherence: Function 'TrackRevenue' depends on interface abstraction(s) (ctx context.Context, p RevenueEventParams) rather than concrete struct pointers
+
+#### Evidence Trail:
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'TrackRevenue' depends on interface abstraction(s) (ctx context.Context, p RevenueEventParams) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:74:1`
+
+### #676 DEPENDENCY_INVERSION on `RecordEvent`
+- **Category:** `principle`
+- **Confidence:** **75%** [HIGH]
+- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:97:1`
 - **Summary:** DIP Adherence: Function 'RecordEvent' depends on interface abstraction(s) (ctx context.Context, event RewardEvent) rather than concrete struct pointers
 
 #### Evidence Trail:
-- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'RecordEvent' depends on interface abstraction(s) (ctx context.Context, event RewardEvent) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:93:1`
-
-### #583 HIGH_COHESION_LOW_COUPLING on `dependencies`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:193:1`
-- **Summary:** High Coupling (High Fan-Out): Struct 'dependencies' couples directly with 33 distinct types (app_handler.AdminHandler, app_handler.AdminPaywallsHandler, app_handler.AnalyticsHandlersExtended, app_handler.AppSettingsHandler...)
-
-#### Evidence Trail:
-- `+80%` **[COUPLING_HIGH_FAN_OUT]** High Coupling (High Fan-Out): Struct 'dependencies' couples directly with 33 distinct types (app_handler.AdminHandler, app_handler.AdminPaywallsHandler, app_handler.AnalyticsHandlersExtended, app_handler.AppSettingsHandler...) -> `/Volumes/External/Code/paywall-iap/backend/cmd/api/main.go:193:1`
-
-### #584 HIGH_COHESION_LOW_COUPLING on `Config`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/config/config.go:12:1`
-- **Summary:** High Coupling (High Fan-Out): Struct 'Config' couples directly with 8 distinct types (DatabaseConfig, IAPConfig, JWTConfig, LagoConfig...)
-
-#### Evidence Trail:
-- `+80%` **[COUPLING_HIGH_FAN_OUT]** High Coupling (High Fan-Out): Struct 'Config' couples directly with 8 distinct types (DatabaseConfig, IAPConfig, JWTConfig, LagoConfig...) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/config/config.go:12:1`
-
-### #585 HIGH_COHESION_LOW_COUPLING on `AdvancedBanditEngine`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:16:1`
-- **Summary:** High Coupling (High Fan-Out): Struct 'AdvancedBanditEngine' couples directly with 11 distinct types (BanditCache, BanditRepository, CurrencyRateService, DelayedRewardStrategy...)
-
-#### Evidence Trail:
-- `+80%` **[COUPLING_HIGH_FAN_OUT]** High Coupling (High Fan-Out): Struct 'AdvancedBanditEngine' couples directly with 11 distinct types (BanditCache, BanditRepository, CurrencyRateService, DelayedRewardStrategy...) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:16:1`
-
-### #586 HIGH_COHESION_LOW_COUPLING on `AdminHandler`
-- **Category:** `principle`
-- **Confidence:** **80%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:31:1`
-- **Summary:** High Coupling (High Fan-Out): Struct 'AdminHandler' couples directly with 15 distinct types (asynq.Client, domainRepo.SubscriptionRepository, domainRepo.UserRepository, generated.Queries...)
-
-#### Evidence Trail:
-- `+80%` **[COUPLING_HIGH_FAN_OUT]** High Coupling (High Fan-Out): Struct 'AdminHandler' couples directly with 15 distinct types (asynq.Client, domainRepo.SubscriptionRepository, domainRepo.UserRepository, generated.Queries...) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:31:1`
-
-### #587 KISS on `main`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/migrator/main.go:15:1`
-- **Summary:** KISS Violation (High Complexity): Function 'main' has cyclomatic complexity of 13 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'main' has cyclomatic complexity of 13 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/cmd/migrator/main.go:15:1`
-
-### #588 KISS on `main`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/seed/main.go:26:1`
-- **Summary:** KISS Violation (High Complexity): Function 'main' has cyclomatic complexity of 14 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'main' has cyclomatic complexity of 14 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/cmd/seed/main.go:26:1`
-
-### #589 KISS on `doJSON`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/loadgen/main.go:107:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'doJSON' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'doJSON' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/cmd/loadgen/main.go:107:1`
-
-### #590 KISS on `runUser`
-- **Category:** `principle`
-- **Confidence:** **92%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/cmd/loadgen/main.go:145:1`
-- **Summary:** KISS Violation (High Complexity): Function 'runUser' has cyclomatic complexity of 20 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'runUser' has cyclomatic complexity of 20 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/cmd/loadgen/main.go:145:1`
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'runUser' takes 7 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/cmd/loadgen/main.go:145:1`
-
-### #591 KISS on `AdminMiddleware`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/admin_auth.go:16:1`
-- **Summary:** KISS Violation (High Complexity): Function 'AdminMiddleware' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'AdminMiddleware' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/admin_auth.go:16:1`
-
-### #592 KISS on `Authenticate`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:50:1`
-- **Summary:** KISS Violation (High Complexity): Function 'Authenticate' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'Authenticate' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/middleware/jwt.go:50:1`
-
-### #593 KISS on `Execute`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:31:1`
-- **Summary:** KISS Violation (High Complexity): Function 'Execute' has cyclomatic complexity of 14 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'Execute' has cyclomatic complexity of 14 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/register.go:31:1`
-
-### #594 KISS on `NewVerifyIAPCommand`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:58:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewVerifyIAPCommand' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewVerifyIAPCommand' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:58:1`
-
-### #595 KISS on `NewVerifyIAPCommandLegacy`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:75:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewVerifyIAPCommandLegacy' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewVerifyIAPCommandLegacy' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:75:1`
-
-### #596 KISS on `Execute`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:91:1`
-- **Summary:** KISS Violation (High Complexity): Function 'Execute' has cyclomatic complexity of 14 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'Execute' has cyclomatic complexity of 14 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/application/command/verify_iap.go:91:1`
-
-### #597 KISS on `CalculateWinProbabilities`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:163:1`
-- **Summary:** KISS Violation (High Complexity): Function 'CalculateWinProbabilities' has cyclomatic complexity of 13 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'CalculateWinProbabilities' has cyclomatic complexity of 13 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/bandit_maintenance_jobs.go:163:1`
-
-### #598 KISS on `HandleProcessWebhook`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:221:1`
-- **Summary:** KISS Violation (High Complexity): Function 'HandleProcessWebhook' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'HandleProcessWebhook' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:221:1`
-
-### #599 KISS on `HandleSendNotification`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:328:1`
-- **Summary:** KISS Violation (High Complexity): Function 'HandleSendNotification' has cyclomatic complexity of 66 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'HandleSendNotification' has cyclomatic complexity of 66 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/tasks.go:328:1`
-
-### #600 KISS on `RegisterBanditMaintenanceTasks`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/currency_asynq.go:74:1`
-- **Summary:** KISS Violation (High Complexity): Function 'RegisterBanditMaintenanceTasks' has cyclomatic complexity of 14 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'RegisterBanditMaintenanceTasks' has cyclomatic complexity of 14 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/worker/tasks/currency_asynq.go:74:1`
-
-### #601 KISS on `SetFunnelData`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:281:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'SetFunnelData' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'SetFunnelData' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/cache/analytics_cache.go:281:1`
-
-### #602 KISS on `UpdateEventStatus`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:132:1`
-- **Summary:** KISS Violation (High Complexity): Function 'UpdateEventStatus' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'UpdateEventStatus' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/matomo_fallback.go:132:1`
-
-### #603 KISS on `SaveConversion`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:320:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'SaveConversion' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'SaveConversion' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:320:1`
-
-### #604 KISS on `ProcessPendingConversion`
-- **Category:** `principle`
-- **Confidence:** **92%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:466:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ProcessPendingConversion' has cyclomatic complexity of 12 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ProcessPendingConversion' has cyclomatic complexity of 12 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:466:1`
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'ProcessPendingConversion' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:466:1`
-
-### #605 KISS on `ProcessExpiredPendingReward`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:558:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ProcessExpiredPendingReward' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ProcessExpiredPendingReward' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/bandit_repository.go:558:1`
-
-### #606 KISS on `GetAuditLogPaginated`
-- **Category:** `principle`
-- **Confidence:** **92%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:268:1`
-- **Summary:** KISS Violation (High Complexity): Function 'GetAuditLogPaginated' has cyclomatic complexity of 14 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'GetAuditLogPaginated' has cyclomatic complexity of 14 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:268:1`
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'GetAuditLogPaginated' takes 7 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/analytics_repository_impl.go:268:1`
-
-### #607 KISS on `insertExperimentLifecycleAudit`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:241:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'insertExperimentLifecycleAudit' takes 6 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'insertExperimentLifecycleAudit' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:241:1`
-
-### #608 KISS on `syncDraftExperimentArms`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:112:1`
-- **Summary:** KISS Violation (High Complexity): Function 'syncDraftExperimentArms' has cyclomatic complexity of 19 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'syncDraftExperimentArms' has cyclomatic complexity of 19 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:112:1`
-
-### #609 KISS on `UpdateExperimentStatus`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:216:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'UpdateExperimentStatus' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'UpdateExperimentStatus' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:216:1`
-
-### #610 KISS on `UpdateExperimentStatusWithAudit`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:319:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'UpdateExperimentStatusWithAudit' takes 7 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'UpdateExperimentStatusWithAudit' takes 7 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:319:1`
-
-### #611 KISS on `UpdateExperimentStatusAndAutomationPolicyWithAudit`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:351:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'UpdateExperimentStatusAndAutomationPolicyWithAudit' takes 8 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'UpdateExperimentStatusAndAutomationPolicyWithAudit' takes 8 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/experiment_admin_repository.go:351:1`
-
-### #612 KISS on `scanAndDecryptCredentials`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:305:1`
-- **Summary:** KISS Violation (High Complexity): Function 'scanAndDecryptCredentials' has cyclomatic complexity of 11 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'scanAndDecryptCredentials' has cyclomatic complexity of 11 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/persistence/repository/app_repository_impl.go:305:1`
-
-### #613 KISS on `VerifyReceipt`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/verifier.go:100:1`
-- **Summary:** KISS Violation (High Complexity): Function 'VerifyReceipt' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'VerifyReceipt' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/infrastructure/external/iap/verifier.go:100:1`
-
-### #614 KISS on `NewSubscription`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:50:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewSubscription' takes 6 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewSubscription' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/subscription.go:50:1`
-
-### #615 KISS on `NewUser`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/user.go:47:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewUser' takes 6 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewUser' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/user.go:47:1`
-
-### #616 KISS on `NewTransaction`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/transaction.go:31:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewTransaction' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewTransaction' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/transaction.go:31:1`
-
-### #617 KISS on `NewWinbackOffer`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/winback_offer.go:43:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewWinbackOffer' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewWinbackOffer' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/entity/winback_offer.go:43:1`
-
-### #618 KISS on `NewAdvancedBanditEngine`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:72:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewAdvancedBanditEngine' takes 7 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewAdvancedBanditEngine' takes 7 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:72:1`
-
-### #619 KISS on `SelectArm`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:209:1`
-- **Summary:** KISS Violation (High Complexity): Function 'SelectArm' has cyclomatic complexity of 13 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'SelectArm' has cyclomatic complexity of 13 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:209:1`
-
-### #620 KISS on `RecordReward`
-- **Category:** `principle`
-- **Confidence:** **92%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:271:1`
-- **Summary:** KISS Violation (High Complexity): Function 'RecordReward' has cyclomatic complexity of 14 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'RecordReward' has cyclomatic complexity of 14 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:271:1`
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'RecordReward' takes 7 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:271:1`
-
-### #621 KISS on `ProcessConversion`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:365:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'ProcessConversion' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'ProcessConversion' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:365:1`
-
-### #622 KISS on `GetMetrics`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:464:1`
-- **Summary:** KISS Violation (High Complexity): Function 'GetMetrics' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'GetMetrics' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:464:1`
-
-### #623 KISS on `TrimConfiguredWindows`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:571:1`
-- **Summary:** KISS Violation (High Complexity): Function 'TrimConfiguredWindows' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'TrimConfiguredWindows' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:571:1`
-
-### #624 KISS on `SyncObjectiveStats`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:608:1`
-- **Summary:** KISS Violation (High Complexity): Function 'SyncObjectiveStats' has cyclomatic complexity of 15 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'SyncObjectiveStats' has cyclomatic complexity of 15 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:608:1`
-
-### #625 KISS on `RunMaintenanceDetailed`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:794:1`
-- **Summary:** KISS Violation (High Complexity): Function 'RunMaintenanceDetailed' has cyclomatic complexity of 11 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'RunMaintenanceDetailed' has cyclomatic complexity of 11 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/advanced_bandit_engine.go:794:1`
-
-### #626 KISS on `CreateFlag`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:38:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'CreateFlag' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'CreateFlag' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/feature_flag_service.go:38:1`
-
-### #627 KISS on `TrackEvent`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:66:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'TrackEvent' takes 7 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'TrackEvent' takes 7 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:66:1`
-
-### #628 KISS on `TrackPurchase`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:100:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'TrackPurchase' takes 6 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'TrackPurchase' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/matomo_forwarder.go:100:1`
-
-### #629 KISS on `SelectArm`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:245:1`
-- **Summary:** KISS Violation (High Complexity): Function 'SelectArm' has cyclomatic complexity of 11 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'SelectArm' has cyclomatic complexity of 11 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:245:1`
-
-### #630 KISS on `TrackImpression`
-- **Category:** `principle`
-- **Confidence:** **92%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:376:1`
-- **Summary:** KISS Violation (High Complexity): Function 'TrackImpression' has cyclomatic complexity of 14 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'TrackImpression' has cyclomatic complexity of 14 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:376:1`
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'TrackImpression' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:376:1`
-
-### #631 KISS on `UpdateRewardWithEvent`
-- **Category:** `principle`
-- **Confidence:** **92%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:438:1`
-- **Summary:** KISS Violation (High Complexity): Function 'UpdateRewardWithEvent' has cyclomatic complexity of 16 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'UpdateRewardWithEvent' has cyclomatic complexity of 16 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:438:1`
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'UpdateRewardWithEvent' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:438:1`
-
-### #632 KISS on `CalculateWinProbability`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:668:1`
-- **Summary:** KISS Violation (High Complexity): Function 'CalculateWinProbability' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'CalculateWinProbability' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/bandit_service.go:668:1`
-
-### #633 KISS on `NewHybridObjectiveStrategy`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:54:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewHybridObjectiveStrategy' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewHybridObjectiveStrategy' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:54:1`
-
-### #634 KISS on `calculateHybridScore`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:166:1`
-- **Summary:** KISS Violation (High Complexity): Function 'calculateHybridScore' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'calculateHybridScore' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:166:1`
-
-### #635 KISS on `RecordObjectiveReward`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:258:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'RecordObjectiveReward' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'RecordObjectiveReward' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:258:1`
-
-### #636 KISS on `GetObjectiveScores`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:315:1`
-- **Summary:** KISS Violation (High Complexity): Function 'GetObjectiveScores' has cyclomatic complexity of 13 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'GetObjectiveScores' has cyclomatic complexity of 13 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/hybrid_objective_strategy.go:315:1`
-
-### #637 KISS on `ExecuteScheduled`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/automation_job_execution_service.go:58:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ExecuteScheduled' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ExecuteScheduled' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/automation_job_execution_service.go:58:1`
-
-### #638 KISS on `ProcessConversion`
-- **Category:** `principle`
-- **Confidence:** **92%** [VERY_HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:124:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ProcessConversion' has cyclomatic complexity of 17 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ProcessConversion' has cyclomatic complexity of 17 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:124:1`
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'ProcessConversion' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:124:1`
-
-### #639 KISS on `ProcessExpiredRewards`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:253:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ProcessExpiredRewards' has cyclomatic complexity of 13 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ProcessExpiredRewards' has cyclomatic complexity of 13 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/delayed_reward_strategy.go:253:1`
-
-### #640 KISS on `CreateWinbackOffer`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:42:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'CreateWinbackOffer' takes 6 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'CreateWinbackOffer' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:42:1`
-
-### #641 KISS on `CreateWinbackCampaignForChurnedUsers`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:133:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'CreateWinbackCampaignForChurnedUsers' takes 6 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'CreateWinbackCampaignForChurnedUsers' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/winback_service.go:133:1`
-
-### #642 KISS on `RecordRewardWithCurrency`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:157:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'RecordRewardWithCurrency' takes 7 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'RecordRewardWithCurrency' takes 7 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_conversion_strategy.go:157:1`
-
-### #643 KISS on `NewLTVService`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:55:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewLTVService' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewLTVService' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:55:1`
-
-### #644 KISS on `CalculateLTV`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:91:1`
-- **Summary:** KISS Violation (High Complexity): Function 'CalculateLTV' has cyclomatic complexity of 13 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'CalculateLTV' has cyclomatic complexity of 13 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:91:1`
-
-### #645 KISS on `GetCohortLTV`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:313:1`
-- **Summary:** KISS Violation (High Complexity): Function 'GetCohortLTV' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'GetCohortLTV' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ltv_service.go:313:1`
-
-### #646 KISS on `NewLinUCBSelectionStrategy`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:33:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewLinUCBSelectionStrategy' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewLinUCBSelectionStrategy' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/linucb_strategy.go:33:1`
-
-### #647 KISS on `LogAction`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/audit_service.go:23:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'LogAction' takes 6 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'LogAction' takes 6 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/audit_service.go:23:1`
-
-### #648 KISS on `Recommend`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:124:1`
-- **Summary:** KISS Violation (High Complexity): Function 'Recommend' has cyclomatic complexity of 12 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'Recommend' has cyclomatic complexity of 12 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_winner_recommendation_service.go:124:1`
-
-### #649 KISS on `GetAuditLogPaginated`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:116:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'GetAuditLogPaginated' takes 7 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'GetAuditLogPaginated' takes 7 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/analytics_service.go:116:1`
-
-### #650 KISS on `ProcessDunningAttempt`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:63:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ProcessDunningAttempt' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ProcessDunningAttempt' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/dunning_service.go:63:1`
-
-### #651 KISS on `NewCurrencyRateService`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:61:1`
-- **Summary:** KISS Violation (High Complexity): Function 'NewCurrencyRateService' has cyclomatic complexity of 29 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'NewCurrencyRateService' has cyclomatic complexity of 29 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/currency_service.go:61:1`
-
-### #652 KISS on `TrackRevenue`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:66:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'TrackRevenue' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'TrackRevenue' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/ab_analytics_service.go:66:1`
-
-### #653 KISS on `NewSlidingWindowStrategy`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:38:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewSlidingWindowStrategy' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewSlidingWindowStrategy' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:38:1`
-
-### #654 KISS on `RepairExperiment`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:73:1`
-- **Summary:** KISS Violation (High Complexity): Function 'RepairExperiment' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'RepairExperiment' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:73:1`
-
-### #655 KISS on `syncObjectiveStats`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:124:1`
-- **Summary:** KISS Violation (High Complexity): Function 'syncObjectiveStats' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'syncObjectiveStats' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/experiment_repair_service.go:124:1`
-
-### #656 KISS on `NewWebhookHandler`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:34:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewWebhookHandler' takes 5 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewWebhookHandler' takes 5 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:34:1`
-
-### #657 KISS on `StripeWebhook`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:51:1`
-- **Summary:** KISS Violation (High Complexity): Function 'StripeWebhook' has cyclomatic complexity of 11 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'StripeWebhook' has cyclomatic complexity of 11 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:51:1`
-
-### #658 KISS on `AppleWebhook`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:123:1`
-- **Summary:** KISS Violation (High Complexity): Function 'AppleWebhook' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'AppleWebhook' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:123:1`
-
-### #659 KISS on `GoogleWebhook`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:204:1`
-- **Summary:** KISS Violation (High Complexity): Function 'GoogleWebhook' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'GoogleWebhook' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/webhook.go:204:1`
-
-### #660 KISS on `experimentAutomationPolicyChangedFields`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:424:1`
-- **Summary:** KISS Violation (High Complexity): Function 'experimentAutomationPolicyChangedFields' has cyclomatic complexity of 17 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'experimentAutomationPolicyChangedFields' has cyclomatic complexity of 17 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:424:1`
-
-### #661 KISS on `validateCreateAdminExperimentRequest`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:629:1`
-- **Summary:** KISS Violation (High Complexity): Function 'validateCreateAdminExperimentRequest' has cyclomatic complexity of 25 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'validateCreateAdminExperimentRequest' has cyclomatic complexity of 25 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:629:1`
-
-### #662 KISS on `validateUpdateAdminExperimentRequest`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:709:1`
-- **Summary:** KISS Violation (High Complexity): Function 'validateUpdateAdminExperimentRequest' has cyclomatic complexity of 27 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'validateUpdateAdminExperimentRequest' has cyclomatic complexity of 27 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:709:1`
-
-### #663 KISS on `scanAdminExperiment`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:828:1`
-- **Summary:** KISS Violation (High Complexity): Function 'scanAdminExperiment' has cyclomatic complexity of 13 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'scanAdminExperiment' has cyclomatic complexity of 13 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_experiments.go:828:1`
-
-### #664 KISS on `AdminLogout`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:179:1`
-- **Summary:** KISS Violation (High Complexity): Function 'AdminLogout' has cyclomatic complexity of 18 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'AdminLogout' has cyclomatic complexity of 18 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/auth.go:179:1`
-
-### #665 KISS on `PutAppSettings`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_app_settings.go:61:1`
-- **Summary:** KISS Violation (High Complexity): Function 'PutAppSettings' has cyclomatic complexity of 19 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'PutAppSettings' has cyclomatic complexity of 19 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_app_settings.go:61:1`
-
-### #666 KISS on `UpdateApp`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_apps.go:131:1`
-- **Summary:** KISS Violation (High Complexity): Function 'UpdateApp' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'UpdateApp' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_apps.go:131:1`
-
-### #667 KISS on `NewAdminHandler`
-- **Category:** `principle`
-- **Confidence:** **70%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:50:1`
-- **Summary:** KISS Violation (Long Parameter List): Function 'NewAdminHandler' takes 12 parameters; consider a Config struct or Functional Options
-
-#### Evidence Trail:
-- `+70%` **[KISS_LONG_PARAMETER_LIST]** KISS Violation (Long Parameter List): Function 'NewAdminHandler' takes 12 parameters; consider a Config struct or Functional Options -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:50:1`
-
-### #668 KISS on `SearchUsers`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:415:1`
-- **Summary:** KISS Violation (High Complexity): Function 'SearchUsers' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'SearchUsers' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:415:1`
-
-### #669 KISS on `ForceRenew`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:563:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ForceRenew' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ForceRenew' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:563:1`
-
-### #670 KISS on `ListWebhooks`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:746:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ListWebhooks' has cyclomatic complexity of 15 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ListWebhooks' has cyclomatic complexity of 15 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:746:1`
-
-### #671 KISS on `ListSubscriptions`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:1008:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ListSubscriptions' has cyclomatic complexity of 14 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ListSubscriptions' has cyclomatic complexity of 14 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:1008:1`
-
-### #672 KISS on `ListTransactions`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:1235:1`
-- **Summary:** KISS Violation (High Complexity): Function 'ListTransactions' has cyclomatic complexity of 13 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'ListTransactions' has cyclomatic complexity of 13 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin.go:1235:1`
-
-### #673 KISS on `Statistics`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit.go:310:1`
-- **Summary:** KISS Violation (High Complexity): Function 'Statistics' has cyclomatic complexity of 16 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'Statistics' has cyclomatic complexity of 16 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit.go:310:1`
-
-### #674 KISS on `UpdatePaywall`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_paywalls.go:159:1`
-- **Summary:** KISS Violation (High Complexity): Function 'UpdatePaywall' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'UpdatePaywall' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/admin_paywalls.go:159:1`
-
-### #675 KISS on `RunMaintenance`
-- **Category:** `principle`
-- **Confidence:** **75%** [HIGH]
-- **Primary Location:** `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:423:1`
-- **Summary:** KISS Violation (High Complexity): Function 'RunMaintenance' has cyclomatic complexity of 10 (control branch points)
-
-#### Evidence Trail:
-- `+75%` **[KISS_HIGH_CYCLOMATIC_COMPLEXITY]** KISS Violation (High Complexity): Function 'RunMaintenance' has cyclomatic complexity of 10 (control branch points) -> `/Volumes/External/Code/paywall-iap/backend/internal/interfaces/http/handlers/bandit_advanced.go:423:1`
+- `+75%` **[DIP_INTERFACE_PARAMETER]** DIP Adherence: Function 'RecordEvent' depends on interface abstraction(s) (ctx context.Context, event RewardEvent) rather than concrete struct pointers -> `/Volumes/External/Code/paywall-iap/backend/internal/domain/service/sliding_window_strategy.go:97:1`
