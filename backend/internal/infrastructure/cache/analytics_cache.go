@@ -80,7 +80,10 @@ func (c *MetricCache) SetRealtimeMetric(ctx context.Context, metric *RealtimeMet
 		return fmt.Errorf("failed to marshal metric: %w", err)
 	}
 
-	if err := c.client.Set(ctx, key, data, TTLRealtime).Err(); err != nil {
+	pipe := c.client.Pipeline()
+	pipe.Set(ctx, key, data, TTLRealtime)
+	pipe.Set(ctx, key+":value", metric.Value, TTLRealtime)
+	if _, err := pipe.Exec(ctx); err != nil {
 		return fmt.Errorf("failed to set realtime metric: %w", err)
 	}
 
@@ -107,6 +110,13 @@ func (c *MetricCache) GetRealtimeMetric(ctx context.Context, name string) (*Real
 	var metric RealtimeMetric
 	if err := json.Unmarshal(data, &metric); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal metric: %w", err)
+	}
+
+	if valStr, err := c.client.Get(ctx, key+":value").Result(); err == nil {
+		var val float64
+		if _, err := fmt.Sscanf(valStr, "%f", &val); err == nil {
+			metric.Value = val
+		}
 	}
 
 	return &metric, nil

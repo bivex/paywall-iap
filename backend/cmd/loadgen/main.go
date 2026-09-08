@@ -142,10 +142,8 @@ func doJSON(method, url string, headers map[string]string, body interface{}, dry
 
 // ---- worker ----
 
-func runUser(i int, apiBase, appID, appleMockURL string, dryRun bool, platformMode string, st *stats) {
+func prepareScenario(i int, platformMode, appleMockURL string, dryRun bool, st *stats) (scenario, bool) {
 	platform := platformMode
-	var sc scenario
-
 	if platform == "mixed" {
 		if rand.Intn(2) == 0 {
 			platform = "android"
@@ -155,7 +153,7 @@ func runUser(i int, apiBase, appID, appleMockURL string, dryRun bool, platformMo
 	}
 
 	if platform == "android" {
-		sc = googleScenarios[rand.Intn(len(googleScenarios))]
+		sc := googleScenarios[rand.Intn(len(googleScenarios))]
 		purchaseToken := fmt.Sprintf("%s_%d_%d", sc.token, i, time.Now().UnixNano())
 		receiptJSON, _ := json.Marshal(map[string]string{
 			"packageName":   "com.bivex.game",
@@ -164,20 +162,22 @@ func runUser(i int, apiBase, appID, appleMockURL string, dryRun bool, platformMo
 			"type":          "subscription",
 		})
 		sc.token = string(receiptJSON)
-	} else {
-		// iOS: create a real receipt via Apple mock POST /subs
-		product := appleProducts[rand.Intn(len(appleProducts))]
-		sc = scenario{name: "ios_sub", platform: "ios", product: product}
-		receiptToken, err := createAppleReceipt(appleMockURL, product, dryRun)
-		if err != nil || receiptToken == "" {
-			st.regFailed.Add(1)
-			log.Printf("[user %d] apple mock create receipt: %v", i, err)
-			return
-		}
-		sc.token = receiptToken
+		return sc, true
 	}
 
-	// 1. Register user
+	product := appleProducts[rand.Intn(len(appleProducts))]
+	sc := scenario{name: "ios_sub", platform: "ios", product: product}
+	receiptToken, err := createAppleReceipt(appleMockURL, product, dryRun)
+	if err != nil || receiptToken == "" {
+		st.regFailed.Add(1)
+		log.Printf("[user %d] apple mock create receipt: %v", i, err)
+		return scenario{}, false
+	}
+	sc.token = receiptToken
+	return sc, true
+}
+
+func registerUserSession(i int, apiBase, appID string, sc scenario, dryRun bool, st *stats) (string, bool) {
 	userID := fmt.Sprintf("loadgen_user_%d_%d", i, rand.Int63())
 	deviceID := fmt.Sprintf("device_%d_%d", i, rand.Int63())
 
@@ -198,15 +198,13 @@ func runUser(i int, apiBase, appID, appleMockURL string, dryRun bool, platformMo
 		} else {
 			log.Printf("[user %d] register failed %d: %v", i, status, regResp)
 		}
-		return
+		return "", false
 	}
 	st.registered.Add(1)
-
 	if dryRun {
-		return
+		return "", false
 	}
 
-	// Extract token — response is wrapped in {"data": {...}}
 	token, _ := regResp["access_token"].(string)
 	if token == "" {
 		if data, ok := regResp["data"].(map[string]interface{}); ok {
@@ -216,10 +214,32 @@ func runUser(i int, apiBase, appID, appleMockURL string, dryRun bool, platformMo
 	if token == "" {
 		st.regFailed.Add(1)
 		log.Printf("[user %d] no access_token in register response", i)
-		return
+		return "", false
 	}
+	return token, true
+}
 
-	// 2. Verify IAP
+func recordIAPVerificationStats(st *stats, iapResp map[string]interface{}) string {
+	subStatus, _ := iapResp["status"].(string)
+	if subStatus == "" {
+		if data, ok := iapResp["data"].(map[string]interface{}); ok {
+			subStatus, _ = data["status"].(string)
+		}
+	}
+	switch subStatus {
+	case "active":
+		st.verActive.Add(1)
+	case "expired":
+		st.verExpired.Add(1)
+	case "canceled", "cancelled":
+		st.verCanceled.Add(1)
+	case "pending":
+		st.verPending.Add(1)
+	}
+	return subStatus
+}
+
+func verifyUserIAP(i int, apiBase, appID, token string, sc scenario, dryRun bool, st *stats) {
 	iapBody := map[string]interface{}{
 		"platform":       sc.platform,
 		"receipt_data":   sc.token,
@@ -244,27 +264,25 @@ func runUser(i int, apiBase, appID, appleMockURL string, dryRun bool, platformMo
 	}
 
 	st.verified.Add(1)
-
-	subStatus, _ := iapResp["status"].(string)
-	if subStatus == "" {
-		if data, ok := iapResp["data"].(map[string]interface{}); ok {
-			subStatus, _ = data["status"].(string)
-		}
-	}
-	switch subStatus {
-	case "active":
-		st.verActive.Add(1)
-	case "expired":
-		st.verExpired.Add(1)
-	case "canceled", "cancelled":
-		st.verCanceled.Add(1)
-	case "pending":
-		st.verPending.Add(1)
-	}
+	subStatus := recordIAPVerificationStats(st, iapResp)
 
 	if os.Getenv("LOADGEN_VERBOSE") != "" {
 		fmt.Printf("[user %d] %s %s → %s (http %d)\n", i, sc.platform, sc.name, subStatus, iapStatus)
 	}
+}
+
+func runUser(i int, apiBase, appID, appleMockURL string, dryRun bool, platformMode string, st *stats) {
+	sc, ok := prepareScenario(i, platformMode, appleMockURL, dryRun, st)
+	if !ok {
+		return
+	}
+
+	token, ok := registerUserSession(i, apiBase, appID, sc, dryRun, st)
+	if !ok || dryRun {
+		return
+	}
+
+	verifyUserIAP(i, apiBase, appID, token, sc, dryRun, st)
 }
 
 func main() {

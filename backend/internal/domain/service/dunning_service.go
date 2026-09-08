@@ -59,9 +59,41 @@ func (s *DunningService) StartDunning(ctx context.Context, subscriptionID, userI
 	return dunning, nil
 }
 
+func (s *DunningService) handlePaymentSuccess(ctx context.Context, dunning *entity.Dunning) error {
+	dunning.MarkRecovered()
+	if err := s.dunningRepo.Update(ctx, dunning); err != nil {
+		return err
+	}
+	if err := s.subscriptionRepo.UpdateStatus(ctx, dunning.SubscriptionID, entity.StatusActive); err != nil {
+		return err
+	}
+	s.notificationSvc.SendPaymentSuccessNotification(ctx, dunning.UserID)
+	return nil
+}
+
+func (s *DunningService) handlePaymentFailure(ctx context.Context, dunning *entity.Dunning) error {
+	if dunning.AttemptCount >= dunning.MaxAttempts {
+		dunning.MarkFailed()
+		if err := s.dunningRepo.Update(ctx, dunning); err != nil {
+			return err
+		}
+		if err := s.subscriptionRepo.Cancel(ctx, dunning.SubscriptionID); err != nil {
+			return err
+		}
+		s.notificationSvc.SendPaymentFinalFailureNotification(ctx, dunning.UserID)
+		return nil
+	}
+
+	dunning.NextAttemptAt = time.Now().Add(dunning.GetRetryDelay())
+	if err := s.dunningRepo.Update(ctx, dunning); err != nil {
+		return err
+	}
+	s.notificationSvc.SendPaymentRetryNotification(ctx, dunning.UserID, dunning.AttemptCount+1)
+	return nil
+}
+
 // ProcessDunningAttempt processes a dunning retry attempt
 func (s *DunningService) ProcessDunningAttempt(ctx context.Context, dunningID uuid.UUID, paymentSuccess bool) error {
-	// Get dunning
 	dunning, err := s.dunningRepo.GetByID(ctx, dunningID)
 	if err != nil {
 		return errors.New("dunning not found")
@@ -71,58 +103,13 @@ func (s *DunningService) ProcessDunningAttempt(ctx context.Context, dunningID uu
 		return errors.New("dunning cannot be retried")
 	}
 
-	// Increment attempt counter
 	dunning.IncrementAttempt()
 
 	if paymentSuccess {
-		// Mark as recovered
-		dunning.MarkRecovered()
-		err = s.dunningRepo.Update(ctx, dunning)
-		if err != nil {
-			return err
-		}
-
-		// Update subscription status
-		err = s.subscriptionRepo.UpdateStatus(ctx, dunning.SubscriptionID, entity.StatusActive)
-		if err != nil {
-			return err
-		}
-
-		// Send success notification
-		s.notificationSvc.SendPaymentSuccessNotification(ctx, dunning.UserID)
-		return nil
+		return s.handlePaymentSuccess(ctx, dunning)
 	}
 
-	// Payment failed
-	if dunning.AttemptCount >= dunning.MaxAttempts {
-		// Max attempts reached, mark as failed
-		dunning.MarkFailed()
-		err = s.dunningRepo.Update(ctx, dunning)
-		if err != nil {
-			return err
-		}
-
-		// Cancel subscription
-		err = s.subscriptionRepo.Cancel(ctx, dunning.SubscriptionID)
-		if err != nil {
-			return err
-		}
-
-		// Send final failure notification
-		s.notificationSvc.SendPaymentFinalFailureNotification(ctx, dunning.UserID)
-		return nil
-	}
-
-	// Schedule next attempt
-	dunning.NextAttemptAt = time.Now().Add(dunning.GetRetryDelay())
-	err = s.dunningRepo.Update(ctx, dunning)
-	if err != nil {
-		return err
-	}
-
-	// Send retry notification
-	s.notificationSvc.SendPaymentRetryNotification(ctx, dunning.UserID, dunning.AttemptCount+1)
-	return nil
+	return s.handlePaymentFailure(ctx, dunning)
 }
 
 // GetPendingDunningAttempts returns dunning processes that need processing

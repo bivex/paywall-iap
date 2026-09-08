@@ -173,26 +173,8 @@ func (s *HybridObjectiveStrategy) calculateHybridScore(ctx context.Context, armI
 			continue
 		}
 
-		var score float64
-		var err error
-
-		switch ObjectiveType(objective) {
-		case ObjectiveConversion:
-			score, err = s.calculateConversionScore(ctx, armID)
-		case ObjectiveLTV:
-			score, err = s.calculateLVTScore(ctx, armID)
-		case ObjectiveRevenue:
-			score, err = s.calculateRevenueScore(ctx, armID)
-		default:
-			s.logger.Warn("Unknown objective type", zap.String("objective", objective))
-			continue
-		}
-
-		if err != nil {
-			s.logger.Warn("Failed to calculate objective score",
-				zap.String("objective", objective),
-				zap.Error(err),
-			)
+		score, ok := s.evaluateObjectiveScore(ctx, armID, objective)
+		if !ok {
 			continue
 		}
 
@@ -219,6 +201,33 @@ func (s *HybridObjectiveStrategy) calculateHybridScore(ctx context.Context, armI
 	}
 
 	return hybridScore, nil
+}
+
+func (s *HybridObjectiveStrategy) evaluateObjectiveScore(ctx context.Context, armID uuid.UUID, objective string) (float64, bool) {
+	var score float64
+	var err error
+
+	switch ObjectiveType(objective) {
+	case ObjectiveConversion:
+		score, err = s.calculateConversionScore(ctx, armID)
+	case ObjectiveLTV:
+		score, err = s.calculateLVTScore(ctx, armID)
+	case ObjectiveRevenue:
+		score, err = s.calculateRevenueScore(ctx, armID)
+	default:
+		s.logger.Warn("Unknown objective type", zap.String("objective", objective))
+		return 0, false
+	}
+
+	if err != nil {
+		s.logger.Warn("Failed to calculate objective score",
+			zap.String("objective", objective),
+			zap.Error(err),
+		)
+		return 0, false
+	}
+
+	return score, true
 }
 
 // normalizeScores normalizes scores to [0,1] range using min-max normalization
@@ -318,13 +327,11 @@ func (s *HybridObjectiveStrategy) GetObjectiveScores(
 ) (map[ObjectiveType]*ObjectiveScore, error) {
 	scores := make(map[ObjectiveType]*ObjectiveScore)
 
-	// Get basic stats
 	stats, err := s.repo.GetArmStats(ctx, armID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get arm stats: %w", err)
 	}
 
-	// Conversion score
 	conversionScore := s.baseBandit.SampleBeta(stats.Alpha, stats.Beta)
 	scores[ObjectiveConversion] = &ObjectiveScore{
 		ObjectiveType: ObjectiveConversion,
@@ -336,103 +343,114 @@ func (s *HybridObjectiveStrategy) GetObjectiveScores(
 		Revenue:       stats.Revenue,
 	}
 
-	shouldIncludeObjective := func(objective ObjectiveType) bool {
-		if s.config == nil {
-			return objective == ObjectiveConversion
-		}
-
-		if s.config.ObjectiveType == objective || s.config.ObjectiveType == ObjectiveHybrid {
-			return true
-		}
-
-		if s.config.ObjectiveType == ObjectiveHybrid && s.config.ObjectiveWeights != nil {
-			_, ok := s.config.ObjectiveWeights[string(objective)]
-			return ok
-		}
-
-		return false
-	}
-
-	getObjectiveStats := func(objective ObjectiveType) *ArmObjectiveStats {
-		objRepo, ok := s.repo.(ObjectiveRepository)
-		if !ok {
-			return &ArmObjectiveStats{
-				ArmID:         armID,
-				ObjectiveType: objective,
-				Alpha:         stats.Alpha,
-				Beta:          stats.Beta,
-				Samples:       stats.Samples,
-				Conversions:   stats.Conversions,
-				TotalRevenue:  stats.Revenue,
-				AvgLTV:        stats.AvgReward,
-			}
-		}
-
-		objStats, err := objRepo.GetObjectiveStats(ctx, armID, objective)
-		if err != nil || objStats == nil {
-			return &ArmObjectiveStats{
-				ArmID:         armID,
-				ObjectiveType: objective,
-				Alpha:         stats.Alpha,
-				Beta:          stats.Beta,
-				Samples:       stats.Samples,
-				Conversions:   stats.Conversions,
-				TotalRevenue:  stats.Revenue,
-				AvgLTV:        stats.AvgReward,
-			}
-		}
-
-		return objStats
-	}
-
-	if shouldIncludeObjective(ObjectiveLTV) {
-		ltvScore, err := s.calculateLVTScore(ctx, armID)
-		if err == nil {
-			objStat := getObjectiveStats(ObjectiveLTV)
-			scores[ObjectiveLTV] = &ObjectiveScore{
-				ObjectiveType: ObjectiveLTV,
-				Score:         ltvScore,
-				Alpha:         objStat.Alpha,
-				Beta:          objStat.Beta,
-				Samples:       objStat.Samples,
-				Conversions:   objStat.Conversions,
-				AvgLTV:        objStat.AvgLTV,
-			}
-		}
-	}
-
-	if shouldIncludeObjective(ObjectiveRevenue) {
-		revenueScore, err := s.calculateRevenueScore(ctx, armID)
-		if err == nil {
-			objStat := getObjectiveStats(ObjectiveRevenue)
-			scores[ObjectiveRevenue] = &ObjectiveScore{
-				ObjectiveType: ObjectiveRevenue,
-				Score:         revenueScore,
-				Alpha:         objStat.Alpha,
-				Beta:          objStat.Beta,
-				Samples:       objStat.Samples,
-				Conversions:   objStat.Conversions,
-				Revenue:       objStat.TotalRevenue,
-			}
-		}
-	}
-
-	if s.config != nil && s.config.ObjectiveType == ObjectiveHybrid {
-		hybridScore, err := s.calculateHybridScore(ctx, armID)
-		if err == nil {
-			scores[ObjectiveHybrid] = &ObjectiveScore{
-				ObjectiveType: ObjectiveHybrid,
-				Score:         hybridScore,
-				Alpha:         stats.Alpha,
-				Beta:          stats.Beta,
-				Samples:       stats.Samples,
-				Conversions:   stats.Conversions,
-				Revenue:       stats.Revenue,
-			}
-		}
-	}
+	s.populateLTVScore(ctx, armID, stats, scores)
+	s.populateRevenueScore(ctx, armID, stats, scores)
+	s.populateHybridScore(ctx, armID, stats, scores)
 
 	return scores, nil
+}
+
+func (s *HybridObjectiveStrategy) shouldIncludeObjective(objective ObjectiveType) bool {
+	if s.config == nil {
+		return objective == ObjectiveConversion
+	}
+
+	if s.config.ObjectiveType == objective || s.config.ObjectiveType == ObjectiveHybrid {
+		return true
+	}
+
+	if s.config.ObjectiveType == ObjectiveHybrid && s.config.ObjectiveWeights != nil {
+		_, ok := s.config.ObjectiveWeights[string(objective)]
+		return ok
+	}
+
+	return false
+}
+
+func (s *HybridObjectiveStrategy) resolveObjectiveStats(ctx context.Context, armID uuid.UUID, objective ObjectiveType, stats *ArmStats) *ArmObjectiveStats {
+	objRepo, ok := s.repo.(ObjectiveRepository)
+	if !ok {
+		return s.fallbackObjectiveStats(armID, objective, stats)
+	}
+
+	objStats, err := objRepo.GetObjectiveStats(ctx, armID, objective)
+	if err != nil || objStats == nil {
+		return s.fallbackObjectiveStats(armID, objective, stats)
+	}
+
+	return objStats
+}
+
+func (s *HybridObjectiveStrategy) fallbackObjectiveStats(armID uuid.UUID, objective ObjectiveType, stats *ArmStats) *ArmObjectiveStats {
+	return &ArmObjectiveStats{
+		ArmID:         armID,
+		ObjectiveType: objective,
+		Alpha:         stats.Alpha,
+		Beta:          stats.Beta,
+		Samples:       stats.Samples,
+		Conversions:   stats.Conversions,
+		TotalRevenue:  stats.Revenue,
+		AvgLTV:        stats.AvgReward,
+	}
+}
+
+func (s *HybridObjectiveStrategy) populateLTVScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
+	if !s.shouldIncludeObjective(ObjectiveLTV) {
+		return
+	}
+	ltvScore, err := s.calculateLVTScore(ctx, armID)
+	if err != nil {
+		return
+	}
+	objStat := s.resolveObjectiveStats(ctx, armID, ObjectiveLTV, stats)
+	scores[ObjectiveLTV] = &ObjectiveScore{
+		ObjectiveType: ObjectiveLTV,
+		Score:         ltvScore,
+		Alpha:         objStat.Alpha,
+		Beta:          objStat.Beta,
+		Samples:       objStat.Samples,
+		Conversions:   objStat.Conversions,
+		AvgLTV:        objStat.AvgLTV,
+	}
+}
+
+func (s *HybridObjectiveStrategy) populateRevenueScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
+	if !s.shouldIncludeObjective(ObjectiveRevenue) {
+		return
+	}
+	revenueScore, err := s.calculateRevenueScore(ctx, armID)
+	if err != nil {
+		return
+	}
+	objStat := s.resolveObjectiveStats(ctx, armID, ObjectiveRevenue, stats)
+	scores[ObjectiveRevenue] = &ObjectiveScore{
+		ObjectiveType: ObjectiveRevenue,
+		Score:         revenueScore,
+		Alpha:         objStat.Alpha,
+		Beta:          objStat.Beta,
+		Samples:       objStat.Samples,
+		Conversions:   objStat.Conversions,
+		Revenue:       objStat.TotalRevenue,
+	}
+}
+
+func (s *HybridObjectiveStrategy) populateHybridScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
+	if s.config == nil || s.config.ObjectiveType != ObjectiveHybrid {
+		return
+	}
+	hybridScore, err := s.calculateHybridScore(ctx, armID)
+	if err != nil {
+		return
+	}
+	scores[ObjectiveHybrid] = &ObjectiveScore{
+		ObjectiveType: ObjectiveHybrid,
+		Score:         hybridScore,
+		Alpha:         stats.Alpha,
+		Beta:          stats.Beta,
+		Samples:       stats.Samples,
+		Conversions:   stats.Conversions,
+		Revenue:       stats.Revenue,
+	}
 }
 
 // UpdateConfig updates the objective configuration

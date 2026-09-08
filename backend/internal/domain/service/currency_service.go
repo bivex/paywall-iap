@@ -151,39 +151,36 @@ func (s *CurrencyRateService) GetRate(ctx context.Context, currency string) (flo
 	return rate, nil
 }
 
-// fetchRateFromECB fetches exchange rates from the European Central Bank API
-func (s *CurrencyRateService) fetchRateFromECB(ctx context.Context, currency string) (float64, string, error) {
+func (s *CurrencyRateService) parseECBRatesFromHTTP(ctx context.Context) (*ECBCurrencyRates, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.ecbAPIURL, nil)
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to fetch rates: %w", err)
+		return nil, fmt.Errorf("failed to fetch rates: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, "", fmt.Errorf("failed to read response: %w", err)
+		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	var ecbRates ECBCurrencyRates
 	if err := xml.Unmarshal(body, &ecbRates); err != nil {
-		return 0, "", fmt.Errorf("failed to parse XML: %w", err)
+		return nil, fmt.Errorf("failed to parse XML: %w", err)
 	}
+	return &ecbRates, nil
+}
 
-	// ECB provides EUR-based rates
-	// We need to convert to USD-based
-	// EUR/USD rate from ECB (inverse)
-	var eurToUsdRate float64 = 1.08 // Approximate, will be calculated
-
-	// Find the target currency rate
+func calculateECBRateToUSD(ecbRates *ECBCurrencyRates, currency string) (float64, float64, error) {
+	var eurToUsdRate float64 = 1.08
 	for _, cube := range ecbRates.Cube.Cube.Cube {
 		if cube.Currency == "USD" {
 			eurToUsdRate = cube.Rate
@@ -191,22 +188,28 @@ func (s *CurrencyRateService) fetchRateFromECB(ctx context.Context, currency str
 		}
 	}
 
-	// Calculate target currency rate to USD
 	for _, cube := range ecbRates.Cube.Cube.Cube {
 		if cube.Currency == currency {
-			// ECB rate is EUR to Currency
-			// We want Currency to USD
-			// Currency/USD = (EUR/USD) / (EUR/Currency)
-			rate := eurToUsdRate / cube.Rate
-
-			// Cache all fetched rates
-			s.cacheFetchedRates(ctx, ecbRates, eurToUsdRate)
-
-			return rate, "ecb", nil
+			return eurToUsdRate / cube.Rate, eurToUsdRate, nil
 		}
 	}
+	return 0, 0, ErrCurrencyRateNotFound
+}
 
-	return 0, "", ErrCurrencyRateNotFound
+// fetchRateFromECB fetches exchange rates from the European Central Bank API
+func (s *CurrencyRateService) fetchRateFromECB(ctx context.Context, currency string) (float64, string, error) {
+	ecbRates, err := s.parseECBRatesFromHTTP(ctx)
+	if err != nil {
+		return 0, "", err
+	}
+
+	rate, eurToUsdRate, err := calculateECBRateToUSD(ecbRates, currency)
+	if err != nil {
+		return 0, "", err
+	}
+
+	s.cacheFetchedRates(ctx, *ecbRates, eurToUsdRate)
+	return rate, "ecb", nil
 }
 
 // cacheFetchedRates caches all rates from an ECB response

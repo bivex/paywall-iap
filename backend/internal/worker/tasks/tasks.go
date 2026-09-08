@@ -218,6 +218,24 @@ func (h *TaskHandlers) HandleComputeAnalytics(ctx context.Context, t *asynq.Task
 	return nil
 }
 
+func (h *TaskHandlers) dispatchWebhookByProvider(ctx context.Context, payloadProvider, eventID string, event generated.WebhookEvent) error {
+	switch payloadProvider {
+	case "stripe":
+		if err := h.handleStripeEvent(ctx, event); err != nil {
+			return err
+		}
+	case "apple":
+		if err := h.handleAppleS2SEvent(ctx, event); err != nil {
+			h.logger.Error("Apple S2S handler error", zap.Error(err), zap.String("event_id", eventID))
+		}
+	case "google":
+		if err := h.handleGoogleRTDNEvent(ctx, event); err != nil {
+			h.logger.Error("Google RTDN handler error", zap.Error(err), zap.String("event_id", eventID))
+		}
+	}
+	return nil
+}
+
 // HandleProcessWebhook processes incoming webhook events
 func (h *TaskHandlers) HandleProcessWebhook(ctx context.Context, t *asynq.Task) error {
 	var payload struct {
@@ -253,23 +271,8 @@ func (h *TaskHandlers) HandleProcessWebhook(ctx context.Context, t *asynq.Task) 
 		return nil
 	}
 
-	// Dispatch based on provider
-	switch payload.Provider {
-	case "stripe":
-		if err := h.handleStripeEvent(ctx, event); err != nil {
-			return err
-		}
-	case "apple":
-		if err := h.handleAppleS2SEvent(ctx, event); err != nil {
-			h.logger.Error("Apple S2S handler error", zap.Error(err), zap.String("event_id", payload.EventID))
-			// Return nil — don't retry on business logic errors; Apple expects 200.
-		}
-	case "google":
-		if err := h.handleGoogleRTDNEvent(ctx, event); err != nil {
-			h.logger.Error("Google RTDN handler error", zap.Error(err), zap.String("event_id", payload.EventID))
-			// Don't fail the task — return nil so the event is still marked processed
-			// and we don't loop on it. Real-world: send to DLQ.
-		}
+	if err := h.dispatchWebhookByProvider(ctx, payload.Provider, payload.EventID, event); err != nil {
+		return err
 	}
 
 	// Mark as processed
@@ -536,17 +539,19 @@ rtdnSubscriptionRevoked            = 12 // revoked (refunded)
 rtdnSubscriptionExpired            = 13 // expired
 )
 
+type rtdnSubscriptionNotification struct {
+	Version          string `json:"version"`
+	NotificationType int    `json:"notificationType"`
+	PurchaseToken    string `json:"purchaseToken"`
+	SubscriptionID   string `json:"subscriptionId"`
+}
+
 // rtdnPayload is the DeveloperNotification JSON body stored in webhook_events.
 type rtdnPayload struct {
-PackageName string `json:"packageName"`
-EventTimeMillis string `json:"eventTimeMillis"`
-SubscriptionNotification struct {
-Version          string `json:"version"`
-NotificationType int    `json:"notificationType"`
-PurchaseToken    string `json:"purchaseToken"`
-SubscriptionID   string `json:"subscriptionId"`
-} `json:"subscriptionNotification"`
-TestNotification *struct{} `json:"testNotification,omitempty"`
+	PackageName              string                        `json:"packageName"`
+	EventTimeMillis          string                        `json:"eventTimeMillis"`
+	SubscriptionNotification rtdnSubscriptionNotification `json:"subscriptionNotification"`
+	TestNotification         *struct{}                     `json:"testNotification,omitempty"`
 }
 
 // handleGoogleRTDNEvent processes a Google RTDN webhook event stored in the DB.
@@ -557,257 +562,260 @@ TestNotification *struct{} `json:"testNotification,omitempty"`
 //   - EXPIRED / REVOKED → expired
 //   - ON_HOLD / PAUSED  → on_hold
 //   - IN_GRACE_PERIOD   → grace_period
-//   - DEFERRED / PRICE_CHANGE_CONFIRMED / PAUSE_SCHEDULE_CHANGED → no status change (logged)
+func resolveRTDNStatusAndExpiry(notificationType int) (string, time.Time, bool) {
+	switch notificationType {
+	case rtdnSubscriptionPurchased:
+		return "active", time.Time{}, true
+	case rtdnSubscriptionRenewed, rtdnSubscriptionRecovered, rtdnSubscriptionRestarted:
+		return "active", time.Now().AddDate(0, 1, 0), true
+	case rtdnSubscriptionCanceled, rtdnSubscriptionOnHold, rtdnSubscriptionPaused:
+		return "cancelled", time.Time{}, true
+	case rtdnSubscriptionExpired, rtdnSubscriptionRevoked:
+		return "expired", time.Time{}, true
+	case rtdnSubscriptionInGracePeriod:
+		return "grace", time.Time{}, true
+	case rtdnSubscriptionDeferred, rtdnSubscriptionPriceChangeConfirm, rtdnSubscriptionPausedScheduleChanged:
+		return "", time.Time{}, true
+	default:
+		return "", time.Time{}, false
+	}
+}
+
 func (h *TaskHandlers) handleGoogleRTDNEvent(ctx context.Context, event generated.WebhookEvent) error {
-var notif rtdnPayload
-if err := json.Unmarshal(event.Payload, &notif); err != nil {
-return fmt.Errorf("rtdn: unmarshal payload: %w", err)
+	notif, err := parseRTDNPayload(event)
+	if err != nil {
+		return err
+	}
+	if notif == nil {
+		h.logger.Info("rtdn: test notification received")
+		return nil
+	}
+
+	sn := notif.SubscriptionNotification
+	if sn.PurchaseToken == "" {
+		return fmt.Errorf("rtdn: missing purchaseToken in subscriptionNotification")
+	}
+
+	h.logger.Info("rtdn: processing",
+		zap.Int("notificationType", sn.NotificationType),
+		zap.String("purchaseToken", sn.PurchaseToken),
+		zap.String("subscriptionId", sn.SubscriptionID),
+	)
+
+	token := sn.PurchaseToken
+	sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, &token)
+	if err != nil {
+		h.logger.Warn("rtdn: subscription not found for purchaseToken",
+			zap.String("purchaseToken", sn.PurchaseToken),
+			zap.Error(err),
+		)
+		return nil
+	}
+
+	return h.applyRTDNStatusAndExpiry(ctx, sub, sn)
 }
 
-// Test notification — no subscription notification, always ack.
-if notif.TestNotification != nil {
-h.logger.Info("rtdn: test notification received")
-return nil
+func parseRTDNPayload(event generated.WebhookEvent) (*rtdnPayload, error) {
+	var notif rtdnPayload
+	if err := json.Unmarshal(event.Payload, &notif); err != nil {
+		return nil, fmt.Errorf("rtdn: unmarshal payload: %w", err)
+	}
+	if notif.TestNotification != nil {
+		return nil, nil
+	}
+	return &notif, nil
 }
 
-sn := notif.SubscriptionNotification
-if sn.PurchaseToken == "" {
-return fmt.Errorf("rtdn: missing purchaseToken in subscriptionNotification")
+func (h *TaskHandlers) applyRTDNStatusAndExpiry(ctx context.Context, sub generated.Subscription, sn rtdnSubscriptionNotification) error {
+	newStatus, newExpiry, handled := resolveRTDNStatusAndExpiry(sn.NotificationType)
+	if !handled {
+		h.logger.Warn("rtdn: unknown notificationType", zap.Int("type", sn.NotificationType))
+		return nil
+	}
+	if newStatus == "" {
+		h.logger.Info("rtdn: informational notification, no status change",
+			zap.Int("notificationType", sn.NotificationType),
+			zap.String("subscriptionId", sn.SubscriptionID),
+		)
+		return nil
+	}
+
+	if newStatus != sub.Status {
+		if _, err := h.queries.UpdateSubscriptionStatus(ctx, generated.UpdateSubscriptionStatusParams{
+			ID:     sub.ID,
+			Status: newStatus,
+		}); err != nil {
+			return fmt.Errorf("rtdn: update subscription status: %w", err)
+		}
+		h.logger.Info("rtdn: subscription status updated",
+			zap.String("subscription_id", sub.ID.String()),
+			zap.String("old_status", sub.Status),
+			zap.String("new_status", newStatus),
+		)
+	}
+
+	if !newExpiry.IsZero() {
+		if _, err := h.queries.UpdateSubscriptionExpiry(ctx, generated.UpdateSubscriptionExpiryParams{
+			ID:        sub.ID,
+			ExpiresAt: newExpiry,
+		}); err != nil {
+			return fmt.Errorf("rtdn: update subscription expiry: %w", err)
+		}
+		h.logger.Info("rtdn: subscription expiry extended",
+			zap.String("subscription_id", sub.ID.String()),
+			zap.Time("new_expiry", newExpiry),
+		)
+	}
+
+	return nil
 }
 
-h.logger.Info("rtdn: processing",
-zap.Int("notificationType", sn.NotificationType),
-zap.String("purchaseToken", sn.PurchaseToken),
-zap.String("subscriptionId", sn.SubscriptionID),
-)
-
-// Look up the subscription via provider_tx_id = purchaseToken.
-token := sn.PurchaseToken
-sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, &token)
-if err != nil {
-// Unknown token — likely a notification for a purchase we haven't seen yet
-// (race: webhook arrives before /verify/iap). Log and move on.
-h.logger.Warn("rtdn: subscription not found for purchaseToken",
-zap.String("purchaseToken", sn.PurchaseToken),
-zap.Error(err),
-)
-return nil
+func parseAppleSignedTransactionInfo(signedTxInfo string) (string, time.Time) {
+	if signedTxInfo == "" {
+		return "", time.Time{}
+	}
+	txParts := strings.Split(signedTxInfo, ".")
+	if len(txParts) != 3 {
+		return "", time.Time{}
+	}
+	txPayloadBytes, err := base64.RawURLEncoding.DecodeString(txParts[1])
+	if err != nil {
+		return "", time.Time{}
+	}
+	var txInfo struct {
+		OriginalTransactionID string `json:"originalTransactionId"`
+		ExpiresDate           int64  `json:"expiresDate"` // unix ms
+	}
+	if err := json.Unmarshal(txPayloadBytes, &txInfo); err != nil {
+		return "", time.Time{}
+	}
+	var newExpiry time.Time
+	if txInfo.ExpiresDate > 0 {
+		newExpiry = time.Unix(txInfo.ExpiresDate/1000, 0)
+	}
+	return txInfo.OriginalTransactionID, newExpiry
 }
 
-newStatus := ""
-newExpiry := time.Time{}
-
-switch sn.NotificationType {
-case rtdnSubscriptionPurchased, rtdnSubscriptionRenewed,
-rtdnSubscriptionRecovered, rtdnSubscriptionRestarted:
-newStatus = "active"
-// Extend expiry by 1 month for renewal/recovered (we don't re-verify here;
-// a proper implementation would call purchases.subscriptionsv2.get).
-if sn.NotificationType == rtdnSubscriptionRenewed ||
-sn.NotificationType == rtdnSubscriptionRecovered ||
-sn.NotificationType == rtdnSubscriptionRestarted {
-newExpiry = time.Now().AddDate(0, 1, 0)
+func (h *TaskHandlers) acquireSubscriptionLock(ctx context.Context, subID, notifType string) func() {
+	if h.redis == nil {
+		return nil
+	}
+	lockKey := fmt.Sprintf("sub:proc:lock:%s", subID)
+	lockDeadline := time.Now().Add(8 * time.Second)
+	for {
+		acquired, lockErr := h.redis.SetNX(ctx, lockKey, notifType, 10*time.Second).Result()
+		if lockErr != nil {
+			h.logger.Warn("apple s2s: redis lock error, proceeding without lock", zap.Error(lockErr))
+			return nil
+		}
+		if acquired {
+			return func() { h.redis.Del(ctx, lockKey) }
+		}
+		if time.Now().After(lockDeadline) {
+			h.logger.Warn("apple s2s: lock wait timed out, proceeding without lock",
+				zap.String("subscription_id", subID),
+				zap.String("notification_type", notifType),
+			)
+			return nil
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
-case rtdnSubscriptionCanceled:
-newStatus = "cancelled"
-
-case rtdnSubscriptionExpired, rtdnSubscriptionRevoked:
-newStatus = "expired"
-
-case rtdnSubscriptionOnHold, rtdnSubscriptionPaused:
-newStatus = "cancelled"
-
-case rtdnSubscriptionInGracePeriod:
-newStatus = "grace"
-
-case rtdnSubscriptionDeferred, rtdnSubscriptionPriceChangeConfirm,
-rtdnSubscriptionPausedScheduleChanged:
-// Informational — no status change needed.
-h.logger.Info("rtdn: informational notification, no status change",
-zap.Int("notificationType", sn.NotificationType),
-zap.String("subscriptionId", sn.SubscriptionID),
-)
-return nil
-
-default:
-h.logger.Warn("rtdn: unknown notificationType", zap.Int("type", sn.NotificationType))
-return nil
+func mapAppleNotificationToStatus(notifType string) (string, bool) {
+	switch notifType {
+	case "SUBSCRIBED", "DID_RENEW":
+		return "active", true
+	case "DID_FAIL_TO_RENEW":
+		return "grace", true
+	case "EXPIRED", "GRACE_PERIOD_EXPIRED":
+		return "expired", true
+	case "CANCEL", "REFUND", "REVOKE":
+		return "cancelled", true
+	case "PRICE_INCREASE":
+		return "", true
+	default:
+		return "", false
+	}
 }
 
-if newStatus != "" && newStatus != sub.Status {
-if _, err := h.queries.UpdateSubscriptionStatus(ctx, generated.UpdateSubscriptionStatusParams{
-ID:     sub.ID,
-Status: newStatus,
-}); err != nil {
-return fmt.Errorf("rtdn: update subscription status: %w", err)
-}
-h.logger.Info("rtdn: subscription status updated",
-zap.String("subscription_id", sub.ID.String()),
-zap.String("old_status", sub.Status),
-zap.String("new_status", newStatus),
-)
-}
-
-// Extend expiry for renewal events.
-if !newExpiry.IsZero() {
-if _, err := h.queries.UpdateSubscriptionExpiry(ctx, generated.UpdateSubscriptionExpiryParams{
-ID:        sub.ID,
-ExpiresAt: newExpiry,
-}); err != nil {
-return fmt.Errorf("rtdn: update subscription expiry: %w", err)
-}
-h.logger.Info("rtdn: subscription expiry extended",
-zap.String("subscription_id", sub.ID.String()),
-zap.Time("new_expiry", newExpiry),
-)
-}
-
-return nil
-}
-
-// handleAppleS2SEvent processes Apple App Store Server Notifications v2.
-// The stored DB payload is the decoded JWS envelope JSON.
-// signedTransactionInfo is itself a fake-JWS whose middle part contains transaction details.
+// handleAppleS2SEvent processes an Apple App Store Server-to-Server v2 notification.
 func (h *TaskHandlers) handleAppleS2SEvent(ctx context.Context, event generated.WebhookEvent) error {
-// Parse outer notification envelope (stored as plain JSON in DB)
-var envelope struct {
-NotificationType string `json:"notificationType"`
-NotificationUUID string `json:"notificationUUID"`
-Data             struct {
-SignedTransactionInfo string `json:"signedTransactionInfo"`
-} `json:"data"`
-}
-if err := json.Unmarshal(event.Payload, &envelope); err != nil {
-return fmt.Errorf("apple s2s: unmarshal envelope: %w", err)
+	var envelope struct {
+		NotificationType string `json:"notificationType"`
+		NotificationUUID string `json:"notificationUUID"`
+		Data             struct {
+			SignedTransactionInfo string `json:"signedTransactionInfo"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(event.Payload, &envelope); err != nil {
+		return fmt.Errorf("apple s2s: unmarshal envelope: %w", err)
+	}
+
+	notifType := strings.ToUpper(envelope.NotificationType)
+	originalTxID, newExpiry := parseAppleSignedTransactionInfo(envelope.Data.SignedTransactionInfo)
+	if originalTxID == "" {
+		h.logger.Warn("apple s2s: no originalTransactionId in signedTransactionInfo",
+			zap.String("notification_type", notifType),
+			zap.String("event_id", event.EventID),
+		)
+		return nil
+	}
+
+	txID := originalTxID
+	sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, &txID)
+	if err != nil {
+		h.logger.Warn("apple s2s: subscription not found",
+			zap.String("original_tx_id", originalTxID),
+			zap.String("notification_type", notifType),
+		)
+		return nil
+	}
+
+	if unlock := h.acquireSubscriptionLock(ctx, sub.ID.String(), notifType); unlock != nil {
+		defer unlock()
+	}
+
+	return h.updateAppleSubscriptionState(ctx, sub, originalTxID, notifType, newExpiry)
 }
 
-notifType := strings.ToUpper(envelope.NotificationType)
+func (h *TaskHandlers) updateAppleSubscriptionState(ctx context.Context, sub generated.Subscription, originalTxID, notifType string, newExpiry time.Time) error {
+	newStatus, handled := mapAppleNotificationToStatus(notifType)
+	if !handled {
+		h.logger.Warn("apple s2s: unknown notificationType, skipping", zap.String("type", notifType))
+		return nil
+	}
+	if newStatus == "" {
+		h.logger.Info("apple s2s: informational notification, no action", zap.String("subscription_id", sub.ID.String()))
+		return nil
+	}
 
-// Decode inner signedTransactionInfo (fake JWS: header.payload.sig)
-var originalTxID string
-var newExpiry time.Time
+	if _, err := h.queries.UpdateSubscriptionStatus(ctx, generated.UpdateSubscriptionStatusParams{
+		ID:     sub.ID,
+		Status: newStatus,
+	}); err != nil {
+		return fmt.Errorf("apple s2s: update status to %s: %w", newStatus, err)
+	}
 
-if envelope.Data.SignedTransactionInfo != "" {
-txParts := strings.Split(envelope.Data.SignedTransactionInfo, ".")
-if len(txParts) == 3 {
-txPayloadBytes, err := base64.RawURLEncoding.DecodeString(txParts[1])
-if err == nil {
-var txInfo struct {
-OriginalTransactionID string `json:"originalTransactionId"`
-ExpiresDate           int64  `json:"expiresDate"` // unix ms
-}
-if err := json.Unmarshal(txPayloadBytes, &txInfo); err == nil {
-originalTxID = txInfo.OriginalTransactionID
-if txInfo.ExpiresDate > 0 {
-newExpiry = time.Unix(txInfo.ExpiresDate/1000, 0)
-}
-}
-}
-}
-}
+	h.logger.Info("apple s2s: subscription updated",
+		zap.String("subscription_id", sub.ID.String()),
+		zap.String("original_tx_id", originalTxID),
+		zap.String("notification_type", notifType),
+		zap.String("new_status", newStatus),
+	)
 
-if originalTxID == "" {
-h.logger.Warn("apple s2s: no originalTransactionId in signedTransactionInfo",
-zap.String("notification_type", notifType),
-zap.String("event_id", event.EventID),
-)
-return nil
-}
+	if (notifType == "DID_RENEW" || notifType == "SUBSCRIBED") && !newExpiry.IsZero() {
+		if _, err := h.queries.UpdateSubscriptionExpiry(ctx, generated.UpdateSubscriptionExpiryParams{
+			ID:        sub.ID,
+			ExpiresAt: newExpiry,
+		}); err != nil {
+			return fmt.Errorf("apple s2s: update expiry: %w", err)
+		}
+		h.logger.Info("apple s2s: subscription expiry extended",
+			zap.String("subscription_id", sub.ID.String()),
+			zap.Time("new_expiry", newExpiry),
+		)
+	}
 
-// Look up subscription by original_transaction_id (stored as provider_tx_id on first IAP verify)
-txID := originalTxID
-sub, err := h.queries.GetSubscriptionByProviderTxID(ctx, &txID)
-if err != nil {
-// Not found is non-fatal: notification may arrive before first receipt verify
-h.logger.Warn("apple s2s: subscription not found",
-zap.String("original_tx_id", originalTxID),
-zap.String("notification_type", notifType),
-)
-return nil
-}
-
-// Acquire per-subscription Redis lock to serialize concurrent events.
-// Without this, two goroutines can process EXPIRED and DID_RENEW simultaneously,
-// causing a race where the order of DB writes is non-deterministic.
-// We spin-wait for the lock so no event is silently dropped.
-if h.redis != nil {
-lockKey := fmt.Sprintf("sub:proc:lock:%s", sub.ID.String())
-lockDeadline := time.Now().Add(8 * time.Second)
-for {
-acquired, lockErr := h.redis.SetNX(ctx, lockKey, notifType, 10*time.Second).Result()
-if lockErr != nil {
-h.logger.Warn("apple s2s: redis lock error, proceeding without lock", zap.Error(lockErr))
-break
-}
-if acquired {
-defer h.redis.Del(ctx, lockKey)
-break
-}
-if time.Now().After(lockDeadline) {
-h.logger.Warn("apple s2s: lock wait timed out, proceeding without lock",
-zap.String("subscription_id", sub.ID.String()),
-zap.String("notification_type", notifType),
-)
-break
-}
-time.Sleep(100 * time.Millisecond)
-}
-}
-
-// Map notificationType → subscription status
-// https://developer.apple.com/documentation/appstoreservernotifications/notificationtype
-var newStatus string
-switch notifType {
-case "SUBSCRIBED", "DID_RENEW":
-newStatus = "active"
-case "DID_FAIL_TO_RENEW":
-newStatus = "grace"
-case "EXPIRED", "GRACE_PERIOD_EXPIRED":
-newStatus = "expired"
-case "CANCEL":
-newStatus = "cancelled"
-case "REFUND", "REVOKE":
-newStatus = "cancelled"
-case "PRICE_INCREASE":
-h.logger.Info("apple s2s: price increase notification, no action",
-zap.String("subscription_id", sub.ID.String()),
-)
-return nil
-default:
-h.logger.Warn("apple s2s: unknown notificationType, skipping",
-zap.String("type", notifType),
-)
-return nil
-}
-
-if _, err := h.queries.UpdateSubscriptionStatus(ctx, generated.UpdateSubscriptionStatusParams{
-ID:     sub.ID,
-Status: newStatus,
-}); err != nil {
-return fmt.Errorf("apple s2s: update status to %s: %w", newStatus, err)
-}
-
-h.logger.Info("apple s2s: subscription updated",
-zap.String("subscription_id", sub.ID.String()),
-zap.String("original_tx_id", originalTxID),
-zap.String("notification_type", notifType),
-zap.String("new_status", newStatus),
-)
-
-// For renewal events, also extend expiry date
-if (notifType == "DID_RENEW" || notifType == "SUBSCRIBED") && !newExpiry.IsZero() {
-if _, err := h.queries.UpdateSubscriptionExpiry(ctx, generated.UpdateSubscriptionExpiryParams{
-ID:        sub.ID,
-ExpiresAt: newExpiry,
-}); err != nil {
-return fmt.Errorf("apple s2s: update expiry: %w", err)
-}
-h.logger.Info("apple s2s: subscription expiry extended",
-zap.String("subscription_id", sub.ID.String()),
-zap.Time("new_expiry", newExpiry),
-)
-}
-
-return nil
+	return nil
 }

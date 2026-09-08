@@ -361,6 +361,22 @@ func formatArmStatistics(armStats map[uuid.UUID]*service.ArmStats) []ArmStatisti
 	return arms
 }
 
+func (h *BanditHandler) populateWinProbabilities(c *gin.Context, experimentID uuid.UUID, resp *StatisticsResponse) {
+	includeWinProbs, specified, errStr := parseWinProbsOption(c)
+	if errStr != "" || (specified && !includeWinProbs) {
+		return
+	}
+	if includeWinProbs {
+		if winProbs, err := h.banditService.CalculateWinProbability(c.Request.Context(), experimentID, 1000); err == nil {
+			probs := make(map[string]float64, len(winProbs))
+			for armID, prob := range winProbs {
+				probs[armID.String()] = prob
+			}
+			resp.WinProbs = probs
+		}
+	}
+}
+
 func (h *BanditHandler) Statistics(c *gin.Context) {
 	if errStr := validateBanditQueryParams(c); errStr != "" {
 		response.BadRequest(c, errStr)
@@ -391,25 +407,12 @@ func (h *BanditHandler) Statistics(c *gin.Context) {
 		Arms:         formatArmStatistics(armStats),
 	}
 
-	includeWinProbs, specified, errStr := parseWinProbsOption(c)
-	if errStr != "" {
+	if _, _, errStr := parseWinProbsOption(c); errStr != "" {
 		response.BadRequest(c, errStr)
 		return
 	}
-	if specified && !includeWinProbs {
-		response.OK(c, resp)
-		return
-	}
-	if includeWinProbs {
-		if winProbs, err := h.banditService.CalculateWinProbability(c.Request.Context(), experimentID, 1000); err == nil {
-			probs := make(map[string]float64, len(winProbs))
-			for armID, prob := range winProbs {
-				probs[armID.String()] = prob
-			}
-			resp.WinProbs = probs
-		}
-	}
 
+	h.populateWinProbabilities(c, experimentID, &resp)
 	response.OK(c, resp)
 }
 

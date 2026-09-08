@@ -57,7 +57,7 @@ func (h *AppSettingsHandler) GetAppSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"settings": s})
 }
 
-func applySettingsUpdates(current *entity.AppSettings, req appSettingsRequest) string {
+func applyTrialAndGracePeriodSettings(current *entity.AppSettings, req appSettingsRequest) string {
 	if req.GracePeriodDays != nil {
 		if *req.GracePeriodDays < 0 || *req.GracePeriodDays > 90 {
 			return "grace_period_days must be 0–90"
@@ -73,18 +73,16 @@ func applySettingsUpdates(current *entity.AppSettings, req appSettingsRequest) s
 		}
 		current.TrialDays = *req.TrialDays
 	}
+	return ""
+}
+
+func applyCurrencyAndStoreSettings(current *entity.AppSettings, req appSettingsRequest) string {
 	if req.DefaultCurrency != nil {
 		cur := strings.ToUpper(strings.TrimSpace(*req.DefaultCurrency))
 		if len(cur) != 3 {
 			return "default_currency must be a 3-letter ISO-4217 code"
 		}
 		current.DefaultCurrency = cur
-	}
-	if req.WebhookURL != nil {
-		current.WebhookURL = *req.WebhookURL
-	}
-	if req.WebhookSecret != nil {
-		current.WebhookSecret = *req.WebhookSecret
 	}
 	if req.StoreEnvironment != nil {
 		current.StoreEnvironment = *req.StoreEnvironment
@@ -94,6 +92,22 @@ func applySettingsUpdates(current *entity.AppSettings, req appSettingsRequest) s
 	}
 	if req.SubscriptionRequiredFor != nil {
 		current.SubscriptionRequiredFor = req.SubscriptionRequiredFor
+	}
+	return ""
+}
+
+func applySettingsUpdates(current *entity.AppSettings, req appSettingsRequest) string {
+	if errStr := applyTrialAndGracePeriodSettings(current, req); errStr != "" {
+		return errStr
+	}
+	if errStr := applyCurrencyAndStoreSettings(current, req); errStr != "" {
+		return errStr
+	}
+	if req.WebhookURL != nil {
+		current.WebhookURL = *req.WebhookURL
+	}
+	if req.WebhookSecret != nil {
+		current.WebhookSecret = *req.WebhookSecret
 	}
 	return ""
 }

@@ -109,52 +109,57 @@ func (r *ExperimentAdminRepository) UpdateExperimentDraft(ctx context.Context, e
 	return nil
 }
 
-func syncDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, arms []service.ExperimentArmInput) error {
-	if err := ensureDraftExperimentPricingTiersExist(ctx, tx, arms); err != nil {
-		return err
-	}
-
+func loadExistingArmIDs(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID) (map[uuid.UUID]struct{}, error) {
 	existingArmIDs := make(map[uuid.UUID]struct{})
 	rows, err := tx.Query(ctx, `SELECT id FROM ab_test_arms WHERE experiment_id = $1`, experimentID)
 	if err != nil {
-		return fmt.Errorf("failed to load experiment arms: %w", err)
+		return nil, fmt.Errorf("failed to load experiment arms: %w", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var armID uuid.UUID
 		if err := rows.Scan(&armID); err != nil {
-			return fmt.Errorf("failed to scan experiment arm: %w", err)
+			return nil, fmt.Errorf("failed to scan experiment arm: %w", err)
 		}
 		existingArmIDs[armID] = struct{}{}
 	}
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("failed to iterate experiment arms: %w", err)
+		return nil, fmt.Errorf("failed to iterate experiment arms: %w", err)
 	}
+	return existingArmIDs, nil
+}
 
+func collectRetainedArmIDs(arms []service.ExperimentArmInput, existingArmIDs map[uuid.UUID]struct{}) ([]uuid.UUID, error) {
 	retainedArmIDs := make([]uuid.UUID, 0, len(arms))
 	for _, arm := range arms {
 		if arm.ID == nil {
 			continue
 		}
 		if _, exists := existingArmIDs[*arm.ID]; !exists {
-			return service.ErrExperimentArmNotFound
+			return nil, service.ErrExperimentArmNotFound
 		}
 		retainedArmIDs = append(retainedArmIDs, *arm.ID)
 	}
+	return retainedArmIDs, nil
+}
 
+func deleteRemovedDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, retainedArmIDs []uuid.UUID) error {
 	if len(retainedArmIDs) == 0 {
 		if _, err := tx.Exec(ctx, `DELETE FROM ab_test_arms WHERE experiment_id = $1`, experimentID); err != nil {
 			return fmt.Errorf("failed to delete replaced experiment arms: %w", err)
 		}
-	} else {
-		if _, err := tx.Exec(ctx, `
-			DELETE FROM ab_test_arms
-			WHERE experiment_id = $1
-			  AND NOT (id = ANY($2))`, experimentID, retainedArmIDs); err != nil {
-			return fmt.Errorf("failed to delete removed experiment arms: %w", err)
-		}
+		return nil
 	}
+	if _, err := tx.Exec(ctx, `
+		DELETE FROM ab_test_arms
+		WHERE experiment_id = $1
+		  AND NOT (id = ANY($2))`, experimentID, retainedArmIDs); err != nil {
+		return fmt.Errorf("failed to delete removed experiment arms: %w", err)
+	}
+	return nil
+}
 
+func updateDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, arms []service.ExperimentArmInput) error {
 	for _, arm := range arms {
 		if arm.ID == nil {
 			continue
@@ -175,7 +180,10 @@ func syncDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.U
 			return service.ErrExperimentArmNotFound
 		}
 	}
+	return nil
+}
 
+func insertNewDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, arms []service.ExperimentArmInput) error {
 	for _, arm := range arms {
 		if arm.ID != nil {
 			continue
@@ -186,8 +194,33 @@ func syncDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.U
 			return fmt.Errorf("failed to insert experiment arm: %w", err)
 		}
 	}
-
 	return nil
+}
+
+func syncDraftExperimentArms(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, arms []service.ExperimentArmInput) error {
+	if err := ensureDraftExperimentPricingTiersExist(ctx, tx, arms); err != nil {
+		return err
+	}
+
+	existingArmIDs, err := loadExistingArmIDs(ctx, tx, experimentID)
+	if err != nil {
+		return err
+	}
+
+	retainedArmIDs, err := collectRetainedArmIDs(arms, existingArmIDs)
+	if err != nil {
+		return err
+	}
+
+	if err := deleteRemovedDraftExperimentArms(ctx, tx, experimentID, retainedArmIDs); err != nil {
+		return err
+	}
+
+	if err := updateDraftExperimentArms(ctx, tx, experimentID, arms); err != nil {
+		return err
+	}
+
+	return insertNewDraftExperimentArms(ctx, tx, experimentID, arms)
 }
 
 func ensureDraftExperimentPricingTiersExist(ctx context.Context, tx pgx.Tx, arms []service.ExperimentArmInput) error {

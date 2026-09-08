@@ -46,73 +46,70 @@ func NewJWTMiddleware(secret string, redisClient *redis.Client, accessTTL time.D
 	}
 }
 
+func extractBearerAuthToken(authHeader string) (string, bool) {
+	if authHeader == "" {
+		return "", false
+	}
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return "", false
+	}
+	return parts[1], true
+}
+
+func (j *JWTMiddleware) checkTokenBlocklist(ctx context.Context, jti string) (bool, error) {
+	blocklisted, err := j.refreshCache.Get(ctx, j.blocklistPrefix+jti).Result()
+	if err != nil && err != redis.Nil {
+		return false, err
+	}
+	return blocklisted != "", nil
+}
+
+func injectJWTClaims(c *gin.Context, claims *JWTClaims) {
+	c.Set("user_id", claims.UserID)
+	c.Set("jti", claims.JTI)
+	if claims.Role != "" {
+		c.Set("role", claims.Role)
+	}
+	if claims.AppID != "" {
+		c.Set("app_id", claims.AppID)
+		if appID, err := uuid.Parse(claims.AppID); err == nil {
+			c.Request = c.Request.WithContext(appctx.WithAppID(c.Request.Context(), appID))
+		}
+	}
+}
+
 // Authenticate validates the JWT token and sets user context
 func (j *JWTMiddleware) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			response.Unauthorized(c, "Missing authorization header")
+		tokenString, ok := extractBearerAuthToken(c.GetHeader("Authorization"))
+		if !ok {
+			response.Unauthorized(c, "Invalid or missing authorization header")
 			c.Abort()
 			return
 		}
 
-		// Extract token from "Bearer <token>"
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			response.Unauthorized(c, "Invalid authorization header format")
-			c.Abort()
-			return
-		}
-
-		tokenString := parts[1]
-
-		// Parse and validate token
-		claims := &JWTClaims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errors.New("unexpected signing method")
-			}
-			return j.secret, nil
-		})
-
-		if err != nil || !token.Valid {
+		claims, err := j.ParseToken(tokenString)
+		if err != nil {
 			response.Unauthorized(c, "Invalid token")
 			c.Abort()
 			return
 		}
 
-		// Check if token is revoked
-		ctx := c.Request.Context()
-		blocklisted, err := j.refreshCache.Get(ctx, j.blocklistPrefix+claims.JTI).Result()
-		if err != nil && err != redis.Nil {
+		isRevoked, err := j.checkTokenBlocklist(c.Request.Context(), claims.JTI)
+		if err != nil {
 			j.logger.Error("failed to check token blocklist", zap.Error(err))
-			// Fail closed for security
 			response.ServiceUnavailable(c, "Token validation unavailable")
 			c.Abort()
 			return
 		}
-
-		if blocklisted != "" {
+		if isRevoked {
 			response.Error(c, 401, "TOKEN_REVOKED", "Token has been revoked")
 			c.Abort()
 			return
 		}
 
-		// Set user context
-		c.Set("user_id", claims.UserID)
-		c.Set("jti", claims.JTI)
-		if claims.Role != "" {
-			c.Set("role", claims.Role)
-		}
-		if claims.AppID != "" {
-			c.Set("app_id", claims.AppID)
-			// Also inject into request context so repositories can access it
-			if appID, err := uuid.Parse(claims.AppID); err == nil {
-				r := c.Request.WithContext(appctx.WithAppID(c.Request.Context(), appID))
-				c.Request = r
-			}
-		}
-
+		injectJWTClaims(c, claims)
 		c.Next()
 	}
 }

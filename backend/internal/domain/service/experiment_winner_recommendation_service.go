@@ -132,22 +132,8 @@ func (s *ExperimentWinnerRecommendationService) Recommend(ctx context.Context, i
 		MinSampleSize:              input.MinSampleSize,
 	}
 
-	switch input.Status {
-	case "draft":
-		recommendation.Reason = WinnerRecommendationReasonDraftExperiment
-		return s.finalizeRecommendation(ctx, input, recommendation)
-	case "running", "paused", "completed":
-	default:
-		recommendation.Reason = WinnerRecommendationReasonStatusNotEligible
-		return s.finalizeRecommendation(ctx, input, recommendation)
-	}
-
-	if len(input.Arms) < 2 {
-		recommendation.Reason = WinnerRecommendationReasonInsufficientArms
-		return s.finalizeRecommendation(ctx, input, recommendation)
-	}
-	if input.TotalSamples <= 0 {
-		recommendation.Reason = WinnerRecommendationReasonInsufficientData
+	if reason, ok := checkPreCalculationIneligibility(input); ok {
+		recommendation.Reason = reason
 		return s.finalizeRecommendation(ctx, input, recommendation)
 	}
 
@@ -175,18 +161,42 @@ func (s *ExperimentWinnerRecommendationService) Recommend(ctx context.Context, i
 	confidencePercent := confidence * 100
 	recommendation.ConfidencePercent = &confidencePercent
 
-	if input.TotalSamples < input.MinSampleSize {
-		recommendation.Reason = WinnerRecommendationReasonInsufficientSampleSize
-		return s.finalizeRecommendation(ctx, input, recommendation)
-	}
-	if confidence < input.ConfidenceThreshold {
-		recommendation.Reason = WinnerRecommendationReasonConfidenceBelowThreshold
+	if reason, ok := checkConfidenceThresholds(input, confidence); ok {
+		recommendation.Reason = reason
 		return s.finalizeRecommendation(ctx, input, recommendation)
 	}
 
 	recommendation.Recommended = true
 	recommendation.Reason = WinnerRecommendationReasonRecommendWinner
 	return s.finalizeRecommendation(ctx, input, recommendation)
+}
+
+func checkPreCalculationIneligibility(input ExperimentWinnerRecommendationInput) (string, bool) {
+	switch input.Status {
+	case "draft":
+		return WinnerRecommendationReasonDraftExperiment, true
+	case "running", "paused", "completed":
+	default:
+		return WinnerRecommendationReasonStatusNotEligible, true
+	}
+
+	if len(input.Arms) < 2 {
+		return WinnerRecommendationReasonInsufficientArms, true
+	}
+	if input.TotalSamples <= 0 {
+		return WinnerRecommendationReasonInsufficientData, true
+	}
+	return "", false
+}
+
+func checkConfidenceThresholds(input ExperimentWinnerRecommendationInput, confidence float64) (string, bool) {
+	if input.TotalSamples < input.MinSampleSize {
+		return WinnerRecommendationReasonInsufficientSampleSize, true
+	}
+	if confidence < input.ConfidenceThreshold {
+		return WinnerRecommendationReasonConfidenceBelowThreshold, true
+	}
+	return "", false
 }
 
 func (s *ExperimentWinnerRecommendationService) finalizeRecommendation(ctx context.Context, input ExperimentWinnerRecommendationInput, recommendation *WinnerRecommendation) (*WinnerRecommendation, error) {

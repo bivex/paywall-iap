@@ -421,8 +421,7 @@ func serializableExperimentAutomationPolicy(policy service.ExperimentAutomationP
 	return result
 }
 
-func experimentAutomationPolicyChangedFields(before, after service.ExperimentAutomationPolicy) []string {
-	fields := make([]string, 0, 10)
+func appendAutomationPolicyFlagChanges(fields []string, before, after service.ExperimentAutomationPolicy) []string {
 	if before.Enabled != after.Enabled {
 		fields = append(fields, "enabled")
 	}
@@ -444,44 +443,47 @@ func experimentAutomationPolicyChangedFields(before, after service.ExperimentAut
 	if before.ManualOverride != after.ManualOverride {
 		fields = append(fields, "manual_override")
 	}
+	return fields
+}
 
-	beforeLockedUntil := ""
-	afterLockedUntil := ""
-	if before.LockedUntil != nil {
-		beforeLockedUntil = before.LockedUntil.UTC().Format(time.RFC3339)
+func formatTimePtr(t *time.Time) string {
+	if t != nil {
+		return t.UTC().Format(time.RFC3339)
 	}
-	if after.LockedUntil != nil {
-		afterLockedUntil = after.LockedUntil.UTC().Format(time.RFC3339)
+	return ""
+}
+
+func formatUUIDPtr(u *uuid.UUID) string {
+	if u != nil {
+		return u.String()
 	}
-	if beforeLockedUntil != afterLockedUntil {
+	return ""
+}
+
+func formatStrPtr(s *string) string {
+	if s != nil {
+		return *s
+	}
+	return ""
+}
+
+func appendAutomationPolicyLockChanges(fields []string, before, after service.ExperimentAutomationPolicy) []string {
+	if formatTimePtr(before.LockedUntil) != formatTimePtr(after.LockedUntil) {
 		fields = append(fields, "locked_until")
 	}
-
-	beforeLockedBy := ""
-	afterLockedBy := ""
-	if before.LockedBy != nil {
-		beforeLockedBy = before.LockedBy.String()
-	}
-	if after.LockedBy != nil {
-		afterLockedBy = after.LockedBy.String()
-	}
-	if beforeLockedBy != afterLockedBy {
+	if formatUUIDPtr(before.LockedBy) != formatUUIDPtr(after.LockedBy) {
 		fields = append(fields, "locked_by")
 	}
-
-	beforeLockReason := ""
-	afterLockReason := ""
-	if before.LockReason != nil {
-		beforeLockReason = *before.LockReason
-	}
-	if after.LockReason != nil {
-		afterLockReason = *after.LockReason
-	}
-	if beforeLockReason != afterLockReason {
+	if formatStrPtr(before.LockReason) != formatStrPtr(after.LockReason) {
 		fields = append(fields, "lock_reason")
 	}
-
 	return fields
+}
+
+func experimentAutomationPolicyChangedFields(before, after service.ExperimentAutomationPolicy) []string {
+	fields := make([]string, 0, 10)
+	fields = appendAutomationPolicyFlagChanges(fields, before, after)
+	return appendAutomationPolicyLockChanges(fields, before, after)
 }
 
 func (h *AdminExperimentHandler) logExperimentAutomationPolicyAction(c *gin.Context, experimentID uuid.UUID, before, after service.ExperimentAutomationPolicy) {
@@ -626,7 +628,7 @@ func (h *AdminExperimentHandler) logHoldExperimentForReviewAction(c *gin.Context
 	_ = h.auditService.LogAction(c.Request.Context(), *adminID, "hold_experiment_for_review", "experiment", nil, details)
 }
 
-func validateExperimentBasicInfo(name string, description *string, algorithmType *string, isBandit *bool) string {
+func validateExperimentName(name string) string {
 	if name == "" {
 		return "Experiment name is required"
 	}
@@ -636,12 +638,20 @@ func validateExperimentBasicInfo(name string, description *string, algorithmType
 	if containsControlCharacter(name) {
 		return "Experiment name cannot contain control characters"
 	}
+	return ""
+}
+
+func validateExperimentDescription(description *string) string {
 	if description == nil {
 		return "Experiment description is required"
 	}
 	if containsNullByte(*description) {
 		return "Experiment description cannot contain null bytes"
 	}
+	return ""
+}
+
+func validateExperimentAlgorithm(algorithmType *string) string {
 	if algorithmType == nil {
 		return "Algorithm type is required"
 	}
@@ -650,8 +660,21 @@ func validateExperimentBasicInfo(name string, description *string, algorithmType
 	}
 	switch *algorithmType {
 	case "thompson_sampling", "ucb", "epsilon_greedy":
+		return ""
 	default:
 		return "Algorithm type must be thompson_sampling, ucb, or epsilon_greedy"
+	}
+}
+
+func validateExperimentBasicInfo(name string, description *string, algorithmType *string, isBandit *bool) string {
+	if msg := validateExperimentName(name); msg != "" {
+		return msg
+	}
+	if msg := validateExperimentDescription(description); msg != "" {
+		return msg
+	}
+	if msg := validateExperimentAlgorithm(algorithmType); msg != "" {
+		return msg
 	}
 	if isBandit == nil {
 		return "Bandit flag is required"
@@ -727,6 +750,32 @@ func validateCreateAdminExperimentRequest(req createAdminExperimentRequest) stri
 	return ""
 }
 
+func validateUpdateExperimentArms(arms []updateAdminExperimentArmRequest) string {
+	if len(arms) < 2 {
+		return "At least two experiment arms are required"
+	}
+	controlCount := 0
+	seenIDs := make(map[uuid.UUID]struct{}, len(arms))
+	for _, arm := range arms {
+		if msg := validateExperimentArmFields(arm.Name, arm.Description, arm.TrafficWeight); msg != "" {
+			return msg
+		}
+		if arm.ID != nil {
+			if _, exists := seenIDs[*arm.ID]; exists {
+				return "Each persisted experiment arm may only appear once"
+			}
+			seenIDs[*arm.ID] = struct{}{}
+		}
+		if arm.IsControl {
+			controlCount++
+		}
+	}
+	if controlCount != 1 {
+		return "Exactly one control arm is required"
+	}
+	return ""
+}
+
 func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) string {
 	if msg := validateExperimentBasicInfo(req.Name, req.Description, req.AlgorithmType, req.IsBandit); msg != "" {
 		return msg
@@ -735,27 +784,8 @@ func validateUpdateAdminExperimentRequest(req updateAdminExperimentRequest) stri
 		return msg
 	}
 	if req.Arms != nil {
-		if len(req.Arms) < 2 {
-			return "At least two experiment arms are required"
-		}
-		controlCount := 0
-		seenIDs := make(map[uuid.UUID]struct{}, len(req.Arms))
-		for _, arm := range req.Arms {
-			if msg := validateExperimentArmFields(arm.Name, arm.Description, arm.TrafficWeight); msg != "" {
-				return msg
-			}
-			if arm.ID != nil {
-				if _, exists := seenIDs[*arm.ID]; exists {
-					return "Each persisted experiment arm may only appear once"
-				}
-				seenIDs[*arm.ID] = struct{}{}
-			}
-			if arm.IsControl {
-				controlCount++
-			}
-		}
-		if controlCount != 1 {
-			return "Exactly one control arm is required"
+		if msg := validateUpdateExperimentArms(req.Arms); msg != "" {
+			return msg
 		}
 	}
 	return ""

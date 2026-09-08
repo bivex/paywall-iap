@@ -27,27 +27,25 @@ func NewRegisterCommand(userRepo repository.UserRepository, jwtMiddleware *appMi
 	}
 }
 
-// Execute executes the register command
-func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest) (*dto.RegisterResponse, error) {
-	// Validate platform
+func validateRegisterRequest(req *dto.RegisterRequest) (uuid.UUID, error) {
 	if req.Platform != "ios" && req.Platform != "android" {
-		return nil, fmt.Errorf("%w: invalid platform", domainErrors.ErrInvalidPlatform)
+		return uuid.Nil, fmt.Errorf("%w: invalid platform", domainErrors.ErrInvalidPlatform)
 	}
 	if containsNullByte(req.PlatformUserID) || containsNullByte(req.DeviceID) || containsNullByte(req.AppVersion) || containsNullByte(req.Email) {
-		return nil, fmt.Errorf("invalid request: text fields must not contain null bytes")
+		return uuid.Nil, fmt.Errorf("invalid request: text fields must not contain null bytes")
 	}
 
-	// Parse AppID if provided
-	var appID uuid.UUID
 	if req.AppID != "" {
 		parsed, err := uuid.Parse(req.AppID)
 		if err != nil {
-			return nil, fmt.Errorf("invalid app_id: %w", err)
+			return uuid.Nil, fmt.Errorf("invalid app_id: %w", err)
 		}
-		appID = parsed
+		return parsed, nil
 	}
+	return uuid.Nil, nil
+}
 
-	// Check if user already exists (app-scoped when AppID is provided)
+func (c *RegisterCommand) checkUserAvailability(ctx context.Context, req *dto.RegisterRequest, appID uuid.UUID) error {
 	var exists bool
 	var err error
 	if appID != uuid.Nil {
@@ -56,20 +54,33 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 		exists, err = c.userRepo.ExistsByPlatformID(ctx, req.PlatformUserID)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to check user existence: %w", err)
+		return fmt.Errorf("failed to check user existence: %w", err)
 	}
 	if exists {
-		return nil, fmt.Errorf("%w: user already exists", domainErrors.ErrUserAlreadyExists)
+		return fmt.Errorf("%w: user already exists", domainErrors.ErrUserAlreadyExists)
 	}
 
 	if strings.TrimSpace(req.Email) != "" {
 		userByEmail, err := c.userRepo.GetByEmail(ctx, req.Email)
 		if err == nil && userByEmail != nil {
-			return nil, fmt.Errorf("%w: user already exists", domainErrors.ErrUserAlreadyExists)
+			return fmt.Errorf("%w: user already exists", domainErrors.ErrUserAlreadyExists)
 		}
 		if err != nil && !strings.Contains(err.Error(), domainErrors.ErrUserNotFound.Error()) {
-			return nil, fmt.Errorf("failed to check user email: %w", err)
+			return fmt.Errorf("failed to check user email: %w", err)
 		}
+	}
+	return nil
+}
+
+// Execute executes the register command
+func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest) (*dto.RegisterResponse, error) {
+	appID, err := validateRegisterRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := c.checkUserAvailability(ctx, req, appID); err != nil {
+		return nil, err
 	}
 
 	// Create user entity

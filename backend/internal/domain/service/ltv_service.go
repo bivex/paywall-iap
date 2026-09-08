@@ -87,21 +87,71 @@ type LTVEstimates struct {
 	Factors       map[string]float64 `json:"factors"`
 }
 
-// CalculateLTV calculates LTV estimates for a user
-func (s *LTVService) CalculateLTV(ctx context.Context, userID uuid.UUID) (*LTVEstimates, error) {
-	// Get user's subscription history
+func (s *LTVService) populateActualLTV(estimates *LTVEstimates, subs []Subscription) {
+	if len(subs) == 0 {
+		return
+	}
+	firstSub := subs[0]
+	daysSinceFirst := int(time.Since(firstSub.CreatedAt).Hours() / 24)
+
+	if daysSinceFirst >= 30 {
+		estimates.LTV30 = s.getRevenueInPeriod(subs, 30)
+		estimates.Factors["actual_30day"] = estimates.LTV30
+	}
+	if daysSinceFirst >= 90 {
+		estimates.LTV90 = s.getRevenueInPeriod(subs, 90)
+		estimates.Factors["actual_90day"] = estimates.LTV90
+	}
+	if daysSinceFirst >= 365 {
+		estimates.LTV365 = s.getRevenueInPeriod(subs, 365)
+		estimates.Factors["actual_365day"] = estimates.LTV365
+	}
+}
+
+func (s *LTVService) populatePredictedLTV(ctx context.Context, userID uuid.UUID, estimates *LTVEstimates) {
+	if estimates.LTV30 == 0 {
+		if ltv30, err := s.predictLTVFromCohorts(ctx, userID, 30); err == nil {
+			estimates.LTV30 = ltv30
+			estimates.Factors["predicted_30day"] = ltv30
+		}
+	}
+	if estimates.LTV90 == 0 {
+		if ltv90, err := s.predictLTVFromCohorts(ctx, userID, 90); err == nil {
+			estimates.LTV90 = ltv90
+			estimates.Factors["predicted_90day"] = ltv90
+		}
+	}
+	if estimates.LTV365 == 0 {
+		if ltv365, err := s.predictLTVFromCohorts(ctx, userID, 365); err == nil {
+			estimates.LTV365 = ltv365
+			estimates.Factors["predicted_365day"] = ltv365
+		}
+	}
+}
+
+func (s *LTVService) loadSubscriptionsAndRevenue(ctx context.Context, userID uuid.UUID) ([]Subscription, float64, error) {
+	if s.subscriptionRepo == nil {
+		return nil, 0, nil
+	}
 	subs, err := s.subscriptionRepo.GetUserSubscriptions(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get subscriptions: %w", err)
+		return nil, 0, fmt.Errorf("failed to get subscriptions: %w", err)
 	}
 
-	// Get total revenue to date
 	totalRevenue, err := s.subscriptionRepo.GetTotalRevenue(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get total revenue: %w", err)
+		return nil, 0, fmt.Errorf("failed to get total revenue: %w", err)
+	}
+	return subs, totalRevenue, nil
+}
+
+// CalculateLTV calculates LTV estimates for a user
+func (s *LTVService) CalculateLTV(ctx context.Context, userID uuid.UUID) (*LTVEstimates, error) {
+	subs, totalRevenue, err := s.loadSubscriptionsAndRevenue(ctx, userID)
+	if err != nil {
+		return nil, err
 	}
 
-	// Calculate base LTV from actual data
 	estimates := &LTVEstimates{
 		UserID:       userID.String(),
 		LTVLifetime:  totalRevenue,
@@ -110,65 +160,17 @@ func (s *LTVService) CalculateLTV(ctx context.Context, userID uuid.UUID) (*LTVEs
 		Factors:      make(map[string]float64),
 	}
 
-	// If user has enough history, use actual data
-	if len(subs) > 0 {
-		firstSub := subs[0]
-		daysSinceFirst := int(time.Since(firstSub.CreatedAt).Hours() / 24)
+	s.populateActualLTV(estimates, subs)
+	s.populatePredictedLTV(ctx, userID, estimates)
 
-		if daysSinceFirst >= 30 {
-			// Calculate 30-day LTV from actual data
-			estimates.LTV30 = s.getRevenueInPeriod(subs, 30)
-			estimates.Factors["actual_30day"] = estimates.LTV30
-		}
-
-		if daysSinceFirst >= 90 {
-			// Calculate 90-day LTV from actual data
-			estimates.LTV90 = s.getRevenueInPeriod(subs, 90)
-			estimates.Factors["actual_90day"] = estimates.LTV90
-		}
-
-		if daysSinceFirst >= 365 {
-			// Calculate 365-day LTV from actual data
-			estimates.LTV365 = s.getRevenueInPeriod(subs, 365)
-			estimates.Factors["actual_365day"] = estimates.LTV365
-		}
-	}
-
-	// For missing time horizons, use cohort-based predictions
-	if estimates.LTV30 == 0 {
-		ltv30, err := s.predictLTVFromCohorts(ctx, userID, 30)
-		if err == nil {
-			estimates.LTV30 = ltv30
-			estimates.Factors["predicted_30day"] = ltv30
-		}
-	}
-
-	if estimates.LTV90 == 0 {
-		ltv90, err := s.predictLTVFromCohorts(ctx, userID, 90)
-		if err == nil {
-			estimates.LTV90 = ltv90
-			estimates.Factors["predicted_90day"] = ltv90
-		}
-	}
-
-	if estimates.LTV365 == 0 {
-		ltv365, err := s.predictLTVFromCohorts(ctx, userID, 365)
-		if err == nil {
-			estimates.LTV365 = ltv365
-			estimates.Factors["predicted_365day"] = ltv365
-		}
-	}
-
-	// Calculate confidence based on data availability
-	confidence := s.calculateConfidence(estimates, subs)
-	estimates.Confidence = confidence
+	estimates.Confidence = s.calculateConfidence(estimates, subs)
 
 	s.logger.Debug("Calculated LTV",
 		zap.String("user_id", userID.String()),
 		zap.Float64("ltv30", estimates.LTV30),
 		zap.Float64("ltv90", estimates.LTV90),
 		zap.Float64("ltv365", estimates.LTV365),
-		zap.Float64("confidence", confidence),
+		zap.Float64("confidence", estimates.Confidence),
 	)
 
 	return estimates, nil
@@ -176,34 +178,27 @@ func (s *LTVService) CalculateLTV(ctx context.Context, userID uuid.UUID) (*LTVEs
 
 // predictLTVFromCohorts predicts LTV using cohort data
 func (s *LTVService) predictLTVFromCohorts(ctx context.Context, userID uuid.UUID, days int) (float64, error) {
-	// Get user's join date (first subscription)
-	subs, err := s.subscriptionRepo.GetUserSubscriptions(ctx, userID)
-	if err != nil || len(subs) == 0 {
-		// Use default LTV based on product pricing
-		return s.getDefaultLTV(days), nil
+	if s.cohortWorker != nil {
+		ltvMap, err := s.cohortWorker.CalculateLTVFromCohorts(ctx, userID)
+		if err != nil {
+			s.logger.Warn("Failed to get cohort LTV, using default",
+				zap.String("user_id", userID.String()),
+				zap.Error(err),
+			)
+			return s.getDefaultLTV(days), nil
+		}
+		if val, ok := lookupCohortLTV(ltvMap, days); ok {
+			return val, nil
+		}
 	}
 
-	// Get LTV from cohort worker
-	ltvMap, err := s.cohortWorker.CalculateLTVFromCohorts(ctx, userID)
-	if err != nil {
-		s.logger.Warn("Failed to get cohort LTV, using default",
-			zap.String("user_id", userID.String()),
-			zap.Error(err),
-		)
-		return s.getDefaultLTV(days), nil
-	}
+	return s.getDefaultLTV(days), nil
+}
 
-	// Extract the requested time horizon
-	switch days {
-	case 30:
-		return ltvMap["ltv30"], nil
-	case 90:
-		return ltvMap["ltv90"], nil
-	case 365:
-		return ltvMap["ltv365"], nil
-	default:
-		return s.getDefaultLTV(days), nil
-	}
+func lookupCohortLTV(ltvMap map[string]float64, days int) (float64, bool) {
+	key := fmt.Sprintf("ltv%d", days)
+	val, ok := ltvMap[key]
+	return val, ok
 }
 
 // getDefaultLTV returns default LTV estimates based on product pricing
@@ -309,6 +304,22 @@ func (s *LTVService) calculateConfidence(estimates *LTVEstimates, subs []Subscri
 	return confidence
 }
 
+func accumulateCohortMetricRevenue(cohortLTV *CohortLTV, metric CohortMetrics) {
+	if metric.CohortSize <= 0 {
+		return
+	}
+	cohortSize := float64(metric.CohortSize)
+	if rev30, ok := metric.Revenue["day30"]; ok {
+		cohortLTV.LTV30 += rev30 / cohortSize
+	}
+	if rev90, ok := metric.Revenue["day90"]; ok {
+		cohortLTV.LTV90 += rev90 / cohortSize
+	}
+	if rev365, ok := metric.Revenue["day365"]; ok {
+		cohortLTV.LTV365 += rev365 / cohortSize
+	}
+}
+
 // GetCohortLTV calculates LTV for an entire cohort
 func (s *LTVService) GetCohortLTV(ctx context.Context, cohortDate time.Time) (*CohortLTV, error) {
 	// Fetch cohort metrics from worker
@@ -332,27 +343,14 @@ func (s *LTVService) GetCohortLTV(ctx context.Context, cohortDate time.Time) (*C
 
 	for _, metric := range metrics {
 		cohortLTV.CohortSize += metric.CohortSize
-
-		// Average revenue per user
-		if metric.CohortSize > 0 {
-			if rev30, ok := metric.Revenue["day30"]; ok {
-				cohortLTV.LTV30 += rev30 / float64(metric.CohortSize)
-			}
-			if rev90, ok := metric.Revenue["day90"]; ok {
-				cohortLTV.LTV90 += rev90 / float64(metric.CohortSize)
-			}
-			if rev365, ok := metric.Revenue["day365"]; ok {
-				cohortLTV.LTV365 += rev365 / float64(metric.CohortSize)
-			}
-		}
+		accumulateCohortMetricRevenue(cohortLTV, metric)
 	}
 
 	// Average across all metrics
-	if len(metrics) > 0 {
-		cohortLTV.LTV30 /= float64(len(metrics))
-		cohortLTV.LTV90 /= float64(len(metrics))
-		cohortLTV.LTV365 /= float64(len(metrics))
-	}
+	numMetrics := float64(len(metrics))
+	cohortLTV.LTV30 /= numMetrics
+	cohortLTV.LTV90 /= numMetrics
+	cohortLTV.LTV365 /= numMetrics
 
 	return cohortLTV, nil
 }

@@ -61,14 +61,8 @@ func (s *AutomationJobExecutionService) ExecuteScheduled(
 	payload []byte,
 	run func(context.Context) (map[string]any, error),
 ) (bool, error) {
-	if spec.JobName == "" {
-		return false, fmt.Errorf("scheduled automation job requires a job name")
-	}
-	if spec.Source == "" {
-		return false, fmt.Errorf("scheduled automation job %s requires a source", spec.JobName)
-	}
-	if spec.Window <= 0 {
-		return false, fmt.Errorf("scheduled automation job %s requires a positive window", spec.JobName)
+	if err := validateScheduledJobSpec(spec); err != nil {
+		return false, err
 	}
 
 	windowStartedAt := s.now().UTC().Truncate(spec.Window)
@@ -90,20 +84,45 @@ func (s *AutomationJobExecutionService) ExecuteScheduled(
 	}
 
 	details, runErr := run(ctx)
+	if err := s.recordJobRunCompletion(ctx, jobRun.ID, spec.JobName, details, runErr); err != nil {
+		return true, err
+	}
+	return true, runErr
+}
+
+func validateScheduledJobSpec(spec ScheduledAutomationJobSpec) error {
+	if spec.JobName == "" {
+		return fmt.Errorf("scheduled automation job requires a job name")
+	}
+	if spec.Source == "" {
+		return fmt.Errorf("scheduled automation job %s requires a source", spec.JobName)
+	}
+	if spec.Window <= 0 {
+		return fmt.Errorf("scheduled automation job %s requires a positive window", spec.JobName)
+	}
+	return nil
+}
+
+func (s *AutomationJobExecutionService) recordJobRunCompletion(
+	ctx context.Context,
+	jobRunID uuid.UUID,
+	jobName string,
+	details map[string]any,
+	runErr error,
+) error {
 	if runErr != nil {
 		failureDetails := cloneAutomationJobDetails(details)
 		failureDetails["error"] = runErr.Error()
-		if err := s.repo.FinishAutomationJobRun(ctx, jobRun.ID, AutomationJobRunStatusFailed, failureDetails); err != nil {
-			return true, fmt.Errorf("scheduled automation job %s failed: %w (failed to persist failure status: %v)", spec.JobName, runErr, err)
+		if err := s.repo.FinishAutomationJobRun(ctx, jobRunID, AutomationJobRunStatusFailed, failureDetails); err != nil {
+			return fmt.Errorf("scheduled automation job %s failed: %w (failed to persist failure status: %v)", jobName, runErr, err)
 		}
-		return true, runErr
+		return nil
 	}
 
-	if err := s.repo.FinishAutomationJobRun(ctx, jobRun.ID, AutomationJobRunStatusCompleted, details); err != nil {
-		return true, fmt.Errorf("failed to persist completion status for scheduled automation job %s: %w", spec.JobName, err)
+	if err := s.repo.FinishAutomationJobRun(ctx, jobRunID, AutomationJobRunStatusCompleted, details); err != nil {
+		return fmt.Errorf("failed to persist completion status for scheduled automation job %s: %w", jobName, err)
 	}
-
-	return true, nil
+	return nil
 }
 
 func scheduledAutomationJobIdempotencyKey(jobName string, windowStartedAt time.Time, payload []byte) string {

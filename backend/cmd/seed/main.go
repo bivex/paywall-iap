@@ -23,6 +23,48 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func validateSeedFlags(dbURL, email, password string) {
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL is required (flag --database or env var)")
+	}
+	if email == "" || password == "" {
+		log.Fatal("--email and --password are required")
+	}
+	if len(password) < 8 {
+		log.Fatal("--password must be at least 8 characters")
+	}
+}
+
+func ensureSuperAdminUser(ctx context.Context, q *generated.Queries, email, platformUserID string) generated.User {
+	user, err := q.GetUserByEmail(ctx, email)
+	if err != nil {
+		user, err = q.CreateUser(ctx, generated.CreateUserParams{
+			PlatformUserID: platformUserID,
+			DeviceID:       nil,
+			Platform:       "web",
+			AppVersion:     "1.0.0",
+			Email:          email,
+			Role:           "superadmin",
+		})
+		if err != nil {
+			log.Fatalf("Failed to create user: %v", err)
+		}
+		fmt.Printf("✅ Created new superadmin user: %s (id: %s)\n", email, user.ID)
+		return user
+	}
+
+	if user.Role != "admin" && user.Role != "superadmin" {
+		if _, err := q.UpdateUserRole(ctx, generated.UpdateUserRoleParams{
+			ID:   user.ID,
+			Role: "superadmin",
+		}); err != nil {
+			log.Fatalf("Failed to update user role: %v", err)
+		}
+	}
+	fmt.Printf("✅ Found existing user: %s (id: %s, role: %s)\n", email, user.ID, user.Role)
+	return user
+}
+
 func main() {
 	var (
 		dbURL    string
@@ -37,15 +79,7 @@ func main() {
 	flag.StringVar(&name, "name", "Admin", "Display name (stored as platform_user_id)")
 	flag.Parse()
 
-	if dbURL == "" {
-		log.Fatal("DATABASE_URL is required (flag --database or env var)")
-	}
-	if email == "" || password == "" {
-		log.Fatal("--email and --password are required")
-	}
-	if len(password) < 8 {
-		log.Fatal("--password must be at least 8 characters")
-	}
+	validateSeedFlags(dbURL, email, password)
 
 	ctx := context.Background()
 
@@ -67,44 +101,14 @@ func main() {
 		log.Fatalf("Failed to hash password: %v", err)
 	}
 
-	// Upsert user (insert or get existing by email)
 	platformUserID := "admin_web_" + strings.ReplaceAll(email, "@", "_at_")
-
-	user, err := q.GetUserByEmail(ctx, email)
-	if err != nil {
-		// User doesn't exist — create new superadmin
-		user, err = q.CreateUser(ctx, generated.CreateUserParams{
-			PlatformUserID: platformUserID,
-			DeviceID:       nil,
-			Platform:       "web",
-			AppVersion:     "1.0.0",
-			Email:          email,
-			Role:           "superadmin",
-		})
-		if err != nil {
-			log.Fatalf("Failed to create user: %v", err)
-		}
-		fmt.Printf("✅ Created new superadmin user: %s (id: %s)\n", email, user.ID)
-	} else {
-		// Existing user — ensure they have superadmin role
-		if user.Role != "admin" && user.Role != "superadmin" {
-			_, err = q.UpdateUserRole(ctx, generated.UpdateUserRoleParams{
-				ID:   user.ID,
-				Role: "superadmin",
-			})
-			if err != nil {
-				log.Fatalf("Failed to update user role: %v", err)
-			}
-		}
-		fmt.Printf("✅ Found existing user: %s (id: %s, role: %s)\n", email, user.ID, user.Role)
-	}
+	user := ensureSuperAdminUser(ctx, q, email, platformUserID)
 
 	// Upsert password hash
-	_, err = q.UpsertAdminCredential(ctx, generated.UpsertAdminCredentialParams{
+	if _, err := q.UpsertAdminCredential(ctx, generated.UpsertAdminCredentialParams{
 		UserID:       user.ID,
 		PasswordHash: string(hash),
-	})
-	if err != nil {
+	}); err != nil {
 		log.Fatalf("Failed to store admin credential: %v", err)
 	}
 

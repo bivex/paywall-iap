@@ -12,6 +12,39 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
+func applyMigrationUp(m *migrate.Migrate) {
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatalf("Migration up failed: %v", err)
+	}
+	fmt.Println("Migrations applied successfully!")
+}
+
+func applyMigrationDown(m *migrate.Migrate) {
+	if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatalf("Migration down failed: %v", err)
+	}
+	fmt.Println("Migrations rolled back successfully!")
+}
+
+func runMigrationCommand(m *migrate.Migrate, args []string) {
+	command := args[0]
+	switch command {
+	case "up":
+		applyMigrationUp(m)
+	case "down":
+		applyMigrationDown(m)
+	case "migrate":
+		if len(args) < 2 {
+			log.Fatal("Subcommand required for migrate: up, down")
+		}
+		if args[1] == "up" {
+			applyMigrationUp(m)
+		}
+	default:
+		log.Fatalf("Unknown command: %s", command)
+	}
+}
+
 func main() {
 	var databaseURL string
 	var migrationsPath string
@@ -37,29 +70,5 @@ func main() {
 		log.Fatal("Command required: up, down, force")
 	}
 
-	command := args[0]
-	switch command {
-	case "up":
-		if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			log.Fatalf("Migration up failed: %v", err)
-		}
-		fmt.Println("Migrations applied successfully!")
-	case "down":
-		if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-			log.Fatalf("Migration down failed: %v", err)
-		}
-		fmt.Println("Migrations rolled back successfully!")
-	case "migrate":
-		if len(args) < 2 {
-			log.Fatal("Subcommand required for migrate: up, down")
-		}
-		if args[1] == "up" {
-			if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-				log.Fatalf("Migration up failed: %v", err)
-			}
-			fmt.Println("Migrations applied successfully!")
-		}
-	default:
-		log.Fatalf("Unknown command: %s", command)
-	}
+	runMigrationCommand(m, args)
 }

@@ -86,40 +86,50 @@ func NewVerifyIAPCommandLegacy(
 	)
 }
 
+func (c *VerifyIAPCommand) handleDuplicateReceipt(ctx context.Context, userUUID uuid.UUID) (*dto.VerifyIAPResponse, error) {
+	sub, err := c.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: receipt already processed", domainErrors.ErrReceiptAlreadyProcessed)
+	}
+	return c.toSubscriptionResponse(sub, false), nil
+}
+
+func (c *VerifyIAPCommand) upsertSubscription(ctx context.Context, userUUID uuid.UUID, platform, productID string, planType entity.PlanType, expiresAt time.Time) (*entity.Subscription, bool, error) {
+	existingSub, err := c.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
+	if err == nil && existingSub != nil {
+		existingSub.ExpiresAt = expiresAt
+		if err := c.subscriptionRepo.Update(ctx, existingSub); err != nil {
+			return nil, false, fmt.Errorf("failed to update subscription: %w", err)
+		}
+		return existingSub, false, nil
+	}
+
+	sub := entity.NewSubscription(
+		userUUID,
+		entity.SourceIAP,
+		platform,
+		productID,
+		planType,
+		expiresAt,
+	)
+	if err := c.subscriptionRepo.Create(ctx, sub); err != nil {
+		return nil, false, fmt.Errorf("failed to create subscription: %w", err)
+	}
+	_ = c.userRepo.UpdatePurchaseChannel(ctx, userUUID, entity.PurchaseChannelIAP)
+	return sub, true, nil
+}
+
 // Execute executes the verify IAP command.
 // appID is the app the user belongs to — used to select per-app store credentials.
 func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uuid.UUID, req *dto.VerifyIAPRequest) (*dto.VerifyIAPResponse, error) {
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := c.validateUserAndRequest(ctx, userID, req)
 	if err != nil {
-		return nil, fmt.Errorf("%w: invalid user ID", domainErrors.ErrInvalidInput)
-	}
-
-	// Get user (validates existence)
-	if _, err := c.userRepo.GetByID(ctx, userUUID); err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
-	}
-
-	// Validate request fields
-	if err := validateIAPRequest(req); err != nil {
 		return nil, err
 	}
 
-	// Select verifier based on platform
-	var verifier DynamicIAPVerifier
-	if req.Platform == "ios" {
-		verifier = c.iosVerifier
-	} else {
-		verifier = c.androidVerifier
-	}
-
-	// Verify receipt — uses per-app credentials from app_credentials table
-	result, err := verifier.VerifyReceipt(ctx, appID, req.ReceiptData)
+	result, err := c.verifyPlatformReceipt(ctx, appID, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify receipt: %w", err)
-	}
-
-	if !result.Valid {
-		return nil, fmt.Errorf("%w: receipt is invalid", domainErrors.ErrReceiptInvalid)
+		return nil, err
 	}
 
 	// Check for duplicate receipt (idempotency)
@@ -129,43 +139,16 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uui
 		return nil, fmt.Errorf("failed to check duplicate receipt: %w", err)
 	}
 	if isDuplicate {
-		sub, err := c.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
-		if err != nil {
-			// Subscription may have been cancelled after the receipt was processed.
-			// Still idempotent — return a clear error rather than an internal failure.
-			return nil, fmt.Errorf("%w: receipt already processed", domainErrors.ErrReceiptAlreadyProcessed)
-		}
-		return c.toSubscriptionResponse(sub, false), nil
+		return c.handleDuplicateReceipt(ctx, userUUID)
 	}
 
 	// Determine plan type from product ID
 	planType := c.determinePlanType(req.ProductID)
 
 	// Check for existing active subscription
-	var sub *entity.Subscription
-	existingSub, err := c.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
-	isNew := false
-
-	if err == nil && existingSub != nil {
-		existingSub.ExpiresAt = result.ExpiresAt
-		if err := c.subscriptionRepo.Update(ctx, existingSub); err != nil {
-			return nil, fmt.Errorf("failed to update subscription: %w", err)
-		}
-		sub = existingSub
-	} else {
-		sub = entity.NewSubscription(
-			userUUID,
-			entity.SourceIAP,
-			req.Platform,
-			req.ProductID,
-			planType,
-			result.ExpiresAt,
-		)
-		if err := c.subscriptionRepo.Create(ctx, sub); err != nil {
-			return nil, fmt.Errorf("failed to create subscription: %w", err)
-		}
-		isNew = true
-		_ = c.userRepo.UpdatePurchaseChannel(ctx, userUUID, entity.PurchaseChannelIAP)
+	sub, isNew, err := c.upsertSubscription(ctx, userUUID, req.Platform, req.ProductID, planType, result.ExpiresAt)
+	if err != nil {
+		return nil, err
 	}
 
 	// Create transaction record
@@ -180,6 +163,43 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uui
 	_ = c.userRepo.IncrementLTV(ctx, userUUID, priceFromPlanType(planType))
 
 	return c.toSubscriptionResponse(sub, isNew), nil
+}
+
+func (c *VerifyIAPCommand) validateUserAndRequest(ctx context.Context, userID string, req *dto.VerifyIAPRequest) (uuid.UUID, error) {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("%w: invalid user ID", domainErrors.ErrInvalidInput)
+	}
+
+	if _, err := c.userRepo.GetByID(ctx, userUUID); err != nil {
+		return uuid.Nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	if err := validateIAPRequest(req); err != nil {
+		return uuid.Nil, err
+	}
+
+	return userUUID, nil
+}
+
+func (c *VerifyIAPCommand) verifyPlatformReceipt(ctx context.Context, appID uuid.UUID, req *dto.VerifyIAPRequest) (*IAPVerificationResult, error) {
+	var verifier DynamicIAPVerifier
+	if req.Platform == "ios" {
+		verifier = c.iosVerifier
+	} else {
+		verifier = c.androidVerifier
+	}
+
+	result, err := verifier.VerifyReceipt(ctx, appID, req.ReceiptData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify receipt: %w", err)
+	}
+
+	if !result.Valid {
+		return nil, fmt.Errorf("%w: receipt is invalid", domainErrors.ErrReceiptInvalid)
+	}
+
+	return result, nil
 }
 
 func (c *VerifyIAPCommand) determinePlanType(productID string) entity.PlanType {

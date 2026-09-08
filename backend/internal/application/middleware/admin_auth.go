@@ -12,54 +12,60 @@ import (
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
 
+func extractBearerToken(authHeader string) (string, error) {
+	if authHeader == "" {
+		return "", fmt.Errorf("missing authorization header")
+	}
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenString == authHeader {
+		return "", fmt.Errorf("invalid token format")
+	}
+	return tokenString, nil
+}
+
+func parseAdminClaims(tokenString, jwtSecret string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(jwtSecret), nil
+	})
+	if err != nil || !token.Valid {
+		return nil, fmt.Errorf("invalid or expired token")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid token claims")
+	}
+	return claims, nil
+}
+
+func resolveAdminUserID(claims jwt.MapClaims) (uuid.UUID, error) {
+	userIDStr, ok := claims["sub"].(string)
+	if !ok {
+		return uuid.Nil, fmt.Errorf("invalid token sub")
+	}
+	return uuid.Parse(userIDStr)
+}
+
 // AdminMiddleware ensures the user is an admin
 func AdminMiddleware(userRepo repository.UserRepository, jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 1. Get token from header
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			response.Unauthorized(c, "Missing authorization header")
+		tokenString, err := extractBearerToken(c.GetHeader("Authorization"))
+		if err != nil {
+			response.Unauthorized(c, err.Error())
 			c.Abort()
 			return
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			response.Unauthorized(c, "Invalid token format")
+		claims, err := parseAdminClaims(tokenString, jwtSecret)
+		if err != nil {
+			response.Unauthorized(c, err.Error())
 			c.Abort()
 			return
 		}
 
-		// 2. Parse and verify JWT
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(jwtSecret), nil
-		})
-
-		if err != nil || !token.Valid {
-			response.Unauthorized(c, "Invalid or expired token")
-			c.Abort()
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			response.Unauthorized(c, "Invalid token claims")
-			c.Abort()
-			return
-		}
-
-		// 3. Resolve user and check role
-		userIDStr, ok := claims["sub"].(string)
-		if !ok {
-			response.Unauthorized(c, "Invalid token sub")
-			c.Abort()
-			return
-		}
-
-		userID, err := uuid.Parse(userIDStr)
+		userID, err := resolveAdminUserID(claims)
 		if err != nil {
 			response.Unauthorized(c, "Invalid user ID in token")
 			c.Abort()

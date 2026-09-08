@@ -96,18 +96,9 @@ func (s *ExperimentRepairService) RepairExperiment(ctx context.Context, experime
 		return nil, err
 	}
 
-	winnerConfidence, err := s.recalculateWinnerConfidence(ctx, experimentID)
+	winnerConfidencePercent, err := s.updateAndFormatWinnerConfidence(ctx, experimentID)
 	if err != nil {
 		return nil, err
-	}
-	if err := s.repo.UpdateExperimentWinnerConfidence(ctx, experimentID, winnerConfidence); err != nil {
-		return nil, err
-	}
-
-	var winnerConfidencePercent *float64
-	if winnerConfidence != nil {
-		value := *winnerConfidence * 100
-		winnerConfidencePercent = &value
 	}
 
 	return &ExperimentRepairSummary{
@@ -119,6 +110,21 @@ func (s *ExperimentRepairService) RepairExperiment(ctx context.Context, experime
 		PendingRewardsProcessed: processed,
 		WinnerConfidencePercent: winnerConfidencePercent,
 	}, nil
+}
+
+func (s *ExperimentRepairService) updateAndFormatWinnerConfidence(ctx context.Context, experimentID uuid.UUID) (*float64, error) {
+	winnerConfidence, err := s.recalculateWinnerConfidence(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.repo.UpdateExperimentWinnerConfidence(ctx, experimentID, winnerConfidence); err != nil {
+		return nil, err
+	}
+	if winnerConfidence == nil {
+		return nil, nil
+	}
+	value := *winnerConfidence * 100
+	return &value, nil
 }
 
 func (s *ExperimentRepairService) syncObjectiveStats(ctx context.Context, experimentID uuid.UUID) (int, error) {
@@ -138,28 +144,38 @@ func (s *ExperimentRepairService) syncObjectiveStats(ctx context.Context, experi
 
 	synced := 0
 	for _, arm := range arms {
-		stats, err := s.banditRepo.GetArmStats(ctx, arm.ID)
+		armSynced, err := s.syncSingleArmObjectiveStats(ctx, arm.ID, objectiveTypes)
+		synced += armSynced
 		if err != nil {
-			return synced, fmt.Errorf("failed to load arm stats for objective repair: %w", err)
-		}
-
-		for _, objectiveType := range objectiveTypes {
-			if err := s.banditRepo.UpdateObjectiveStats(ctx, &ArmObjectiveStats{
-				ArmID:         arm.ID,
-				ObjectiveType: objectiveType,
-				Alpha:         stats.Alpha,
-				Beta:          stats.Beta,
-				Samples:       stats.Samples,
-				Conversions:   stats.Conversions,
-				TotalRevenue:  stats.Revenue,
-				AvgLTV:        stats.AvgReward,
-			}); err != nil {
-				return synced, fmt.Errorf("failed to sync objective stats during repair: %w", err)
-			}
-			synced++
+			return synced, err
 		}
 	}
 
+	return synced, nil
+}
+
+func (s *ExperimentRepairService) syncSingleArmObjectiveStats(ctx context.Context, armID uuid.UUID, objectiveTypes []ObjectiveType) (int, error) {
+	stats, err := s.banditRepo.GetArmStats(ctx, armID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load arm stats for objective repair: %w", err)
+	}
+
+	synced := 0
+	for _, objectiveType := range objectiveTypes {
+		if err := s.banditRepo.UpdateObjectiveStats(ctx, &ArmObjectiveStats{
+			ArmID:         armID,
+			ObjectiveType: objectiveType,
+			Alpha:         stats.Alpha,
+			Beta:          stats.Beta,
+			Samples:       stats.Samples,
+			Conversions:   stats.Conversions,
+			TotalRevenue:  stats.Revenue,
+			AvgLTV:        stats.AvgReward,
+		}); err != nil {
+			return synced, fmt.Errorf("failed to sync objective stats during repair: %w", err)
+		}
+		synced++
+	}
 	return synced, nil
 }
 

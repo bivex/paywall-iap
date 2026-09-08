@@ -128,78 +128,78 @@ func (r *PostgresMatomoEventRepository) GetPendingEvents(ctx context.Context, li
 	return events, nil
 }
 
-// UpdateEventStatus updates the status of an event after processing attempt
-func (r *PostgresMatomoEventRepository) UpdateEventStatus(ctx context.Context, eventID uuid.UUID, status string, processErr error) error {
-	if status == "sent" {
-		// Mark as successfully sent
-		query := `
-			UPDATE matomo_staged_events
-			SET status = 'sent',
-				sent_at = NOW(),
-				next_retry_at = NULL
-			WHERE id = $1
-		`
-		_, err := r.pool.Exec(ctx, query, eventID)
-		if err != nil {
-			return fmt.Errorf("failed to mark event as sent: %w", err)
-		}
-		r.logger.Debug("Marked event as sent", zap.String("event_id", eventID.String()))
-		return nil
+func (r *PostgresMatomoEventRepository) markEventSent(ctx context.Context, eventID uuid.UUID) error {
+	query := `
+		UPDATE matomo_staged_events
+		SET status = 'sent',
+			sent_at = NOW(),
+			next_retry_at = NULL
+		WHERE id = $1
+	`
+	if _, err := r.pool.Exec(ctx, query, eventID); err != nil {
+		return fmt.Errorf("failed to mark event as sent: %w", err)
+	}
+	r.logger.Debug("Marked event as sent", zap.String("event_id", eventID.String()))
+	return nil
+}
+
+func (r *PostgresMatomoEventRepository) handleEventRetryOrFail(ctx context.Context, eventID uuid.UUID, processErr error) error {
+	var retryCount, maxRetries int
+	checkQuery := `
+		SELECT retry_count, max_retries
+		FROM matomo_staged_events
+		WHERE id = $1
+	`
+	if err := r.pool.QueryRow(ctx, checkQuery, eventID).Scan(&retryCount, &maxRetries); err != nil {
+		return fmt.Errorf("failed to get retry info: %w", err)
 	}
 
-	if processErr != nil {
-		// Check if we should retry or mark as permanently failed
-		var retryCount, maxRetries int
-		checkQuery := `
-			SELECT retry_count, max_retries
-			FROM matomo_staged_events
-			WHERE id = $1
-		`
-		err := r.pool.QueryRow(ctx, checkQuery, eventID).Scan(&retryCount, &maxRetries)
-		if err != nil {
-			return fmt.Errorf("failed to get retry info: %w", err)
-		}
-
-		if retryCount >= maxRetries {
-			// Permanent failure
-			errorMsg := processErr.Error()
-			query := `
-				UPDATE matomo_staged_events
-				SET status = 'failed',
-					failed_at = NOW(),
-					error_message = $2
-				WHERE id = $1
-			`
-			_, err = r.pool.Exec(ctx, query, eventID, errorMsg)
-			if err != nil {
-				return fmt.Errorf("failed to mark event as failed: %w", err)
-			}
-			r.logger.Warn("Event marked as permanently failed",
-				zap.String("event_id", eventID.String()),
-				zap.String("error", errorMsg),
-			)
-			return nil
-		}
-
-		// Retry with exponential backoff
+	if retryCount >= maxRetries {
+		errorMsg := processErr.Error()
 		query := `
 			UPDATE matomo_staged_events
-			SET retry_count = retry_count + 1,
-				status = 'pending',
-				next_retry_at = calculate_next_retry(retry_count + 1, max_retries),
+			SET status = 'failed',
+				failed_at = NOW(),
 				error_message = $2
 			WHERE id = $1
 		`
-		errorMsg := processErr.Error()
-		_, err = r.pool.Exec(ctx, query, eventID, errorMsg)
-		if err != nil {
-			return fmt.Errorf("failed to schedule retry: %w", err)
+		if _, err := r.pool.Exec(ctx, query, eventID, errorMsg); err != nil {
+			return fmt.Errorf("failed to mark event as failed: %w", err)
 		}
-		r.logger.Debug("Event scheduled for retry",
+		r.logger.Warn("Event marked as permanently failed",
 			zap.String("event_id", eventID.String()),
-			zap.Int("retry_count", retryCount+1),
+			zap.String("error", errorMsg),
 		)
 		return nil
+	}
+
+	query := `
+		UPDATE matomo_staged_events
+		SET retry_count = retry_count + 1,
+			status = 'pending',
+			next_retry_at = calculate_next_retry(retry_count + 1, max_retries),
+			error_message = $2
+		WHERE id = $1
+	`
+	errorMsg := processErr.Error()
+	if _, err := r.pool.Exec(ctx, query, eventID, errorMsg); err != nil {
+		return fmt.Errorf("failed to schedule retry: %w", err)
+	}
+	r.logger.Debug("Event scheduled for retry",
+		zap.String("event_id", eventID.String()),
+		zap.Int("retry_count", retryCount+1),
+	)
+	return nil
+}
+
+// UpdateEventStatus updates the status of an event after processing attempt
+func (r *PostgresMatomoEventRepository) UpdateEventStatus(ctx context.Context, eventID uuid.UUID, status string, processErr error) error {
+	if status == "sent" {
+		return r.markEventSent(ctx, eventID)
+	}
+
+	if processErr != nil {
+		return r.handleEventRetryOrFail(ctx, eventID, processErr)
 	}
 
 	// Generic status update

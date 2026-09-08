@@ -159,6 +159,54 @@ type CalculateWinProbabilitiesResult struct {
 	WinProbabilities map[string]float64 `json:"win_probabilities"`
 }
 
+func runMonteCarloWinSimulations(statsMap map[uuid.UUID]*service.ArmStats, simulations int) map[string]float64 {
+	wins := make(map[uuid.UUID]int, len(statsMap))
+	for id := range statsMap {
+		wins[id] = 0
+	}
+
+	for i := 0; i < simulations; i++ {
+		bestArm := findBestSampledArm(statsMap)
+		if bestArm != uuid.Nil {
+			wins[bestArm]++
+		}
+	}
+
+	result := make(map[string]float64, len(wins))
+	for id, w := range wins {
+		result[id.String()] = float64(w) / float64(simulations)
+	}
+	return result
+}
+
+func findBestSampledArm(statsMap map[uuid.UUID]*service.ArmStats) uuid.UUID {
+	bestArm := uuid.Nil
+	bestSample := -1.0
+	for id, stats := range statsMap {
+		sample := sampleArmBeta(stats)
+		if sample > bestSample {
+			bestSample = sample
+			bestArm = id
+		}
+	}
+	return bestArm
+}
+
+func sampleArmBeta(stats *service.ArmStats) float64 {
+	if stats == nil {
+		return -1.0
+	}
+	alpha := stats.Alpha
+	if alpha <= 0 {
+		alpha = 1
+	}
+	beta := stats.Beta
+	if beta <= 0 {
+		beta = 1
+	}
+	return sampleBeta(alpha, beta)
+}
+
 // CalculateWinProbabilities calculates win probabilities for experiment arms
 func (j *BanditMaintenanceJobs) CalculateWinProbabilities(
 	ctx context.Context,
@@ -188,41 +236,7 @@ func (j *BanditMaintenanceJobs) CalculateWinProbabilities(
 		simulations = 10000
 	}
 
-	// Monte Carlo Thompson Sampling: sample Beta(alpha, beta) per arm per simulation
-	wins := make(map[uuid.UUID]int, len(statsMap))
-	for id := range statsMap {
-		wins[id] = 0
-	}
-
-	for i := 0; i < simulations; i++ {
-		bestArm := uuid.Nil
-		bestSample := -1.0
-		for id, stats := range statsMap {
-			alpha := stats.Alpha
-			beta := stats.Beta
-			if alpha <= 0 {
-				alpha = 1
-			}
-			if beta <= 0 {
-				beta = 1
-			}
-			// Beta sample approximation via gamma ratio
-			sample := sampleBeta(alpha, beta)
-			if sample > bestSample {
-				bestSample = sample
-				bestArm = id
-			}
-		}
-		if bestArm != uuid.Nil {
-			wins[bestArm]++
-		}
-	}
-
-	result := make(map[string]float64, len(wins))
-	for id, w := range wins {
-		result[id.String()] = float64(w) / float64(simulations)
-	}
-
+	result := runMonteCarloWinSimulations(statsMap, simulations)
 	return CalculateWinProbabilitiesResult{WinProbabilities: result}, nil
 }
 

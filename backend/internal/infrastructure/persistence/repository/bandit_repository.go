@@ -515,26 +515,41 @@ func (r *PostgresBanditConversionRepository) ProcessPendingConversion(ctx contex
 	}
 	defer tx.Rollback(ctx)
 
-	matchedPending := &service.PendingReward{}
-	err = scanPendingReward(tx.QueryRow(ctx, `
-		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
-		       conversion_value, conversion_currency, converted_at, processed_at
-		FROM bandit_pending_rewards
-		WHERE user_id = $1
-		  AND converted = FALSE
-		  AND processed_at IS NULL
-		  AND expires_at > $2
-		ORDER BY assigned_at DESC
-		LIMIT 1
-		FOR UPDATE
-	`, userID, processedAt), matchedPending)
-	if err == pgx.ErrNoRows {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, fmt.Errorf("failed to load pending reward for conversion: %w", err)
+	matchedPending, err := r.loadPendingRewardForConversionTx(ctx, tx, userID, processedAt)
+	if err != nil || matchedPending == nil {
+		return nil, false, err
 	}
 
+	applied, err := r.executePendingConversionUpdatesTx(ctx, tx, matchedPending, transactionID, conversionValue, currency, processedAt)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, false, fmt.Errorf("failed to commit pending conversion transaction: %w", err)
+	}
+	if !applied {
+		return matchedPending, false, nil
+	}
+
+	convertedAt := processedAt
+	matchedPending.Converted = true
+	matchedPending.ConversionValue = conversionValue
+	matchedPending.ConversionCurrency = currency
+	matchedPending.ConvertedAt = &convertedAt
+	matchedPending.ProcessedAt = &convertedAt
+	return matchedPending, true, nil
+}
+
+func (r *PostgresBanditConversionRepository) executePendingConversionUpdatesTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	matchedPending *service.PendingReward,
+	transactionID uuid.UUID,
+	conversionValue float64,
+	currency string,
+	processedAt time.Time,
+) (bool, error) {
 	inserted, err := r.insertConversionEventTx(ctx, tx, &service.ConversionEvent{
 		ExperimentID:          matchedPending.ExperimentID,
 		ArmID:                 matchedPending.ArmID,
@@ -552,20 +567,47 @@ func (r *PostgresBanditConversionRepository) ProcessPendingConversion(ctx contex
 		OccurredAt: processedAt,
 	})
 	if err != nil {
-		return nil, false, err
+		return false, err
 	}
 	if !inserted {
-		if err := tx.Commit(ctx); err != nil {
-			return nil, false, fmt.Errorf("failed to commit duplicate pending conversion transaction: %w", err)
-		}
-		return matchedPending, false, nil
+		return false, nil
 	}
 
 	if err := r.applyRewardToArmTx(ctx, tx, matchedPending.ArmID, conversionValue); err != nil {
-		return nil, false, err
+		return false, err
 	}
 
-	_, err = tx.Exec(ctx, `
+	if err := r.finalizePendingConversionTx(ctx, tx, matchedPending.ID, transactionID, conversionValue, currency, processedAt); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *PostgresBanditConversionRepository) loadPendingRewardForConversionTx(ctx context.Context, tx pgx.Tx, userID uuid.UUID, processedAt time.Time) (*service.PendingReward, error) {
+	matchedPending := &service.PendingReward{}
+	err := scanPendingReward(tx.QueryRow(ctx, `
+		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
+		       conversion_value, conversion_currency, converted_at, processed_at
+		FROM bandit_pending_rewards
+		WHERE user_id = $1
+		  AND converted = FALSE
+		  AND processed_at IS NULL
+		  AND expires_at > $2
+		ORDER BY assigned_at DESC
+		LIMIT 1
+		FOR UPDATE
+	`, userID, processedAt), matchedPending)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to load pending reward for conversion: %w", err)
+	}
+	return matchedPending, nil
+}
+
+func (r *PostgresBanditConversionRepository) finalizePendingConversionTx(ctx context.Context, tx pgx.Tx, pendingID, transactionID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) error {
+	_, err := tx.Exec(ctx, `
 		UPDATE bandit_pending_rewards
 		SET converted = TRUE,
 		    conversion_value = $2,
@@ -573,58 +615,23 @@ func (r *PostgresBanditConversionRepository) ProcessPendingConversion(ctx contex
 		    converted_at = $4,
 		    processed_at = $4
 		WHERE id = $1
-	`, matchedPending.ID, conversionValue, currency, processedAt)
+	`, pendingID, conversionValue, currency, processedAt)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to update pending reward conversion state: %w", err)
+		return fmt.Errorf("failed to update pending reward conversion state: %w", err)
 	}
 
 	_, err = tx.Exec(ctx, `
 		INSERT INTO bandit_conversion_links (pending_id, transaction_id, linked_at)
 		VALUES ($1, $2, $3)
 		ON CONFLICT DO NOTHING
-	`, matchedPending.ID, transactionID, processedAt)
+	`, pendingID, transactionID, processedAt)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to create conversion link: %w", err)
+		return fmt.Errorf("failed to create conversion link: %w", err)
 	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return nil, false, fmt.Errorf("failed to commit pending conversion transaction: %w", err)
-	}
-
-	convertedAt := processedAt
-	matchedPending.Converted = true
-	matchedPending.ConversionValue = conversionValue
-	matchedPending.ConversionCurrency = currency
-	matchedPending.ConvertedAt = &convertedAt
-	matchedPending.ProcessedAt = &convertedAt
-	return matchedPending, true, nil
+	return nil
 }
 
-func (r *PostgresBanditConversionRepository) ProcessExpiredPendingReward(ctx context.Context, pendingID uuid.UUID, processedAt time.Time) (bool, error) {
-	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
-	if err != nil {
-		return false, fmt.Errorf("failed to begin expired pending reward transaction: %w", err)
-	}
-	defer tx.Rollback(ctx)
-
-	pending := &service.PendingReward{}
-	err = scanPendingReward(tx.QueryRow(ctx, `
-		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
-		       conversion_value, conversion_currency, converted_at, processed_at
-		FROM bandit_pending_rewards
-		WHERE id = $1
-		  AND converted = FALSE
-		  AND processed_at IS NULL
-		  AND expires_at <= $2
-		FOR UPDATE
-	`, pendingID, processedAt), pending)
-	if err == pgx.ErrNoRows {
-		return false, nil
-	}
-	if err != nil {
-		return false, fmt.Errorf("failed to load expired pending reward: %w", err)
-	}
-
+func (r *PostgresBanditConversionRepository) expirePendingRewardTx(ctx context.Context, tx pgx.Tx, pending *service.PendingReward, processedAt time.Time) (bool, error) {
 	inserted, err := r.insertConversionEventTx(ctx, tx, &service.ConversionEvent{
 		ExperimentID:          pending.ExperimentID,
 		ArmID:                 pending.ArmID,
@@ -666,6 +673,34 @@ func (r *PostgresBanditConversionRepository) ProcessExpiredPendingReward(ctx con
 	}
 
 	return true, nil
+}
+
+func (r *PostgresBanditConversionRepository) ProcessExpiredPendingReward(ctx context.Context, pendingID uuid.UUID, processedAt time.Time) (bool, error) {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return false, fmt.Errorf("failed to begin expired pending reward transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	pending := &service.PendingReward{}
+	err = scanPendingReward(tx.QueryRow(ctx, `
+		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
+		       conversion_value, conversion_currency, converted_at, processed_at
+		FROM bandit_pending_rewards
+		WHERE id = $1
+		  AND converted = FALSE
+		  AND processed_at IS NULL
+		  AND expires_at <= $2
+		FOR UPDATE
+	`, pendingID, processedAt), pending)
+	if err == pgx.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("failed to load expired pending reward: %w", err)
+	}
+
+	return r.expirePendingRewardTx(ctx, tx, pending, processedAt)
 }
 
 // GetAssignmentHistory retrieves historical assignments for a user

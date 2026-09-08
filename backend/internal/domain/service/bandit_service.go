@@ -271,36 +271,21 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 		return uuid.Nil, fmt.Errorf("%w: %s", ErrExperimentArmsNotFound, experimentID)
 	}
 
+	bestArm, maxSample, armScores := b.sampleCandidateArms(ctx, arms)
+	if err := b.persistAndCacheAssignment(ctx, experimentID, userID, bestArm, maxSample, armScores, len(arms)); err != nil {
+		return uuid.Nil, err
+	}
+
+	return bestArm.ID, nil
+}
+
+func (b *ThompsonSamplingBandit) sampleCandidateArms(ctx context.Context, arms []Arm) (*Arm, float64, []map[string]interface{}) {
 	var bestArm *Arm
 	maxSample := -1.0
 	armScores := make([]map[string]interface{}, 0, len(arms))
 
-	// Sample from Beta distribution for each arm and select the max
 	for _, arm := range arms {
-		// Get current statistics from cache or DB
-		cacheKey := fmt.Sprintf("ab:arm:%s", arm.ID.String())
-		statsSource := "cache"
-		stats, err := b.cache.GetArmStats(ctx, cacheKey)
-		if err != nil {
-			// Fallback to database
-			statsSource = "database"
-			stats, err = b.repo.GetArmStats(ctx, arm.ID)
-			if err != nil {
-				b.logger.Warn("Failed to get arm stats, using defaults",
-					zap.String("arm_id", arm.ID.String()),
-					zap.Error(err),
-				)
-				// Use default Beta(1,1) = uniform prior
-				statsSource = "default_prior"
-				stats = &ArmStats{
-					ArmID: arm.ID,
-					Alpha: 1.0,
-					Beta:  1.0,
-				}
-			}
-		}
-
-		// Sample from Beta(alpha, beta)
+		stats, statsSource := b.resolveArmStatsForSampling(ctx, arm)
 		sample := b.SampleBeta(stats.Alpha, stats.Beta)
 
 		b.logger.Debug("Arm sample",
@@ -331,10 +316,42 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 	}
 
 	if bestArm == nil {
-		// Fallback: select random arm
 		bestArm = &arms[b.rng.Intn(len(arms))]
 	}
+	return bestArm, maxSample, armScores
+}
 
+func (b *ThompsonSamplingBandit) resolveArmStatsForSampling(ctx context.Context, arm Arm) (*ArmStats, string) {
+	cacheKey := fmt.Sprintf("ab:arm:%s", arm.ID.String())
+	stats, err := b.cache.GetArmStats(ctx, cacheKey)
+	if err == nil && stats != nil {
+		return stats, "cache"
+	}
+
+	stats, err = b.repo.GetArmStats(ctx, arm.ID)
+	if err == nil && stats != nil {
+		return stats, "database"
+	}
+
+	b.logger.Warn("Failed to get arm stats, using defaults",
+		zap.String("arm_id", arm.ID.String()),
+		zap.Error(err),
+	)
+	return &ArmStats{
+		ArmID: arm.ID,
+		Alpha: 1.0,
+		Beta:  1.0,
+	}, "default_prior"
+}
+
+func (b *ThompsonSamplingBandit) persistAndCacheAssignment(
+	ctx context.Context,
+	experimentID, userID uuid.UUID,
+	bestArm *Arm,
+	maxSample float64,
+	armScores []map[string]interface{},
+	armsCount int,
+) error {
 	assignedAt := time.Now().UTC()
 	assignment := &Assignment{
 		ID:           uuid.New(),
@@ -345,23 +362,21 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 		ExpiresAt:    assignedAt.Add(24 * time.Hour),
 		Metadata: map[string]interface{}{
 			"selection_strategy": "thompson_sampling",
-			"arms_considered":    len(arms),
+			"arms_considered":    armsCount,
 			"selected_arm_name":  bestArm.Name,
 			"selected_sample":    maxSample,
 			"arm_scores":         armScores,
 		},
 	}
 	if err := b.repo.CreateAssignment(ctx, assignment); err != nil {
-		return uuid.Nil, fmt.Errorf("failed to persist assignment: %w", err)
+		return fmt.Errorf("failed to persist assignment: %w", err)
 	}
 
-	// Create sticky assignment in cache
 	cacheKey := fmt.Sprintf("ab:assign:%s:%s", experimentID.String(), userID.String())
 	if err := b.cache.SetAssignment(ctx, cacheKey, bestArm.ID, 24*time.Hour); err != nil {
 		b.logger.Warn("Failed to cache assignment", zap.Error(err))
 	}
-
-	return bestArm.ID, nil
+	return nil
 }
 
 // SelectArmWithMeta returns the assigned arm ID and whether it was a new assignment
@@ -386,6 +401,24 @@ func (b *ThompsonSamplingBandit) TrackImpression(
 	experimentID, armID, userID uuid.UUID,
 	event *ImpressionEvent,
 ) error {
+	if err := b.validateArmExists(ctx, experimentID, armID); err != nil {
+		return err
+	}
+
+	appender, ok := b.repo.(impressionEventAppender)
+	if !ok {
+		return fmt.Errorf("impression event logging not supported")
+	}
+
+	normalizedEvent := normalizeImpressionEvent(experimentID, armID, userID, event)
+	if err := appender.AppendImpressionEvent(ctx, &normalizedEvent); err != nil {
+		return fmt.Errorf("failed to append impression event: %w", err)
+	}
+
+	return nil
+}
+
+func (b *ThompsonSamplingBandit) validateArmExists(ctx context.Context, experimentID, armID uuid.UUID) error {
 	arms, err := b.repo.GetArms(ctx, experimentID)
 	if err != nil {
 		return err
@@ -394,53 +427,42 @@ func (b *ThompsonSamplingBandit) TrackImpression(
 		return ErrExperimentArmsNotFound
 	}
 
-	armFound := false
 	for _, arm := range arms {
 		if arm.ID == armID {
-			armFound = true
-			break
+			return nil
 		}
 	}
-	if !armFound {
-		return ErrBanditArmNotFound
-	}
+	return ErrBanditArmNotFound
+}
 
-	appender, ok := b.repo.(impressionEventAppender)
-	if !ok {
-		return fmt.Errorf("impression event logging not supported")
-	}
-
-	normalizedEvent := ImpressionEvent{
-		ExperimentID: experimentID,
-		ArmID:        armID,
-		UserID:       userID,
-		EventType:    ImpressionEventTypeImpression,
-		OccurredAt:   time.Now().UTC(),
-	}
-	if event != nil {
-		normalizedEvent = *event
-		if normalizedEvent.ExperimentID == uuid.Nil {
-			normalizedEvent.ExperimentID = experimentID
-		}
-		if normalizedEvent.ArmID == uuid.Nil {
-			normalizedEvent.ArmID = armID
-		}
-		if normalizedEvent.UserID == uuid.Nil {
-			normalizedEvent.UserID = userID
-		}
-		if normalizedEvent.EventType == "" {
-			normalizedEvent.EventType = ImpressionEventTypeImpression
-		}
-		if normalizedEvent.OccurredAt.IsZero() {
-			normalizedEvent.OccurredAt = time.Now().UTC()
+func normalizeImpressionEvent(experimentID, armID, userID uuid.UUID, event *ImpressionEvent) ImpressionEvent {
+	if event == nil {
+		return ImpressionEvent{
+			ExperimentID: experimentID,
+			ArmID:        armID,
+			UserID:       userID,
+			EventType:    ImpressionEventTypeImpression,
+			OccurredAt:   time.Now().UTC(),
 		}
 	}
 
-	if err := appender.AppendImpressionEvent(ctx, &normalizedEvent); err != nil {
-		return fmt.Errorf("failed to append impression event: %w", err)
+	normalized := *event
+	if normalized.ExperimentID == uuid.Nil {
+		normalized.ExperimentID = experimentID
 	}
-
-	return nil
+	if normalized.ArmID == uuid.Nil {
+		normalized.ArmID = armID
+	}
+	if normalized.UserID == uuid.Nil {
+		normalized.UserID = userID
+	}
+	if normalized.EventType == "" {
+		normalized.EventType = ImpressionEventTypeImpression
+	}
+	if normalized.OccurredAt.IsZero() {
+		normalized.OccurredAt = time.Now().UTC()
+	}
+	return normalized
 }
 
 func (b *ThompsonSamplingBandit) UpdateRewardWithEvent(
@@ -449,67 +471,21 @@ func (b *ThompsonSamplingBandit) UpdateRewardWithEvent(
 	reward float64,
 	event *ConversionEvent,
 ) error {
-	// Get current stats
 	stats, err := b.repo.GetArmStats(ctx, armID)
 	if err != nil {
 		return fmt.Errorf("failed to get arm stats: %w", err)
 	}
 
-	// Update alpha/beta based on reward
-	// In Thompson Sampling for conversion rate:
-	// - Success (conversion): increment alpha
-	// - Failure (no conversion): increment beta
-	if reward > 0 {
-		stats.Alpha += 1.0
-		stats.Conversions++
-		stats.Revenue += reward
-	} else {
-		stats.Beta += 1.0
-	}
-	stats.Samples++
+	applyRewardToArmStats(stats, reward)
 
-	// Calculate average reward
-	if stats.Samples > 0 {
-		stats.AvgReward = stats.Revenue / float64(stats.Samples)
-	}
-
-	// Save to database
 	if err := b.repo.UpdateArmStats(ctx, stats); err != nil {
 		return fmt.Errorf("failed to update arm stats: %w", err)
 	}
 
-	if event != nil {
-		if appender, ok := b.repo.(conversionEventAppender); ok {
-			normalizedEvent := *event
-			if normalizedEvent.ExperimentID == uuid.Nil {
-				normalizedEvent.ExperimentID = experimentID
-			}
-			if normalizedEvent.ArmID == uuid.Nil {
-				normalizedEvent.ArmID = armID
-			}
-			if normalizedEvent.EventType == "" {
-				normalizedEvent.EventType = ConversionEventTypeDirectReward
-			}
-			if normalizedEvent.OccurredAt.IsZero() {
-				normalizedEvent.OccurredAt = time.Now().UTC()
-			}
-			if normalizedEvent.NormalizedRewardValue == 0 {
-				normalizedEvent.NormalizedRewardValue = reward
-			}
-			if normalizedEvent.OriginalRewardValue == 0 {
-				normalizedEvent.OriginalRewardValue = reward
-			}
-			if normalizedEvent.NormalizedCurrency == "" {
-				normalizedEvent.NormalizedCurrency = normalizedEvent.OriginalCurrency
-			}
-
-			if err := appender.AppendConversionEvent(ctx, &normalizedEvent); err != nil {
-				return fmt.Errorf("failed to append conversion event: %w", err)
-			}
-		}
+	if err := b.appendConversionEventIfSupported(ctx, experimentID, armID, reward, event); err != nil {
+		return err
 	}
 
-	// Update cache
 	cacheKey := fmt.Sprintf("ab:arm:%s", armID.String())
 	if err := b.cache.SetArmStats(ctx, cacheKey, stats, 24*time.Hour); err != nil {
 		b.logger.Warn("Failed to update cache", zap.Error(err))
@@ -524,6 +500,68 @@ func (b *ThompsonSamplingBandit) UpdateRewardWithEvent(
 	)
 
 	return nil
+}
+
+func applyRewardToArmStats(stats *ArmStats, reward float64) {
+	if reward > 0 {
+		stats.Alpha += 1.0
+		stats.Conversions++
+		stats.Revenue += reward
+	} else {
+		stats.Beta += 1.0
+	}
+	stats.Samples++
+
+	if stats.Samples > 0 {
+		stats.AvgReward = stats.Revenue / float64(stats.Samples)
+	}
+}
+
+func (b *ThompsonSamplingBandit) appendConversionEventIfSupported(
+	ctx context.Context,
+	experimentID, armID uuid.UUID,
+	reward float64,
+	event *ConversionEvent,
+) error {
+	if event == nil {
+		return nil
+	}
+	appender, ok := b.repo.(conversionEventAppender)
+	if !ok {
+		return nil
+	}
+
+	normalizedEvent := normalizeConversionEvent(experimentID, armID, reward, event)
+	if err := appender.AppendConversionEvent(ctx, &normalizedEvent); err != nil {
+		return fmt.Errorf("failed to append conversion event: %w", err)
+	}
+	return nil
+}
+
+func normalizeConversionEvent(experimentID, armID uuid.UUID, reward float64, event *ConversionEvent) ConversionEvent {
+	normalized := *event
+	if normalized.ExperimentID == uuid.Nil {
+		normalized.ExperimentID = experimentID
+	}
+	if normalized.ArmID == uuid.Nil {
+		normalized.ArmID = armID
+	}
+	if normalized.EventType == "" {
+		normalized.EventType = ConversionEventTypeDirectReward
+	}
+	if normalized.OccurredAt.IsZero() {
+		normalized.OccurredAt = time.Now().UTC()
+	}
+	if normalized.NormalizedRewardValue == 0 {
+		normalized.NormalizedRewardValue = reward
+	}
+	if normalized.OriginalRewardValue == 0 {
+		normalized.OriginalRewardValue = reward
+	}
+	if normalized.NormalizedCurrency == "" {
+		normalized.NormalizedCurrency = normalized.OriginalCurrency
+	}
+	return normalized
 }
 
 // SampleBeta generates a random sample from Beta(α, β)
@@ -674,12 +712,27 @@ func (b *ThompsonSamplingBandit) GetArmStatistics(ctx context.Context, experimen
 // CalculateWinProbability calculates the probability that each arm is the best
 // using Monte Carlo simulation of Beta distributions
 func (b *ThompsonSamplingBandit) CalculateWinProbability(ctx context.Context, experimentID uuid.UUID, simulations int) (map[uuid.UUID]float64, error) {
+	armStats, err := b.loadArmStatsForSimulation(ctx, experimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	winCounts := b.runMonteCarloWinCounts(armStats, simulations)
+
+	winProbs := make(map[uuid.UUID]float64, len(winCounts))
+	for armID, count := range winCounts {
+		winProbs[armID] = float64(count) / float64(simulations)
+	}
+
+	return winProbs, nil
+}
+
+func (b *ThompsonSamplingBandit) loadArmStatsForSimulation(ctx context.Context, experimentID uuid.UUID) ([]*ArmStats, error) {
 	arms, err := b.repo.GetArms(ctx, experimentID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get stats for all arms
 	armStats := make([]*ArmStats, 0, len(arms))
 	for _, arm := range arms {
 		stats, err := b.repo.GetArmStats(ctx, arm.ID)
@@ -689,9 +742,11 @@ func (b *ThompsonSamplingBandit) CalculateWinProbability(ctx context.Context, ex
 		stats.ArmID = arm.ID
 		armStats = append(armStats, stats)
 	}
+	return armStats, nil
+}
 
-	// Monte Carlo simulation
-	winCounts := make(map[uuid.UUID]int)
+func (b *ThompsonSamplingBandit) runMonteCarloWinCounts(armStats []*ArmStats, simulations int) map[uuid.UUID]int {
+	winCounts := make(map[uuid.UUID]int, len(armStats))
 	for _, stats := range armStats {
 		winCounts[stats.ArmID] = 0
 	}
@@ -712,12 +767,5 @@ func (b *ThompsonSamplingBandit) CalculateWinProbability(ctx context.Context, ex
 			winCounts[bestArmID]++
 		}
 	}
-
-	// Convert to probabilities
-	winProbs := make(map[uuid.UUID]float64)
-	for armID, count := range winCounts {
-		winProbs[armID] = float64(count) / float64(simulations)
-	}
-
-	return winProbs, nil
+	return winCounts
 }

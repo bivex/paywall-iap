@@ -70,9 +70,25 @@ func RegisterCurrencyScheduledTasks(scheduler *asynq.Scheduler) error {
 // Asynq-compatible Bandit Maintenance Tasks
 // =====================================================
 
-// RegisterBanditMaintenanceTasks registers bandit maintenance task handlers
-func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine banditMaintenanceEngine, executor scheduledJobExecutor, logger *zap.Logger) {
-	mux.HandleFunc("bandit:maintenance:full", func(ctx context.Context, t *asynq.Task) error {
+func parseMaintenanceBatchSize(payload []byte, logger *zap.Logger) int {
+	if len(payload) == 0 {
+		return 100
+	}
+	var p struct {
+		BatchSize int `json:"batch_size"`
+	}
+	if err := json.Unmarshal(payload, &p); err != nil {
+		logger.Warn("Failed to parse payload", zap.Error(err))
+		return 100
+	}
+	if p.BatchSize <= 0 {
+		return 100
+	}
+	return p.BatchSize
+}
+
+func newFullMaintenanceHandler(advancedEngine banditMaintenanceEngine, executor scheduledJobExecutor, logger *zap.Logger) func(context.Context, *asynq.Task) error {
+	return func(ctx context.Context, t *asynq.Task) error {
 		executed, err := executor.ExecuteScheduled(ctx, service.ScheduledAutomationJobSpec{
 			JobName: "bandit:maintenance:full",
 			Source:  "asynq_scheduler",
@@ -94,34 +110,24 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine banditMa
 			logger.Info("Skipping duplicate full bandit maintenance within scheduled window")
 		}
 		return nil
-	})
+	}
+}
 
-	mux.HandleFunc("bandit:maintenance:trim_windows", func(ctx context.Context, t *asynq.Task) error {
-		// Parse batch size from payload
-		var payload struct {
-			BatchSize int `json:"batch_size"`
-		}
-		if len(t.Payload()) > 0 {
-			if err := json.Unmarshal(t.Payload(), &payload); err != nil {
-				logger.Warn("Failed to parse payload", zap.Error(err))
-				payload.BatchSize = 100
-			}
-		} else {
-			payload.BatchSize = 100
-		}
-
+func newTrimWindowsHandler(advancedEngine banditMaintenanceEngine, executor scheduledJobExecutor, logger *zap.Logger) func(context.Context, *asynq.Task) error {
+	return func(ctx context.Context, t *asynq.Task) error {
+		batchSize := parseMaintenanceBatchSize(t.Payload(), logger)
 		executed, err := executor.ExecuteScheduled(ctx, service.ScheduledAutomationJobSpec{
 			JobName: "bandit:maintenance:trim_windows",
 			Source:  "asynq_scheduler",
 			Window:  time.Hour,
 		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
-			logger.Info("Processing window trimming", zap.Int("batch_size", payload.BatchSize))
-			trimmed, err := advancedEngine.TrimConfiguredWindows(ctx, payload.BatchSize)
+			logger.Info("Processing window trimming", zap.Int("batch_size", batchSize))
+			trimmed, err := advancedEngine.TrimConfiguredWindows(ctx, batchSize)
 			if err != nil {
 				return nil, err
 			}
 			logger.Info("Window trimming completed")
-			return map[string]any{"maintenance": "trim_windows", "batch_size": payload.BatchSize, "windows_trimmed": trimmed}, nil
+			return map[string]any{"maintenance": "trim_windows", "batch_size": batchSize, "windows_trimmed": trimmed}, nil
 		})
 		if err != nil {
 			logger.Error("Failed to trim windows", zap.Error(err))
@@ -131,34 +137,24 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine banditMa
 			logger.Info("Skipping duplicate window trimming within scheduled window")
 		}
 		return nil
-	})
+	}
+}
 
-	mux.HandleFunc("bandit:maintenance:process_expired", func(ctx context.Context, t *asynq.Task) error {
-		// Parse batch size from payload
-		var payload struct {
-			BatchSize int `json:"batch_size"`
-		}
-		if len(t.Payload()) > 0 {
-			if err := json.Unmarshal(t.Payload(), &payload); err != nil {
-				logger.Warn("Failed to parse payload", zap.Error(err))
-				payload.BatchSize = 100
-			}
-		} else {
-			payload.BatchSize = 100
-		}
-
+func newProcessExpiredHandler(advancedEngine banditMaintenanceEngine, executor scheduledJobExecutor, logger *zap.Logger) func(context.Context, *asynq.Task) error {
+	return func(ctx context.Context, t *asynq.Task) error {
+		batchSize := parseMaintenanceBatchSize(t.Payload(), logger)
 		executed, err := executor.ExecuteScheduled(ctx, service.ScheduledAutomationJobSpec{
 			JobName: "bandit:maintenance:process_expired",
 			Source:  "asynq_scheduler",
 			Window:  15 * time.Minute,
 		}, t.Payload(), func(ctx context.Context) (map[string]any, error) {
-			logger.Info("Processing expired pending rewards", zap.Int("batch_size", payload.BatchSize))
-			processed, err := advancedEngine.ProcessExpiredPendingRewards(ctx, payload.BatchSize)
+			logger.Info("Processing expired pending rewards", zap.Int("batch_size", batchSize))
+			processed, err := advancedEngine.ProcessExpiredPendingRewards(ctx, batchSize)
 			if err != nil {
 				return nil, err
 			}
 			logger.Info("Expired rewards processed")
-			return map[string]any{"maintenance": "process_expired", "batch_size": payload.BatchSize, "processed": processed}, nil
+			return map[string]any{"maintenance": "process_expired", "batch_size": batchSize, "processed": processed}, nil
 		})
 		if err != nil {
 			logger.Error("Failed to process expired rewards", zap.Error(err))
@@ -168,7 +164,14 @@ func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine banditMa
 			logger.Info("Skipping duplicate expired reward processing within scheduled window")
 		}
 		return nil
-	})
+	}
+}
+
+// RegisterBanditMaintenanceTasks registers bandit maintenance task handlers
+func RegisterBanditMaintenanceTasks(mux *asynq.ServeMux, advancedEngine banditMaintenanceEngine, executor scheduledJobExecutor, logger *zap.Logger) {
+	mux.HandleFunc("bandit:maintenance:full", newFullMaintenanceHandler(advancedEngine, executor, logger))
+	mux.HandleFunc("bandit:maintenance:trim_windows", newTrimWindowsHandler(advancedEngine, executor, logger))
+	mux.HandleFunc("bandit:maintenance:process_expired", newProcessExpiredHandler(advancedEngine, executor, logger))
 }
 
 func banditMaintenanceSummaryDetails(summary *service.BanditMaintenanceSummary) map[string]any {

@@ -96,59 +96,37 @@ type VerifyResponse struct {
 	OriginalTxID  string
 }
 
-// VerifyReceipt verifies an Apple IAP receipt
-func (v *AppleVerifier) VerifyReceipt(ctx context.Context, receiptData string) (*VerifyResponse, error) {
-	// No secret and no mock → dev stub (always valid)
-	if v.sharedSecret == "" && v.mockURL == "" {
-		return &VerifyResponse{
-			Valid:         true,
-			TransactionID: "mock-tx-" + receiptData[:min(10, len(receiptData))],
-			ProductID:     "com.yourapp.premium.monthly",
-			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
-			IsRenewable:   true,
-			OriginalTxID:  "mock-original-tx",
-		}, nil
+func devStubVerifyResponse(receiptData string) *VerifyResponse {
+	return &VerifyResponse{
+		Valid:         true,
+		TransactionID: "mock-tx-" + receiptData[:min(10, len(receiptData))],
+		ProductID:     "com.yourapp.premium.monthly",
+		ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		IsRenewable:   true,
+		OriginalTxID:  "mock-original-tx",
 	}
+}
 
-	// Build go-iap client and optionally redirect to mock.
-	// When using the local mock, also wrap the transport to patch non-numeric
-	// original_transaction_id values (mock uses string IDs; go-iap expects numbers).
-	var client *iap.Client
+func (v *AppleVerifier) buildIAPClient() *iap.Client {
 	if v.mockURL != "" {
-		client = iap.NewWithClient(&http.Client{
+		client := iap.NewWithClient(&http.Client{
 			Transport: &numericStringPatcher{wrapped: http.DefaultTransport},
 		})
 		mockVerifyURL := v.mockURL + "/verifyReceipt"
 		client.ProductionURL = mockVerifyURL
 		client.SandboxURL = mockVerifyURL
-	} else {
-		client = iap.New()
+		return client
 	}
+	return iap.New()
+}
 
-	req := iap.IAPRequest{
-		ReceiptData: receiptData,
-		Password:    v.sharedSecret,
+func parseAppleReceiptResponse(result *iap.IAPResponse) *VerifyResponse {
+	if result.Status != 0 || len(result.LatestReceiptInfo) == 0 {
+		return &VerifyResponse{Valid: false}
 	}
-
-	var result iap.IAPResponse
-	if err := client.Verify(ctx, req, &result); err != nil {
-		return nil, fmt.Errorf("failed to verify receipt: %w", err)
-	}
-
-	// Non-zero status → invalid receipt
-	if result.Status != 0 {
-		return &VerifyResponse{Valid: false}, nil
-	}
-
-	latestReceipts := result.LatestReceiptInfo
-	if len(latestReceipts) == 0 {
-		return &VerifyResponse{Valid: false}, nil
-	}
-	first := latestReceipts[0]
-
-	// Refunded/cancelled transactions have cancellation_date set → reject.
+	first := result.LatestReceiptInfo[0]
 	if first.CancellationDate.CancellationDate != "" || first.CancellationDate.CancellationDateMS != "" {
-		return &VerifyResponse{Valid: false}, nil
+		return &VerifyResponse{Valid: false}
 	}
 
 	expiresAt := time.Now()
@@ -165,9 +143,29 @@ func (v *AppleVerifier) VerifyReceipt(ctx context.Context, receiptData string) (
 		TransactionID: first.TransactionID,
 		ProductID:     first.ProductID,
 		ExpiresAt:     expiresAt,
-		IsRenewable:   first.IsInIntroOfferPeriod == "false",
+		IsRenewable:   first.ExpiresDateMS != "",
 		OriginalTxID:  string(first.OriginalTransactionID),
-	}, nil
+	}
+}
+
+// VerifyReceipt verifies an Apple IAP receipt
+func (v *AppleVerifier) VerifyReceipt(ctx context.Context, receiptData string) (*VerifyResponse, error) {
+	if v.sharedSecret == "" && v.mockURL == "" {
+		return devStubVerifyResponse(receiptData), nil
+	}
+
+	client := v.buildIAPClient()
+	req := iap.IAPRequest{
+		ReceiptData: receiptData,
+		Password:    v.sharedSecret,
+	}
+
+	var result iap.IAPResponse
+	if err := client.Verify(ctx, req, &result); err != nil {
+		return nil, fmt.Errorf("failed to verify receipt: %w", err)
+	}
+
+	return parseAppleReceiptResponse(&result), nil
 }
 
 func min(a, b int) int {

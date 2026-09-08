@@ -351,26 +351,26 @@ func (r *appRepositoryImpl) scanAndDecryptCredentials(rows pgx.Rows) (*entity.Ap
 		return decryptField(k, *p)
 	}
 
-	if c.AppleSharedSecret, err = dec(appleSecretEnc); err != nil {
-		return nil, fmt.Errorf("decrypt apple_shared_secret: %w", err)
+	targets := []struct {
+		name   string
+		source *string
+		dest   *string
+	}{
+		{"apple_shared_secret", appleSecretEnc, &c.AppleSharedSecret},
+		{"apple_private_key", applePrivKeyEnc, &c.ApplePrivateKey},
+		{"google_service_account", googleSAEnc, &c.GoogleServiceAccount},
+		{"stripe_secret_key", stripeSecretEnc, &c.StripeSecretKey},
+		{"stripe_webhook_secret", stripeWHEnc, &c.StripeWebhookSecret},
+		{"paddle_api_key", paddleAPIEnc, &c.PaddleAPIKey},
+		{"paddle_webhook_secret", paddleWHEnc, &c.PaddleWebhookSecret},
 	}
-	if c.ApplePrivateKey, err = dec(applePrivKeyEnc); err != nil {
-		return nil, fmt.Errorf("decrypt apple_private_key: %w", err)
-	}
-	if c.GoogleServiceAccount, err = dec(googleSAEnc); err != nil {
-		return nil, fmt.Errorf("decrypt google_service_account: %w", err)
-	}
-	if c.StripeSecretKey, err = dec(stripeSecretEnc); err != nil {
-		return nil, fmt.Errorf("decrypt stripe_secret_key: %w", err)
-	}
-	if c.StripeWebhookSecret, err = dec(stripeWHEnc); err != nil {
-		return nil, fmt.Errorf("decrypt stripe_webhook_secret: %w", err)
-	}
-	if c.PaddleAPIKey, err = dec(paddleAPIEnc); err != nil {
-		return nil, fmt.Errorf("decrypt paddle_api_key: %w", err)
-	}
-	if c.PaddleWebhookSecret, err = dec(paddleWHEnc); err != nil {
-		return nil, fmt.Errorf("decrypt paddle_webhook_secret: %w", err)
+
+	for _, t := range targets {
+		val, err := dec(t.source)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt %s: %w", t.name, err)
+		}
+		*t.dest = val
 	}
 
 	return &c, nil
