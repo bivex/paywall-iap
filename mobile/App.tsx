@@ -20,6 +20,7 @@ import {initializeServices, getIAPService, cleanupServices} from './src/applicat
 import {useAuthStore} from './src/application/store/authStore';
 import {useIAPStore} from './src/application/store/iapStore';
 import {PaywallSDK} from './src/sdk';
+import {API_BASE_URL, APP_ID} from './src/infrastructure/api/config';
 
 function App() {
   const [isInitializing, setIsInitializing] = useState(true);
@@ -43,10 +44,10 @@ function App() {
         setService(iapService);
         await initIAP();
 
-        // Initialize Paywall SDK
+        // Initialize Paywall SDK with Server-Driven UI configuration
         await PaywallSDK.configure({
-          appId: '2e0a62f9-dc32-4bcf-a2ce-8e545d9bbdf2', // com.mothsalt.game1
-          baseUrl: 'http://localhost:8080/v1',
+          appId: APP_ID,
+          baseUrl: API_BASE_URL,
           debug: __DEV__,
         });
 

@@ -1,12 +1,14 @@
-import React, {useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
 import {useAuthStore} from '../../application/store/authStore';
 import {useSubscriptionStore} from '../../application/store/subscriptionStore';
 import {navigateToPaywall} from '../navigation/types';
+import {PaywallModal} from '../../sdk';
 
 export function HomeScreen() {
   const {user} = useAuthStore();
-  const {subscription, checkAccess} = useSubscriptionStore();
+  const {subscription, checkAccess, fetchSubscription} = useSubscriptionStore();
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     // Check access on mount
@@ -21,43 +23,64 @@ export function HomeScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Welcome</Text>
-        {user && <Text style={styles.subtitle}>User ID: {user.id.slice(0, 8)}...</Text>}
-      </View>
+    <>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Welcome</Text>
+          {user && <Text style={styles.subtitle}>User ID: {user.id.slice(0, 8)}...</Text>}
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Subscription Status</Text>
-        {subscription ? (
-          <View style={styles.statusContainer}>
-            <Text style={styles.statusText}>
-              Status: <Text style={[styles.statusValue, {color: subscription.status === 'active' ? '#4CAF50' : '#f44336'}]}>
-                {subscription.status.toUpperCase()}
-              </Text>
-            </Text>
-            <Text style={styles.statusText}>
-              Plan: <Text style={styles.statusValue}>{subscription.planType.toUpperCase()}</Text>
-            </Text>
-            {subscription.expiresAt && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Subscription Status</Text>
+          {subscription ? (
+            <View style={styles.statusContainer}>
               <Text style={styles.statusText}>
-                Expires: <Text style={styles.statusValue}>{new Date(subscription.expiresAt).toLocaleDateString()}</Text>
+                Status: <Text style={[styles.statusValue, {color: subscription.status === 'active' ? '#4CAF50' : '#f44336'}]}>
+                  {subscription.status.toUpperCase()}
+                </Text>
               </Text>
-            )}
-          </View>
-        ) : (
-          <Text style={styles.noSubscriptionText}>No active subscription</Text>
-        )}
-      </View>
+              <Text style={styles.statusText}>
+                Plan: <Text style={styles.statusValue}>{subscription.planType.toUpperCase()}</Text>
+              </Text>
+              {subscription.expiresAt && (
+                <Text style={styles.statusText}>
+                  Expires: <Text style={styles.statusValue}>{new Date(subscription.expiresAt).toLocaleDateString()}</Text>
+                </Text>
+              )}
+            </View>
+          ) : (
+            <View style={styles.statusContainer}>
+              <Text style={styles.noSubscriptionText}>No active subscription</Text>
+              <TouchableOpacity
+                style={styles.proBannerButton}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text style={styles.proBannerText}>✨ Upgrade with Paywall Modal</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Content</Text>
-        <TouchableOpacity style={styles.contentItem} onPress={handlePremiumContentAccess}>
-          <Text style={styles.contentTitle}>Premium Content</Text>
-          <Text style={styles.contentDescription}>Exclusive premium content for subscribers</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Content</Text>
+          <TouchableOpacity style={styles.contentItem} onPress={handlePremiumContentAccess}>
+            <Text style={styles.contentTitle}>🔒 Premium Content (Full Screen Paywall)</Text>
+            <Text style={styles.contentDescription}>Exclusive premium content for subscribers. Tap to trigger paywall.</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      {/* Embedded SDK Paywall Modal */}
+      <PaywallModal
+        visible={modalVisible}
+        trigger="home_banner_click"
+        onClose={() => setModalVisible(false)}
+        onPurchaseSuccess={async () => {
+          setModalVisible(false);
+          await fetchSubscription();
+        }}
+      />
+    </>
   );
 }
 
@@ -109,6 +132,20 @@ const styles = StyleSheet.create({
   noSubscriptionText: {
     color: '#888',
     fontSize: 14,
+    marginBottom: 10,
+  },
+  proBannerButton: {
+    backgroundColor: '#6366f1',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  proBannerText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
   },
   contentItem: {
     backgroundColor: '#1a1a1a',

@@ -27,9 +27,12 @@ class PaywallClient {
    * Initialize the Paywall SDK with app configuration
    */
   public async configure(config: PaywallSDKConfig): Promise<void> {
+    const rawBase = (config.baseUrl || 'http://localhost:8081/v1').replace(/\/+$/, '');
+    const normalizedBase = rawBase.endsWith('/v1') ? rawBase : `${rawBase}/v1`;
+
     this.config = {
-      baseUrl: 'http://localhost:8080/v1',
       ...config,
+      baseUrl: normalizedBase,
     };
 
     if (config.offlineFallback) {
@@ -39,7 +42,7 @@ class PaywallClient {
     this.isInitialized = true;
 
     if (this.config.debug) {
-      console.log('[PaywallSDK] Configured with appId:', this.config.appId);
+      console.log('[PaywallSDK] Configured with appId:', this.config.appId, 'baseUrl:', this.config.baseUrl);
     }
 
     // Pre-fetch active paywall in background so it's ready instantaneously
@@ -188,14 +191,25 @@ class PaywallClient {
         }
       }
 
+      // Resolve authentication token
+      let effectiveToken = userToken;
+      if (!effectiveToken) {
+        try {
+          const { SecureStorage } = await import('../infrastructure/storage/SecureStorage');
+          effectiveToken = (await SecureStorage.getItem('access_token')) || undefined;
+        } catch {
+          // ignore if secure storage unavailable
+        }
+      }
+
       // Verify with backend
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'X-App-ID': config.appId,
       };
 
-      if (userToken) {
-        headers['Authorization'] = `Bearer ${userToken}`;
+      if (effectiveToken) {
+        headers['Authorization'] = `Bearer ${effectiveToken}`;
       }
 
       const verifyRes = await fetch(`${config.baseUrl}/verify/iap`, {
@@ -228,6 +242,14 @@ class PaywallClient {
 
       // Track conversion
       await this.trackConversion(this.cachedPaywall.id, productId);
+
+      // Refresh app-wide subscription state
+      try {
+        const { useSubscriptionStore } = await import('../application/store/subscriptionStore');
+        await useSubscriptionStore.getState().fetchSubscription();
+      } catch {
+        // ignore
+      }
 
       return {
         success: true,

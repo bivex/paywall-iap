@@ -1,7 +1,8 @@
-import {API_BASE_URL} from './config';
+import {API_BASE_URL, APP_ID} from './config';
 
 export class ApiClient {
   private accessToken: string | null = null;
+  private appId: string = APP_ID;
 
   setAccessToken(token: string) {
     this.accessToken = token;
@@ -11,6 +12,10 @@ export class ApiClient {
     this.accessToken = null;
   }
 
+  setAppId(appId: string) {
+    this.appId = appId;
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -18,6 +23,7 @@ export class ApiClient {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'X-App-ID': this.appId,
     };
 
     if (this.accessToken) {

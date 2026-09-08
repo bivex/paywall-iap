@@ -1,5 +1,9 @@
+import {Platform} from 'react-native';
+
 // API Client configuration
-const API_BASE_URL = __DEV__ ? 'http://localhost:8080/v1' : 'https://api.yourapp.com/v1';
+const DEV_HOST = Platform.OS === 'android' ? 'http://10.0.2.2:8081' : 'http://localhost:8081';
+export const API_BASE_URL = process.env.API_BASE_URL || (__DEV__ ? `${DEV_HOST}/v1` : 'https://api.yourapp.com/v1');
+export const APP_ID = '2e0a62f9-dc32-4bcf-a2ce-8e545d9bbdf2';
 
 export interface ApiResponse<T> {
   data: T;
