@@ -103,7 +103,11 @@ class PaywallClient {
         const rawDef = body.data?.definition ?? body.definition ?? body.data;
 
         if (rawDef && typeof rawDef === 'object' && rawDef.plans) {
-          this.cachedPaywall = rawDef as PaywallDefinition;
+          const paywallName = rawDef.name || body.data?.name || body.name || rawDef.hero?.title || rawDef.id || 'Active Paywall';
+          this.cachedPaywall = {
+            ...rawDef,
+            name: paywallName,
+          } as PaywallDefinition;
           if (config.debug) {
             console.log('[PaywallSDK] Fetched active paywall successfully:', this.cachedPaywall.name);
           }
