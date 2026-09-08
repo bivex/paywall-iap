@@ -622,6 +622,7 @@ LIMIT $%d OFFSET $%d
 		AppVersion     string  `json:"app_version"`
 		CreatedAt      string  `json:"created_at"`
 		SubStatus      string  `json:"sub_status"`
+		PlanType       string  `json:"plan_type"`
 		SubExpiresAt   string  `json:"sub_expires_at"`
 	}
 
@@ -630,13 +631,17 @@ LIMIT $%d OFFSET $%d
 	for rows.Next() {
 		var r UserRow
 		var createdAt time.Time
+		var subExpiresAt *time.Time
 		if err := rows.Scan(&uid, &r.PlatformUserID, &r.Platform, &r.Email, &r.Role,
-			&r.LTV, &r.AppVersion, &createdAt, &r.SubStatus, &r.SubExpiresAt); err != nil {
+			&r.LTV, &r.AppVersion, &createdAt, &r.SubStatus, &r.PlanType, &subExpiresAt); err != nil {
 			response.InternalError(c, "Failed to scan user")
 			return
 		}
 		r.ID = uid.String()
 		r.CreatedAt = createdAt.Format(time.RFC3339)
+		if subExpiresAt != nil {
+			r.SubExpiresAt = subExpiresAt.Format(time.RFC3339)
+		}
 		result = append(result, r)
 	}
 
