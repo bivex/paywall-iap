@@ -307,12 +307,22 @@ type FunnelStep struct {
 	DropoffRate float64 `json:"dropoff_rate"`
 }
 
-// SetFunnelData stores funnel data with 30min TTL
-func (c *CohortFunnelCache) SetFunnelData(ctx context.Context, funnelID string, dateFrom, dateTo time.Time, data *FunnelData) error {
-	key := fmt.Sprintf(KeyFunnelData, funnelID, fmt.Sprintf("%s:%s", dateFrom.Format("2006-01-02"), dateTo.Format("2006-01-02")))
+// SetFunnelDataParams contains parameters for caching funnel data.
+type SetFunnelDataParams struct {
+	FunnelID string
+	DateFrom time.Time
+	DateTo   time.Time
+	Data     *FunnelData
+}
 
-	data.CachedAt = time.Now()
-	jsonData, err := json.Marshal(data)
+// SetFunnelData stores funnel data with 30min TTL
+func (c *CohortFunnelCache) SetFunnelData(ctx context.Context, params SetFunnelDataParams) error {
+	key := fmt.Sprintf(KeyFunnelData, params.FunnelID, fmt.Sprintf("%s:%s", params.DateFrom.Format("2006-01-02"), params.DateTo.Format("2006-01-02")))
+
+	if params.Data != nil {
+		params.Data.CachedAt = time.Now()
+	}
+	jsonData, err := json.Marshal(params.Data)
 	if err != nil {
 		return fmt.Errorf("failed to marshal funnel data: %w", err)
 	}
@@ -321,7 +331,7 @@ func (c *CohortFunnelCache) SetFunnelData(ctx context.Context, funnelID string, 
 		return fmt.Errorf("failed to set funnel data: %w", err)
 	}
 
-	c.logger.Debug("Cached funnel data", zap.String("funnel_id", funnelID))
+	c.logger.Debug("Cached funnel data", zap.String("funnel_id", params.FunnelID))
 	return nil
 }
 

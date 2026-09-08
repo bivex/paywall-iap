@@ -125,7 +125,13 @@ func TestBanditMaintenanceSummaryUsesRepositoryBackedMaintenance(t *testing.T) {
 	repo := repository.NewPostgresBanditRepository(db, zap.NewNop())
 	cache := &integrationBanditMaintenanceCache{}
 	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{EnableHybrid: true})
+	engine := service.NewAdvancedBanditEngine(service.AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &service.EngineConfig{EnableHybrid: true},
+	})
 
 	summary, err := engine.RunMaintenanceDetailed(ctx)
 

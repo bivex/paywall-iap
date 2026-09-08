@@ -43,19 +43,29 @@ type User struct {
 	AppID           uuid.UUID
 }
 
+// NewUserParams contains parameters for creating a new user entity.
+type NewUserParams struct {
+	PlatformUserID string
+	DeviceID       string
+	Platform       Platform
+	AppVersion     string
+	Email          string
+	AppID          uuid.UUID
+}
+
 // NewUser creates a new user entity
-func NewUser(platformUserID, deviceID string, platform Platform, appVersion, email string, appID uuid.UUID) *User {
+func NewUser(p NewUserParams) *User {
 	return &User{
 		ID:             uuid.New(),
-		PlatformUserID: platformUserID,
-		DeviceID:       deviceID,
-		Platform:       platform,
-		AppVersion:     appVersion,
-		Email:          email,
+		PlatformUserID: p.PlatformUserID,
+		DeviceID:       p.DeviceID,
+		Platform:       p.Platform,
+		AppVersion:     p.AppVersion,
+		Email:          p.Email,
 		LTV:            0,
 		Role:           RoleUser,
 		CreatedAt:      time.Now(),
-		AppID:          appID,
+		AppID:          p.AppID,
 	}
 }
 

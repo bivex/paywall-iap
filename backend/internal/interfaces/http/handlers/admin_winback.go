@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/bivex/paywall-iap/internal/domain/entity"
+	"github.com/bivex/paywall-iap/internal/domain/service"
 	httpmiddleware "github.com/bivex/paywall-iap/internal/interfaces/http/middleware"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
@@ -101,7 +102,13 @@ func (h *AdminExperimentHandler) logWinbackCampaignAction(c *gin.Context, action
 	details["total_offers"] = summary.TotalOffers
 	details["active_offers"] = summary.ActiveOffers
 
-	_ = h.auditService.LogAction(c.Request.Context(), adminID, action, "winback_campaign", nil, details)
+	_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+		AdminID:      adminID,
+		Action:       action,
+		TargetType:   "winback_campaign",
+		TargetUserID: nil,
+		Details:      details,
+	})
 }
 
 func (h *AdminExperimentHandler) getWinbackCampaignSummary(ctx *gin.Context, campaignID string) (WinbackCampaignSummary, error) {
@@ -196,11 +203,13 @@ func (h *AdminExperimentHandler) LaunchWinbackCampaign(c *gin.Context) {
 
 	createdOffers, err := h.winbackService.CreateWinbackCampaignForChurnedUsers(
 		c.Request.Context(),
-		req.CampaignID,
-		entity.DiscountType(req.DiscountType),
-		req.DiscountValue,
-		req.DurationDays,
-		req.DaysSinceChurn,
+		service.CreateWinbackCampaignParams{
+			CampaignID:     req.CampaignID,
+			DiscountType:   entity.DiscountType(req.DiscountType),
+			DiscountValue:  req.DiscountValue,
+			DurationDays:   req.DurationDays,
+			DaysSinceChurn: req.DaysSinceChurn,
+		},
 	)
 	if err != nil {
 		response.InternalError(c, "Failed to launch winback campaign")

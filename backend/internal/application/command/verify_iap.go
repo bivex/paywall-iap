@@ -54,36 +54,44 @@ type VerifyIAPCommand struct {
 	androidVerifier  DynamicIAPVerifier
 }
 
+// VerifyIAPCommandParams contains dependencies for VerifyIAPCommand.
+type VerifyIAPCommandParams struct {
+	UserRepo         repository.UserRepository
+	SubscriptionRepo repository.SubscriptionRepository
+	TransactionRepo  repository.TransactionRepository
+	IOSVerifier      DynamicIAPVerifier
+	AndroidVerifier  DynamicIAPVerifier
+}
+
 // NewVerifyIAPCommand creates a new verify IAP command with dynamic (per-app) verifiers.
-func NewVerifyIAPCommand(
-	userRepo repository.UserRepository,
-	subscriptionRepo repository.SubscriptionRepository,
-	transactionRepo repository.TransactionRepository,
-	iosVerifier DynamicIAPVerifier,
-	androidVerifier DynamicIAPVerifier,
-) *VerifyIAPCommand {
+func NewVerifyIAPCommand(params VerifyIAPCommandParams) *VerifyIAPCommand {
 	return &VerifyIAPCommand{
-		userRepo:         userRepo,
-		subscriptionRepo: subscriptionRepo,
-		transactionRepo:  transactionRepo,
-		iosVerifier:      iosVerifier,
-		androidVerifier:  androidVerifier,
+		userRepo:         params.UserRepo,
+		subscriptionRepo: params.SubscriptionRepo,
+		transactionRepo:  params.TransactionRepo,
+		iosVerifier:      params.IOSVerifier,
+		androidVerifier:  params.AndroidVerifier,
 	}
 }
 
+// VerifyIAPCommandLegacyParams contains dependencies for VerifyIAPCommand with legacy static verifiers.
+type VerifyIAPCommandLegacyParams struct {
+	UserRepo         repository.UserRepository
+	SubscriptionRepo repository.SubscriptionRepository
+	TransactionRepo  repository.TransactionRepository
+	IOSVerifier      IAPVerifier
+	AndroidVerifier  IAPVerifier
+}
+
 // NewVerifyIAPCommandLegacy wraps legacy static verifiers for tests / backward compat.
-func NewVerifyIAPCommandLegacy(
-	userRepo repository.UserRepository,
-	subscriptionRepo repository.SubscriptionRepository,
-	transactionRepo repository.TransactionRepository,
-	iosVerifier IAPVerifier,
-	androidVerifier IAPVerifier,
-) *VerifyIAPCommand {
-	return NewVerifyIAPCommand(
-		userRepo, subscriptionRepo, transactionRepo,
-		&staticVerifierAdapter{iosVerifier},
-		&staticVerifierAdapter{androidVerifier},
-	)
+func NewVerifyIAPCommandLegacy(params VerifyIAPCommandLegacyParams) *VerifyIAPCommand {
+	return NewVerifyIAPCommand(VerifyIAPCommandParams{
+		UserRepo:         params.UserRepo,
+		SubscriptionRepo: params.SubscriptionRepo,
+		TransactionRepo:  params.TransactionRepo,
+		IOSVerifier:      &staticVerifierAdapter{params.IOSVerifier},
+		AndroidVerifier:  &staticVerifierAdapter{params.AndroidVerifier},
+	})
 }
 
 func (c *VerifyIAPCommand) handleDuplicateReceipt(ctx context.Context, userUUID uuid.UUID) (*dto.VerifyIAPResponse, error) {
@@ -94,28 +102,36 @@ func (c *VerifyIAPCommand) handleDuplicateReceipt(ctx context.Context, userUUID 
 	return c.toSubscriptionResponse(sub, false), nil
 }
 
-func (c *VerifyIAPCommand) upsertSubscription(ctx context.Context, userUUID uuid.UUID, platform, productID string, planType entity.PlanType, expiresAt time.Time) (*entity.Subscription, bool, error) {
-	existingSub, err := c.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
+type upsertSubscriptionParams struct {
+	userUUID  uuid.UUID
+	platform  string
+	productID string
+	planType  entity.PlanType
+	expiresAt time.Time
+}
+
+func (c *VerifyIAPCommand) upsertSubscription(ctx context.Context, p upsertSubscriptionParams) (*entity.Subscription, bool, error) {
+	existingSub, err := c.subscriptionRepo.GetActiveByUserID(ctx, p.userUUID)
 	if err == nil && existingSub != nil {
-		existingSub.ExpiresAt = expiresAt
+		existingSub.ExpiresAt = p.expiresAt
 		if err := c.subscriptionRepo.Update(ctx, existingSub); err != nil {
 			return nil, false, fmt.Errorf("failed to update subscription: %w", err)
 		}
 		return existingSub, false, nil
 	}
 
-	sub := entity.NewSubscription(
-		userUUID,
-		entity.SourceIAP,
-		platform,
-		productID,
-		planType,
-		expiresAt,
-	)
+	sub := entity.NewSubscription(entity.NewSubscriptionParams{
+		UserID:    p.userUUID,
+		Source:    entity.SourceIAP,
+		Platform:  p.platform,
+		ProductID: p.productID,
+		PlanType:  p.planType,
+		ExpiresAt: p.expiresAt,
+	})
 	if err := c.subscriptionRepo.Create(ctx, sub); err != nil {
 		return nil, false, fmt.Errorf("failed to create subscription: %w", err)
 	}
-	_ = c.userRepo.UpdatePurchaseChannel(ctx, userUUID, entity.PurchaseChannelIAP)
+	_ = c.userRepo.UpdatePurchaseChannel(ctx, p.userUUID, entity.PurchaseChannelIAP)
 	return sub, true, nil
 }
 
@@ -146,13 +162,25 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uui
 	planType := c.determinePlanType(req.ProductID)
 
 	// Check for existing active subscription
-	sub, isNew, err := c.upsertSubscription(ctx, userUUID, req.Platform, req.ProductID, planType, result.ExpiresAt)
+	sub, isNew, err := c.upsertSubscription(ctx, upsertSubscriptionParams{
+		userUUID:  userUUID,
+		platform:  req.Platform,
+		productID: req.ProductID,
+		planType:  planType,
+		expiresAt: result.ExpiresAt,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	// Create transaction record
-	txn := entity.NewTransaction(appID, userUUID, sub.ID, 0, "USD")
+	txn := entity.NewTransaction(entity.NewTransactionParams{
+		AppID:          appID,
+		UserID:         userUUID,
+		SubscriptionID: sub.ID,
+		Amount:         0,
+		Currency:       "USD",
+	})
 	txn.ReceiptHash = receiptHash
 	txn.ProviderTxID = result.TransactionID
 	if err := c.transactionRepo.Create(ctx, txn); err != nil {

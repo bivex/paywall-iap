@@ -227,14 +227,14 @@ func (h *AdminSubscriptionHandler) GrantSubscription(c *gin.Context) {
 		return
 	}
 
-	sub := entity.NewSubscription(
-		userID,
-		entity.SourceStripe, // admin-granted via Stripe source
-		"web",
-		req.ProductID,
-		entity.PlanType(req.PlanType),
-		expiresAt,
-	)
+	sub := entity.NewSubscription(entity.NewSubscriptionParams{
+		UserID:    userID,
+		Source:    entity.SourceStripe, // admin-granted via Stripe source
+		Platform:  "web",
+		ProductID: req.ProductID,
+		PlanType:  entity.PlanType(req.PlanType),
+		ExpiresAt: expiresAt,
+	})
 
 	if err := h.subscriptionRepo.Create(c.Request.Context(), sub); err != nil {
 		response.InternalError(c, "Failed to grant subscription")
@@ -244,10 +244,16 @@ func (h *AdminSubscriptionHandler) GrantSubscription(c *gin.Context) {
 	// Audit log
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
-		_ = h.auditService.LogAction(c.Request.Context(), aid, "grant_subscription", "user", &userID, map[string]interface{}{
-			"product_id": req.ProductID,
-			"plan_type":  req.PlanType,
-			"expires_at": req.ExpiresAt,
+		_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+			AdminID:      aid,
+			Action:       "grant_subscription",
+			TargetType:   "user",
+			TargetUserID: &userID,
+			Details: map[string]interface{}{
+				"product_id": req.ProductID,
+				"plan_type":  req.PlanType,
+				"expires_at": req.ExpiresAt,
+			},
 		})
 	}
 
@@ -294,9 +300,15 @@ func (h *AdminSubscriptionHandler) RevokeSubscription(c *gin.Context) {
 	// Audit log
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
-		_ = h.auditService.LogAction(c.Request.Context(), aid, "revoke_subscription", "user", &userID, map[string]interface{}{
-			"reason":          req.Reason,
-			"subscription_id": sub.ID,
+		_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+			AdminID:      aid,
+			Action:       "revoke_subscription",
+			TargetType:   "user",
+			TargetUserID: &userID,
+			Details: map[string]interface{}{
+				"reason":          req.Reason,
+				"subscription_id": sub.ID,
+			},
 		})
 	}
 
@@ -493,7 +505,14 @@ func (h *AdminAuditHandler) GetAuditLog(c *gin.Context) {
 		to, _ = time.Parse(time.RFC3339, v)
 	}
 
-	pageResult, err := h.analyticsService.GetAuditLogPaginated(ctx, offset, limit, action, search, from, to)
+	pageResult, err := h.analyticsService.GetAuditLogPaginated(ctx, domainRepo.AuditLogFilter{
+		Offset: offset,
+		Limit:  limit,
+		Action: action,
+		Search: search,
+		From:   from,
+		To:     to,
+	})
 	if err != nil {
 		response.InternalError(c, "Failed to get audit log")
 		return
@@ -658,8 +677,14 @@ func (h *AdminSubscriptionHandler) ForceCancel(c *gin.Context) {
 	}
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
-		_ = h.auditService.LogAction(c.Request.Context(), aid, "revoke_subscription", "user", &userID, map[string]interface{}{
-			"reason": req.Reason, "subscription_id": sub.ID,
+		_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+			AdminID:      aid,
+			Action:       "revoke_subscription",
+			TargetType:   "user",
+			TargetUserID: &userID,
+			Details: map[string]interface{}{
+				"reason": req.Reason, "subscription_id": sub.ID,
+			},
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true})
@@ -711,8 +736,14 @@ type manualRenewalParams struct {
 func (h *AdminSubscriptionHandler) logManualRenewal(c *gin.Context, p manualRenewalParams) {
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
-		_ = h.auditService.LogAction(c.Request.Context(), aid, "manual_renewal", "subscription", &p.userID, map[string]interface{}{
-			"reason": p.reason, "days": p.days, "sub_id": p.subID,
+		_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+			AdminID:      aid,
+			Action:       "manual_renewal",
+			TargetType:   "subscription",
+			TargetUserID: &p.userID,
+			Details: map[string]interface{}{
+				"reason": p.reason, "days": p.days, "sub_id": p.subID,
+			},
 		})
 	}
 }
@@ -813,8 +844,14 @@ RETURNING id`,
 
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
-		_ = h.auditService.LogAction(ctx, aid, "grant_subscription", "user", &userID, map[string]interface{}{
-			"reason": req.Reason, "days": req.Days, "grace_id": graceID, "type": "grace_period",
+		_ = h.auditService.LogAction(ctx, service.AuditActionParams{
+			AdminID:      aid,
+			Action:       "grant_subscription",
+			TargetType:   "user",
+			TargetUserID: &userID,
+			Details: map[string]interface{}{
+				"reason": req.Reason, "days": req.Days, "grace_id": graceID, "type": "grace_period",
+			},
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "grace_expires_at": gracExpires.Format(time.RFC3339)})
@@ -1037,8 +1074,14 @@ func (h *AdminWebhookHandler) ReplayWebhook(c *gin.Context) {
 	// Log admin action
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
-		_ = h.auditService.LogAction(ctx, aid, "replay_webhook", "webhook_event", &id, map[string]interface{}{
-			"provider": provider, "event_type": eventType, "event_id": eventID,
+		_ = h.auditService.LogAction(ctx, service.AuditActionParams{
+			AdminID:      aid,
+			Action:       "replay_webhook",
+			TargetType:   "webhook_event",
+			TargetUserID: &id,
+			Details: map[string]interface{}{
+				"provider": provider, "event_type": eventType, "event_id": eventID,
+			},
 		})
 	}
 

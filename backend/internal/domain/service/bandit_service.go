@@ -225,12 +225,40 @@ type ExperimentConfig struct {
 	ExplorationAlpha float64 // For LinUCB: exploration parameter
 }
 
-// ThompsonSamplingBandit implements the Thompson Sampling algorithm
-type ThompsonSamplingBandit struct {
+// BetaDistributionSampler samples from Beta and Gamma distributions
+type BetaDistributionSampler struct {
+	rng *rand.Rand
+}
+
+// BanditArmSelector selects bandit arms using Thompson Sampling
+type BanditArmSelector struct {
+	repo    BanditRepository
+	cache   BanditCache
+	logger  *zap.Logger
+	sampler *BetaDistributionSampler
+}
+
+// BanditRewardTracker tracks impressions, rewards, and conversion events
+type BanditRewardTracker struct {
 	repo   BanditRepository
 	cache  BanditCache
 	logger *zap.Logger
-	rng    *rand.Rand
+}
+
+// BanditStatsCalculator calculates arm statistics and Monte Carlo win probabilities
+type BanditStatsCalculator struct {
+	repo    BanditRepository
+	cache   BanditCache
+	logger  *zap.Logger
+	sampler *BetaDistributionSampler
+}
+
+// ThompsonSamplingBandit implements the Thompson Sampling algorithm
+type ThompsonSamplingBandit struct {
+	*BetaDistributionSampler
+	*BanditArmSelector
+	*BanditRewardTracker
+	*BanditStatsCalculator
 }
 
 // NewThompsonSamplingBandit creates a new Thompson Sampling bandit service
@@ -240,17 +268,35 @@ func NewThompsonSamplingBandit(
 	logger *zap.Logger,
 ) *ThompsonSamplingBandit {
 	source := rand.NewSource(time.Now().UnixNano())
-	return &ThompsonSamplingBandit{
+	sampler := &BetaDistributionSampler{rng: rand.New(source)}
+	armSelector := &BanditArmSelector{
+		repo:    repo,
+		cache:   cache,
+		logger:  logger,
+		sampler: sampler,
+	}
+	rewardTracker := &BanditRewardTracker{
 		repo:   repo,
 		cache:  cache,
 		logger: logger,
-		rng:    rand.New(source),
+	}
+	statsCalculator := &BanditStatsCalculator{
+		repo:    repo,
+		cache:   cache,
+		logger:  logger,
+		sampler: sampler,
+	}
+	return &ThompsonSamplingBandit{
+		BetaDistributionSampler: sampler,
+		BanditArmSelector:       armSelector,
+		BanditRewardTracker:     rewardTracker,
+		BanditStatsCalculator:   statsCalculator,
 	}
 }
 
 // SelectArm selects the best arm using Thompson Sampling
 // Returns the arm ID that maximizes the sampled Beta distribution
-func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, error) {
+func (b *BanditArmSelector) SelectArm(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, error) {
 	// First, check if user has an active assignment (sticky assignment)
 	if assignment, err := b.repo.GetActiveAssignment(ctx, experimentID, userID); err == nil && assignment != nil {
 		b.logger.Debug("Using existing assignment",
@@ -272,21 +318,28 @@ func (b *ThompsonSamplingBandit) SelectArm(ctx context.Context, experimentID, us
 	}
 
 	bestArm, maxSample, armScores := b.sampleCandidateArms(ctx, arms)
-	if err := b.persistAndCacheAssignment(ctx, experimentID, userID, bestArm, maxSample, armScores, len(arms)); err != nil {
+	if err := b.persistAndCacheAssignment(ctx, persistAssignmentParams{
+		experimentID: experimentID,
+		userID:       userID,
+		bestArm:      bestArm,
+		maxSample:    maxSample,
+		armScores:    armScores,
+		armsCount:    len(arms),
+	}); err != nil {
 		return uuid.Nil, err
 	}
 
 	return bestArm.ID, nil
 }
 
-func (b *ThompsonSamplingBandit) sampleCandidateArms(ctx context.Context, arms []Arm) (*Arm, float64, []map[string]interface{}) {
+func (b *BanditArmSelector) sampleCandidateArms(ctx context.Context, arms []Arm) (*Arm, float64, []map[string]interface{}) {
 	var bestArm *Arm
 	maxSample := -1.0
 	armScores := make([]map[string]interface{}, 0, len(arms))
 
 	for _, arm := range arms {
 		stats, statsSource := b.resolveArmStatsForSampling(ctx, arm)
-		sample := b.SampleBeta(stats.Alpha, stats.Beta)
+		sample := b.sampler.SampleBeta(stats.Alpha, stats.Beta)
 
 		b.logger.Debug("Arm sample",
 			zap.String("arm_id", arm.ID.String()),
@@ -316,12 +369,12 @@ func (b *ThompsonSamplingBandit) sampleCandidateArms(ctx context.Context, arms [
 	}
 
 	if bestArm == nil {
-		bestArm = &arms[b.rng.Intn(len(arms))]
+		bestArm = &arms[b.sampler.rng.Intn(len(arms))]
 	}
 	return bestArm, maxSample, armScores
 }
 
-func (b *ThompsonSamplingBandit) resolveArmStatsForSampling(ctx context.Context, arm Arm) (*ArmStats, string) {
+func (b *BanditArmSelector) resolveArmStatsForSampling(ctx context.Context, arm Arm) (*ArmStats, string) {
 	cacheKey := fmt.Sprintf("ab:arm:%s", arm.ID.String())
 	stats, err := b.cache.GetArmStats(ctx, cacheKey)
 	if err == nil && stats != nil {
@@ -344,43 +397,48 @@ func (b *ThompsonSamplingBandit) resolveArmStatsForSampling(ctx context.Context,
 	}, "default_prior"
 }
 
-func (b *ThompsonSamplingBandit) persistAndCacheAssignment(
+type persistAssignmentParams struct {
+	experimentID uuid.UUID
+	userID       uuid.UUID
+	bestArm      *Arm
+	maxSample    float64
+	armScores    []map[string]interface{}
+	armsCount    int
+}
+
+func (b *BanditArmSelector) persistAndCacheAssignment(
 	ctx context.Context,
-	experimentID, userID uuid.UUID,
-	bestArm *Arm,
-	maxSample float64,
-	armScores []map[string]interface{},
-	armsCount int,
+	p persistAssignmentParams,
 ) error {
 	assignedAt := time.Now().UTC()
 	assignment := &Assignment{
 		ID:           uuid.New(),
-		ExperimentID: experimentID,
-		UserID:       userID,
-		ArmID:        bestArm.ID,
+		ExperimentID: p.experimentID,
+		UserID:       p.userID,
+		ArmID:        p.bestArm.ID,
 		AssignedAt:   assignedAt,
 		ExpiresAt:    assignedAt.Add(24 * time.Hour),
 		Metadata: map[string]interface{}{
 			"selection_strategy": "thompson_sampling",
-			"arms_considered":    armsCount,
-			"selected_arm_name":  bestArm.Name,
-			"selected_sample":    maxSample,
-			"arm_scores":         armScores,
+			"arms_considered":    p.armsCount,
+			"selected_arm_name":  p.bestArm.Name,
+			"selected_sample":    p.maxSample,
+			"arm_scores":         p.armScores,
 		},
 	}
 	if err := b.repo.CreateAssignment(ctx, assignment); err != nil {
 		return fmt.Errorf("failed to persist assignment: %w", err)
 	}
 
-	cacheKey := fmt.Sprintf("ab:assign:%s:%s", experimentID.String(), userID.String())
-	if err := b.cache.SetAssignment(ctx, cacheKey, bestArm.ID, 24*time.Hour); err != nil {
+	cacheKey := fmt.Sprintf("ab:assign:%s:%s", p.experimentID.String(), p.userID.String())
+	if err := b.cache.SetAssignment(ctx, cacheKey, p.bestArm.ID, 24*time.Hour); err != nil {
 		b.logger.Warn("Failed to cache assignment", zap.Error(err))
 	}
 	return nil
 }
 
 // SelectArmWithMeta returns the assigned arm ID and whether it was a new assignment
-func (b *ThompsonSamplingBandit) SelectArmWithMeta(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, bool, error) {
+func (b *BanditArmSelector) SelectArmWithMeta(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, bool, error) {
 	// Check for existing assignment first
 	if assignment, err := b.repo.GetActiveAssignment(ctx, experimentID, userID); err == nil && assignment != nil {
 		return assignment.ArmID, false, nil
@@ -389,19 +447,39 @@ func (b *ThompsonSamplingBandit) SelectArmWithMeta(ctx context.Context, experime
 	return armID, err == nil, err
 }
 
+// TrackImpressionParams contains parameters for tracking an arm impression.
+type TrackImpressionParams struct {
+	ExperimentID uuid.UUID
+	ArmID        uuid.UUID
+	UserID       uuid.UUID
+	Event        *ImpressionEvent
+}
+
+// RewardWithEventParams contains parameters for updating an arm's reward along with a conversion event.
+type RewardWithEventParams struct {
+	ExperimentID uuid.UUID
+	ArmID        uuid.UUID
+	Reward       float64
+	Event        *ConversionEvent
+}
+
 // UpdateReward updates the alpha/beta parameters for the selected arm
 // reward > 0 counts as a conversion (alpha increment)
 // reward <= 0 counts as a non-conversion (beta increment)
-func (b *ThompsonSamplingBandit) UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error {
-	return b.UpdateRewardWithEvent(ctx, experimentID, armID, reward, nil)
+func (b *BanditRewardTracker) UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error {
+	return b.UpdateRewardWithEvent(ctx, RewardWithEventParams{
+		ExperimentID: experimentID,
+		ArmID:        armID,
+		Reward:       reward,
+		Event:        nil,
+	})
 }
 
-func (b *ThompsonSamplingBandit) TrackImpression(
+func (b *BanditRewardTracker) TrackImpression(
 	ctx context.Context,
-	experimentID, armID, userID uuid.UUID,
-	event *ImpressionEvent,
+	params TrackImpressionParams,
 ) error {
-	if err := b.validateArmExists(ctx, experimentID, armID); err != nil {
+	if err := b.validateArmExists(ctx, params.ExperimentID, params.ArmID); err != nil {
 		return err
 	}
 
@@ -410,7 +488,7 @@ func (b *ThompsonSamplingBandit) TrackImpression(
 		return fmt.Errorf("impression event logging not supported")
 	}
 
-	normalizedEvent := normalizeImpressionEvent(experimentID, armID, userID, event)
+	normalizedEvent := normalizeImpressionEvent(params.ExperimentID, params.ArmID, params.UserID, params.Event)
 	if err := appender.AppendImpressionEvent(ctx, &normalizedEvent); err != nil {
 		return fmt.Errorf("failed to append impression event: %w", err)
 	}
@@ -418,7 +496,7 @@ func (b *ThompsonSamplingBandit) TrackImpression(
 	return nil
 }
 
-func (b *ThompsonSamplingBandit) validateArmExists(ctx context.Context, experimentID, armID uuid.UUID) error {
+func (b *BanditRewardTracker) validateArmExists(ctx context.Context, experimentID, armID uuid.UUID) error {
 	arms, err := b.repo.GetArms(ctx, experimentID)
 	if err != nil {
 		return err
@@ -465,35 +543,33 @@ func normalizeImpressionEvent(experimentID, armID, userID uuid.UUID, event *Impr
 	return normalized
 }
 
-func (b *ThompsonSamplingBandit) UpdateRewardWithEvent(
+func (b *BanditRewardTracker) UpdateRewardWithEvent(
 	ctx context.Context,
-	experimentID, armID uuid.UUID,
-	reward float64,
-	event *ConversionEvent,
+	params RewardWithEventParams,
 ) error {
-	stats, err := b.repo.GetArmStats(ctx, armID)
+	stats, err := b.repo.GetArmStats(ctx, params.ArmID)
 	if err != nil {
 		return fmt.Errorf("failed to get arm stats: %w", err)
 	}
 
-	applyRewardToArmStats(stats, reward)
+	applyRewardToArmStats(stats, params.Reward)
 
 	if err := b.repo.UpdateArmStats(ctx, stats); err != nil {
 		return fmt.Errorf("failed to update arm stats: %w", err)
 	}
 
-	if err := b.appendConversionEventIfSupported(ctx, experimentID, armID, reward, event); err != nil {
+	if err := b.appendConversionEventIfSupported(ctx, params); err != nil {
 		return err
 	}
 
-	cacheKey := fmt.Sprintf("ab:arm:%s", armID.String())
+	cacheKey := fmt.Sprintf("ab:arm:%s", params.ArmID.String())
 	if err := b.cache.SetArmStats(ctx, cacheKey, stats, 24*time.Hour); err != nil {
 		b.logger.Warn("Failed to update cache", zap.Error(err))
 	}
 
 	b.logger.Debug("Reward updated",
-		zap.String("arm_id", armID.String()),
-		zap.Float64("reward", reward),
+		zap.String("arm_id", params.ArmID.String()),
+		zap.Float64("reward", params.Reward),
 		zap.Float64("alpha", stats.Alpha),
 		zap.Float64("beta", stats.Beta),
 		zap.Int("samples", stats.Samples),
@@ -517,13 +593,11 @@ func applyRewardToArmStats(stats *ArmStats, reward float64) {
 	}
 }
 
-func (b *ThompsonSamplingBandit) appendConversionEventIfSupported(
+func (b *BanditRewardTracker) appendConversionEventIfSupported(
 	ctx context.Context,
-	experimentID, armID uuid.UUID,
-	reward float64,
-	event *ConversionEvent,
+	params RewardWithEventParams,
 ) error {
-	if event == nil {
+	if params.Event == nil {
 		return nil
 	}
 	appender, ok := b.repo.(conversionEventAppender)
@@ -531,7 +605,7 @@ func (b *ThompsonSamplingBandit) appendConversionEventIfSupported(
 		return nil
 	}
 
-	normalizedEvent := normalizeConversionEvent(experimentID, armID, reward, event)
+	normalizedEvent := normalizeConversionEvent(params.ExperimentID, params.ArmID, params.Reward, params.Event)
 	if err := appender.AppendConversionEvent(ctx, &normalizedEvent); err != nil {
 		return fmt.Errorf("failed to append conversion event: %w", err)
 	}
@@ -567,41 +641,41 @@ func normalizeConversionEvent(experimentID, armID uuid.UUID, reward float64, eve
 // SampleBeta generates a random sample from Beta(α, β)
 // Uses Marsaglia and Tsang's method for alpha,beta >= 1
 // Falls back to simple uniform for small parameters
-func (b *ThompsonSamplingBandit) SampleBeta(alpha, beta float64) float64 {
+func (s *BetaDistributionSampler) SampleBeta(alpha, beta float64) float64 {
 	// Handle edge cases
 	if alpha <= 0 || beta <= 0 {
-		return b.rng.Float64()
+		return s.rng.Float64()
 	}
 
 	// For small parameters, use simple approximation
 	if alpha < 1 && beta < 1 {
-		return b.sampleBetaJohnk(alpha, beta)
+		return s.sampleBetaJohnk(alpha, beta)
 	}
 
 	if alpha < 1 {
 		// For alpha < 1, beta >= 1
-		return b.SampleBeta(alpha+1, beta) * math.Pow(b.rng.Float64(), 1/alpha)
+		return s.SampleBeta(alpha+1, beta) * math.Pow(s.rng.Float64(), 1/alpha)
 	}
 
 	if beta < 1 {
 		// For beta < 1, alpha >= 1
-		return b.SampleBeta(alpha, beta+1) * math.Pow(b.rng.Float64(), 1/beta)
+		return s.SampleBeta(alpha, beta+1) * math.Pow(s.rng.Float64(), 1/beta)
 	}
 
 	// Try Marsaglia-Tsang method for alpha,beta >= 1
-	if sample := b.sampleBetaMarsagliaTsang(alpha, beta); sample >= 0 {
+	if sample := s.sampleBetaMarsagliaTsang(alpha, beta); sample >= 0 {
 		return sample
 	}
 
 	// Fallback: Cheng's method
-	return b.sampleBetaCheng(alpha, beta)
+	return s.sampleBetaCheng(alpha, beta)
 }
 
 // sampleBetaJohnk implements Johnk's method for alpha,beta < 1
-func (b *ThompsonSamplingBandit) sampleBetaJohnk(alpha, beta float64) float64 {
+func (s *BetaDistributionSampler) sampleBetaJohnk(alpha, beta float64) float64 {
 	for {
-		u1 := b.rng.Float64()
-		u2 := b.rng.Float64()
+		u1 := s.rng.Float64()
+		u2 := s.rng.Float64()
 		if u1 == 0 || u2 == 0 {
 			continue
 		}
@@ -615,9 +689,9 @@ func (b *ThompsonSamplingBandit) sampleBetaJohnk(alpha, beta float64) float64 {
 
 // sampleBetaMarsagliaTsang implements Marsaglia-Tsang method for alpha,beta >= 1
 // Returns -1 if sampling fails
-func (b *ThompsonSamplingBandit) sampleBetaMarsagliaTsang(alpha, beta float64) float64 {
-	gamma1 := b.sampleGamma(alpha)
-	gamma2 := b.sampleGamma(beta)
+func (s *BetaDistributionSampler) sampleBetaMarsagliaTsang(alpha, beta float64) float64 {
+	gamma1 := s.sampleGamma(alpha)
+	gamma2 := s.sampleGamma(beta)
 
 	if gamma1+gamma2 > 0 {
 		return gamma1 / (gamma1 + gamma2)
@@ -627,20 +701,20 @@ func (b *ThompsonSamplingBandit) sampleBetaMarsagliaTsang(alpha, beta float64) f
 }
 
 // sampleGamma generates a sample from Gamma(shape, 1) using the Marsaglia-Tsang method (2000)
-func (b *ThompsonSamplingBandit) sampleGamma(shape float64) float64 {
+func (s *BetaDistributionSampler) sampleGamma(shape float64) float64 {
 	if shape < 1 {
-		return b.sampleGamma(shape+1) * math.Pow(b.rng.Float64(), 1.0/shape)
+		return s.sampleGamma(shape+1) * math.Pow(s.rng.Float64(), 1.0/shape)
 	}
 	d := shape - 1.0/3.0
 	c := 1.0 / math.Sqrt(9.0*d)
 	for {
-		z := b.rng.NormFloat64()
+		z := s.rng.NormFloat64()
 		v := 1.0 + c*z
 		if v <= 0 {
 			continue
 		}
 		v = v * v * v
-		u := b.rng.Float64()
+		u := s.rng.Float64()
 		if u < 1.0-0.0331*z*z*z*z {
 			return d * v
 		}
@@ -651,7 +725,7 @@ func (b *ThompsonSamplingBandit) sampleGamma(shape float64) float64 {
 }
 
 // sampleBetaCheng implements Cheng's method as a fallback
-func (b *ThompsonSamplingBandit) sampleBetaCheng(alpha, beta float64) float64 {
+func (s *BetaDistributionSampler) sampleBetaCheng(alpha, beta float64) float64 {
 	a := alpha - 1
 	bParam := beta - 1
 
@@ -663,8 +737,8 @@ func (b *ThompsonSamplingBandit) sampleBetaCheng(alpha, beta float64) float64 {
 
 	x := theta
 	for {
-		u := b.rng.Float64()
-		v := b.rng.Float64()
+		u := s.rng.Float64()
+		v := s.rng.Float64()
 
 		if u == 0 || v == 0 {
 			continue
@@ -690,7 +764,7 @@ func (b *ThompsonSamplingBandit) sampleBetaCheng(alpha, beta float64) float64 {
 }
 
 // GetArmStatistics returns the current statistics for all arms in an experiment
-func (b *ThompsonSamplingBandit) GetArmStatistics(ctx context.Context, experimentID uuid.UUID) (map[uuid.UUID]*ArmStats, error) {
+func (b *BanditStatsCalculator) GetArmStatistics(ctx context.Context, experimentID uuid.UUID) (map[uuid.UUID]*ArmStats, error) {
 	arms, err := b.repo.GetArms(ctx, experimentID)
 	if err != nil {
 		return nil, err
@@ -711,7 +785,7 @@ func (b *ThompsonSamplingBandit) GetArmStatistics(ctx context.Context, experimen
 
 // CalculateWinProbability calculates the probability that each arm is the best
 // using Monte Carlo simulation of Beta distributions
-func (b *ThompsonSamplingBandit) CalculateWinProbability(ctx context.Context, experimentID uuid.UUID, simulations int) (map[uuid.UUID]float64, error) {
+func (b *BanditStatsCalculator) CalculateWinProbability(ctx context.Context, experimentID uuid.UUID, simulations int) (map[uuid.UUID]float64, error) {
 	armStats, err := b.loadArmStatsForSimulation(ctx, experimentID)
 	if err != nil {
 		return nil, err
@@ -727,7 +801,7 @@ func (b *ThompsonSamplingBandit) CalculateWinProbability(ctx context.Context, ex
 	return winProbs, nil
 }
 
-func (b *ThompsonSamplingBandit) loadArmStatsForSimulation(ctx context.Context, experimentID uuid.UUID) ([]*ArmStats, error) {
+func (b *BanditStatsCalculator) loadArmStatsForSimulation(ctx context.Context, experimentID uuid.UUID) ([]*ArmStats, error) {
 	arms, err := b.repo.GetArms(ctx, experimentID)
 	if err != nil {
 		return nil, err
@@ -745,7 +819,7 @@ func (b *ThompsonSamplingBandit) loadArmStatsForSimulation(ctx context.Context, 
 	return armStats, nil
 }
 
-func (b *ThompsonSamplingBandit) runMonteCarloWinCounts(armStats []*ArmStats, simulations int) map[uuid.UUID]int {
+func (b *BanditStatsCalculator) runMonteCarloWinCounts(armStats []*ArmStats, simulations int) map[uuid.UUID]int {
 	winCounts := make(map[uuid.UUID]int, len(armStats))
 	for _, stats := range armStats {
 		winCounts[stats.ArmID] = 0
@@ -756,7 +830,7 @@ func (b *ThompsonSamplingBandit) runMonteCarloWinCounts(armStats []*ArmStats, si
 		maxSample := -1.0
 
 		for _, stats := range armStats {
-			sample := b.SampleBeta(stats.Alpha, stats.Beta)
+			sample := b.sampler.SampleBeta(stats.Alpha, stats.Beta)
 			if sample > maxSample {
 				maxSample = sample
 				bestArmID = stats.ArmID

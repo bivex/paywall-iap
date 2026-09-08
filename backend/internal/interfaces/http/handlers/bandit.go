@@ -23,9 +23,9 @@ type BanditHandler struct {
 type BanditService interface {
 	SelectArm(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, error)
 	SelectArmWithMeta(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, bool, error)
-	TrackImpression(ctx context.Context, experimentID, armID, userID uuid.UUID, event *service.ImpressionEvent) error
+	TrackImpression(ctx context.Context, params service.TrackImpressionParams) error
 	UpdateReward(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error
-	UpdateRewardWithEvent(ctx context.Context, experimentID, armID uuid.UUID, reward float64, event *service.ConversionEvent) error
+	UpdateRewardWithEvent(ctx context.Context, params service.RewardWithEventParams) error
 	GetArmStatistics(ctx context.Context, experimentID uuid.UUID) (map[uuid.UUID]*service.ArmStats, error)
 	CalculateWinProbability(ctx context.Context, experimentID uuid.UUID, simulations int) (map[uuid.UUID]float64, error)
 }
@@ -170,13 +170,18 @@ func (h *BanditHandler) Impression(c *gin.Context) {
 		return
 	}
 
-	err = h.banditService.TrackImpression(c.Request.Context(), experimentID, armID, userID, &service.ImpressionEvent{
+	err = h.banditService.TrackImpression(c.Request.Context(), service.TrackImpressionParams{
 		ExperimentID: experimentID,
 		ArmID:        armID,
 		UserID:       userID,
-		EventType:    service.ImpressionEventTypeImpression,
-		Metadata:     req.Metadata,
-		OccurredAt:   time.Now().UTC(),
+		Event: &service.ImpressionEvent{
+			ExperimentID: experimentID,
+			ArmID:        armID,
+			UserID:       userID,
+			EventType:    service.ImpressionEventTypeImpression,
+			Metadata:     req.Metadata,
+			OccurredAt:   time.Now().UTC(),
+		},
 	})
 	if err != nil {
 		if errors.Is(err, service.ErrBanditArmNotFound) || errors.Is(err, service.ErrExperimentArmsNotFound) {
@@ -239,19 +244,24 @@ func (h *BanditHandler) Reward(c *gin.Context) {
 	reward := *req.Reward
 
 	// Update the bandit with the reward
-	err = h.banditService.UpdateRewardWithEvent(c.Request.Context(), experimentID, armID, reward, &service.ConversionEvent{
-		ExperimentID:          experimentID,
-		ArmID:                 armID,
-		UserID:                &userID,
-		EventType:             service.ConversionEventTypeDirectReward,
-		OriginalRewardValue:   reward,
-		OriginalCurrency:      req.Currency,
-		NormalizedRewardValue: reward,
-		NormalizedCurrency:    req.Currency,
-		Metadata: map[string]interface{}{
-			"source": "bandit_reward_api",
+	err = h.banditService.UpdateRewardWithEvent(c.Request.Context(), service.RewardWithEventParams{
+		ExperimentID: experimentID,
+		ArmID:        armID,
+		Reward:       reward,
+		Event: &service.ConversionEvent{
+			ExperimentID:          experimentID,
+			ArmID:                 armID,
+			UserID:                &userID,
+			EventType:             service.ConversionEventTypeDirectReward,
+			OriginalRewardValue:   reward,
+			OriginalCurrency:      req.Currency,
+			NormalizedRewardValue: reward,
+			NormalizedCurrency:    req.Currency,
+			Metadata: map[string]interface{}{
+				"source": "bandit_reward_api",
+			},
+			OccurredAt: time.Now().UTC(),
 		},
-		OccurredAt: time.Now().UTC(),
 	})
 	if err != nil {
 		if errors.Is(err, service.ErrBanditArmNotFound) {

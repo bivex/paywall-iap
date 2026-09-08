@@ -29,25 +29,30 @@ type LinUCBModel struct {
 	SamplesCount int
 }
 
+// LinUCBSelectionStrategyConfig specifies parameters for creating LinUCBSelectionStrategy
+type LinUCBSelectionStrategyConfig struct {
+	Repo      BanditRepository
+	Cache     BanditCache
+	Logger    *zap.Logger
+	Alpha     float64
+	Dimension int
+}
+
 // NewLinUCBSelectionStrategy creates a new LinUCB selection strategy
-func NewLinUCBSelectionStrategy(
-	repo BanditRepository,
-	cache BanditCache,
-	logger *zap.Logger,
-	alpha float64,
-	dimension int,
-) *LinUCBSelectionStrategy {
+func NewLinUCBSelectionStrategy(cfg LinUCBSelectionStrategyConfig) *LinUCBSelectionStrategy {
+	alpha := cfg.Alpha
 	if alpha <= 0 {
 		alpha = 0.3 // Default exploration parameter
 	}
+	dimension := cfg.Dimension
 	if dimension <= 0 {
 		dimension = 20 // Default feature dimension
 	}
 
 	return &LinUCBSelectionStrategy{
-		repo:   repo,
-		cache:  cache,
-		logger: logger,
+		repo:   cfg.Repo,
+		cache:  cfg.Cache,
+		logger: cfg.Logger,
 		alpha:  alpha,
 		dim:    dimension,
 	}

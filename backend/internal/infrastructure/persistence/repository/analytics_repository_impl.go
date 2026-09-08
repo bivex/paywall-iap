@@ -315,11 +315,9 @@ func formatAuditLogDetails(detailsRaw string) string {
 // GetAuditLogPaginated returns a paginated, filterable audit log.
 func (r *AnalyticsRepositoryImpl) GetAuditLogPaginated(
 	ctx context.Context,
-	offset, limit int,
-	action, search string,
-	from, to time.Time,
+	filter domainRepo.AuditLogFilter,
 ) (*domainRepo.AuditLogPage, error) {
-	whereSQL, args, idx := buildAuditLogWhereClauses(action, search, from, to)
+	whereSQL, args, idx := buildAuditLogWhereClauses(filter.Action, filter.Search, filter.From, filter.To)
 
 	// Total count
 	countQuery := fmt.Sprintf(`
@@ -335,7 +333,7 @@ func (r *AnalyticsRepositoryImpl) GetAuditLogPaginated(
 	}
 
 	// Data rows
-	args = append(args, limit, offset)
+	args = append(args, filter.Limit, filter.Offset)
 	dataQuery := fmt.Sprintf(`
 		SELECT
 			a.id,
@@ -358,7 +356,7 @@ func (r *AnalyticsRepositoryImpl) GetAuditLogPaginated(
 	}
 	defer rows.Close()
 
-	result := make([]domainRepo.AuditLogRow, 0, limit)
+	result := make([]domainRepo.AuditLogRow, 0, filter.Limit)
 	for rows.Next() {
 		var row domainRepo.AuditLogRow
 		var detailsRaw string

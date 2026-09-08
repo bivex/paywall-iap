@@ -44,13 +44,25 @@ func TestWinbackWorkerJobs(t *testing.T) {
 	jobHandler := tasks.NewWinbackJobHandler(winbackService, notificationService)
 
 	// Create test user
-	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com", uuid.Nil)
+	user := entity.NewUser(entity.NewUserParams{
+		PlatformUserID: "test-platform",
+		DeviceID:       "test-device",
+		Platform:       entity.PlatformiOS,
+		AppVersion:     "1.0",
+		Email:          "test@example.com",
+		AppID:          uuid.Nil,
+	})
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 
 	t.Run("ProcessExpiredWinbackOffers expires offers", func(t *testing.T) {
-		// Create expired offer
-		expiredOffer := entity.NewWinbackOffer(user.ID, "expired_campaign", entity.DiscountTypePercentage, 50.0, time.Now().Add(-24*time.Hour))
+		expiredOffer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        user.ID,
+			CampaignID:    "expired_campaign",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 50.0,
+			ExpiresAt:     time.Now().Add(-24 * time.Hour),
+		})
 		err := winbackRepo.Create(ctx, expiredOffer)
 		require.NoError(t, err)
 

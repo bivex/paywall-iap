@@ -62,19 +62,29 @@ func NewMatomoForwarder(
 	}
 }
 
+// MatomoTrackEventParams contains parameters for enqueuing a standard event.
+type MatomoTrackEventParams struct {
+	UserID     *uuid.UUID
+	Category   string
+	Action     string
+	Name       string
+	Value      float64
+	CustomVars map[string]string
+}
+
 // TrackEvent enqueues a standard event for delivery
-func (f *MatomoForwarder) TrackEvent(ctx context.Context, userID *uuid.UUID, category, action, name string, value float64, customVars map[string]string) error {
+func (f *MatomoForwarder) TrackEvent(ctx context.Context, params MatomoTrackEventParams) error {
 	event := &MatomoStagedEvent{
 		ID:        uuid.New(),
 		EventType: "event",
-		UserID:    userID,
+		UserID:    params.UserID,
 		Payload: map[string]interface{}{
-			"category":        category,
-			"action":          action,
-			"name":            name,
-			"value":           value,
-			"custom_variables": customVars,
-			"event_time":      time.Now(),
+			"category":         params.Category,
+			"action":           params.Action,
+			"name":             params.Name,
+			"value":            params.Value,
+			"custom_variables": params.CustomVars,
+			"event_time":       time.Now(),
 		},
 		Status:      "pending",
 		MaxRetries:  3,
@@ -89,26 +99,39 @@ func (f *MatomoForwarder) TrackEvent(ctx context.Context, userID *uuid.UUID, cat
 	f.logger.Debug("Enqueued Matomo event",
 		zap.String("event_id", event.ID.String()),
 		zap.String("type", event.EventType),
-		zap.String("category", category),
-		zap.String("action", action),
+		zap.String("category", params.Category),
+		zap.String("action", params.Action),
 	)
 
 	return nil
 }
 
+// MatomoTrackPurchaseParams contains parameters for enqueuing an ecommerce event.
+type MatomoTrackPurchaseParams struct {
+	UserID     *uuid.UUID
+	OrderID    string
+	Revenue    float64
+	Items      []matomoClient.EcommerceItem
+	CustomVars map[string]string
+}
+
 // TrackPurchase enqueues an ecommerce event for delivery
-func (f *MatomoForwarder) TrackPurchase(ctx context.Context, userID *uuid.UUID, orderID string, revenue float64, items []matomoClient.EcommerceItem, customVars map[string]string) error {
+func (f *MatomoForwarder) TrackPurchase(ctx context.Context, params MatomoTrackPurchaseParams) error {
+	var userIDStr string
+	if params.UserID != nil {
+		userIDStr = params.UserID.String()
+	}
 	event := &MatomoStagedEvent{
 		ID:        uuid.New(),
 		EventType: "ecommerce",
-		UserID:    userID,
+		UserID:    params.UserID,
 		Payload: map[string]interface{}{
-			"user_id":        userID.String(),
-			"revenue":        revenue,
-			"order_id":       orderID,
-			"items":          items,
-			"custom_variables": customVars,
-			"event_time":     time.Now(),
+			"user_id":          userIDStr,
+			"revenue":          params.Revenue,
+			"order_id":         params.OrderID,
+			"items":            params.Items,
+			"custom_variables": params.CustomVars,
+			"event_time":       time.Now(),
 		},
 		Status:      "pending",
 		MaxRetries:  3,
@@ -122,9 +145,9 @@ func (f *MatomoForwarder) TrackPurchase(ctx context.Context, userID *uuid.UUID, 
 
 	f.logger.Debug("Enqueued Matomo ecommerce event",
 		zap.String("event_id", event.ID.String()),
-		zap.String("order_id", orderID),
-		zap.Float64("revenue", revenue),
-		zap.Int("items", len(items)),
+		zap.String("order_id", params.OrderID),
+		zap.Float64("revenue", params.Revenue),
+		zap.Int("items", len(params.Items)),
 	)
 
 	return nil

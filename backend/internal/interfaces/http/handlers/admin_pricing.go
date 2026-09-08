@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
+	"github.com/bivex/paywall-iap/internal/domain/service"
 	httpmiddleware "github.com/bivex/paywall-iap/internal/interfaces/http/middleware"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
@@ -196,7 +197,13 @@ func (h *AdminExperimentHandler) logPricingTierAction(c *gin.Context, action str
 		details["lifetime_price"] = *tier.LifetimePrice
 	}
 
-	_ = h.auditService.LogAction(c.Request.Context(), adminID, action, "pricing_tier", pricingTierTargetID(tier.ID), details)
+	_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+		AdminID:      adminID,
+		Action:       action,
+		TargetType:   "pricing_tier",
+		TargetUserID: pricingTierTargetID(tier.ID),
+		Details:      details,
+	})
 }
 
 func (h *AdminExperimentHandler) ListPricingTiers(c *gin.Context) {

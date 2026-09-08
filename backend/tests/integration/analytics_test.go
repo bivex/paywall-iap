@@ -145,13 +145,10 @@ func TestAnalyticsAPI(t *testing.T) {
 			"ltv365": 119.88,
 		}, nil)
 
-		ltvService := service.NewLTVService(
-			nil, // matomoClient — concrete type; use nil for unit-level test
-			mockCohortWorker,
-			nil, // subscriptionRepo - will use defaults
-			nil, // transactionRepo
-			logger,
-		)
+		ltvService := service.NewLTVService(service.LTVServiceParams{
+			CohortWorker: mockCohortWorker,
+			Logger:       logger,
+		})
 
 		userID := uuid.New()
 
@@ -259,12 +256,17 @@ func TestAnalyticsAPI(t *testing.T) {
 		dateTo := time.Date(2026, 3, 7, 0, 0, 0, 0, time.UTC)
 
 		// Cache funnel data
-		err := analyticsCache.SetFunnelData(ctx, "funnel_purchase", dateFrom, dateTo, &cache.FunnelData{
-			FunnelID:       funnelData.FunnelID,
-			Steps:          convertFunnelSteps(funnelData.Steps),
-			TotalEntries:   funnelData.TotalEntries,
-			TotalExits:     funnelData.TotalExits,
-			ConversionRate: funnelData.ConversionRate,
+		err := analyticsCache.SetFunnelData(ctx, cache.SetFunnelDataParams{
+			FunnelID: "funnel_purchase",
+			DateFrom: dateFrom,
+			DateTo:   dateTo,
+			Data: &cache.FunnelData{
+				FunnelID:       funnelData.FunnelID,
+				Steps:          convertFunnelSteps(funnelData.Steps),
+				TotalEntries:   funnelData.TotalEntries,
+				TotalExits:     funnelData.TotalExits,
+				ConversionRate: funnelData.ConversionRate,
+			},
 		})
 		assert.NoError(t, err)
 
@@ -316,7 +318,10 @@ func TestAnalyticsHTTPEndpoints(t *testing.T) {
 
 	mockCohortWorker := new(MockCohortWorker)
 
-	ltvService := service.NewLTVService(nil, mockCohortWorker, nil, nil, logger)
+	ltvService := service.NewLTVService(service.LTVServiceParams{
+		CohortWorker: mockCohortWorker,
+		Logger:       logger,
+	})
 	analyticsCache := cache.NewAnalyticsCache(redisClient, logger)
 
 	// Setup Gin router

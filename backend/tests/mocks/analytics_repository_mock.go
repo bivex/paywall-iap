@@ -61,8 +61,8 @@ func (m *AnalyticsRepositoryMock) GetRecentAuditLog(ctx context.Context, limit i
 	return args.Get(0).([]repository.AuditLogEntry), args.Error(1)
 }
 
-func (m *AnalyticsRepositoryMock) GetAuditLogPaginated(ctx context.Context, offset, limit int, action, search string, from, to time.Time) (*repository.AuditLogPage, error) {
-	args := m.Called(ctx, offset, limit, action, search, from, to)
+func (m *AnalyticsRepositoryMock) GetAuditLogPaginated(ctx context.Context, filter repository.AuditLogFilter) (*repository.AuditLogPage, error) {
+	args := m.Called(ctx, filter)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

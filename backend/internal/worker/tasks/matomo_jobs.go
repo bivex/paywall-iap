@@ -136,7 +136,14 @@ func (w *MatomoWorker) HandleSendEvent(ctx context.Context, t *asynq.Task) error
 
 	// This would need a UUID - for now, we'll track without user ID
 	// In production, convert string UUID to uuid.UUID
-	if err := w.forwarder.TrackEvent(ctx, nil, payload.Category, payload.Action, payload.Name, payload.Value, payload.CustomVars); err != nil {
+	if err := w.forwarder.TrackEvent(ctx, service.MatomoTrackEventParams{
+		UserID:     nil,
+		Category:   payload.Category,
+		Action:     payload.Action,
+		Name:       payload.Name,
+		Value:      payload.Value,
+		CustomVars: payload.CustomVars,
+	}); err != nil {
 		w.logger.Error("Failed to track event",
 			zap.String("category", payload.Category),
 			zap.String("action", payload.Action),
@@ -204,7 +211,13 @@ func (w *MatomoWorker) HandleSendEcommerce(ctx context.Context, t *asynq.Task) e
 
 	// Track purchase (will be queued for async delivery)
 	// Note: Converting string UUID to uuid.UUID would happen here
-	if err := w.forwarder.TrackPurchase(ctx, nil, payload.OrderID, payload.Revenue, items, payload.CustomVars); err != nil {
+	if err := w.forwarder.TrackPurchase(ctx, service.MatomoTrackPurchaseParams{
+		UserID:     nil,
+		OrderID:    payload.OrderID,
+		Revenue:    payload.Revenue,
+		Items:      items,
+		CustomVars: payload.CustomVars,
+	}); err != nil {
 		w.logger.Error("Failed to track purchase",
 			zap.String("order_id", payload.OrderID),
 			zap.Float64("revenue", payload.Revenue),

@@ -292,14 +292,14 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
 	currencyService := service.NewCurrencyRateService(redisClient, logging.Logger)
 
-	advancedBanditEngine := service.NewAdvancedBanditEngine(
-		banditService,
-		banditRepo,
-		banditCache,
-		redisClient,
-		currencyService,
-		logging.Logger,
-		&service.EngineConfig{
+	advancedBanditEngine := service.NewAdvancedBanditEngine(service.AdvancedBanditEngineParams{
+		Base:            banditService,
+		Repo:            banditRepo,
+		Cache:           banditCache,
+		RedisClient:     redisClient,
+		CurrencyService: currencyService,
+		Logger:          logging.Logger,
+		Config: &service.EngineConfig{
 			ExperimentConfig: nil,
 			EnableCurrency:   true,
 			EnableContextual: true,
@@ -307,7 +307,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 			EnableWindow:     true,
 			EnableHybrid:     true,
 		},
-	)
+	})
 
 	// Initialize middleware
 	jwtMiddleware := middleware.NewJWTMiddleware(cfg.JWT.Secret, redisClient, cfg.JWT.AccessTTL)
@@ -329,13 +329,13 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	// Initialize commands
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
 	cancelSubCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
-	verifyIAPCmd := command.NewVerifyIAPCommand(
-		userRepo,
-		subscriptionRepo,
-		transactionRepo,
-		dynamicApple,
-		dynamicGoogle,
-	)
+	verifyIAPCmd := command.NewVerifyIAPCommand(command.VerifyIAPCommandParams{
+		UserRepo:         userRepo,
+		SubscriptionRepo: subscriptionRepo,
+		TransactionRepo:  transactionRepo,
+		IOSVerifier:      dynamicApple,
+		AndroidVerifier:  dynamicGoogle,
+	})
 	adminLoginCmd := command.NewAdminLoginCommand(userRepo, adminCredRepo, jwtMiddleware)
 
 	// Initialize queries
@@ -387,8 +387,11 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	winbackHandler := app_handler.NewWinbackHandler(acceptWinbackCmd, winbackService, jwtMiddleware)
 
 	analyticsCache := cache.NewAnalyticsCache(redisClient, logging.Logger)
-	ltvService := service.NewLTVService(nil, nil, service.NewLTVSubscriptionAdapter(subscriptionRepo), transactionRepo, logging.Logger).
-		WithUserRepo(userRepo)
+	ltvService := service.NewLTVService(service.LTVServiceParams{
+		SubscriptionRepo: service.NewLTVSubscriptionAdapter(subscriptionRepo),
+		TransactionRepo:  transactionRepo,
+		Logger:           logging.Logger,
+	}).WithUserRepo(userRepo)
 	analyticsExtHandler := app_handler.NewAnalyticsHandlersExtended(ltvService, analyticsCache, logging.Logger)
 
 	return &dependencies{

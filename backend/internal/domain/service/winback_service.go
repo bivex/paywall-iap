@@ -38,30 +38,50 @@ func NewWinbackService(
 	}
 }
 
+// CreateWinbackOfferParams encapsulates parameters for creating a winback offer
+type CreateWinbackOfferParams struct {
+	UserID        uuid.UUID
+	CampaignID    string
+	DiscountType  entity.DiscountType
+	DiscountValue float64
+	DurationDays  int
+}
+
+// CreateWinbackCampaignParams encapsulates parameters for creating winback offers for churned users
+type CreateWinbackCampaignParams struct {
+	CampaignID     string
+	DiscountType   entity.DiscountType
+	DiscountValue  float64
+	DurationDays   int
+	DaysSinceChurn int
+}
+
 // CreateWinbackOffer creates a new winback offer for a user
 func (s *WinbackService) CreateWinbackOffer(
 	ctx context.Context,
-	userID uuid.UUID,
-	campaignID string,
-	discountType entity.DiscountType,
-	discountValue float64,
-	durationDays int,
+	p CreateWinbackOfferParams,
 ) (*entity.WinbackOffer, error) {
 	// Check if user already has an active offer for this campaign
-	existing, err := s.winbackRepo.GetActiveByUserAndCampaign(ctx, userID, campaignID)
+	existing, err := s.winbackRepo.GetActiveByUserAndCampaign(ctx, p.UserID, p.CampaignID)
 	if err == nil && existing != nil && existing.IsActive() {
 		return nil, errors.New("user already has an active offer for this campaign")
 	}
 
 	// Verify user exists
-	_, err = s.userRepo.GetByID(ctx, userID)
+	_, err = s.userRepo.GetByID(ctx, p.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
 	// Create winback offer
-	expiresAt := time.Now().Add(time.Duration(durationDays) * 24 * time.Hour)
-	offer := entity.NewWinbackOffer(userID, campaignID, discountType, discountValue, expiresAt)
+	expiresAt := time.Now().Add(time.Duration(p.DurationDays) * 24 * time.Hour)
+	offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+		UserID:        p.UserID,
+		CampaignID:    p.CampaignID,
+		DiscountType:  p.DiscountType,
+		DiscountValue: p.DiscountValue,
+		ExpiresAt:     expiresAt,
+	})
 
 	// Save offer
 	err = s.winbackRepo.Create(ctx, offer)
@@ -132,21 +152,23 @@ func (s *WinbackService) ProcessExpiredWinbackOffers(ctx context.Context, limit 
 // CreateWinbackCampaignForChurnedUsers creates winback offers for recently churned users
 func (s *WinbackService) CreateWinbackCampaignForChurnedUsers(
 	ctx context.Context,
-	campaignID string,
-	discountType entity.DiscountType,
-	discountValue float64,
-	durationDays int,
-	daysSinceChurn int,
+	p CreateWinbackCampaignParams,
 ) (int, error) {
 	// Get churned users (subscriptions cancelled within specified days)
-	churnedUsers, err := s.subRepo.GetUsersWithCancelledSubscriptions(ctx, daysSinceChurn)
+	churnedUsers, err := s.subRepo.GetUsersWithCancelledSubscriptions(ctx, p.DaysSinceChurn)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get churned users: %w", err)
 	}
 
 	created := 0
 	for _, userID := range churnedUsers {
-		_, err := s.CreateWinbackOffer(ctx, userID, campaignID, discountType, discountValue, durationDays)
+		_, err := s.CreateWinbackOffer(ctx, CreateWinbackOfferParams{
+			UserID:        userID,
+			CampaignID:    p.CampaignID,
+			DiscountType:  p.DiscountType,
+			DiscountValue: p.DiscountValue,
+			DurationDays:  p.DurationDays,
+		})
 		if err != nil {
 			// Skip users who already have offers
 			continue

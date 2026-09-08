@@ -9,14 +9,40 @@ import (
 	"go.uber.org/zap"
 )
 
-// HybridObjectiveStrategy implements multi-objective optimization
-// Supports combining conversion rate, LTV, and revenue into a single score
-type HybridObjectiveStrategy struct {
+// HybridObjectiveConfigManager manages objective configuration, weights, and rewards
+type HybridObjectiveConfigManager struct {
 	repo       BanditRepository
 	cache      BanditCache
 	logger     *zap.Logger
 	config     *ExperimentConfig
 	baseBandit *ThompsonSamplingBandit
+}
+
+// HybridObjectiveCalculator computes objective and hybrid scores for arms
+type HybridObjectiveCalculator struct {
+	repo          BanditRepository
+	cache         BanditCache
+	logger        *zap.Logger
+	configManager *HybridObjectiveConfigManager
+	baseBandit    *ThompsonSamplingBandit
+}
+
+// HybridObjectiveReporter builds objective scores and reports
+type HybridObjectiveReporter struct {
+	repo          BanditRepository
+	cache         BanditCache
+	logger        *zap.Logger
+	configManager *HybridObjectiveConfigManager
+	calculator    *HybridObjectiveCalculator
+	baseBandit    *ThompsonSamplingBandit
+}
+
+// HybridObjectiveStrategy implements multi-objective optimization
+// Supports combining conversion rate, LTV, and revenue into a single score
+type HybridObjectiveStrategy struct {
+	*HybridObjectiveConfigManager
+	*HybridObjectiveCalculator
+	*HybridObjectiveReporter
 }
 
 // ObjectiveScore represents the score for a single objective
@@ -50,14 +76,23 @@ type ObjectiveRepository interface {
 	GetAllObjectiveStats(ctx context.Context, armID uuid.UUID) (map[ObjectiveType]*ArmObjectiveStats, error)
 }
 
+// HybridObjectiveStrategyConfig specifies parameters for creating HybridObjectiveStrategy
+type HybridObjectiveStrategyConfig struct {
+	Repo       BanditRepository
+	Cache      BanditCache
+	Logger     *zap.Logger
+	Config     *ExperimentConfig
+	BaseBandit *ThompsonSamplingBandit
+}
+
 // NewHybridObjectiveStrategy creates a new hybrid objective strategy
-func NewHybridObjectiveStrategy(
-	repo BanditRepository,
-	cache BanditCache,
-	logger *zap.Logger,
-	config *ExperimentConfig,
-	baseBandit *ThompsonSamplingBandit,
-) *HybridObjectiveStrategy {
+func NewHybridObjectiveStrategy(cfg HybridObjectiveStrategyConfig) *HybridObjectiveStrategy {
+	repo := cfg.Repo
+	cache := cfg.Cache
+	logger := cfg.Logger
+	config := cfg.Config
+	baseBandit := cfg.BaseBandit
+
 	if config == nil {
 		config = &ExperimentConfig{
 			ObjectiveType: ObjectiveConversion,
@@ -73,21 +108,42 @@ func NewHybridObjectiveStrategy(
 		}
 	}
 
-	return &HybridObjectiveStrategy{
+	configManager := &HybridObjectiveConfigManager{
 		repo:       repo,
 		cache:      cache,
 		logger:     logger,
 		config:     config,
 		baseBandit: baseBandit,
 	}
+	calculator := &HybridObjectiveCalculator{
+		repo:          repo,
+		cache:         cache,
+		logger:        logger,
+		configManager: configManager,
+		baseBandit:    baseBandit,
+	}
+	reporter := &HybridObjectiveReporter{
+		repo:          repo,
+		cache:         cache,
+		logger:        logger,
+		configManager: configManager,
+		calculator:    calculator,
+		baseBandit:    baseBandit,
+	}
+
+	return &HybridObjectiveStrategy{
+		HybridObjectiveConfigManager: configManager,
+		HybridObjectiveCalculator:    calculator,
+		HybridObjectiveReporter:      reporter,
+	}
 }
 
 // CalculateScore calculates the objective score for an arm
-func (s *HybridObjectiveStrategy) CalculateScore(
+func (s *HybridObjectiveCalculator) CalculateScore(
 	ctx context.Context,
 	armID uuid.UUID,
 ) (float64, error) {
-	switch s.config.ObjectiveType {
+	switch s.configManager.config.ObjectiveType {
 	case ObjectiveConversion:
 		return s.calculateConversionScore(ctx, armID)
 	case ObjectiveLTV:
@@ -102,7 +158,7 @@ func (s *HybridObjectiveStrategy) CalculateScore(
 }
 
 // calculateConversionScore uses standard Thompson Sampling
-func (s *HybridObjectiveStrategy) calculateConversionScore(ctx context.Context, armID uuid.UUID) (float64, error) {
+func (s *HybridObjectiveCalculator) calculateConversionScore(ctx context.Context, armID uuid.UUID) (float64, error) {
 	stats, err := s.repo.GetArmStats(ctx, armID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get arm stats: %w", err)
@@ -113,7 +169,7 @@ func (s *HybridObjectiveStrategy) calculateConversionScore(ctx context.Context, 
 }
 
 // calculateLVTScore uses Expected Value = P(conversion) × AvgLTV
-func (s *HybridObjectiveStrategy) calculateLVTScore(ctx context.Context, armID uuid.UUID) (float64, error) {
+func (s *HybridObjectiveCalculator) calculateLVTScore(ctx context.Context, armID uuid.UUID) (float64, error) {
 	stats, err := s.repo.GetArmStats(ctx, armID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get arm stats: %w", err)
@@ -146,7 +202,7 @@ func (s *HybridObjectiveStrategy) calculateLVTScore(ctx context.Context, armID u
 }
 
 // calculateRevenueScore uses Normalized Revenue = P(conv) × (Revenue / Price)
-func (s *HybridObjectiveStrategy) calculateRevenueScore(ctx context.Context, armID uuid.UUID) (float64, error) {
+func (s *HybridObjectiveCalculator) calculateRevenueScore(ctx context.Context, armID uuid.UUID) (float64, error) {
 	stats, err := s.repo.GetArmStats(ctx, armID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get arm stats: %w", err)
@@ -163,12 +219,12 @@ func (s *HybridObjectiveStrategy) calculateRevenueScore(ctx context.Context, arm
 }
 
 // calculateHybridScore combines multiple objectives with weights
-func (s *HybridObjectiveStrategy) calculateHybridScore(ctx context.Context, armID uuid.UUID) (float64, error) {
+func (s *HybridObjectiveCalculator) calculateHybridScore(ctx context.Context, armID uuid.UUID) (float64, error) {
 	scores := make(map[string]float64)
 	totalWeight := 0.0
 
 	// Calculate score for each objective
-	for objective, weight := range s.config.ObjectiveWeights {
+	for objective, weight := range s.configManager.config.ObjectiveWeights {
 		if weight <= 0 {
 			continue
 		}
@@ -193,7 +249,7 @@ func (s *HybridObjectiveStrategy) calculateHybridScore(ctx context.Context, armI
 
 	// Weighted sum
 	hybridScore := 0.0
-	for objective, weight := range s.config.ObjectiveWeights {
+	for objective, weight := range s.configManager.config.ObjectiveWeights {
 		if score, ok := normalizedScores[objective]; ok {
 			normalizedWeight := weight / totalWeight
 			hybridScore += score * normalizedWeight
@@ -203,7 +259,7 @@ func (s *HybridObjectiveStrategy) calculateHybridScore(ctx context.Context, armI
 	return hybridScore, nil
 }
 
-func (s *HybridObjectiveStrategy) evaluateObjectiveScore(ctx context.Context, armID uuid.UUID, objective string) (float64, bool) {
+func (s *HybridObjectiveCalculator) evaluateObjectiveScore(ctx context.Context, armID uuid.UUID, objective string) (float64, bool) {
 	var score float64
 	var err error
 
@@ -231,7 +287,7 @@ func (s *HybridObjectiveStrategy) evaluateObjectiveScore(ctx context.Context, ar
 }
 
 // normalizeScores normalizes scores to [0,1] range using min-max normalization
-func (s *HybridObjectiveStrategy) normalizeScores(scores map[string]float64) map[string]float64 {
+func (s *HybridObjectiveCalculator) normalizeScores(scores map[string]float64) map[string]float64 {
 	if len(scores) == 0 {
 		return scores
 	}
@@ -263,14 +319,24 @@ func (s *HybridObjectiveStrategy) normalizeScores(scores map[string]float64) map
 	return normalized
 }
 
+// ObjectiveRewardParams specifies parameters for recording an objective reward
+type ObjectiveRewardParams struct {
+	ArmID         uuid.UUID
+	ObjectiveType ObjectiveType
+	Reward        float64
+	LTV           float64
+}
+
 // RecordObjectiveReward records a reward for a specific objective
-func (s *HybridObjectiveStrategy) RecordObjectiveReward(
+func (s *HybridObjectiveConfigManager) RecordObjectiveReward(
 	ctx context.Context,
-	armID uuid.UUID,
-	objectiveType ObjectiveType,
-	reward float64,
-	ltv float64,
+	p ObjectiveRewardParams,
 ) error {
+	armID := p.ArmID
+	objectiveType := p.ObjectiveType
+	reward := p.Reward
+	ltv := p.LTV
+
 	objRepo, ok := s.repo.(ObjectiveRepository)
 	if !ok {
 		return fmt.Errorf("repository does not support objective stats")
@@ -321,7 +387,7 @@ func (s *HybridObjectiveStrategy) RecordObjectiveReward(
 }
 
 // GetObjectiveScores returns all objective scores for an arm
-func (s *HybridObjectiveStrategy) GetObjectiveScores(
+func (s *HybridObjectiveReporter) GetObjectiveScores(
 	ctx context.Context,
 	armID uuid.UUID,
 ) (map[ObjectiveType]*ObjectiveScore, error) {
@@ -350,24 +416,24 @@ func (s *HybridObjectiveStrategy) GetObjectiveScores(
 	return scores, nil
 }
 
-func (s *HybridObjectiveStrategy) shouldIncludeObjective(objective ObjectiveType) bool {
-	if s.config == nil {
+func (s *HybridObjectiveReporter) shouldIncludeObjective(objective ObjectiveType) bool {
+	if s.configManager.config == nil {
 		return objective == ObjectiveConversion
 	}
 
-	if s.config.ObjectiveType == objective || s.config.ObjectiveType == ObjectiveHybrid {
+	if s.configManager.config.ObjectiveType == objective || s.configManager.config.ObjectiveType == ObjectiveHybrid {
 		return true
 	}
 
-	if s.config.ObjectiveType == ObjectiveHybrid && s.config.ObjectiveWeights != nil {
-		_, ok := s.config.ObjectiveWeights[string(objective)]
+	if s.configManager.config.ObjectiveType == ObjectiveHybrid && s.configManager.config.ObjectiveWeights != nil {
+		_, ok := s.configManager.config.ObjectiveWeights[string(objective)]
 		return ok
 	}
 
 	return false
 }
 
-func (s *HybridObjectiveStrategy) resolveObjectiveStats(ctx context.Context, armID uuid.UUID, objective ObjectiveType, stats *ArmStats) *ArmObjectiveStats {
+func (s *HybridObjectiveReporter) resolveObjectiveStats(ctx context.Context, armID uuid.UUID, objective ObjectiveType, stats *ArmStats) *ArmObjectiveStats {
 	objRepo, ok := s.repo.(ObjectiveRepository)
 	if !ok {
 		return s.fallbackObjectiveStats(armID, objective, stats)
@@ -381,7 +447,7 @@ func (s *HybridObjectiveStrategy) resolveObjectiveStats(ctx context.Context, arm
 	return objStats
 }
 
-func (s *HybridObjectiveStrategy) fallbackObjectiveStats(armID uuid.UUID, objective ObjectiveType, stats *ArmStats) *ArmObjectiveStats {
+func (s *HybridObjectiveReporter) fallbackObjectiveStats(armID uuid.UUID, objective ObjectiveType, stats *ArmStats) *ArmObjectiveStats {
 	return &ArmObjectiveStats{
 		ArmID:         armID,
 		ObjectiveType: objective,
@@ -394,11 +460,11 @@ func (s *HybridObjectiveStrategy) fallbackObjectiveStats(armID uuid.UUID, object
 	}
 }
 
-func (s *HybridObjectiveStrategy) populateLTVScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
+func (s *HybridObjectiveReporter) populateLTVScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
 	if !s.shouldIncludeObjective(ObjectiveLTV) {
 		return
 	}
-	ltvScore, err := s.calculateLVTScore(ctx, armID)
+	ltvScore, err := s.calculator.calculateLVTScore(ctx, armID)
 	if err != nil {
 		return
 	}
@@ -414,11 +480,11 @@ func (s *HybridObjectiveStrategy) populateLTVScore(ctx context.Context, armID uu
 	}
 }
 
-func (s *HybridObjectiveStrategy) populateRevenueScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
+func (s *HybridObjectiveReporter) populateRevenueScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
 	if !s.shouldIncludeObjective(ObjectiveRevenue) {
 		return
 	}
-	revenueScore, err := s.calculateRevenueScore(ctx, armID)
+	revenueScore, err := s.calculator.calculateRevenueScore(ctx, armID)
 	if err != nil {
 		return
 	}
@@ -434,11 +500,11 @@ func (s *HybridObjectiveStrategy) populateRevenueScore(ctx context.Context, armI
 	}
 }
 
-func (s *HybridObjectiveStrategy) populateHybridScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
-	if s.config == nil || s.config.ObjectiveType != ObjectiveHybrid {
+func (s *HybridObjectiveReporter) populateHybridScore(ctx context.Context, armID uuid.UUID, stats *ArmStats, scores map[ObjectiveType]*ObjectiveScore) {
+	if s.configManager.config == nil || s.configManager.config.ObjectiveType != ObjectiveHybrid {
 		return
 	}
-	hybridScore, err := s.calculateHybridScore(ctx, armID)
+	hybridScore, err := s.calculator.calculateHybridScore(ctx, armID)
 	if err != nil {
 		return
 	}
@@ -454,7 +520,7 @@ func (s *HybridObjectiveStrategy) populateHybridScore(ctx context.Context, armID
 }
 
 // UpdateConfig updates the objective configuration
-func (s *HybridObjectiveStrategy) UpdateConfig(config *ExperimentConfig) {
+func (s *HybridObjectiveConfigManager) UpdateConfig(config *ExperimentConfig) {
 	if config != nil {
 		s.config = config
 		s.logger.Info("Hybrid objective config updated",
@@ -465,12 +531,12 @@ func (s *HybridObjectiveStrategy) UpdateConfig(config *ExperimentConfig) {
 }
 
 // GetConfig returns the current configuration
-func (s *HybridObjectiveStrategy) GetConfig() *ExperimentConfig {
+func (s *HybridObjectiveConfigManager) GetConfig() *ExperimentConfig {
 	return s.config
 }
 
 // ValidateWeights validates that objective weights sum to a reasonable value
-func (s *HybridObjectiveStrategy) ValidateWeights(weights map[string]float64) error {
+func (s *HybridObjectiveConfigManager) ValidateWeights(weights map[string]float64) error {
 	if len(weights) == 0 {
 		return fmt.Errorf("no weights provided")
 	}
@@ -498,7 +564,7 @@ func (s *HybridObjectiveStrategy) ValidateWeights(weights map[string]float64) er
 }
 
 // NormalizeWeights normalizes weights to sum to 1.0
-func (s *HybridObjectiveStrategy) NormalizeWeights(weights map[string]float64) map[string]float64 {
+func (s *HybridObjectiveConfigManager) NormalizeWeights(weights map[string]float64) map[string]float64 {
 	sum := 0.0
 	for _, weight := range weights {
 		sum += weight

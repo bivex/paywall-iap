@@ -33,7 +33,13 @@ func TestWinbackService(t *testing.T) {
 		winbackRepo.On("GetActiveByUserAndCampaign", ctx, userID, "campaign_123").Return(nil, errors.New("not found")).Once()
 		winbackRepo.On("Create", ctx, mock.Anything).Return(nil).Once()
 
-		offer, err := winbackService.CreateWinbackOffer(ctx, userID, "campaign_123", entity.DiscountTypePercentage, 25.0, 30)
+		offer, err := winbackService.CreateWinbackOffer(ctx, service.CreateWinbackOfferParams{
+			UserID:        userID,
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			DurationDays:  30,
+		})
 		require.NoError(t, err)
 		assert.Equal(t, entity.OfferStatusOffered, offer.Status)
 		assert.Equal(t, 25.0, offer.DiscountValue)
@@ -43,7 +49,13 @@ func TestWinbackService(t *testing.T) {
 		userID := uuid.New()
 		offerID := uuid.New()
 
-		offer := entity.NewWinbackOffer(userID, "campaign_123", entity.DiscountTypePercentage, 25.0, time.Now().Add(30*24*time.Hour))
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        userID,
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 		offer.ID = offerID
 
 		winbackRepo.On("GetByID", ctx, offerID).Return(offer, nil).Once()
@@ -59,7 +71,13 @@ func TestWinbackService(t *testing.T) {
 		userID := uuid.New()
 		offerID := uuid.New()
 
-		offer := entity.NewWinbackOffer(userID, "campaign_123", entity.DiscountTypePercentage, 25.0, time.Now().Add(-24*time.Hour))
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        userID,
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			ExpiresAt:     time.Now().Add(-24 * time.Hour),
+		})
 		offer.ID = offerID
 
 		winbackRepo.On("GetByID", ctx, offerID).Return(offer, nil).Once()
@@ -71,7 +89,13 @@ func TestWinbackService(t *testing.T) {
 	})
 
 	t.Run("Calculate discount for percentage offer", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(uuid.New(), "campaign_123", entity.DiscountTypePercentage, 25.0, time.Now().Add(30*24*time.Hour))
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 
 		discount := offer.CalculateDiscountAmount(100.0)
 		assert.InDelta(t, 25.0, discount, 0.01)
@@ -81,7 +105,13 @@ func TestWinbackService(t *testing.T) {
 	})
 
 	t.Run("Calculate discount for fixed offer", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(uuid.New(), "campaign_123", entity.DiscountTypeFixed, 20.0, time.Now().Add(30*24*time.Hour))
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypeFixed,
+			DiscountValue: 20.0,
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 
 		discount := offer.CalculateDiscountAmount(100.0)
 		assert.InDelta(t, 20.0, discount, 0.01)

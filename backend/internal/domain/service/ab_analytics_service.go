@@ -62,15 +62,23 @@ func (s *ABAnalyticsService) TrackConversion(ctx context.Context, userID uuid.UU
 	return nil
 }
 
+// RevenueEventParams encapsulates parameters for tracking revenue
+type RevenueEventParams struct {
+	UserID  uuid.UUID
+	FlagID  string
+	Variant string
+	Amount  float64
+}
+
 // TrackRevenue tracks revenue from a user
-func (s *ABAnalyticsService) TrackRevenue(ctx context.Context, userID uuid.UUID, flagID, variant string, amount float64) error {
+func (s *ABAnalyticsService) TrackRevenue(ctx context.Context, p RevenueEventParams) error {
 	event := &ABTestEvent{
 		ID:        uuid.New(),
-		UserID:    userID,
-		FlagID:    flagID,
-		Variant:   variant,
+		UserID:    p.UserID,
+		FlagID:    p.FlagID,
+		Variant:   p.Variant,
 		Event:     "revenue",
-		Value:     amount,
+		Value:     p.Amount,
 		Timestamp: time.Now(),
 	}
 

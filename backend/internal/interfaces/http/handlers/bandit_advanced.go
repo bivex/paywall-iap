@@ -378,10 +378,12 @@ func (h *BanditOpsHandler) ProcessConversion(w http.ResponseWriter, r *http.Requ
 
 	if err := h.engine.ProcessConversion(
 		r.Context(),
-		req.TransactionID,
-		req.UserID,
-		*req.ConversionValue,
-		req.Currency,
+		service.ConversionRewardParams{
+			TransactionID:   req.TransactionID,
+			UserID:          req.UserID,
+			ConversionValue: *req.ConversionValue,
+			Currency:        req.Currency,
+		},
 	); err != nil {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return

@@ -70,9 +70,15 @@ func TestRegisterCommand_RejectsNullBytesBeforeRepositoryAccess(t *testing.T) {
 	require.Contains(t, err.Error(), "null bytes")
 	require.False(t, repo.existsCalled)
 }
-
 func TestRegisterCommand_RejectsDuplicateEmailBeforeCreate(t *testing.T) {
-	repo := &registerRepoStub{userByEmail: entity.NewUser("existing-user", "device-1", entity.PlatformiOS, "1.0.0", "user@example.com", uuid.Nil)}
+	repo := &registerRepoStub{userByEmail: entity.NewUser(entity.NewUserParams{
+		PlatformUserID: "existing-user",
+		DeviceID:       "device-1",
+		Platform:       entity.PlatformiOS,
+		AppVersion:     "1.0.0",
+		Email:          "user@example.com",
+		AppID:          uuid.Nil,
+	})}
 	cmd := NewRegisterCommand(repo, appMiddleware.NewJWTMiddleware("test-secret", nil, time.Minute))
 
 	_, err := cmd.Execute(context.Background(), &dto.RegisterRequest{

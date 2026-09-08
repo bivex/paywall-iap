@@ -129,13 +129,42 @@ type ExperimentStatusTransitionAudit struct {
 	Details        map[string]interface{}
 }
 
+// UpdateExperimentStatusParams contains parameters for updating experiment status.
+type UpdateExperimentStatusParams struct {
+	ExperimentID uuid.UUID
+	NextStatus   string
+	StartAt      *time.Time
+	EndAt        *time.Time
+}
+
+// UpdateExperimentStatusAuditParams contains parameters for updating experiment status with audit.
+type UpdateExperimentStatusAuditParams struct {
+	ExperimentID  uuid.UUID
+	CurrentStatus string
+	NextStatus    string
+	StartAt       *time.Time
+	EndAt         *time.Time
+	Audit         *ExperimentStatusTransitionAudit
+}
+
+// UpdateExperimentStatusPolicyAuditParams contains parameters for updating experiment status and policy with audit.
+type UpdateExperimentStatusPolicyAuditParams struct {
+	ExperimentID  uuid.UUID
+	CurrentStatus string
+	NextStatus    string
+	StartAt       *time.Time
+	EndAt         *time.Time
+	Policy        ExperimentAutomationPolicy
+	Audit         *ExperimentStatusTransitionAudit
+}
+
 type ExperimentMutationRepository interface {
 	GetExperimentMutationState(ctx context.Context, experimentID uuid.UUID) (*ExperimentMutationState, error)
 	UpdateExperimentDraft(ctx context.Context, experimentID uuid.UUID, input UpdateExperimentInput) error
-	UpdateExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string, startAt, endAt *time.Time) error
-	UpdateExperimentStatusWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, audit *ExperimentStatusTransitionAudit) error
+	UpdateExperimentStatus(ctx context.Context, params UpdateExperimentStatusParams) error
+	UpdateExperimentStatusWithAudit(ctx context.Context, params UpdateExperimentStatusAuditParams) error
 	UpdateExperimentAutomationPolicy(ctx context.Context, experimentID uuid.UUID, policy ExperimentAutomationPolicy) error
-	UpdateExperimentStatusAndAutomationPolicyWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, policy ExperimentAutomationPolicy, audit *ExperimentStatusTransitionAudit) error
+	UpdateExperimentStatusAndAutomationPolicyWithAudit(ctx context.Context, params UpdateExperimentStatusPolicyAuditParams) error
 }
 
 type ExperimentLockInput struct {
@@ -290,16 +319,15 @@ func (s *ExperimentAdminService) HoldExperimentForReview(ctx context.Context, ex
 		endAt = &value
 	}
 
-	return s.repo.UpdateExperimentStatusAndAutomationPolicyWithAudit(
-		ctx,
-		experimentID,
-		experiment.Status,
-		"paused",
-		startAt,
-		endAt,
-		policy,
-		audit,
-	)
+	return s.repo.UpdateExperimentStatusAndAutomationPolicyWithAudit(ctx, UpdateExperimentStatusPolicyAuditParams{
+		ExperimentID:  experimentID,
+		CurrentStatus: experiment.Status,
+		NextStatus:    "paused",
+		StartAt:       startAt,
+		EndAt:         endAt,
+		Policy:        policy,
+		Audit:         audit,
+	})
 }
 
 func (s *ExperimentAdminService) transitionExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string, audit *ExperimentStatusTransitionAudit) error {
@@ -332,7 +360,14 @@ func (s *ExperimentAdminService) transitionExperimentStatus(ctx context.Context,
 		endAt = &value
 	}
 
-	return s.repo.UpdateExperimentStatusWithAudit(ctx, experimentID, experiment.Status, nextStatus, startAt, endAt, audit)
+	return s.repo.UpdateExperimentStatusWithAudit(ctx, UpdateExperimentStatusAuditParams{
+		ExperimentID:  experimentID,
+		CurrentStatus: experiment.Status,
+		NextStatus:    nextStatus,
+		StartAt:       startAt,
+		EndAt:         endAt,
+		Audit:         audit,
+	})
 }
 
 func validateExperimentStatusTransition(currentStatus string, nextStatus string) error {

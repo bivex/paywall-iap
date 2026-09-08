@@ -31,7 +31,12 @@ func TestABAnalyticsService(t *testing.T) {
 	})
 
 	t.Run("TrackRevenue records revenue event", func(t *testing.T) {
-		err := analyticsService.TrackRevenue(ctx, userID, flagID, "variant_b", 99.99)
+		err := analyticsService.TrackRevenue(ctx, service.RevenueEventParams{
+			UserID:  userID,
+			FlagID:  flagID,
+			Variant: "variant_b",
+			Amount:  99.99,
+		})
 		require.NoError(t, err)
 	})
 
@@ -62,7 +67,12 @@ func TestABAnalyticsService(t *testing.T) {
 		analyticsService.TrackExposure(ctx, u2, testFlag, "variant_a")
 
 		// One user pays $50
-		analyticsService.TrackRevenue(ctx, u1, testFlag, "variant_a", 50.0)
+		analyticsService.TrackRevenue(ctx, service.RevenueEventParams{
+			UserID:  u1,
+			FlagID:  testFlag,
+			Variant: "variant_a",
+			Amount:  50.0,
+		})
 
 		avg := analyticsService.GetAverageRevenue(testFlag, "variant_a")
 		assert.InDelta(t, 25.0, avg, 0.01) // 50 / 2 = 25

@@ -34,17 +34,26 @@ func NewFeatureFlagService() *FeatureFlagService {
 	}
 }
 
+// CreateFlagParams contains parameters for creating a feature flag.
+type CreateFlagParams struct {
+	ID             string
+	Name           string
+	Enabled        bool
+	RolloutPercent int
+	UserIDs        []string
+}
+
 // CreateFlag creates a new feature flag
-func (s *FeatureFlagService) CreateFlag(id, name string, enabled bool, rolloutPercent int, userIDs []string) *FeatureFlag {
+func (s *FeatureFlagService) CreateFlag(params CreateFlagParams) *FeatureFlag {
 	flag := &FeatureFlag{
-		ID:             id,
-		Name:           name,
-		Enabled:        enabled,
-		RolloutPercent: rolloutPercent,
-		UserIDs:        userIDs,
+		ID:             params.ID,
+		Name:           params.Name,
+		Enabled:        params.Enabled,
+		RolloutPercent: params.RolloutPercent,
+		UserIDs:        params.UserIDs,
 	}
 
-	s.flags[id] = flag
+	s.flags[params.ID] = flag
 	return flag
 }
 

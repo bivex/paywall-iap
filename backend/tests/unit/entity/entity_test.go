@@ -11,14 +11,14 @@ import (
 )
 
 func TestNewUser(t *testing.T) {
-	user := entity.NewUser(
-		"apple-123",
-		"device-456",
-		entity.PlatformiOS,
-		"1.0.0",
-		"test@example.com",
-		uuid.Nil,
-	)
+	user := entity.NewUser(entity.NewUserParams{
+		PlatformUserID: "apple-123",
+		DeviceID:       "device-456",
+		Platform:       entity.PlatformiOS,
+		AppVersion:     "1.0.0",
+		Email:          "test@example.com",
+		AppID:          uuid.Nil,
+	})
 
 	assert.NotNil(t, user.ID)
 	assert.Equal(t, "apple-123", user.PlatformUserID)
@@ -51,7 +51,14 @@ func TestUser_HasEmail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			user := entity.NewUser("id", "device", entity.PlatformiOS, "1.0", tt.email, uuid.Nil)
+			user := entity.NewUser(entity.NewUserParams{
+				PlatformUserID: "id",
+				DeviceID:       "device",
+				Platform:       entity.PlatformiOS,
+				AppVersion:     "1.0",
+				Email:          tt.email,
+				AppID:          uuid.Nil,
+			})
 			assert.Equal(t, tt.expected, user.HasEmail())
 		})
 	}
@@ -61,14 +68,14 @@ func TestNewSubscription(t *testing.T) {
 	userID := uuid.New()
 	expiresAt := time.Now().Add(30 * 24 * time.Hour)
 
-	sub := entity.NewSubscription(
-		userID,
-		entity.SourceIAP,
-		"ios",
-		"com.app.premium",
-		entity.PlanMonthly,
-		expiresAt,
-	)
+	sub := entity.NewSubscription(entity.NewSubscriptionParams{
+		UserID:    userID,
+		Source:    entity.SourceIAP,
+		Platform:  "ios",
+		ProductID: "com.app.premium",
+		PlanType:  entity.PlanMonthly,
+		ExpiresAt: expiresAt,
+	})
 
 	assert.NotNil(t, sub.ID)
 	assert.Equal(t, userID, sub.UserID)
@@ -177,7 +184,13 @@ func TestNewTransaction(t *testing.T) {
 	userID := uuid.New()
 	subID := uuid.New()
 
-	txn := entity.NewTransaction(appID, userID, subID, 9.99, "USD")
+	txn := entity.NewTransaction(entity.NewTransactionParams{
+		AppID:          appID,
+		UserID:         userID,
+		SubscriptionID: subID,
+		Amount:         9.99,
+		Currency:       "USD",
+	})
 
 	assert.NotNil(t, txn.ID)
 	assert.Equal(t, appID, txn.AppID)

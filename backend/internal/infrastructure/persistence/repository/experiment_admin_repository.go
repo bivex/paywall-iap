@@ -246,8 +246,15 @@ func ensureDraftExperimentPricingTiersExist(ctx context.Context, tx pgx.Tx, arms
 	return nil
 }
 
-func (r *ExperimentAdminRepository) UpdateExperimentStatus(ctx context.Context, experimentID uuid.UUID, nextStatus string, startAt, endAt *time.Time) error {
-	return r.UpdateExperimentStatusWithAudit(ctx, experimentID, "", nextStatus, startAt, endAt, nil)
+func (r *ExperimentAdminRepository) UpdateExperimentStatus(ctx context.Context, params service.UpdateExperimentStatusParams) error {
+	return r.UpdateExperimentStatusWithAudit(ctx, service.UpdateExperimentStatusAuditParams{
+		ExperimentID:  params.ExperimentID,
+		CurrentStatus: "",
+		NextStatus:    params.NextStatus,
+		StartAt:       params.StartAt,
+		EndAt:         params.EndAt,
+		Audit:         nil,
+	})
 }
 
 func experimentStatusTransitionAuditDetailsJSON(audit *service.ExperimentStatusTransitionAudit) ([]byte, *string, error) {
@@ -271,11 +278,18 @@ func experimentStatusTransitionAuditDetailsJSON(audit *service.ExperimentStatusT
 	return detailsJSON, reason, nil
 }
 
-func insertExperimentLifecycleAudit(ctx context.Context, tx pgx.Tx, experimentID uuid.UUID, currentStatus, nextStatus string, audit *service.ExperimentStatusTransitionAudit) error {
-	if audit == nil {
+type experimentLifecycleAuditParams struct {
+	experimentID  uuid.UUID
+	currentStatus string
+	nextStatus    string
+	audit         *service.ExperimentStatusTransitionAudit
+}
+
+func insertExperimentLifecycleAudit(ctx context.Context, tx pgx.Tx, p experimentLifecycleAuditParams) error {
+	if p.audit == nil {
 		return nil
 	}
-	detailsJSON, reason, err := experimentStatusTransitionAuditDetailsJSON(audit)
+	detailsJSON, reason, err := experimentStatusTransitionAuditDetailsJSON(p.audit)
 	if err != nil {
 		return err
 	}
@@ -286,20 +300,20 @@ func insertExperimentLifecycleAudit(ctx context.Context, tx pgx.Tx, experimentID
 		)
 		VALUES ($1, $2, $3, $4, 'status_transition', $5, $6, $7, $8)
 		ON CONFLICT (idempotency_key) DO NOTHING`,
-		experimentID,
-		audit.ActorType,
-		audit.ActorID,
-		audit.Source,
-		currentStatus,
-		nextStatus,
-		audit.IdempotencyKey,
+		p.experimentID,
+		p.audit.ActorType,
+		p.audit.ActorID,
+		p.audit.Source,
+		p.currentStatus,
+		p.nextStatus,
+		p.audit.IdempotencyKey,
 		detailsJSON,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert experiment lifecycle audit log: %w", err)
 	}
 
-	if audit.ActorType == "system" && audit.Source == "experiment_automation_reconciler" {
+	if p.audit.ActorType == "system" && p.audit.Source == "experiment_automation_reconciler" {
 		_, err = tx.Exec(ctx, `
 				INSERT INTO experiment_automation_decision_log (
 					experiment_id,
@@ -313,12 +327,12 @@ func insertExperimentLifecycleAudit(ctx context.Context, tx pgx.Tx, experimentID
 				)
 				VALUES ($1, $2, 'status_transition', $3, $4, $5, $6, $7)
 				ON CONFLICT (idempotency_key) DO NOTHING`,
-			experimentID,
-			audit.Source,
+			p.experimentID,
+			p.audit.Source,
 			reason,
-			currentStatus,
-			nextStatus,
-			audit.IdempotencyKey,
+			p.currentStatus,
+			p.nextStatus,
+			p.audit.IdempotencyKey,
 			detailsJSON,
 		)
 		if err != nil {
@@ -349,7 +363,7 @@ func (r *ExperimentAdminRepository) UpdateExperimentAutomationPolicy(ctx context
 	return nil
 }
 
-func (r *ExperimentAdminRepository) UpdateExperimentStatusWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, audit *service.ExperimentStatusTransitionAudit) error {
+func (r *ExperimentAdminRepository) UpdateExperimentStatusWithAudit(ctx context.Context, params service.UpdateExperimentStatusAuditParams) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to begin experiment status transaction: %w", err)
@@ -363,15 +377,20 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatusWithAudit(ctx context.
 		    end_at = $4,
 		    updated_at = now()
 		WHERE id = $1`,
-		experimentID,
-		nextStatus,
-		startAt,
-		endAt,
+		params.ExperimentID,
+		params.NextStatus,
+		params.StartAt,
+		params.EndAt,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update experiment status: %w", err)
 	}
-	if err := insertExperimentLifecycleAudit(ctx, tx, experimentID, currentStatus, nextStatus, audit); err != nil {
+	if err := insertExperimentLifecycleAudit(ctx, tx, experimentLifecycleAuditParams{
+		experimentID:  params.ExperimentID,
+		currentStatus: params.CurrentStatus,
+		nextStatus:    params.NextStatus,
+		audit:         params.Audit,
+	}); err != nil {
 		return err
 	}
 
@@ -381,8 +400,8 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatusWithAudit(ctx context.
 	return nil
 }
 
-func (r *ExperimentAdminRepository) UpdateExperimentStatusAndAutomationPolicyWithAudit(ctx context.Context, experimentID uuid.UUID, currentStatus, nextStatus string, startAt, endAt *time.Time, policy service.ExperimentAutomationPolicy, audit *service.ExperimentStatusTransitionAudit) error {
-	automationPolicyJSON, err := json.Marshal(policy)
+func (r *ExperimentAdminRepository) UpdateExperimentStatusAndAutomationPolicyWithAudit(ctx context.Context, params service.UpdateExperimentStatusPolicyAuditParams) error {
+	automationPolicyJSON, err := json.Marshal(params.Policy)
 	if err != nil {
 		return fmt.Errorf("failed to marshal experiment automation policy: %w", err)
 	}
@@ -401,10 +420,10 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatusAndAutomationPolicyWit
 		    automation_policy = $5,
 		    updated_at = now()
 		WHERE id = $1`,
-		experimentID,
-		nextStatus,
-		startAt,
-		endAt,
+		params.ExperimentID,
+		params.NextStatus,
+		params.StartAt,
+		params.EndAt,
 		automationPolicyJSON,
 	)
 	if err != nil {
@@ -414,7 +433,12 @@ func (r *ExperimentAdminRepository) UpdateExperimentStatusAndAutomationPolicyWit
 		return service.ErrExperimentNotFound
 	}
 
-	if err := insertExperimentLifecycleAudit(ctx, tx, experimentID, currentStatus, nextStatus, audit); err != nil {
+	if err := insertExperimentLifecycleAudit(ctx, tx, experimentLifecycleAuditParams{
+		experimentID:  params.ExperimentID,
+		currentStatus: params.CurrentStatus,
+		nextStatus:    params.NextStatus,
+		audit:         params.Audit,
+	}); err != nil {
 		return err
 	}
 

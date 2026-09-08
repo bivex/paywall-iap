@@ -232,7 +232,13 @@ func TestGetObjectiveScores_GinWrappedRouteAcceptsValidExperimentID(t *testing.T
 	}
 	cache := &routerPathTestCache{}
 	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{EnableHybrid: true})
+	engine := service.NewAdvancedBanditEngine(service.AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &service.EngineConfig{EnableHybrid: true},
+	})
 	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
 
 	router := gin.New()
@@ -273,7 +279,13 @@ func TestGetObjectiveConfig_GinWrappedRouteAcceptsValidExperimentID(t *testing.T
 	}
 	cache := &routerPathTestCache{}
 	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{EnableHybrid: true})
+	engine := service.NewAdvancedBanditEngine(service.AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &service.EngineConfig{EnableHybrid: true},
+	})
 	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
 
 	router := gin.New()
@@ -398,7 +410,13 @@ func TestRunMaintenance_TargetedCleanupOldContextData(t *testing.T) {
 	repo := &routerPathTestRepo{cleanupContextsDeleted: 5}
 	cache := &routerPathTestCache{}
 	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{})
+	engine := service.NewAdvancedBanditEngine(service.AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &service.EngineConfig{},
+	})
 	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/maintenance", strings.NewReader(`{"scope":"cleanup_old_context_data","older_than_hours":48}`))
 	res := httptest.NewRecorder()
@@ -422,7 +440,13 @@ func TestRunMaintenance_TargetedCleanupExpiredAssignments(t *testing.T) {
 	repo := &routerPathTestRepo{cleanupAssignmentsDeleted: 3}
 	cache := &routerPathTestCache{}
 	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{})
+	engine := service.NewAdvancedBanditEngine(service.AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &service.EngineConfig{},
+	})
 	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/maintenance", strings.NewReader(`{"scope":"cleanup_expired_assignments","older_than_hours":12}`))
 	res := httptest.NewRecorder()
@@ -458,7 +482,13 @@ func TestRunMaintenance_RejectsInvalidScopeWhenEnginePresent(t *testing.T) {
 	repo := &routerPathTestRepo{}
 	cache := &routerPathTestCache{}
 	base := service.NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := service.NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &service.EngineConfig{})
+	engine := service.NewAdvancedBanditEngine(service.AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &service.EngineConfig{},
+	})
 	handler := NewBanditAdvancedHandler(engine, nil, zap.NewNop())
 	req := httptest.NewRequest(http.MethodPost, "/v1/bandit/maintenance", strings.NewReader(`{"scope":"cleanup_everything"}`))
 	res := httptest.NewRecorder()

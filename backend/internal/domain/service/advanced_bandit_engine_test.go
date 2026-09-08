@@ -153,7 +153,13 @@ func TestAdvancedBanditEngine_GetObjectiveScores_LazilyLoadsExperimentConfig(t *
 	}
 	cache := &advancedEngineTestCache{}
 	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{EnableHybrid: true})
+	engine := NewAdvancedBanditEngine(AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &EngineConfig{EnableHybrid: true},
+	})
 
 	scores, err := engine.GetObjectiveScores(context.Background(), experimentID)
 
@@ -170,7 +176,13 @@ func TestAdvancedBanditEngine_GetObjectiveConfig_ReturnsDefaultWhenUnset(t *test
 	repo := &advancedEngineTestRepo{}
 	cache := &advancedEngineTestCache{}
 	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{EnableHybrid: true})
+	engine := NewAdvancedBanditEngine(AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &EngineConfig{EnableHybrid: true},
+	})
 
 	config, err := engine.GetObjectiveConfig(context.Background(), experimentID)
 
@@ -190,7 +202,13 @@ func TestAdvancedBanditEngine_GetPendingReward_UsesLazyDelayedStrategy(t *testin
 	}
 	cache := &advancedEngineTestCache{}
 	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{EnableDelayed: true})
+	engine := NewAdvancedBanditEngine(AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &EngineConfig{EnableDelayed: true},
+	})
 
 	pendingReward, err := engine.GetPendingReward(context.Background(), pendingID)
 	rewards, rewardsErr := engine.GetUserPendingRewards(context.Background(), userID)
@@ -207,7 +225,13 @@ func TestAdvancedBanditEngine_SetObjectiveConfig_NormalizesHybridWeights(t *test
 	repo := &advancedEngineTestRepo{}
 	cache := &advancedEngineTestCache{}
 	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{EnableHybrid: true})
+	engine := NewAdvancedBanditEngine(AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &EngineConfig{EnableHybrid: true},
+	})
 
 	config, err := engine.SetObjectiveConfig(context.Background(), experimentID, ObjectiveHybrid, map[string]float64{
 		"conversion": 5,
@@ -245,7 +269,13 @@ func TestAdvancedBanditEngine_SyncObjectiveStats_UsesConfiguredHybridObjectives(
 	}
 	cache := &advancedEngineTestCache{}
 	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{EnableHybrid: true})
+	engine := NewAdvancedBanditEngine(AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &EngineConfig{EnableHybrid: true},
+	})
 
 	synced, err := engine.SyncObjectiveStats(context.Background(), 10)
 
@@ -281,7 +311,13 @@ func TestAdvancedBanditEngine_RunMaintenanceDetailed_ReturnsRepositoryBackedSumm
 	}
 	cache := &advancedEngineTestCache{}
 	base := NewThompsonSamplingBandit(repo, cache, zap.NewNop())
-	engine := NewAdvancedBanditEngine(base, repo, cache, nil, nil, zap.NewNop(), &EngineConfig{})
+	engine := NewAdvancedBanditEngine(AdvancedBanditEngineParams{
+		Base:   base,
+		Repo:   repo,
+		Cache:  cache,
+		Logger: zap.NewNop(),
+		Config: &EngineConfig{},
+	})
 
 	summary, err := engine.RunMaintenanceDetailed(context.Background())
 

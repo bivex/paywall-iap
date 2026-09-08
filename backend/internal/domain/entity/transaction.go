@@ -27,15 +27,24 @@ type Transaction struct {
 	CreatedAt      time.Time
 }
 
+// NewTransactionParams contains parameters for creating a new transaction entity.
+type NewTransactionParams struct {
+	AppID          uuid.UUID
+	UserID         uuid.UUID
+	SubscriptionID uuid.UUID
+	Amount         float64
+	Currency       string
+}
+
 // NewTransaction creates a new transaction entity
-func NewTransaction(appID, userID, subscriptionID uuid.UUID, amount float64, currency string) *Transaction {
+func NewTransaction(p NewTransactionParams) *Transaction {
 	return &Transaction{
 		ID:             uuid.New(),
-		AppID:          appID,
-		UserID:         userID,
-		SubscriptionID: subscriptionID,
-		Amount:         amount,
-		Currency:       currency,
+		AppID:          p.AppID,
+		UserID:         p.UserID,
+		SubscriptionID: p.SubscriptionID,
+		Amount:         p.Amount,
+		Currency:       p.Currency,
 		Status:         TransactionStatusSuccess,
 		CreatedAt:      time.Now(),
 	}

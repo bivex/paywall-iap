@@ -62,8 +62,12 @@ func createAppleReceipt(mockURL, productID string, dryRun bool) (string, error) 
 	if dryRun {
 		return "dry_run_receipt_" + productID, nil
 	}
-	status, resp, err := doJSON("POST", mockURL+"/subs",
-		nil, map[string]string{"productId": productID}, false)
+	status, resp, err := doJSON(jsonRequest{
+		method: "POST",
+		url:    mockURL + "/subs",
+		body:   map[string]string{"productId": productID},
+		dryRun: false,
+	})
 	if err != nil {
 		return "", fmt.Errorf("apple mock: %w", err)
 	}
@@ -104,28 +108,36 @@ func (s *stats) print() {
 
 // ---- http helpers ----
 
-func doJSON(method, url string, headers map[string]string, body interface{}, dryRun bool) (int, map[string]interface{}, error) {
-	if dryRun {
-		b, _ := json.MarshalIndent(body, "", "  ")
-		fmt.Printf("[DRY] %s %s\n%s\n", method, url, b)
+type jsonRequest struct {
+	method  string
+	url     string
+	headers map[string]string
+	body    interface{}
+	dryRun  bool
+}
+
+func doJSON(r jsonRequest) (int, map[string]interface{}, error) {
+	if r.dryRun {
+		b, _ := json.MarshalIndent(r.body, "", "  ")
+		fmt.Printf("[DRY] %s %s\n%s\n", r.method, r.url, b)
 		return 200, nil, nil
 	}
 
 	var bodyReader io.Reader
-	if body != nil {
-		b, err := json.Marshal(body)
+	if r.body != nil {
+		b, err := json.Marshal(r.body)
 		if err != nil {
 			return 0, nil, err
 		}
 		bodyReader = bytes.NewReader(b)
 	}
 
-	req, err := http.NewRequest(method, url, bodyReader)
+	req, err := http.NewRequest(r.method, r.url, bodyReader)
 	if err != nil {
 		return 0, nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	for k, v := range headers {
+	for k, v := range r.headers {
 		req.Header.Set(k, v)
 	}
 
@@ -142,8 +154,17 @@ func doJSON(method, url string, headers map[string]string, body interface{}, dry
 
 // ---- worker ----
 
-func prepareScenario(i int, platformMode, appleMockURL string, dryRun bool, st *stats) (scenario, bool) {
-	platform := platformMode
+type loadgenRunner struct {
+	apiBase      string
+	appID        string
+	appleMockURL string
+	platformMode string
+	dryRun       bool
+	stats        *stats
+}
+
+func (r *loadgenRunner) prepareScenario(i int) (scenario, bool) {
+	platform := r.platformMode
 	if platform == "mixed" {
 		if rand.Intn(2) == 0 {
 			platform = "android"
@@ -167,9 +188,9 @@ func prepareScenario(i int, platformMode, appleMockURL string, dryRun bool, st *
 
 	product := appleProducts[rand.Intn(len(appleProducts))]
 	sc := scenario{name: "ios_sub", platform: "ios", product: product}
-	receiptToken, err := createAppleReceipt(appleMockURL, product, dryRun)
+	receiptToken, err := createAppleReceipt(r.appleMockURL, product, r.dryRun)
 	if err != nil || receiptToken == "" {
-		st.regFailed.Add(1)
+		r.stats.regFailed.Add(1)
 		log.Printf("[user %d] apple mock create receipt: %v", i, err)
 		return scenario{}, false
 	}
@@ -177,7 +198,7 @@ func prepareScenario(i int, platformMode, appleMockURL string, dryRun bool, st *
 	return sc, true
 }
 
-func registerUserSession(i int, apiBase, appID string, sc scenario, dryRun bool, st *stats) (string, bool) {
+func (r *loadgenRunner) registerUserSession(i int, sc scenario) (string, bool) {
 	userID := fmt.Sprintf("loadgen_user_%d_%d", i, rand.Int63())
 	deviceID := fmt.Sprintf("device_%d_%d", i, rand.Int63())
 
@@ -186,13 +207,18 @@ func registerUserSession(i int, apiBase, appID string, sc scenario, dryRun bool,
 		"device_id":        deviceID,
 		"platform":         sc.platform,
 		"app_version":      "1.0.0",
-		"app_id":           appID,
+		"app_id":           r.appID,
 	}
 
-	status, regResp, err := doJSON("POST", apiBase+"/v1/auth/register",
-		map[string]string{"X-App-ID": appID}, regBody, dryRun)
+	status, regResp, err := doJSON(jsonRequest{
+		method:  "POST",
+		url:     r.apiBase + "/v1/auth/register",
+		headers: map[string]string{"X-App-ID": r.appID},
+		body:    regBody,
+		dryRun:  r.dryRun,
+	})
 	if err != nil || status >= 400 {
-		st.regFailed.Add(1)
+		r.stats.regFailed.Add(1)
 		if err != nil {
 			log.Printf("[user %d] register error: %v", i, err)
 		} else {
@@ -200,8 +226,8 @@ func registerUserSession(i int, apiBase, appID string, sc scenario, dryRun bool,
 		}
 		return "", false
 	}
-	st.registered.Add(1)
-	if dryRun {
+	r.stats.registered.Add(1)
+	if r.dryRun {
 		return "", false
 	}
 
@@ -212,7 +238,7 @@ func registerUserSession(i int, apiBase, appID string, sc scenario, dryRun bool,
 		}
 	}
 	if token == "" {
-		st.regFailed.Add(1)
+		r.stats.regFailed.Add(1)
 		log.Printf("[user %d] no access_token in register response", i)
 		return "", false
 	}
@@ -239,7 +265,7 @@ func recordIAPVerificationStats(st *stats, iapResp map[string]interface{}) strin
 	return subStatus
 }
 
-func verifyUserIAP(i int, apiBase, appID, token string, sc scenario, dryRun bool, st *stats) {
+func (r *loadgenRunner) verifyUserIAP(i int, token string, sc scenario) {
 	iapBody := map[string]interface{}{
 		"platform":       sc.platform,
 		"receipt_data":   sc.token,
@@ -247,14 +273,19 @@ func verifyUserIAP(i int, apiBase, appID, token string, sc scenario, dryRun bool
 		"transaction_id": fmt.Sprintf("txn_%d_%d", i, rand.Int63()),
 	}
 
-	iapStatus, iapResp, err := doJSON("POST", apiBase+"/v1/verify/iap",
-		map[string]string{
+	iapStatus, iapResp, err := doJSON(jsonRequest{
+		method: "POST",
+		url:    r.apiBase + "/v1/verify/iap",
+		headers: map[string]string{
 			"Authorization": "Bearer " + token,
-			"X-App-ID":      appID,
-		}, iapBody, dryRun)
+			"X-App-ID":      r.appID,
+		},
+		body:   iapBody,
+		dryRun: r.dryRun,
+	})
 
 	if err != nil || iapStatus >= 500 {
-		st.verFailed.Add(1)
+		r.stats.verFailed.Add(1)
 		if err != nil {
 			log.Printf("[user %d] iap verify error: %v", i, err)
 		} else {
@@ -263,26 +294,26 @@ func verifyUserIAP(i int, apiBase, appID, token string, sc scenario, dryRun bool
 		return
 	}
 
-	st.verified.Add(1)
-	subStatus := recordIAPVerificationStats(st, iapResp)
+	r.stats.verified.Add(1)
+	subStatus := recordIAPVerificationStats(r.stats, iapResp)
 
 	if os.Getenv("LOADGEN_VERBOSE") != "" {
 		fmt.Printf("[user %d] %s %s → %s (http %d)\n", i, sc.platform, sc.name, subStatus, iapStatus)
 	}
 }
 
-func runUser(i int, apiBase, appID, appleMockURL string, dryRun bool, platformMode string, st *stats) {
-	sc, ok := prepareScenario(i, platformMode, appleMockURL, dryRun, st)
+func (r *loadgenRunner) runUser(i int) {
+	sc, ok := r.prepareScenario(i)
 	if !ok {
 		return
 	}
 
-	token, ok := registerUserSession(i, apiBase, appID, sc, dryRun, st)
-	if !ok || dryRun {
+	token, ok := r.registerUserSession(i, sc)
+	if !ok || r.dryRun {
 		return
 	}
 
-	verifyUserIAP(i, apiBase, appID, token, sc, dryRun, st)
+	r.verifyUserIAP(i, token, sc)
 }
 
 func main() {
@@ -316,13 +347,22 @@ func main() {
 	var wg sync.WaitGroup
 	start := time.Now()
 
+	runner := &loadgenRunner{
+		apiBase:      *apiBase,
+		appID:        *appID,
+		appleMockURL: *appleMock,
+		platformMode: *platformMode,
+		dryRun:       *dryRun,
+		stats:        st,
+	}
+
 	for i := 0; i < *users; i++ {
 		sem <- struct{}{}
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			runUser(idx, *apiBase, *appID, *appleMock, *dryRun, *platformMode, st)
+			runner.runUser(idx)
 		}(i)
 	}
 

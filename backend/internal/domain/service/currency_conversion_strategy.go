@@ -153,48 +153,56 @@ func (s *CurrencyConversionRewardStrategy) countryToCurrency(countryCode string)
 	return currencyMap[countryCode]
 }
 
+// RecordRewardWithCurrencyParams encapsulates parameters for recording reward with currency
+type RecordRewardWithCurrencyParams struct {
+	ExperimentID uuid.UUID
+	ArmID        uuid.UUID
+	UserID       uuid.UUID
+	RewardValue  float64
+	Currency     string
+	Metadata     map[string]interface{}
+}
+
 // RecordRewardWithCurrency records a reward with currency metadata
 func (s *CurrencyConversionRewardStrategy) RecordRewardWithCurrency(
 	ctx context.Context,
-	experimentID, armID, userID uuid.UUID,
-	rewardValue float64,
-	currency string,
-	metadata map[string]interface{},
+	p RecordRewardWithCurrencyParams,
 ) (*RewardWithCurrency, error) {
 	// Convert to USD
-	convertedValue, err := s.currencyService.ConvertToUSD(ctx, rewardValue, currency)
+	convertedValue, err := s.currencyService.ConvertToUSD(ctx, p.RewardValue, p.Currency)
 	if err != nil {
 		s.logger.Warn("Failed to convert currency for recording",
-			zap.String("currency", currency),
-			zap.Float64("original_value", rewardValue),
+			zap.String("currency", p.Currency),
+			zap.Float64("original_value", p.RewardValue),
 			zap.Error(err),
 		)
 		// Continue with original value if conversion fails
-		convertedValue = rewardValue
+		convertedValue = p.RewardValue
 	}
 
 	reward := &RewardWithCurrency{
-		Value:           rewardValue,
-		Currency:        currency,
+		Value:           p.RewardValue,
+		Currency:        p.Currency,
 		ConvertedValue:  convertedValue,
-		OriginalValue:   rewardValue,
-		OriginalCurrency: currency,
+		OriginalValue:   p.RewardValue,
+		OriginalCurrency: p.Currency,
 	}
 
 	// Add currency metadata
+	metadata := p.Metadata
 	if metadata == nil {
 		metadata = make(map[string]interface{})
 	}
-	metadata["original_currency"] = currency
-	metadata["original_revenue"] = rewardValue
+	metadata["original_currency"] = p.Currency
+	metadata["original_revenue"] = p.RewardValue
 	metadata["converted_revenue_usd"] = convertedValue
 
 	s.logger.Info("Reward recorded with currency conversion",
-		zap.String("experiment_id", experimentID.String()),
-		zap.String("arm_id", armID.String()),
-		zap.String("user_id", userID.String()),
-		zap.Float64("original_value", rewardValue),
-		zap.String("original_currency", currency),
+		zap.String("experiment_id", p.ExperimentID.String()),
+		zap.String("arm_id", p.ArmID.String()),
+		zap.String("user_id", p.UserID.String()),
+		zap.Float64("original_value", p.RewardValue),
+		zap.String("original_currency", p.Currency),
 		zap.Float64("converted_value", convertedValue),
 	)
 

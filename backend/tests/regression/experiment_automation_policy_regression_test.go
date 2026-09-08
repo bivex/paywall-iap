@@ -33,11 +33,11 @@ func (s *automationPolicyRepoStub) UpdateExperimentDraft(context.Context, uuid.U
 	return nil
 }
 
-func (s *automationPolicyRepoStub) UpdateExperimentStatus(context.Context, uuid.UUID, string, *time.Time, *time.Time) error {
+func (s *automationPolicyRepoStub) UpdateExperimentStatus(context.Context, service.UpdateExperimentStatusParams) error {
 	return nil
 }
 
-func (s *automationPolicyRepoStub) UpdateExperimentStatusWithAudit(context.Context, uuid.UUID, string, string, *time.Time, *time.Time, *service.ExperimentStatusTransitionAudit) error {
+func (s *automationPolicyRepoStub) UpdateExperimentStatusWithAudit(context.Context, service.UpdateExperimentStatusAuditParams) error {
 	return nil
 }
 
@@ -47,8 +47,8 @@ func (s *automationPolicyRepoStub) UpdateExperimentAutomationPolicy(_ context.Co
 	return nil
 }
 
-func (s *automationPolicyRepoStub) UpdateExperimentStatusAndAutomationPolicyWithAudit(_ context.Context, _ uuid.UUID, _ string, _ string, _ *time.Time, _ *time.Time, policy service.ExperimentAutomationPolicy, _ *service.ExperimentStatusTransitionAudit) error {
-	value := policy
+func (s *automationPolicyRepoStub) UpdateExperimentStatusAndAutomationPolicyWithAudit(_ context.Context, params service.UpdateExperimentStatusPolicyAuditParams) error {
+	value := params.Policy
 	s.updatedPolicy = &value
 	return nil
 }

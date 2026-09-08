@@ -88,20 +88,20 @@ func main() {
 	banditCache := cache.NewRedisBanditCache(redisClient, logging.Logger)
 	banditService := service.NewThompsonSamplingBandit(banditRepo, banditCache, logging.Logger)
 	currencyService := service.NewCurrencyRateService(redisClient, logging.Logger)
-	advancedBanditEngine := service.NewAdvancedBanditEngine(
-		banditService,
-		banditRepo,
-		banditCache,
-		redisClient,
-		currencyService,
-		logging.Logger,
-		&service.EngineConfig{
+	advancedBanditEngine := service.NewAdvancedBanditEngine(service.AdvancedBanditEngineParams{
+		Base:            banditService,
+		Repo:            banditRepo,
+		Cache:           banditCache,
+		RedisClient:     redisClient,
+		CurrencyService: currencyService,
+		Logger:          logging.Logger,
+		Config: &service.EngineConfig{
 			EnableCurrency: true,
 			EnableDelayed:  true,
 			EnableWindow:   true,
 			EnableHybrid:   true,
 		},
-	)
+	})
 
 	// Initialize Asynq server
 	server := asynq.NewServerFromRedisClient(redisClient, asynq.Config{

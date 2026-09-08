@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/bivex/paywall-iap/internal/domain/service"
 	"github.com/bivex/paywall-iap/internal/infrastructure/persistence/sqlc/generated"
 	"github.com/bivex/paywall-iap/internal/interfaces/http/response"
 )
@@ -183,12 +184,18 @@ func (h *AdminExperimentHandler) UpdatePlatformSettings(c *gin.Context) {
 
 	adminID, _ := c.Get("admin_id")
 	if aid, ok := adminID.(uuid.UUID); ok {
-		_ = h.auditService.LogAction(ctx, aid, "update_platform_settings", "admin_settings", &aid, map[string]interface{}{
-			"support_email":       settings.General.SupportEmail,
-			"default_currency":    settings.General.DefaultCurrency,
-			"jwt_expiry_hours":    settings.Security.JWTExpiryHours,
-			"require_mfa":         settings.Security.RequireMFA,
-			"enable_ip_allowlist": settings.Security.EnableIPAllowlist,
+		_ = h.auditService.LogAction(ctx, service.AuditActionParams{
+			AdminID:      aid,
+			Action:       "update_platform_settings",
+			TargetType:   "admin_settings",
+			TargetUserID: &aid,
+			Details: map[string]interface{}{
+				"support_email":       settings.General.SupportEmail,
+				"default_currency":    settings.General.DefaultCurrency,
+				"jwt_expiry_hours":    settings.Security.JWTExpiryHours,
+				"require_mfa":         settings.Security.RequireMFA,
+				"enable_ip_allowlist": settings.Security.EnableIPAllowlist,
+			},
 		})
 	}
 
@@ -258,6 +265,12 @@ func (h *AdminExperimentHandler) ChangeAdminPassword(c *gin.Context) {
 		return
 	}
 
-	_ = h.auditService.LogAction(ctx, adminID, "change_admin_password", "admin_settings", &adminID, map[string]interface{}{})
+	_ = h.auditService.LogAction(ctx, service.AuditActionParams{
+		AdminID:      adminID,
+		Action:       "change_admin_password",
+		TargetType:   "admin_settings",
+		TargetUserID: &adminID,
+		Details:      map[string]interface{}{},
+	})
 	response.OK(c, gin.H{"ok": true})
 }

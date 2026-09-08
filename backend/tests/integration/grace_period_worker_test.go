@@ -47,11 +47,25 @@ func TestGracePeriodWorkerJobs(t *testing.T) {
 	jobHandler := tasks.NewGracePeriodJobHandler(graceService, notificationService)
 
 	// Create test user and subscription
-	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com", uuid.Nil)
+	user := entity.NewUser(entity.NewUserParams{
+		PlatformUserID: "test-platform",
+		DeviceID:       "test-device",
+		Platform:       entity.PlatformiOS,
+		AppVersion:     "1.0",
+		Email:          "test@example.com",
+		AppID:          uuid.Nil,
+	})
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 
-	sub := entity.NewSubscription(user.ID, entity.SourceIAP, "ios", "com.app.premium", entity.PlanMonthly, time.Now().Add(30*24*time.Hour))
+	sub := entity.NewSubscription(entity.NewSubscriptionParams{
+		UserID:    user.ID,
+		Source:    entity.SourceIAP,
+		Platform:  "ios",
+		ProductID: "com.app.premium",
+		PlanType:  entity.PlanMonthly,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+	})
 	err = subRepo.Create(ctx, sub)
 	require.NoError(t, err)
 
@@ -80,11 +94,25 @@ func TestGracePeriodWorkerJobs(t *testing.T) {
 
 	t.Run("NotifyExpiringGracePeriods sends notifications", func(t *testing.T) {
 		// Create grace period expiring in 2 hours
-		user2 := entity.NewUser("test-platform-2", "test-device-2", entity.PlatformiOS, "1.0", "test2@example.com", uuid.Nil)
+		user2 := entity.NewUser(entity.NewUserParams{
+			PlatformUserID: "test-platform-2",
+			DeviceID:       "test-device-2",
+			Platform:       entity.PlatformiOS,
+			AppVersion:     "1.0",
+			Email:          "test2@example.com",
+			AppID:          uuid.Nil,
+		})
 		err = userRepo.Create(ctx, user2)
 		require.NoError(t, err)
 
-		sub2 := entity.NewSubscription(user2.ID, entity.SourceIAP, "ios", "com.app.premium", entity.PlanMonthly, time.Now().Add(30*24*time.Hour))
+		sub2 := entity.NewSubscription(entity.NewSubscriptionParams{
+			UserID:    user2.ID,
+			Source:    entity.SourceIAP,
+			Platform:  "ios",
+			ProductID: "com.app.premium",
+			PlanType:  entity.PlanMonthly,
+			ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+		})
 		err = subRepo.Create(ctx, sub2)
 		require.NoError(t, err)
 

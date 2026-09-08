@@ -61,11 +61,21 @@ type RevenueAnalyticsReader interface {
 	GetChurnRiskCount(ctx context.Context) (int, error)
 }
 
+// AuditLogFilter specifies pagination and filtering for audit log queries
+type AuditLogFilter struct {
+	Offset int
+	Limit  int
+	Action string
+	Search string
+	From   time.Time
+	To     time.Time
+}
+
 // SystemAnalyticsReader defines methods for system health and audit log querying.
 type SystemAnalyticsReader interface {
 	GetWebhookHealthByProvider(ctx context.Context) ([]WebhookProviderHealth, error)
 	GetRecentAuditLog(ctx context.Context, limit int) ([]AuditLogEntry, error)
-	GetAuditLogPaginated(ctx context.Context, offset, limit int, action, search string, from, to time.Time) (*AuditLogPage, error)
+	GetAuditLogPaginated(ctx context.Context, filter AuditLogFilter) (*AuditLogPage, error)
 }
 
 // AnalyticsRepository aggregates all analytics querying operations via composition.

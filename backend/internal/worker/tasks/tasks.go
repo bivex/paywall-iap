@@ -31,8 +31,16 @@ const (
 	TypeExpireGracePeriod = "expire:grace_period"
 )
 
+// WebhookTaskHandler handles provider webhooks (Apple, Google, Stripe).
+type WebhookTaskHandler struct {
+	queries *generated.Queries
+	logger  *zap.Logger
+	redis   *redis.Client
+}
+
 // TaskHandlers holds dependencies for all task handlers.
 type TaskHandlers struct {
+	*WebhookTaskHandler
 	queries      *generated.Queries
 	logger       *zap.Logger
 	redis        *redis.Client
@@ -43,10 +51,16 @@ type TaskHandlers struct {
 
 // NewTaskHandlers creates task handlers with database access.
 func NewTaskHandlers(queries *generated.Queries, redisClient *redis.Client) *TaskHandlers {
-	return &TaskHandlers{
+	wh := &WebhookTaskHandler{
 		queries: queries,
 		logger:  logging.Logger,
 		redis:   redisClient,
+	}
+	return &TaskHandlers{
+		WebhookTaskHandler: wh,
+		queries:            queries,
+		logger:             logging.Logger,
+		redis:              redisClient,
 	}
 }
 
@@ -218,7 +232,7 @@ func (h *TaskHandlers) HandleComputeAnalytics(ctx context.Context, t *asynq.Task
 	return nil
 }
 
-func (h *TaskHandlers) dispatchWebhookByProvider(ctx context.Context, payloadProvider, eventID string, event generated.WebhookEvent) error {
+func (h *WebhookTaskHandler) dispatchWebhookByProvider(ctx context.Context, payloadProvider, eventID string, event generated.WebhookEvent) error {
 	switch payloadProvider {
 	case "stripe":
 		if err := h.handleStripeEvent(ctx, event); err != nil {
@@ -237,7 +251,7 @@ func (h *TaskHandlers) dispatchWebhookByProvider(ctx context.Context, payloadPro
 }
 
 // HandleProcessWebhook processes incoming webhook events
-func (h *TaskHandlers) HandleProcessWebhook(ctx context.Context, t *asynq.Task) error {
+func (h *WebhookTaskHandler) HandleProcessWebhook(ctx context.Context, t *asynq.Task) error {
 	var payload struct {
 		Provider  string `json:"provider"`
 		EventType string `json:"event_type"`
@@ -283,7 +297,7 @@ func (h *TaskHandlers) HandleProcessWebhook(ctx context.Context, t *asynq.Task) 
 	return nil
 }
 
-func (h *TaskHandlers) handleStripeEvent(ctx context.Context, event generated.WebhookEvent) error {
+func (h *WebhookTaskHandler) handleStripeEvent(ctx context.Context, event generated.WebhookEvent) error {
 	var body struct {
 		Type string `json:"type"`
 		Data struct {
@@ -581,7 +595,7 @@ func resolveRTDNStatusAndExpiry(notificationType int) (string, time.Time, bool) 
 	}
 }
 
-func (h *TaskHandlers) handleGoogleRTDNEvent(ctx context.Context, event generated.WebhookEvent) error {
+func (h *WebhookTaskHandler) handleGoogleRTDNEvent(ctx context.Context, event generated.WebhookEvent) error {
 	notif, err := parseRTDNPayload(event)
 	if err != nil {
 		return err
@@ -626,7 +640,7 @@ func parseRTDNPayload(event generated.WebhookEvent) (*rtdnPayload, error) {
 	return &notif, nil
 }
 
-func (h *TaskHandlers) applyRTDNStatusAndExpiry(ctx context.Context, sub generated.Subscription, sn rtdnSubscriptionNotification) error {
+func (h *WebhookTaskHandler) applyRTDNStatusAndExpiry(ctx context.Context, sub generated.Subscription, sn rtdnSubscriptionNotification) error {
 	newStatus, newExpiry, handled := resolveRTDNStatusAndExpiry(sn.NotificationType)
 	if !handled {
 		h.logger.Warn("rtdn: unknown notificationType", zap.Int("type", sn.NotificationType))
@@ -696,7 +710,7 @@ func parseAppleSignedTransactionInfo(signedTxInfo string) (string, time.Time) {
 	return txInfo.OriginalTransactionID, newExpiry
 }
 
-func (h *TaskHandlers) acquireSubscriptionLock(ctx context.Context, subID, notifType string) func() {
+func (h *WebhookTaskHandler) acquireSubscriptionLock(ctx context.Context, subID, notifType string) func() {
 	if h.redis == nil {
 		return nil
 	}
@@ -740,7 +754,7 @@ func mapAppleNotificationToStatus(notifType string) (string, bool) {
 }
 
 // handleAppleS2SEvent processes an Apple App Store Server-to-Server v2 notification.
-func (h *TaskHandlers) handleAppleS2SEvent(ctx context.Context, event generated.WebhookEvent) error {
+func (h *WebhookTaskHandler) handleAppleS2SEvent(ctx context.Context, event generated.WebhookEvent) error {
 	var envelope struct {
 		NotificationType string `json:"notificationType"`
 		NotificationUUID string `json:"notificationUUID"`
@@ -776,44 +790,56 @@ func (h *TaskHandlers) handleAppleS2SEvent(ctx context.Context, event generated.
 		defer unlock()
 	}
 
-	return h.updateAppleSubscriptionState(ctx, sub, originalTxID, notifType, newExpiry)
+	return h.updateAppleSubscriptionState(ctx, appleSubscriptionStateUpdateParams{
+		sub:          sub,
+		originalTxID: originalTxID,
+		notifType:    notifType,
+		newExpiry:    newExpiry,
+	})
 }
 
-func (h *TaskHandlers) updateAppleSubscriptionState(ctx context.Context, sub generated.Subscription, originalTxID, notifType string, newExpiry time.Time) error {
-	newStatus, handled := mapAppleNotificationToStatus(notifType)
+type appleSubscriptionStateUpdateParams struct {
+	sub          generated.Subscription
+	originalTxID string
+	notifType    string
+	newExpiry    time.Time
+}
+
+func (h *WebhookTaskHandler) updateAppleSubscriptionState(ctx context.Context, p appleSubscriptionStateUpdateParams) error {
+	newStatus, handled := mapAppleNotificationToStatus(p.notifType)
 	if !handled {
-		h.logger.Warn("apple s2s: unknown notificationType, skipping", zap.String("type", notifType))
+		h.logger.Warn("apple s2s: unknown notificationType, skipping", zap.String("type", p.notifType))
 		return nil
 	}
 	if newStatus == "" {
-		h.logger.Info("apple s2s: informational notification, no action", zap.String("subscription_id", sub.ID.String()))
+		h.logger.Info("apple s2s: informational notification, no action", zap.String("subscription_id", p.sub.ID.String()))
 		return nil
 	}
 
 	if _, err := h.queries.UpdateSubscriptionStatus(ctx, generated.UpdateSubscriptionStatusParams{
-		ID:     sub.ID,
+		ID:     p.sub.ID,
 		Status: newStatus,
 	}); err != nil {
 		return fmt.Errorf("apple s2s: update status to %s: %w", newStatus, err)
 	}
 
 	h.logger.Info("apple s2s: subscription updated",
-		zap.String("subscription_id", sub.ID.String()),
-		zap.String("original_tx_id", originalTxID),
-		zap.String("notification_type", notifType),
+		zap.String("subscription_id", p.sub.ID.String()),
+		zap.String("original_tx_id", p.originalTxID),
+		zap.String("notification_type", p.notifType),
 		zap.String("new_status", newStatus),
 	)
 
-	if (notifType == "DID_RENEW" || notifType == "SUBSCRIBED") && !newExpiry.IsZero() {
+	if (p.notifType == "DID_RENEW" || p.notifType == "SUBSCRIBED") && !p.newExpiry.IsZero() {
 		if _, err := h.queries.UpdateSubscriptionExpiry(ctx, generated.UpdateSubscriptionExpiryParams{
-			ID:        sub.ID,
-			ExpiresAt: newExpiry,
+			ID:        p.sub.ID,
+			ExpiresAt: p.newExpiry,
 		}); err != nil {
 			return fmt.Errorf("apple s2s: update expiry: %w", err)
 		}
 		h.logger.Info("apple s2s: subscription expiry extended",
-			zap.String("subscription_id", sub.ID.String()),
-			zap.Time("new_expiry", newExpiry),
+			zap.String("subscription_id", p.sub.ID.String()),
+			zap.Time("new_expiry", p.newExpiry),
 		)
 	}
 

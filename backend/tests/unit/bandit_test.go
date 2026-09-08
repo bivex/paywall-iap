@@ -293,7 +293,12 @@ func TestTrackImpression(t *testing.T) {
 				event.Metadata["placement"] == "paywall"
 		})).Return(nil)
 
-		err := bandit.TrackImpression(ctx, experimentID, armID, userID, &service.ImpressionEvent{Metadata: map[string]interface{}{"placement": "paywall"}})
+		err := bandit.TrackImpression(ctx, service.TrackImpressionParams{
+			ExperimentID: experimentID,
+			ArmID:        armID,
+			UserID:       userID,
+			Event:        &service.ImpressionEvent{Metadata: map[string]interface{}{"placement": "paywall"}},
+		})
 
 		assert.NoError(t, err)
 		repo.AssertExpectations(t)
@@ -304,7 +309,12 @@ func TestTrackImpression(t *testing.T) {
 		repo.Calls = nil
 		repo.On("GetArms", ctx, experimentID).Return([]service.Arm{{ID: uuid.New(), ExperimentID: experimentID, Name: "Other"}}, nil)
 
-		err := bandit.TrackImpression(ctx, experimentID, armID, userID, nil)
+		err := bandit.TrackImpression(ctx, service.TrackImpressionParams{
+			ExperimentID: experimentID,
+			ArmID:        armID,
+			UserID:       userID,
+			Event:        nil,
+		})
 
 		assert.ErrorIs(t, err, service.ErrBanditArmNotFound)
 		repo.AssertExpectations(t)
@@ -415,13 +425,18 @@ func TestUpdateReward(t *testing.T) {
 				event.NormalizedRewardValue == 9.99
 		})).Return(nil)
 
-		err := bandit.UpdateRewardWithEvent(ctx, experimentID, armID, 9.99, &service.ConversionEvent{
-			UserID:                &userID,
-			EventType:             service.ConversionEventTypeDirectReward,
-			OriginalRewardValue:   9.99,
-			OriginalCurrency:      "USD",
-			NormalizedRewardValue: 9.99,
-			NormalizedCurrency:    "USD",
+		err := bandit.UpdateRewardWithEvent(ctx, service.RewardWithEventParams{
+			ExperimentID: experimentID,
+			ArmID:        armID,
+			Reward:       9.99,
+			Event: &service.ConversionEvent{
+				UserID:                &userID,
+				EventType:             service.ConversionEventTypeDirectReward,
+				OriginalRewardValue:   9.99,
+				OriginalCurrency:      "USD",
+				NormalizedRewardValue: 9.99,
+				NormalizedCurrency:    "USD",
+			},
 		})
 
 		assert.NoError(t, err)

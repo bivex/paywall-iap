@@ -85,11 +85,13 @@ func (h *WinbackJobHandler) HandleCreateWinbackCampaign(ctx context.Context, t *
 
 	created, err := h.winbackService.CreateWinbackCampaignForChurnedUsers(
 		ctx,
-		p.CampaignID,
-		discountType,
-		p.DiscountValue,
-		p.DurationDays,
-		p.DaysSinceChurn,
+		service.CreateWinbackCampaignParams{
+			CampaignID:     p.CampaignID,
+			DiscountType:   discountType,
+			DiscountValue:  p.DiscountValue,
+			DurationDays:   p.DurationDays,
+			DaysSinceChurn: p.DaysSinceChurn,
+		},
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create winback campaign: %w", err)

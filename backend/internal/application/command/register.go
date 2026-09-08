@@ -84,14 +84,14 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 	}
 
 	// Create user entity
-	user := entity.NewUser(
-		req.PlatformUserID,
-		req.DeviceID,
-		entity.Platform(req.Platform),
-		req.AppVersion,
-		req.Email,
-		appID,
-	)
+	user := entity.NewUser(entity.NewUserParams{
+		PlatformUserID: req.PlatformUserID,
+		DeviceID:       req.DeviceID,
+		Platform:       entity.Platform(req.Platform),
+		AppVersion:     req.AppVersion,
+		Email:          req.Email,
+		AppID:          appID,
+	})
 
 	// Save user
 	if err := c.userRepo.Create(ctx, user); err != nil {

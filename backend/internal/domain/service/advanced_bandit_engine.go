@@ -19,25 +19,62 @@ type banditStrategyGroup struct {
 	delayedStrategy   *DelayedRewardStrategy
 }
 
-// banditSubEngines groups references to the companion sub-engines used by BanditRewardEngine.
-// Grouping reduces the fan-out of BanditRewardEngine below the coupling threshold.
+// banditSubEngines groups references to companion sub-engines.
 type banditSubEngines struct {
 	windowEngine    *BanditWindowEngine
 	objectiveEngine *BanditObjectiveEngine
 }
 
+func (g *banditStrategyGroup) getDelayedStrategy(repo BanditRepository, cache BanditCache, logger *zap.Logger, enabled bool) (*DelayedRewardStrategy, error) {
+	if !enabled {
+		return nil, fmt.Errorf("delayed feedback not enabled")
+	}
+	if g.delayedStrategy != nil {
+		return g.delayedStrategy, nil
+	}
+	g.delayedStrategy = NewDelayedRewardStrategy(repo, cache, logger)
+	return g.delayedStrategy, nil
+}
+
+// BanditSelectionEngine manages arm selection strategies
+type BanditSelectionEngine struct {
+	base          *ThompsonSamplingBandit
+	repo          BanditRepository
+	cache         BanditCache
+	logger        *zap.Logger
+	strategies    banditStrategyGroup
+	enableDelayed bool
+}
+
+// BanditRewardExecutionEngine manages reward processing, normalization, and conversion
+type BanditRewardExecutionEngine struct {
+	base             *ThompsonSamplingBandit
+	repo             BanditRepository
+	currencyService  *CurrencyRateService
+	logger           *zap.Logger
+	strategies       banditStrategyGroup
+	subEngines       banditSubEngines
+	enableCurrency   bool
+	enableContextual bool
+	enableDelayed    bool
+}
+
+// BanditMetricsEngine manages metrics collection and stats querying
+type BanditMetricsEngine struct {
+	base          *ThompsonSamplingBandit
+	repo          BanditRepository
+	cache         BanditCache
+	logger        *zap.Logger
+	strategies    banditStrategyGroup
+	subEngines    banditSubEngines
+	enableDelayed bool
+}
+
 // BanditRewardEngine manages arm selection, reward recording, and metrics
 type BanditRewardEngine struct {
-	base            *ThompsonSamplingBandit
-	repo            BanditRepository
-	cache           BanditCache
-	currencyService *CurrencyRateService
-	logger          *zap.Logger
-	strategies      banditStrategyGroup
-	subEngines      banditSubEngines
-	enableCurrency  bool
-	enableContextual bool
-	enableDelayed   bool
+	*BanditSelectionEngine
+	*BanditRewardExecutionEngine
+	*BanditMetricsEngine
 }
 
 // BanditWindowEngine manages sliding window operations for bandit experiments
@@ -128,16 +165,27 @@ func fetchExperimentConfig(ctx context.Context, repo BanditRepository, experimen
 	return config, nil
 }
 
+// AdvancedBanditEngineParams encapsulates dependencies and configuration for AdvancedBanditEngine
+type AdvancedBanditEngineParams struct {
+	Base            *ThompsonSamplingBandit
+	Repo            BanditRepository
+	Cache           BanditCache
+	RedisClient     *redis.Client
+	CurrencyService *CurrencyRateService
+	Logger          *zap.Logger
+	Config          *EngineConfig
+}
+
 // NewAdvancedBanditEngine creates a new advanced bandit engine composed of specialized sub-engines
-func NewAdvancedBanditEngine(
-	base *ThompsonSamplingBandit,
-	repo BanditRepository,
-	cache BanditCache,
-	redisClient *redis.Client,
-	currencyService *CurrencyRateService,
-	logger *zap.Logger,
-	config *EngineConfig,
-) *AdvancedBanditEngine {
+func NewAdvancedBanditEngine(params AdvancedBanditEngineParams) *AdvancedBanditEngine {
+	base := params.Base
+	repo := params.Repo
+	cache := params.Cache
+	redisClient := params.RedisClient
+	currencyService := params.CurrencyService
+	logger := params.Logger
+	config := params.Config
+
 	var enableCurrency, enableContextual, enableDelayed, enableWindow, enableHybrid bool
 	if config != nil {
 		enableCurrency = config.EnableCurrency
@@ -154,11 +202,23 @@ func NewAdvancedBanditEngine(
 
 	if config != nil && config.ExperimentConfig != nil {
 		if config.EnableHybrid {
-			hybridStrategy = NewHybridObjectiveStrategy(repo, cache, logger, config.ExperimentConfig, base)
+			hybridStrategy = NewHybridObjectiveStrategy(HybridObjectiveStrategyConfig{
+				Repo:       repo,
+				Cache:      cache,
+				Logger:     logger,
+				Config:     config.ExperimentConfig,
+				BaseBandit: base,
+			})
 		}
 		if config.EnableContextual && config.ExperimentConfig.EnableContextual {
 			alpha := config.ExperimentConfig.ExplorationAlpha
-			selectionStrategy = NewLinUCBSelectionStrategy(repo, cache, logger, alpha, 20)
+			selectionStrategy = NewLinUCBSelectionStrategy(LinUCBSelectionStrategyConfig{
+				Repo:      repo,
+				Cache:     cache,
+				Logger:    logger,
+				Alpha:     alpha,
+				Dimension: 20,
+			})
 		}
 		if config.EnableDelayed && config.ExperimentConfig.EnableDelayed {
 			delayedStrategy = NewDelayedRewardStrategy(repo, cache, logger)
@@ -184,24 +244,51 @@ func NewAdvancedBanditEngine(
 		enableHybrid:   enableHybrid,
 	}
 
-	rewardEngine := &BanditRewardEngine{
+	strategies := banditStrategyGroup{
+		rewardStrategy:    rewardStrategy,
+		selectionStrategy: selectionStrategy,
+		delayedStrategy:   delayedStrategy,
+	}
+	subEngines := banditSubEngines{
+		windowEngine:    windowEngine,
+		objectiveEngine: objectiveEngine,
+	}
+
+	selectionEngine := &BanditSelectionEngine{
+		base:          base,
+		repo:          repo,
+		cache:         cache,
+		logger:        logger,
+		strategies:    strategies,
+		enableDelayed: enableDelayed,
+	}
+
+	rewardExecutionEngine := &BanditRewardExecutionEngine{
 		base:             base,
 		repo:             repo,
-		cache:            cache,
 		currencyService:  currencyService,
 		logger:           logger,
-		strategies: banditStrategyGroup{
-			rewardStrategy:    rewardStrategy,
-			selectionStrategy: selectionStrategy,
-			delayedStrategy:   delayedStrategy,
-		},
-		subEngines: banditSubEngines{
-			windowEngine:    windowEngine,
-			objectiveEngine: objectiveEngine,
-		},
+		strategies:       strategies,
+		subEngines:       subEngines,
 		enableCurrency:   enableCurrency,
 		enableContextual: enableContextual,
 		enableDelayed:    enableDelayed,
+	}
+
+	metricsEngine := &BanditMetricsEngine{
+		base:          base,
+		repo:          repo,
+		cache:         cache,
+		logger:        logger,
+		strategies:    strategies,
+		subEngines:    subEngines,
+		enableDelayed: enableDelayed,
+	}
+
+	rewardEngine := &BanditRewardEngine{
+		BanditSelectionEngine:       selectionEngine,
+		BanditRewardExecutionEngine: rewardExecutionEngine,
+		BanditMetricsEngine:         metricsEngine,
 	}
 
 	maintenanceEngine := &BanditMaintenanceEngine{
@@ -222,23 +309,15 @@ func NewAdvancedBanditEngine(
 	}
 }
 
-func (e *BanditRewardEngine) getExperimentConfig(
+func (e *BanditSelectionEngine) getExperimentConfig(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (*ExperimentConfig, error) {
 	return fetchExperimentConfig(ctx, e.repo, experimentID)
 }
 
-func (e *BanditRewardEngine) getDelayedStrategy() (*DelayedRewardStrategy, error) {
-	if !e.enableDelayed {
-		return nil, fmt.Errorf("delayed feedback not enabled")
-	}
-	if e.strategies.delayedStrategy != nil {
-		return e.strategies.delayedStrategy, nil
-	}
-
-	e.strategies.delayedStrategy = NewDelayedRewardStrategy(e.repo, e.cache, e.logger)
-	return e.strategies.delayedStrategy, nil
+func (e *BanditSelectionEngine) getDelayedStrategy() (*DelayedRewardStrategy, error) {
+	return e.strategies.getDelayedStrategy(e.repo, e.cache, e.logger, e.enableDelayed)
 }
 
 func (e *BanditObjectiveEngine) getHybridStrategy(
@@ -254,7 +333,13 @@ func (e *BanditObjectiveEngine) getHybridStrategy(
 		return nil, err
 	}
 
-	return NewHybridObjectiveStrategy(e.repo, e.cache, e.logger, config, e.base), nil
+	return NewHybridObjectiveStrategy(HybridObjectiveStrategyConfig{
+		Repo:       e.repo,
+		Cache:      e.cache,
+		Logger:     e.logger,
+		Config:     config,
+		BaseBandit: e.base,
+	}), nil
 }
 
 func (e *BanditWindowEngine) getWindowStrategy(
@@ -273,11 +358,17 @@ func (e *BanditWindowEngine) getWindowStrategy(
 		return nil, err
 	}
 
-	return NewSlidingWindowStrategy(e.repo, e.redisClient, e.logger, experimentID, config.WindowConfig), nil
+	return NewSlidingWindowStrategy(SlidingWindowStrategyConfig{
+		Repo:         e.repo,
+		RedisClient:  e.redisClient,
+		Logger:       e.logger,
+		ExperimentID: experimentID,
+		Config:       config.WindowConfig,
+	}), nil
 }
 
 // SelectArm selects an arm using the configured strategies
-func (e *BanditRewardEngine) SelectArm(
+func (e *BanditSelectionEngine) SelectArm(
 	ctx context.Context,
 	experimentID, userID uuid.UUID,
 	userContext UserContext,
@@ -287,7 +378,12 @@ func (e *BanditRewardEngine) SelectArm(
 		return uuid.Nil, fmt.Errorf("failed to get arms: %w", err)
 	}
 
-	selectedArm, err := e.resolveSelectedArm(ctx, experimentID, userID, arms, userContext)
+	selectedArm, err := e.resolveSelectedArm(ctx, resolveArmParams{
+		experimentID: experimentID,
+		userID:       userID,
+		arms:         arms,
+		userContext:  userContext,
+	})
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -297,14 +393,19 @@ func (e *BanditRewardEngine) SelectArm(
 	return selectedArm.ID, nil
 }
 
-func (e *BanditRewardEngine) resolveSelectedArm(
+type resolveArmParams struct {
+	experimentID uuid.UUID
+	userID       uuid.UUID
+	arms         []Arm
+	userContext  UserContext
+}
+
+func (e *BanditSelectionEngine) resolveSelectedArm(
 	ctx context.Context,
-	experimentID, userID uuid.UUID,
-	arms []Arm,
-	userContext UserContext,
+	p resolveArmParams,
 ) (*Arm, error) {
 	if e.strategies.selectionStrategy != nil {
-		arm, err := e.strategies.selectionStrategy.SelectArm(ctx, arms, userContext)
+		arm, err := e.strategies.selectionStrategy.SelectArm(ctx, p.arms, p.userContext)
 		if err != nil {
 			e.logger.Warn("Selection strategy failed, falling back to base", zap.Error(err))
 		} else if arm != nil {
@@ -312,12 +413,12 @@ func (e *BanditRewardEngine) resolveSelectedArm(
 		}
 	}
 
-	armID, err := e.base.SelectArm(ctx, experimentID, userID)
+	armID, err := e.base.SelectArm(ctx, p.experimentID, p.userID)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, arm := range arms {
+	for _, arm := range p.arms {
 		if arm.ID == armID {
 			return &arm, nil
 		}
@@ -326,7 +427,7 @@ func (e *BanditRewardEngine) resolveSelectedArm(
 	return nil, fmt.Errorf("failed to select arm")
 }
 
-func (e *BanditRewardEngine) recordPendingRewardIfDelayed(ctx context.Context, experimentID, armID, userID uuid.UUID) {
+func (e *BanditSelectionEngine) recordPendingRewardIfDelayed(ctx context.Context, experimentID, armID, userID uuid.UUID) {
 	delayedStrategy, err := e.getDelayedStrategy()
 	if err != nil {
 		return
@@ -336,33 +437,84 @@ func (e *BanditRewardEngine) recordPendingRewardIfDelayed(ctx context.Context, e
 	}
 }
 
+// RecordRewardParams encapsulates parameters for recording a reward
+type RecordRewardParams struct {
+	ExperimentID uuid.UUID
+	ArmID        uuid.UUID
+	UserID       uuid.UUID
+	Reward       float64
+	Currency     string
+	UserContext  UserContext
+}
+
+type baseRewardEventParams struct {
+	experimentID     uuid.UUID
+	armID            uuid.UUID
+	userID           uuid.UUID
+	originalReward   float64
+	originalCurrency string
+	finalReward      float64
+	finalCurrency    string
+	recordedAt       time.Time
+}
+
+type windowRewardEventParams struct {
+	experimentID uuid.UUID
+	armID        uuid.UUID
+	userID       uuid.UUID
+	reward       float64
+	currency     string
+	recordedAt   time.Time
+}
+
+// ConversionRewardParams encapsulates parameters for processing delayed conversion
+type ConversionRewardParams struct {
+	TransactionID   uuid.UUID
+	UserID          uuid.UUID
+	ConversionValue float64
+	Currency        string
+}
+
 // RecordReward records a reward with all applicable strategies
-func (e *BanditRewardEngine) RecordReward(
+func (e *BanditRewardExecutionEngine) RecordReward(
 	ctx context.Context,
-	experimentID, armID, userID uuid.UUID,
-	reward float64,
-	currency string,
-	userContext UserContext,
+	p RecordRewardParams,
 ) error {
-	finalReward, finalCurrency := e.normalizeRewardCurrency(ctx, experimentID, reward, currency)
+	finalReward, finalCurrency := e.normalizeRewardCurrency(ctx, p.ExperimentID, p.Reward, p.Currency)
 	recordedAt := time.Now().UTC()
 
-	if err := e.recordBaseRewardEvent(ctx, experimentID, armID, userID, reward, currency, finalReward, finalCurrency, recordedAt); err != nil {
+	if err := e.recordBaseRewardEvent(ctx, baseRewardEventParams{
+		experimentID:     p.ExperimentID,
+		armID:            p.ArmID,
+		userID:           p.UserID,
+		originalReward:   p.Reward,
+		originalCurrency: p.Currency,
+		finalReward:      finalReward,
+		finalCurrency:    finalCurrency,
+		recordedAt:       recordedAt,
+	}); err != nil {
 		return err
 	}
 
-	e.updateLinUCBModelIfConfigured(ctx, armID, userContext, finalReward)
-	e.recordWindowEventIfConfigured(ctx, experimentID, armID, userID, finalReward, finalCurrency, recordedAt)
-	e.recordObjectiveRewardIfConfigured(ctx, experimentID, armID, finalReward)
+	e.updateLinUCBModelIfConfigured(ctx, p.ArmID, p.UserContext, finalReward)
+	e.recordWindowEventIfConfigured(ctx, windowRewardEventParams{
+		experimentID: p.ExperimentID,
+		armID:        p.ArmID,
+		userID:       p.UserID,
+		reward:       finalReward,
+		currency:     finalCurrency,
+		recordedAt:   recordedAt,
+	})
+	e.recordObjectiveRewardIfConfigured(ctx, p.ExperimentID, p.ArmID, finalReward)
 
 	return nil
 }
 
-func (e *BanditRewardEngine) normalizeRewardCurrency(ctx context.Context, experimentID uuid.UUID, reward float64, currency string) (float64, string) {
+func (e *BanditRewardExecutionEngine) normalizeRewardCurrency(ctx context.Context, experimentID uuid.UUID, reward float64, currency string) (float64, string) {
 	if currency == "" || currency == "USD" || e.currencyService == nil || !e.enableCurrency {
 		return reward, currency
 	}
-	config, err := e.getExperimentConfig(ctx, experimentID)
+	config, err := fetchExperimentConfig(ctx, e.repo, experimentID)
 	if err != nil || (config != nil && !config.EnableCurrency) {
 		return reward, currency
 	}
@@ -374,35 +526,35 @@ func (e *BanditRewardEngine) normalizeRewardCurrency(ctx context.Context, experi
 	return converted, "USD"
 }
 
-func (e *BanditRewardEngine) recordBaseRewardEvent(
+func (e *BanditRewardExecutionEngine) recordBaseRewardEvent(
 	ctx context.Context,
-	experimentID, armID, userID uuid.UUID,
-	originalReward float64,
-	originalCurrency string,
-	finalReward float64,
-	finalCurrency string,
-	recordedAt time.Time,
+	p baseRewardEventParams,
 ) error {
-	if err := e.base.UpdateRewardWithEvent(ctx, experimentID, armID, finalReward, &ConversionEvent{
-		ExperimentID:          experimentID,
-		ArmID:                 armID,
-		UserID:                &userID,
-		EventType:             ConversionEventTypeDirectReward,
-		OriginalRewardValue:   originalReward,
-		OriginalCurrency:      originalCurrency,
-		NormalizedRewardValue: finalReward,
-		NormalizedCurrency:    finalCurrency,
-		Metadata: map[string]interface{}{
-			"source": "advanced_bandit_engine",
+	if err := e.base.UpdateRewardWithEvent(ctx, RewardWithEventParams{
+		ExperimentID: p.experimentID,
+		ArmID:        p.armID,
+		Reward:       p.finalReward,
+		Event: &ConversionEvent{
+			ExperimentID:          p.experimentID,
+			ArmID:                 p.armID,
+			UserID:                &p.userID,
+			EventType:             ConversionEventTypeDirectReward,
+			OriginalRewardValue:   p.originalReward,
+			OriginalCurrency:      p.originalCurrency,
+			NormalizedRewardValue: p.finalReward,
+			NormalizedCurrency:    p.finalCurrency,
+			Metadata: map[string]interface{}{
+				"source": "advanced_bandit_engine",
+			},
+			OccurredAt: p.recordedAt,
 		},
-		OccurredAt: recordedAt,
 	}); err != nil {
 		return fmt.Errorf("failed to update base reward: %w", err)
 	}
 	return nil
 }
 
-func (e *BanditRewardEngine) updateLinUCBModelIfConfigured(ctx context.Context, armID uuid.UUID, userContext UserContext, reward float64) {
+func (e *BanditRewardExecutionEngine) updateLinUCBModelIfConfigured(ctx context.Context, armID uuid.UUID, userContext UserContext, reward float64) {
 	if linucbStrategy, ok := e.strategies.selectionStrategy.(*LinUCBSelectionStrategy); ok {
 		if err := linucbStrategy.UpdateModel(ctx, armID, userContext, reward); err != nil {
 			e.logger.Warn("Failed to update LinUCB model", zap.Error(err))
@@ -410,33 +562,30 @@ func (e *BanditRewardEngine) updateLinUCBModelIfConfigured(ctx context.Context, 
 	}
 }
 
-func (e *BanditRewardEngine) recordWindowEventIfConfigured(
+func (e *BanditRewardExecutionEngine) recordWindowEventIfConfigured(
 	ctx context.Context,
-	experimentID, armID, userID uuid.UUID,
-	reward float64,
-	currency string,
-	recordedAt time.Time,
+	p windowRewardEventParams,
 ) {
 	if e.subEngines.windowEngine == nil {
 		return
 	}
-	windowStrategy, err := e.subEngines.windowEngine.getWindowStrategy(ctx, experimentID)
+	windowStrategy, err := e.subEngines.windowEngine.getWindowStrategy(ctx, p.experimentID)
 	if err != nil {
 		return
 	}
 	event := RewardEvent{
-		UserID:      userID,
-		ArmID:       armID,
-		RewardValue: reward,
-		Currency:    currency,
-		Timestamp:   recordedAt,
+		UserID:      p.userID,
+		ArmID:       p.armID,
+		RewardValue: p.reward,
+		Currency:    p.currency,
+		Timestamp:   p.recordedAt,
 	}
-	if err := windowStrategy.RecordEvent(ctx, armID, event); err != nil {
+	if err := windowStrategy.RecordEvent(ctx, p.armID, event); err != nil {
 		e.logger.Warn("Failed to record window event", zap.Error(err))
 	}
 }
 
-func (e *BanditRewardEngine) recordObjectiveRewardIfConfigured(ctx context.Context, experimentID, armID uuid.UUID, reward float64) {
+func (e *BanditRewardExecutionEngine) recordObjectiveRewardIfConfigured(ctx context.Context, experimentID, armID uuid.UUID, reward float64) {
 	if e.subEngines.objectiveEngine == nil {
 		return
 	}
@@ -447,34 +596,47 @@ func (e *BanditRewardEngine) recordObjectiveRewardIfConfigured(ctx context.Conte
 	config := hybridStrategy.GetConfig()
 	if config.ObjectiveType == ObjectiveHybrid {
 		for objType := range config.ObjectiveWeights {
-			if err := hybridStrategy.RecordObjectiveReward(ctx, armID, ObjectiveType(objType), reward, 0); err != nil {
+			if err := hybridStrategy.RecordObjectiveReward(ctx, ObjectiveRewardParams{
+				ArmID:         armID,
+				ObjectiveType: ObjectiveType(objType),
+				Reward:        reward,
+				LTV:           0,
+			}); err != nil {
 				e.logger.Warn("Failed to record objective reward", zap.String("objective", objType), zap.Error(err))
 			}
 		}
 		return
 	}
-	if err := hybridStrategy.RecordObjectiveReward(ctx, armID, config.ObjectiveType, reward, 0); err != nil {
+	if err := hybridStrategy.RecordObjectiveReward(ctx, ObjectiveRewardParams{
+		ArmID:         armID,
+		ObjectiveType: config.ObjectiveType,
+		Reward:        reward,
+		LTV:           0,
+	}); err != nil {
 		e.logger.Warn("Failed to record objective reward", zap.Error(err))
 	}
 }
 
 // ProcessConversion processes a delayed conversion
-func (e *BanditRewardEngine) ProcessConversion(
+func (e *BanditRewardExecutionEngine) ProcessConversion(
 	ctx context.Context,
-	transactionID uuid.UUID,
-	userID uuid.UUID,
-	conversionValue float64,
-	currency string,
+	p ConversionRewardParams,
 ) error {
-	delayedStrategy, err := e.getDelayedStrategy()
+	delayedStrategy, err := e.strategies.getDelayedStrategy(e.repo, nil, e.logger, e.enableDelayed)
 	if err != nil {
 		return err
 	}
 
 	// Process through delayed strategy
 	if err := delayedStrategy.ProcessConversion(
-		ctx, transactionID, userID, conversionValue, currency,
-		e.base,
+		ctx,
+		DelayedConversionParams{
+			TransactionID:   p.TransactionID,
+			UserID:          p.UserID,
+			ConversionValue: p.ConversionValue,
+			Currency:        p.Currency,
+			BaseBandit:      e.base,
+		},
 	); err != nil {
 		return err
 	}
@@ -483,7 +645,7 @@ func (e *BanditRewardEngine) ProcessConversion(
 }
 
 // GetArmStatistics returns statistics for all arms in an experiment
-func (e *BanditRewardEngine) GetArmStatistics(
+func (e *BanditMetricsEngine) GetArmStatistics(
 	ctx context.Context,
 	experimentID uuid.UUID,
 ) (map[uuid.UUID]*ArmStats, error) {
@@ -541,7 +703,13 @@ func (e *BanditObjectiveEngine) SetObjectiveConfig(
 	}
 
 	if objectiveType == ObjectiveHybrid {
-		hybridStrategy := NewHybridObjectiveStrategy(e.repo, e.cache, e.logger, config, e.base)
+		hybridStrategy := NewHybridObjectiveStrategy(HybridObjectiveStrategyConfig{
+			Repo:       e.repo,
+			Cache:      e.cache,
+			Logger:     e.logger,
+			Config:     config,
+			BaseBandit: e.base,
+		})
 		if err := hybridStrategy.ValidateWeights(config.ObjectiveWeights); err != nil {
 			return nil, err
 		}
@@ -558,7 +726,7 @@ func (e *BanditObjectiveEngine) SetObjectiveConfig(
 }
 
 // GetMetrics returns production metrics for the engine
-func (e *BanditRewardEngine) GetMetrics(ctx context.Context, experimentID uuid.UUID) (*BanditMetrics, error) {
+func (e *BanditMetricsEngine) GetMetrics(ctx context.Context, experimentID uuid.UUID) (*BanditMetrics, error) {
 	stats, err := e.GetArmStatistics(ctx, experimentID)
 	if err != nil {
 		return nil, err
@@ -574,8 +742,8 @@ func (e *BanditRewardEngine) GetMetrics(ctx context.Context, experimentID uuid.U
 	return metrics, nil
 }
 
-func (e *BanditRewardEngine) populatePendingRewardsMetric(ctx context.Context, metrics *BanditMetrics) {
-	delayedStrategy, err := e.getDelayedStrategy()
+func (e *BanditMetricsEngine) populatePendingRewardsMetric(ctx context.Context, metrics *BanditMetrics) {
+	delayedStrategy, err := e.strategies.getDelayedStrategy(e.repo, e.cache, e.logger, e.enableDelayed)
 	if err != nil {
 		return
 	}
@@ -588,7 +756,7 @@ func (e *BanditRewardEngine) populatePendingRewardsMetric(ctx context.Context, m
 	}
 }
 
-func (e *BanditRewardEngine) populateWindowUtilizationMetric(ctx context.Context, experimentID uuid.UUID, metrics *BanditMetrics) {
+func (e *BanditMetricsEngine) populateWindowUtilizationMetric(ctx context.Context, experimentID uuid.UUID, metrics *BanditMetrics) {
 	if e.subEngines.windowEngine == nil {
 		return
 	}
@@ -872,8 +1040,8 @@ func (e *BanditObjectiveEngine) GetObjectiveConfig(ctx context.Context, experime
 	return fetchExperimentConfig(ctx, e.repo, experimentID)
 }
 
-func (e *BanditRewardEngine) GetPendingReward(ctx context.Context, pendingID uuid.UUID) (*PendingReward, error) {
-	delayedStrategy, err := e.getDelayedStrategy()
+func (e *BanditMetricsEngine) GetPendingReward(ctx context.Context, pendingID uuid.UUID) (*PendingReward, error) {
+	delayedStrategy, err := e.strategies.getDelayedStrategy(e.repo, e.cache, e.logger, e.enableDelayed)
 	if err != nil {
 		return nil, err
 	}
@@ -881,11 +1049,11 @@ func (e *BanditRewardEngine) GetPendingReward(ctx context.Context, pendingID uui
 	return delayedStrategy.GetPendingReward(ctx, pendingID)
 }
 
-func (e *BanditRewardEngine) GetUserPendingRewards(
+func (e *BanditMetricsEngine) GetUserPendingRewards(
 	ctx context.Context,
 	userID uuid.UUID,
 ) ([]*PendingReward, error) {
-	delayedStrategy, err := e.getDelayedStrategy()
+	delayedStrategy, err := e.strategies.getDelayedStrategy(e.repo, e.cache, e.logger, e.enableDelayed)
 	if err != nil {
 		return nil, err
 	}

@@ -51,20 +51,23 @@ type Subscription struct {
 	EndDate   *time.Time
 }
 
+// LTVServiceParams encapsulates dependencies for LTVService
+type LTVServiceParams struct {
+	MatomoClient     *matomo.Client
+	CohortWorker     CohortWorker
+	SubscriptionRepo SubscriptionRepository
+	TransactionRepo  domainRepo.TransactionRepository
+	Logger           *zap.Logger
+}
+
 // NewLTVService creates a new LTV service
-func NewLTVService(
-	matomoClient *matomo.Client,
-	cohortWorker CohortWorker,
-	subscriptionRepo SubscriptionRepository,
-	transactionRepo domainRepo.TransactionRepository,
-	logger *zap.Logger,
-) *LTVService {
+func NewLTVService(params LTVServiceParams) *LTVService {
 	return &LTVService{
-		matomoClient:     matomoClient,
-		cohortWorker:     cohortWorker,
-		subscriptionRepo: subscriptionRepo,
-		transactionRepo:  transactionRepo,
-		logger:           logger,
+		matomoClient:     params.MatomoClient,
+		cohortWorker:     params.CohortWorker,
+		subscriptionRepo: params.SubscriptionRepo,
+		transactionRepo:  params.TransactionRepo,
+		logger:           params.Logger,
 	}
 }
 

@@ -84,7 +84,12 @@ func (s *AutomationJobExecutionService) ExecuteScheduled(
 	}
 
 	details, runErr := run(ctx)
-	if err := s.recordJobRunCompletion(ctx, jobRun.ID, spec.JobName, details, runErr); err != nil {
+	if err := s.recordJobRunCompletion(ctx, jobRunCompletionParams{
+		jobRunID: jobRun.ID,
+		jobName:  spec.JobName,
+		details:  details,
+		runErr:   runErr,
+	}); err != nil {
 		return true, err
 	}
 	return true, runErr
@@ -103,24 +108,28 @@ func validateScheduledJobSpec(spec ScheduledAutomationJobSpec) error {
 	return nil
 }
 
+type jobRunCompletionParams struct {
+	jobRunID uuid.UUID
+	jobName  string
+	details  map[string]any
+	runErr   error
+}
+
 func (s *AutomationJobExecutionService) recordJobRunCompletion(
 	ctx context.Context,
-	jobRunID uuid.UUID,
-	jobName string,
-	details map[string]any,
-	runErr error,
+	p jobRunCompletionParams,
 ) error {
-	if runErr != nil {
-		failureDetails := cloneAutomationJobDetails(details)
-		failureDetails["error"] = runErr.Error()
-		if err := s.repo.FinishAutomationJobRun(ctx, jobRunID, AutomationJobRunStatusFailed, failureDetails); err != nil {
-			return fmt.Errorf("scheduled automation job %s failed: %w (failed to persist failure status: %v)", jobName, runErr, err)
+	if p.runErr != nil {
+		failureDetails := cloneAutomationJobDetails(p.details)
+		failureDetails["error"] = p.runErr.Error()
+		if err := s.repo.FinishAutomationJobRun(ctx, p.jobRunID, AutomationJobRunStatusFailed, failureDetails); err != nil {
+			return fmt.Errorf("scheduled automation job %s failed: %w (failed to persist failure status: %v)", p.jobName, p.runErr, err)
 		}
 		return nil
 	}
 
-	if err := s.repo.FinishAutomationJobRun(ctx, jobRunID, AutomationJobRunStatusCompleted, details); err != nil {
-		return fmt.Errorf("failed to persist completion status for scheduled automation job %s: %w", jobName, err)
+	if err := s.repo.FinishAutomationJobRun(ctx, p.jobRunID, AutomationJobRunStatusCompleted, p.details); err != nil {
+		return fmt.Errorf("failed to persist completion status for scheduled automation job %s: %w", p.jobName, err)
 	}
 	return nil
 }

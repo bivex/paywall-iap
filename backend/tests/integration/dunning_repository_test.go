@@ -29,7 +29,14 @@ func TestDunningRepository(t *testing.T) {
 	require.NoError(t, err)
 
 	// Setup related objects
-	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com", uuid.Nil)
+	user := entity.NewUser(entity.NewUserParams{
+		PlatformUserID: "test-platform",
+		DeviceID:       "test-device",
+		Platform:       entity.PlatformiOS,
+		AppVersion:     "1.0",
+		Email:          "test@example.com",
+		AppID:          uuid.Nil,
+	})
 
 	// Create user
 	_, err = dbContainer.Pool.Exec(ctx, `
@@ -38,7 +45,14 @@ func TestDunningRepository(t *testing.T) {
 		user.ID, user.PlatformUserID, "ios", user.AppVersion, user.Email)
 	require.NoError(t, err)
 
-	subscription := entity.NewSubscription(user.ID, "iap", "ios", "premium", "monthly", time.Now().Add(30*24*time.Hour))
+	subscription := entity.NewSubscription(entity.NewSubscriptionParams{
+		UserID:    user.ID,
+		Source:    "iap",
+		Platform:  "ios",
+		ProductID: "premium",
+		PlanType:  "monthly",
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+	})
 	_, err = dbContainer.Pool.Exec(ctx, `
 		INSERT INTO subscriptions (id, user_id, status, source, platform, product_id, plan_type, expires_at) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,

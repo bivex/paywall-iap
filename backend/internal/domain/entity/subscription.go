@@ -46,17 +46,27 @@ type Subscription struct {
 	DeletedAt *time.Time
 }
 
+// NewSubscriptionParams contains parameters for creating a new subscription entity.
+type NewSubscriptionParams struct {
+	UserID    uuid.UUID
+	Source    SubscriptionSource
+	Platform  string
+	ProductID string
+	PlanType  PlanType
+	ExpiresAt time.Time
+}
+
 // NewSubscription creates a new subscription entity
-func NewSubscription(userID uuid.UUID, source SubscriptionSource, platform, productID string, planType PlanType, expiresAt time.Time) *Subscription {
+func NewSubscription(p NewSubscriptionParams) *Subscription {
 	return &Subscription{
 		ID:        uuid.New(),
-		UserID:    userID,
+		UserID:    p.UserID,
 		Status:    StatusActive,
-		Source:    source,
-		Platform:  platform,
-		ProductID: productID,
-		PlanType:  planType,
-		ExpiresAt: expiresAt,
+		Source:    p.Source,
+		Platform:  p.Platform,
+		ProductID: p.ProductID,
+		PlanType:  p.PlanType,
+		ExpiresAt: p.ExpiresAt,
 		AutoRenew: true,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

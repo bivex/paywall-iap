@@ -33,18 +33,18 @@ func (s *stubExperimentMutationRepository) UpdateExperimentDraft(_ context.Conte
 	return nil
 }
 
-func (s *stubExperimentMutationRepository) UpdateExperimentStatus(_ context.Context, _ uuid.UUID, nextStatus string, startAt, endAt *time.Time) error {
-	s.updatedStatus = nextStatus
-	s.updatedStatusStart = startAt
-	s.updatedStatusEnd = endAt
+func (s *stubExperimentMutationRepository) UpdateExperimentStatus(_ context.Context, params UpdateExperimentStatusParams) error {
+	s.updatedStatus = params.NextStatus
+	s.updatedStatusStart = params.StartAt
+	s.updatedStatusEnd = params.EndAt
 	return nil
 }
 
-func (s *stubExperimentMutationRepository) UpdateExperimentStatusWithAudit(_ context.Context, _ uuid.UUID, _ string, nextStatus string, startAt, endAt *time.Time, audit *ExperimentStatusTransitionAudit) error {
-	s.updatedStatus = nextStatus
-	s.updatedStatusStart = startAt
-	s.updatedStatusEnd = endAt
-	s.updatedStatusAudit = audit
+func (s *stubExperimentMutationRepository) UpdateExperimentStatusWithAudit(_ context.Context, params UpdateExperimentStatusAuditParams) error {
+	s.updatedStatus = params.NextStatus
+	s.updatedStatusStart = params.StartAt
+	s.updatedStatusEnd = params.EndAt
+	s.updatedStatusAudit = params.Audit
 	return nil
 }
 
@@ -53,12 +53,12 @@ func (s *stubExperimentMutationRepository) UpdateExperimentAutomationPolicy(_ co
 	return nil
 }
 
-func (s *stubExperimentMutationRepository) UpdateExperimentStatusAndAutomationPolicyWithAudit(_ context.Context, _ uuid.UUID, _ string, nextStatus string, startAt, endAt *time.Time, policy ExperimentAutomationPolicy, audit *ExperimentStatusTransitionAudit) error {
-	s.updatedStatus = nextStatus
-	s.updatedStatusStart = startAt
-	s.updatedStatusEnd = endAt
-	s.updatedStatusAudit = audit
-	s.updatedPolicy = &policy
+func (s *stubExperimentMutationRepository) UpdateExperimentStatusAndAutomationPolicyWithAudit(_ context.Context, params UpdateExperimentStatusPolicyAuditParams) error {
+	s.updatedStatus = params.NextStatus
+	s.updatedStatusStart = params.StartAt
+	s.updatedStatusEnd = params.EndAt
+	s.updatedStatusAudit = params.Audit
+	s.updatedPolicy = &params.Policy
 	return nil
 }
 

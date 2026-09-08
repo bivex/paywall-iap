@@ -123,7 +123,13 @@ func (h *ABTestHandler) CreateFlag(c *gin.Context) {
 		return
 	}
 
-	flag := h.featureFlagService.CreateFlag(req.ID, req.Name, req.Enabled, req.RolloutPercent, req.UserIDs)
+	flag := h.featureFlagService.CreateFlag(service.CreateFlagParams{
+		ID:             req.ID,
+		Name:           req.Name,
+		Enabled:        req.Enabled,
+		RolloutPercent: req.RolloutPercent,
+		UserIDs:        req.UserIDs,
+	})
 
 	resp := dto.FeatureFlagResponse{
 		ID:             flag.ID,

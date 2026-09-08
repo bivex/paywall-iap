@@ -102,9 +102,16 @@ func TestMatomoEventDelivery(t *testing.T) {
 		userID := uuid.New()
 
 		// Enqueue a standard event
-		err := forwarder.TrackEvent(ctx, &userID, "paywall", "shown", "premium_monthly", 0, map[string]string{
-			"experiment_id": "exp_123",
-			"variant":      "control",
+		err := forwarder.TrackEvent(ctx, service.MatomoTrackEventParams{
+			UserID:   &userID,
+			Category: "paywall",
+			Action:   "shown",
+			Name:     "premium_monthly",
+			Value:    0,
+			CustomVars: map[string]string{
+				"experiment_id": "exp_123",
+				"variant":       "control",
+			},
 		})
 		assert.NoError(t, err)
 
@@ -125,7 +132,13 @@ func TestMatomoEventDelivery(t *testing.T) {
 		// Enqueue multiple events
 		userID := uuid.New()
 		for i := 0; i < 5; i++ {
-			err := forwarder.TrackEvent(ctx, &userID, "test", "action", fmt.Sprintf("event_%d", i), 0, nil)
+			err := forwarder.TrackEvent(ctx, service.MatomoTrackEventParams{
+				UserID:   &userID,
+				Category: "test",
+				Action:   "action",
+				Name:     fmt.Sprintf("event_%d", i),
+				Value:    0,
+			})
 			require.NoError(t, err)
 		}
 
@@ -168,7 +181,11 @@ func TestMatomoEventDelivery(t *testing.T) {
 		forwarder := service.NewMatomoForwarder(flakyMatomo, repo, logger)
 
 		userID := uuid.New()
-		err := forwarder.TrackEvent(ctx, &userID, "test", "retry", "", 0, nil)
+		err := forwarder.TrackEvent(ctx, service.MatomoTrackEventParams{
+			UserID:   &userID,
+			Category: "test",
+			Action:   "retry",
+		})
 		require.NoError(t, err)
 
 		// First attempt should fail, event should be scheduled for retry
@@ -246,9 +263,15 @@ func TestMatomoEventDelivery(t *testing.T) {
 			},
 		}
 
-		err := forwarder.TrackPurchase(ctx, &userID, "order_123", 9.99, items, map[string]string{
-			"experiment_id": "exp_456",
-			"variant":      "variant_a",
+		err := forwarder.TrackPurchase(ctx, service.MatomoTrackPurchaseParams{
+			UserID:  &userID,
+			OrderID: "order_123",
+			Revenue: 9.99,
+			Items:   items,
+			CustomVars: map[string]string{
+				"experiment_id": "exp_456",
+				"variant":       "variant_a",
+			},
 		})
 		assert.NoError(t, err)
 

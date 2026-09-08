@@ -39,18 +39,27 @@ type WinbackOffer struct {
 	CreatedAt     time.Time
 }
 
+// NewWinbackOfferParams contains parameters for creating a new winback offer.
+type NewWinbackOfferParams struct {
+	UserID        uuid.UUID
+	CampaignID    string
+	DiscountType  DiscountType
+	DiscountValue float64
+	ExpiresAt     time.Time
+}
+
 // NewWinbackOffer creates a new winback offer
-func NewWinbackOffer(userID uuid.UUID, campaignID string, discountType DiscountType, discountValue float64, expiresAt time.Time) *WinbackOffer {
+func NewWinbackOffer(p NewWinbackOfferParams) *WinbackOffer {
 	now := time.Now()
 	return &WinbackOffer{
 		ID:            uuid.New(),
-		UserID:        userID,
-		CampaignID:    campaignID,
-		DiscountType:  discountType,
-		DiscountValue: discountValue,
+		UserID:        p.UserID,
+		CampaignID:    p.CampaignID,
+		DiscountType:  p.DiscountType,
+		DiscountValue: p.DiscountValue,
 		Status:        OfferStatusOffered,
 		OfferedAt:     now,
-		ExpiresAt:     expiresAt,
+		ExpiresAt:     p.ExpiresAt,
 		CreatedAt:     now,
 	}
 }

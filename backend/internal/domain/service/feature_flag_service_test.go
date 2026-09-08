@@ -15,7 +15,7 @@ func TestFeatureFlagService(t *testing.T) {
 	ffService := service.NewFeatureFlagService()
 
 	t.Run("CreateFlag and GetFlag", func(t *testing.T) {
-		flag := ffService.CreateFlag("test_flag", "Test Flag", true, 50, []string{})
+		flag := ffService.CreateFlag(service.CreateFlagParams{ID: "test_flag", Name: "Test Flag", Enabled: true, RolloutPercent: 50, UserIDs: []string{}})
 
 		assert.Equal(t, "test_flag", flag.ID)
 		assert.Equal(t, "Test Flag", flag.Name)
@@ -24,7 +24,7 @@ func TestFeatureFlagService(t *testing.T) {
 	})
 
 	t.Run("IsFeatureEnabled with 100% rollout", func(t *testing.T) {
-		ffService.CreateFlag("full_rollout", "Full Rollout", true, 100, []string{})
+		ffService.CreateFlag(service.CreateFlagParams{ID: "full_rollout", Name: "Full Rollout", Enabled: true, RolloutPercent: 100, UserIDs: []string{}})
 
 		enabled, err := ffService.IsFeatureEnabled(ctx, "full_rollout", "user_123")
 		require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestFeatureFlagService(t *testing.T) {
 	})
 
 	t.Run("IsFeatureEnabled with 0% rollout", func(t *testing.T) {
-		ffService.CreateFlag("zero_rollout", "Zero Rollout", true, 0, []string{})
+		ffService.CreateFlag(service.CreateFlagParams{ID: "zero_rollout", Name: "Zero Rollout", Enabled: true, RolloutPercent: 0, UserIDs: []string{}})
 
 		enabled, err := ffService.IsFeatureEnabled(ctx, "zero_rollout", "user_123")
 		require.NoError(t, err)
@@ -40,7 +40,7 @@ func TestFeatureFlagService(t *testing.T) {
 	})
 
 	t.Run("IsFeatureEnabled with specific user IDs", func(t *testing.T) {
-		ffService.CreateFlag("beta_flag", "Beta Flag", true, 0, []string{"beta_user_1", "beta_user_2"})
+		ffService.CreateFlag(service.CreateFlagParams{ID: "beta_flag", Name: "Beta Flag", Enabled: true, RolloutPercent: 0, UserIDs: []string{"beta_user_1", "beta_user_2"}})
 
 		// Beta user should have access
 		enabled, err := ffService.IsFeatureEnabled(ctx, "beta_flag", "beta_user_1")
@@ -54,7 +54,7 @@ func TestFeatureFlagService(t *testing.T) {
 	})
 
 	t.Run("IsFeatureEnabled with disabled flag", func(t *testing.T) {
-		ffService.CreateFlag("disabled_flag", "Disabled Flag", false, 100, []string{})
+		ffService.CreateFlag(service.CreateFlagParams{ID: "disabled_flag", Name: "Disabled Flag", Enabled: false, RolloutPercent: 100, UserIDs: []string{}})
 
 		enabled, err := ffService.IsFeatureEnabled(ctx, "disabled_flag", "user_123")
 		require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestFeatureFlagService(t *testing.T) {
 	})
 
 	t.Run("UpdateFlag updates existing flag", func(t *testing.T) {
-		ffService.CreateFlag("update_flag", "Update Flag", true, 50, []string{})
+		ffService.CreateFlag(service.CreateFlagParams{ID: "update_flag", Name: "Update Flag", Enabled: true, RolloutPercent: 50, UserIDs: []string{}})
 
 		enabled := false
 		rollout := 75
@@ -82,7 +82,7 @@ func TestFeatureFlagService(t *testing.T) {
 	})
 
 	t.Run("DeleteFlag removes flag", func(t *testing.T) {
-		ffService.CreateFlag("delete_flag", "Delete Flag", true, 50, []string{})
+		ffService.CreateFlag(service.CreateFlagParams{ID: "delete_flag", Name: "Delete Flag", Enabled: true, RolloutPercent: 50, UserIDs: []string{}})
 
 		err := ffService.DeleteFlag("delete_flag")
 		require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestFeatureFlagService(t *testing.T) {
 		assert.Equal(t, "control", variant)
 
 		// With flag enabled, should return variant_b
-		ffService.CreateFlag("paywall_variant_test", "Paywall Test", true, 100, []string{})
+		ffService.CreateFlag(service.CreateFlagParams{ID: "paywall_variant_test", Name: "Paywall Test", Enabled: true, RolloutPercent: 100, UserIDs: []string{}})
 		variant, err = ffService.EvaluatePaywallTest(ctx, "user_123")
 		require.NoError(t, err)
 		assert.Equal(t, "variant_b", variant)

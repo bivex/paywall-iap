@@ -31,10 +31,22 @@ type PostgresBanditAssignmentRepository struct {
 	logger *zap.Logger
 }
 
-// PostgresBanditConversionRepository handles conversion and event logging persistence
-type PostgresBanditConversionRepository struct {
+// PostgresBanditEventRepository handles event logging and linking persistence
+type PostgresBanditEventRepository struct {
 	pool   *pgxpool.Pool
 	logger *zap.Logger
+}
+
+// PostgresBanditConversionTxRepository handles transactional processing of pending conversions and expiry
+type PostgresBanditConversionTxRepository struct {
+	pool   *pgxpool.Pool
+	logger *zap.Logger
+}
+
+// PostgresBanditConversionRepository handles conversion and event logging persistence
+type PostgresBanditConversionRepository struct {
+	*PostgresBanditEventRepository
+	*PostgresBanditConversionTxRepository
 }
 
 // PostgresBanditConfigRepository handles bandit experiment and objective configuration persistence
@@ -73,9 +85,12 @@ type pendingRewardScanner interface {
 // NewPostgresBanditRepository creates a new PostgreSQL-backed bandit repository
 func NewPostgresBanditRepository(pool *pgxpool.Pool, logger *zap.Logger) *PostgresBanditRepository {
 	return &PostgresBanditRepository{
-		PostgresBanditArmRepository:           &PostgresBanditArmRepository{pool: pool, logger: logger},
-		PostgresBanditAssignmentRepository:    &PostgresBanditAssignmentRepository{pool: pool, logger: logger},
-		PostgresBanditConversionRepository:    &PostgresBanditConversionRepository{pool: pool, logger: logger},
+		PostgresBanditArmRepository:        &PostgresBanditArmRepository{pool: pool, logger: logger},
+		PostgresBanditAssignmentRepository: &PostgresBanditAssignmentRepository{pool: pool, logger: logger},
+		PostgresBanditConversionRepository: &PostgresBanditConversionRepository{
+			PostgresBanditEventRepository:        &PostgresBanditEventRepository{pool: pool, logger: logger},
+			PostgresBanditConversionTxRepository: &PostgresBanditConversionTxRepository{pool: pool, logger: logger},
+		},
 		PostgresBanditConfigRepository:        &PostgresBanditConfigRepository{pool: pool, logger: logger},
 		PostgresBanditPendingRewardRepository: &PostgresBanditPendingRewardRepository{pool: pool, logger: logger},
 		PostgresBanditMaintenanceRepository:   &PostgresBanditMaintenanceRepository{pool: pool, logger: logger},
@@ -361,20 +376,28 @@ func (r *PostgresBanditAssignmentRepository) GetActiveAssignment(ctx context.Con
 	return &assignment, nil
 }
 
+// SaveConversionParams contains parameters for saving a direct conversion.
+type SaveConversionParams struct {
+	ExperimentID uuid.UUID
+	ArmID        uuid.UUID
+	UserID       uuid.UUID
+	Amount       float64
+}
+
 // SaveConversion records a conversion event for an arm
-func (r *PostgresBanditConversionRepository) SaveConversion(ctx context.Context, experimentID, armID, userID uuid.UUID, amount float64) error {
+func (r *PostgresBanditEventRepository) SaveConversion(ctx context.Context, params SaveConversionParams) error {
 	return r.AppendConversionEvent(ctx, &service.ConversionEvent{
-		ExperimentID:          experimentID,
-		ArmID:                 armID,
-		UserID:                &userID,
+		ExperimentID:          params.ExperimentID,
+		ArmID:                 params.ArmID,
+		UserID:                &params.UserID,
 		EventType:             service.ConversionEventTypeDirectReward,
-		OriginalRewardValue:   amount,
-		NormalizedRewardValue: amount,
+		OriginalRewardValue:   params.Amount,
+		NormalizedRewardValue: params.Amount,
 		OccurredAt:            time.Now().UTC(),
 	})
 }
 
-func (r *PostgresBanditConversionRepository) AppendConversionEvent(ctx context.Context, event *service.ConversionEvent) error {
+func (r *PostgresBanditEventRepository) AppendConversionEvent(ctx context.Context, event *service.ConversionEvent) error {
 	var metadataJSON []byte
 	var err error
 	if event.Metadata != nil {
@@ -421,7 +444,7 @@ func (r *PostgresBanditConversionRepository) AppendConversionEvent(ctx context.C
 	return nil
 }
 
-func (r *PostgresBanditConversionRepository) AppendImpressionEvent(ctx context.Context, event *service.ImpressionEvent) error {
+func (r *PostgresBanditEventRepository) AppendImpressionEvent(ctx context.Context, event *service.ImpressionEvent) error {
 	var metadataJSON []byte
 	var err error
 	if event.Metadata != nil {
@@ -456,7 +479,7 @@ func (r *PostgresBanditConversionRepository) AppendImpressionEvent(ctx context.C
 	return nil
 }
 
-func (r *PostgresBanditConversionRepository) AppendWinnerRecommendationEvent(ctx context.Context, event *service.WinnerRecommendationEvent) error {
+func (r *PostgresBanditEventRepository) AppendWinnerRecommendationEvent(ctx context.Context, event *service.WinnerRecommendationEvent) error {
 	var detailsJSON []byte
 	var err error
 	if event.Details != nil {
@@ -508,19 +531,25 @@ func (r *PostgresBanditConversionRepository) AppendWinnerRecommendationEvent(ctx
 	return nil
 }
 
-func (r *PostgresBanditConversionRepository) ProcessPendingConversion(ctx context.Context, transactionID, userID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) (*service.PendingReward, bool, error) {
+func (r *PostgresBanditConversionTxRepository) ProcessPendingConversion(ctx context.Context, params service.ProcessPendingConversionParams) (*service.PendingReward, bool, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to begin pending conversion transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
-	matchedPending, err := r.loadPendingRewardForConversionTx(ctx, tx, userID, processedAt)
+	matchedPending, err := r.loadPendingRewardForConversionTx(ctx, tx, params.UserID, params.ProcessedAt)
 	if err != nil || matchedPending == nil {
 		return nil, false, err
 	}
 
-	applied, err := r.executePendingConversionUpdatesTx(ctx, tx, matchedPending, transactionID, conversionValue, currency, processedAt)
+	applied, err := r.executePendingConversionUpdatesTx(ctx, tx, pendingConversionUpdateParams{
+		matchedPending:  matchedPending,
+		transactionID:   params.TransactionID,
+		conversionValue: params.ConversionValue,
+		currency:        params.Currency,
+		processedAt:     params.ProcessedAt,
+	})
 	if err != nil {
 		return nil, false, err
 	}
@@ -532,39 +561,43 @@ func (r *PostgresBanditConversionRepository) ProcessPendingConversion(ctx contex
 		return matchedPending, false, nil
 	}
 
-	convertedAt := processedAt
+	convertedAt := params.ProcessedAt
 	matchedPending.Converted = true
-	matchedPending.ConversionValue = conversionValue
-	matchedPending.ConversionCurrency = currency
+	matchedPending.ConversionValue = params.ConversionValue
+	matchedPending.ConversionCurrency = params.Currency
 	matchedPending.ConvertedAt = &convertedAt
 	matchedPending.ProcessedAt = &convertedAt
 	return matchedPending, true, nil
 }
 
-func (r *PostgresBanditConversionRepository) executePendingConversionUpdatesTx(
+type pendingConversionUpdateParams struct {
+	matchedPending  *service.PendingReward
+	transactionID   uuid.UUID
+	conversionValue float64
+	currency        string
+	processedAt     time.Time
+}
+
+func (r *PostgresBanditConversionTxRepository) executePendingConversionUpdatesTx(
 	ctx context.Context,
 	tx pgx.Tx,
-	matchedPending *service.PendingReward,
-	transactionID uuid.UUID,
-	conversionValue float64,
-	currency string,
-	processedAt time.Time,
+	p pendingConversionUpdateParams,
 ) (bool, error) {
 	inserted, err := r.insertConversionEventTx(ctx, tx, &service.ConversionEvent{
-		ExperimentID:          matchedPending.ExperimentID,
-		ArmID:                 matchedPending.ArmID,
-		UserID:                &matchedPending.UserID,
-		PendingRewardID:       &matchedPending.ID,
-		TransactionID:         &transactionID,
+		ExperimentID:          p.matchedPending.ExperimentID,
+		ArmID:                 p.matchedPending.ArmID,
+		UserID:                &p.matchedPending.UserID,
+		PendingRewardID:       &p.matchedPending.ID,
+		TransactionID:         &p.transactionID,
 		EventType:             service.ConversionEventTypeDelayedConversion,
-		OriginalRewardValue:   conversionValue,
-		OriginalCurrency:      currency,
-		NormalizedRewardValue: conversionValue,
-		NormalizedCurrency:    currency,
+		OriginalRewardValue:   p.conversionValue,
+		OriginalCurrency:      p.currency,
+		NormalizedRewardValue: p.conversionValue,
+		NormalizedCurrency:    p.currency,
 		Metadata: map[string]interface{}{
 			"source": "postgres_bandit_repository",
 		},
-		OccurredAt: processedAt,
+		OccurredAt: p.processedAt,
 	})
 	if err != nil {
 		return false, err
@@ -573,17 +606,23 @@ func (r *PostgresBanditConversionRepository) executePendingConversionUpdatesTx(
 		return false, nil
 	}
 
-	if err := r.applyRewardToArmTx(ctx, tx, matchedPending.ArmID, conversionValue); err != nil {
+	if err := r.applyRewardToArmTx(ctx, tx, p.matchedPending.ArmID, p.conversionValue); err != nil {
 		return false, err
 	}
 
-	if err := r.finalizePendingConversionTx(ctx, tx, matchedPending.ID, transactionID, conversionValue, currency, processedAt); err != nil {
+	if err := r.finalizePendingConversionTx(ctx, tx, finalizePendingConversionParams{
+		pendingID:       p.matchedPending.ID,
+		transactionID:   p.transactionID,
+		conversionValue: p.conversionValue,
+		currency:        p.currency,
+		processedAt:     p.processedAt,
+	}); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-func (r *PostgresBanditConversionRepository) loadPendingRewardForConversionTx(ctx context.Context, tx pgx.Tx, userID uuid.UUID, processedAt time.Time) (*service.PendingReward, error) {
+func (r *PostgresBanditConversionTxRepository) loadPendingRewardForConversionTx(ctx context.Context, tx pgx.Tx, userID uuid.UUID, processedAt time.Time) (*service.PendingReward, error) {
 	matchedPending := &service.PendingReward{}
 	err := scanPendingReward(tx.QueryRow(ctx, `
 		SELECT id, experiment_id, arm_id, user_id, assigned_at, expires_at, converted,
@@ -606,7 +645,19 @@ func (r *PostgresBanditConversionRepository) loadPendingRewardForConversionTx(ct
 	return matchedPending, nil
 }
 
-func (r *PostgresBanditConversionRepository) finalizePendingConversionTx(ctx context.Context, tx pgx.Tx, pendingID, transactionID uuid.UUID, conversionValue float64, currency string, processedAt time.Time) error {
+type finalizePendingConversionParams struct {
+	pendingID       uuid.UUID
+	transactionID   uuid.UUID
+	conversionValue float64
+	currency        string
+	processedAt     time.Time
+}
+
+func (r *PostgresBanditConversionTxRepository) finalizePendingConversionTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	p finalizePendingConversionParams,
+) error {
 	_, err := tx.Exec(ctx, `
 		UPDATE bandit_pending_rewards
 		SET converted = TRUE,
@@ -615,7 +666,7 @@ func (r *PostgresBanditConversionRepository) finalizePendingConversionTx(ctx con
 		    converted_at = $4,
 		    processed_at = $4
 		WHERE id = $1
-	`, pendingID, conversionValue, currency, processedAt)
+	`, p.pendingID, p.conversionValue, p.currency, p.processedAt)
 	if err != nil {
 		return fmt.Errorf("failed to update pending reward conversion state: %w", err)
 	}
@@ -624,14 +675,14 @@ func (r *PostgresBanditConversionRepository) finalizePendingConversionTx(ctx con
 		INSERT INTO bandit_conversion_links (pending_id, transaction_id, linked_at)
 		VALUES ($1, $2, $3)
 		ON CONFLICT DO NOTHING
-	`, pendingID, transactionID, processedAt)
+	`, p.pendingID, p.transactionID, p.processedAt)
 	if err != nil {
 		return fmt.Errorf("failed to create conversion link: %w", err)
 	}
 	return nil
 }
 
-func (r *PostgresBanditConversionRepository) expirePendingRewardTx(ctx context.Context, tx pgx.Tx, pending *service.PendingReward, processedAt time.Time) (bool, error) {
+func (r *PostgresBanditConversionTxRepository) expirePendingRewardTx(ctx context.Context, tx pgx.Tx, pending *service.PendingReward, processedAt time.Time) (bool, error) {
 	inserted, err := r.insertConversionEventTx(ctx, tx, &service.ConversionEvent{
 		ExperimentID:          pending.ExperimentID,
 		ArmID:                 pending.ArmID,
@@ -675,7 +726,7 @@ func (r *PostgresBanditConversionRepository) expirePendingRewardTx(ctx context.C
 	return true, nil
 }
 
-func (r *PostgresBanditConversionRepository) ProcessExpiredPendingReward(ctx context.Context, pendingID uuid.UUID, processedAt time.Time) (bool, error) {
+func (r *PostgresBanditConversionTxRepository) ProcessExpiredPendingReward(ctx context.Context, pendingID uuid.UUID, processedAt time.Time) (bool, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return false, fmt.Errorf("failed to begin expired pending reward transaction: %w", err)
@@ -1435,7 +1486,7 @@ func (r *PostgresBanditPendingRewardRepository) UpdatePendingReward(ctx context.
 }
 
 // LinkConversion links a pending reward to a transaction
-func (r *PostgresBanditConversionRepository) LinkConversion(ctx context.Context, link *service.ConversionLink) error {
+func (r *PostgresBanditEventRepository) LinkConversion(ctx context.Context, link *service.ConversionLink) error {
 	query := `
 		INSERT INTO bandit_conversion_links (pending_id, transaction_id)
 		VALUES ($1, $2)
@@ -1450,7 +1501,7 @@ func (r *PostgresBanditConversionRepository) LinkConversion(ctx context.Context,
 	return nil
 }
 
-func (r *PostgresBanditConversionRepository) applyRewardToArmTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID, reward float64) error {
+func (r *PostgresBanditConversionTxRepository) applyRewardToArmTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID, reward float64) error {
 	stats, err := r.loadArmStatsTx(ctx, tx, armID)
 	if err != nil {
 		return err
@@ -1488,7 +1539,7 @@ func (r *PostgresBanditConversionRepository) applyRewardToArmTx(ctx context.Cont
 	return nil
 }
 
-func (r *PostgresBanditConversionRepository) loadArmStatsTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID) (*service.ArmStats, error) {
+func (r *PostgresBanditConversionTxRepository) loadArmStatsTx(ctx context.Context, tx pgx.Tx, armID uuid.UUID) (*service.ArmStats, error) {
 	stats := &service.ArmStats{}
 	err := tx.QueryRow(ctx, `
 		SELECT arm_id, alpha, beta, samples, conversions, revenue, avg_reward, updated_at
@@ -1514,7 +1565,7 @@ func (r *PostgresBanditConversionRepository) loadArmStatsTx(ctx context.Context,
 	return stats, nil
 }
 
-func (r *PostgresBanditConversionRepository) insertConversionEventTx(ctx context.Context, tx pgx.Tx, event *service.ConversionEvent) (bool, error) {
+func (r *PostgresBanditConversionTxRepository) insertConversionEventTx(ctx context.Context, tx pgx.Tx, event *service.ConversionEvent) (bool, error) {
 	var metadataJSON []byte
 	var err error
 	if event.Metadata != nil {
@@ -1576,7 +1627,7 @@ func normalizeOccurredAt(occurredAt time.Time) time.Time {
 }
 
 // GetByTransactionID retrieves conversion links by transaction ID
-func (r *PostgresBanditConversionRepository) GetByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]*service.ConversionLink, error) {
+func (r *PostgresBanditEventRepository) GetByTransactionID(ctx context.Context, transactionID uuid.UUID) ([]*service.ConversionLink, error) {
 	query := `
 		SELECT pending_id, transaction_id, linked_at
 		FROM bandit_conversion_links

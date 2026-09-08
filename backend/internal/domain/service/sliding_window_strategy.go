@@ -34,27 +34,31 @@ type WindowStats struct {
 	WindowEnd   time.Time
 }
 
+// SlidingWindowStrategyConfig specifies parameters for creating SlidingWindowStrategy
+type SlidingWindowStrategyConfig struct {
+	Repo         BanditRepository
+	RedisClient  *redis.Client
+	Logger       *zap.Logger
+	ExperimentID uuid.UUID
+	Config       *WindowConfig
+}
+
 // NewSlidingWindowStrategy creates a new sliding window strategy
-func NewSlidingWindowStrategy(
-	repo BanditRepository,
-	redisClient *redis.Client,
-	logger *zap.Logger,
-	experimentID uuid.UUID,
-	config *WindowConfig,
-) *SlidingWindowStrategy {
+func NewSlidingWindowStrategy(cfg SlidingWindowStrategyConfig) *SlidingWindowStrategy {
+	config := cfg.Config
 	if config == nil {
 		config = &WindowConfig{
-			Type:      WindowTypeEvents,
-			Size:      1000,
+			Type:       WindowTypeEvents,
+			Size:       1000,
 			MinSamples: 100,
 		}
 	}
 
 	return &SlidingWindowStrategy{
-		repo:         repo,
-		redisClient:  redisClient,
-		logger:       logger,
-		experimentID: experimentID,
+		repo:         cfg.Repo,
+		redisClient:  cfg.RedisClient,
+		logger:       cfg.Logger,
+		experimentID: cfg.ExperimentID,
 		config:       config,
 	}
 }
@@ -82,7 +86,7 @@ func (s *SlidingWindowStrategy) GetArmStats(ctx context.Context, armID uuid.UUID
 	}
 
 	// Cache the stats
-	if err := cacheWindowStats(ctx, s.redisClient, s.experimentID, armID, stats); err != nil {
+	if err := s.cacheWindowStats(ctx, armID, stats); err != nil {
 		s.logger.Warn("Failed to cache stats", zap.Error(err))
 	}
 
@@ -218,14 +222,14 @@ func parseEventMember(member string) (RewardEvent, error) {
 }
 
 // cacheWindowStats caches the calculated stats
-func cacheWindowStats(ctx context.Context, client *redis.Client, experimentID, armID uuid.UUID, stats *ArmStats) error {
-	statsKey := slidingStatsKey(experimentID, armID)
+func (s *SlidingWindowStrategy) cacheWindowStats(ctx context.Context, armID uuid.UUID, stats *ArmStats) error {
+	statsKey := slidingStatsKey(s.experimentID, armID)
 
 	// Serialize stats - for production, use JSON or msgpack
 	serialized := fmt.Sprintf("%.2f,%.2f,%d,%d,%.2f",
 		stats.Alpha, stats.Beta, stats.Samples, stats.Conversions, stats.Revenue)
 
-	return client.Set(ctx, statsKey, serialized, 5*time.Minute).Err()
+	return s.redisClient.Set(ctx, statsKey, serialized, 5*time.Minute).Err()
 }
 
 // parseCachedStats parses cached stats from Redis

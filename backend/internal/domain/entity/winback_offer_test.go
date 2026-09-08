@@ -16,7 +16,13 @@ func TestWinbackOfferEntity(t *testing.T) {
 		campaignID := "winback_2026_q1"
 		expiresAt := time.Now().Add(30 * 24 * time.Hour)
 
-		offer := entity.NewWinbackOffer(userID, campaignID, entity.DiscountTypePercentage, 50.0, expiresAt)
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        userID,
+			CampaignID:    campaignID,
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 50.0,
+			ExpiresAt:     expiresAt,
+		})
 
 		assert.NotEmpty(t, offer.ID)
 		assert.Equal(t, userID, offer.UserID)
@@ -29,13 +35,13 @@ func TestWinbackOfferEntity(t *testing.T) {
 	})
 
 	t.Run("Accept marks offer as accepted", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(
-			uuid.New(),
-			"campaign_123",
-			entity.DiscountTypePercentage,
-			25.0,
-			time.Now().Add(30*24*time.Hour),
-		)
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 
 		err := offer.Accept()
 		assert.NoError(t, err)
@@ -44,13 +50,13 @@ func TestWinbackOfferEntity(t *testing.T) {
 	})
 
 	t.Run("Cannot accept expired offer", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(
-			uuid.New(),
-			"campaign_123",
-			entity.DiscountTypePercentage,
-			25.0,
-			time.Now().Add(-24*time.Hour),
-		)
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			ExpiresAt:     time.Now().Add(-24 * time.Hour),
+		})
 
 		err := offer.Accept()
 		assert.Error(t, err)
@@ -58,52 +64,52 @@ func TestWinbackOfferEntity(t *testing.T) {
 	})
 
 	t.Run("CalculateDiscountAmount for percentage discount", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(
-			uuid.New(),
-			"campaign_123",
-			entity.DiscountTypePercentage,
-			25.0, // 25% off
-			time.Now().Add(30*24*time.Hour),
-		)
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0, // 25% off
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 
 		amount := offer.CalculateDiscountAmount(99.99)
 		assert.InDelta(t, 25.0, amount, 0.01) // 25% of 99.99 = 24.9975
 	})
 
 	t.Run("CalculateDiscountAmount for fixed discount", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(
-			uuid.New(),
-			"campaign_123",
-			entity.DiscountTypeFixed,
-			20.0, // $20 off
-			time.Now().Add(30*24*time.Hour),
-		)
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypeFixed,
+			DiscountValue: 20.0, // $20 off
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 
 		amount := offer.CalculateDiscountAmount(99.99)
 		assert.InDelta(t, 20.0, amount, 0.01)
 	})
 
 	t.Run("Discount cannot exceed total amount", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(
-			uuid.New(),
-			"campaign_123",
-			entity.DiscountTypeFixed,
-			50.0, // $50 off
-			time.Now().Add(30*24*time.Hour),
-		)
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypeFixed,
+			DiscountValue: 50.0, // $50 off
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 
 		amount := offer.CalculateDiscountAmount(30.0) // Total is only $30
 		assert.InDelta(t, 30.0, amount, 0.01)         // Should cap at total amount
 	})
 
 	t.Run("Expire marks offer as expired", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(
-			uuid.New(),
-			"campaign_123",
-			entity.DiscountTypePercentage,
-			25.0,
-			time.Now().Add(-24*time.Hour),
-		)
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			ExpiresAt:     time.Now().Add(-24 * time.Hour),
+		})
 
 		err := offer.Expire()
 		assert.NoError(t, err)
@@ -111,13 +117,13 @@ func TestWinbackOfferEntity(t *testing.T) {
 	})
 
 	t.Run("Decline marks offer as declined", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(
-			uuid.New(),
-			"campaign_123",
-			entity.DiscountTypePercentage,
-			25.0,
-			time.Now().Add(30*24*time.Hour),
-		)
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        uuid.New(),
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 
 		err := offer.Decline()
 		assert.NoError(t, err)

@@ -15,9 +15,9 @@ import (
 )
 
 type banditServiceStub struct {
-	trackImpressionFunc       func(ctx context.Context, experimentID, armID, userID uuid.UUID, event *service.ImpressionEvent) error
+	trackImpressionFunc       func(ctx context.Context, params service.TrackImpressionParams) error
 	updateRewardFunc          func(ctx context.Context, experimentID, armID uuid.UUID, reward float64) error
-	updateRewardWithEventFunc func(ctx context.Context, experimentID, armID uuid.UUID, reward float64, event *service.ConversionEvent) error
+	updateRewardWithEventFunc func(ctx context.Context, params service.RewardWithEventParams) error
 }
 
 func (s banditServiceStub) SelectArm(ctx context.Context, experimentID, userID uuid.UUID) (uuid.UUID, error) {
@@ -28,9 +28,9 @@ func (s banditServiceStub) SelectArmWithMeta(ctx context.Context, experimentID, 
 	return uuid.Nil, false, nil
 }
 
-func (s banditServiceStub) TrackImpression(ctx context.Context, experimentID, armID, userID uuid.UUID, event *service.ImpressionEvent) error {
+func (s banditServiceStub) TrackImpression(ctx context.Context, params service.TrackImpressionParams) error {
 	if s.trackImpressionFunc != nil {
-		return s.trackImpressionFunc(ctx, experimentID, armID, userID, event)
+		return s.trackImpressionFunc(ctx, params)
 	}
 	return nil
 }
@@ -42,12 +42,12 @@ func (s banditServiceStub) UpdateReward(ctx context.Context, experimentID, armID
 	return nil
 }
 
-func (s banditServiceStub) UpdateRewardWithEvent(ctx context.Context, experimentID, armID uuid.UUID, reward float64, event *service.ConversionEvent) error {
+func (s banditServiceStub) UpdateRewardWithEvent(ctx context.Context, params service.RewardWithEventParams) error {
 	if s.updateRewardWithEventFunc != nil {
-		return s.updateRewardWithEventFunc(ctx, experimentID, armID, reward, event)
+		return s.updateRewardWithEventFunc(ctx, params)
 	}
 	if s.updateRewardFunc != nil {
-		return s.updateRewardFunc(ctx, experimentID, armID, reward)
+		return s.updateRewardFunc(ctx, params.ExperimentID, params.ArmID, params.Reward)
 	}
 	return nil
 }
@@ -91,8 +91,8 @@ func TestImpression_AcceptsMetadata(t *testing.T) {
 
 	var recorded *service.ImpressionEvent
 	handler := NewBanditHandler(banditServiceStub{
-		trackImpressionFunc: func(ctx context.Context, experimentID, armID, userID uuid.UUID, event *service.ImpressionEvent) error {
-			recorded = event
+		trackImpressionFunc: func(ctx context.Context, params service.TrackImpressionParams) error {
+			recorded = params.Event
 			return nil
 		},
 	})
@@ -116,7 +116,7 @@ func TestImpression_ReturnsNotFoundForMissingArm(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	handler := NewBanditHandler(banditServiceStub{
-		trackImpressionFunc: func(ctx context.Context, experimentID, armID, userID uuid.UUID, event *service.ImpressionEvent) error {
+		trackImpressionFunc: func(ctx context.Context, params service.TrackImpressionParams) error {
 			return service.ErrBanditArmNotFound
 		},
 	})

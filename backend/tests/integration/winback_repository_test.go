@@ -34,12 +34,25 @@ func TestWinbackOfferRepository(t *testing.T) {
 
 	// Create test user
 	userRepo := repository.NewUserRepository(generated.New(dbContainer.Pool))
-	user := entity.NewUser("test-platform", "test-device", entity.PlatformiOS, "1.0", "test@example.com", uuid.Nil)
+	user := entity.NewUser(entity.NewUserParams{
+		PlatformUserID: "test-platform",
+		DeviceID:       "test-device",
+		Platform:       entity.PlatformiOS,
+		AppVersion:     "1.0",
+		Email:          "test@example.com",
+		AppID:          uuid.Nil,
+	})
 	err = userRepo.Create(ctx, user)
 	require.NoError(t, err)
 
 	t.Run("Create and GetByID", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(user.ID, "campaign_123", entity.DiscountTypePercentage, 25.0, time.Now().Add(30*24*time.Hour))
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        user.ID,
+			CampaignID:    "campaign_123",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 25.0,
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 
 		err := winbackRepo.Create(ctx, offer)
 		require.NoError(t, err)
@@ -51,7 +64,13 @@ func TestWinbackOfferRepository(t *testing.T) {
 	})
 
 	t.Run("GetActiveByUserID returns active offers", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(user.ID, "campaign_456", entity.DiscountTypeFixed, 20.0, time.Now().Add(30*24*time.Hour))
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        user.ID,
+			CampaignID:    "campaign_456",
+			DiscountType:  entity.DiscountTypeFixed,
+			DiscountValue: 20.0,
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 		err := winbackRepo.Create(ctx, offer)
 		require.NoError(t, err)
 
@@ -69,7 +88,13 @@ func TestWinbackOfferRepository(t *testing.T) {
 	})
 
 	t.Run("Update changes offer status", func(t *testing.T) {
-		offer := entity.NewWinbackOffer(user.ID, "campaign_789", entity.DiscountTypePercentage, 30.0, time.Now().Add(30*24*time.Hour))
+		offer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        user.ID,
+			CampaignID:    "campaign_789",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 30.0,
+			ExpiresAt:     time.Now().Add(30 * 24 * time.Hour),
+		})
 		err := winbackRepo.Create(ctx, offer)
 		require.NoError(t, err)
 
@@ -85,7 +110,13 @@ func TestWinbackOfferRepository(t *testing.T) {
 	})
 
 	t.Run("GetExpiredOffers returns expired offers", func(t *testing.T) {
-		expiredOffer := entity.NewWinbackOffer(user.ID, "campaign_expired", entity.DiscountTypePercentage, 50.0, time.Now().Add(-24*time.Hour))
+		expiredOffer := entity.NewWinbackOffer(entity.NewWinbackOfferParams{
+			UserID:        user.ID,
+			CampaignID:    "campaign_expired",
+			DiscountType:  entity.DiscountTypePercentage,
+			DiscountValue: 50.0,
+			ExpiresAt:     time.Now().Add(-24 * time.Hour),
+		})
 		err := winbackRepo.Create(ctx, expiredOffer)
 		require.NoError(t, err)
 

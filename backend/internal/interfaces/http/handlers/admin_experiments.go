@@ -504,11 +504,17 @@ func (h *AdminExperimentHandler) logExperimentAutomationPolicyAction(c *gin.Cont
 		return
 	}
 
-	_ = h.auditService.LogAction(c.Request.Context(), adminID, "update_experiment_automation_policy", "experiment", nil, map[string]interface{}{
-		"experiment_id":  experimentID.String(),
-		"changed_fields": changedFields,
-		"before":         serializableExperimentAutomationPolicy(before),
-		"after":          serializableExperimentAutomationPolicy(after),
+	_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+		AdminID:      adminID,
+		Action:       "update_experiment_automation_policy",
+		TargetType:   "experiment",
+		TargetUserID: nil,
+		Details: map[string]interface{}{
+			"experiment_id":  experimentID.String(),
+			"changed_fields": changedFields,
+			"before":         serializableExperimentAutomationPolicy(before),
+			"after":          serializableExperimentAutomationPolicy(after),
+		},
 	})
 }
 
@@ -577,7 +583,13 @@ func (h *AdminExperimentHandler) logConfirmExperimentWinnerAction(c *gin.Context
 	if experiment.WinnerRecommendation.ConfidencePercent != nil {
 		details["confidence_percent"] = *experiment.WinnerRecommendation.ConfidencePercent
 	}
-	_ = h.auditService.LogAction(c.Request.Context(), *adminID, "confirm_experiment_winner", "experiment", nil, details)
+	_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+		AdminID:      *adminID,
+		Action:       "confirm_experiment_winner",
+		TargetType:   "experiment",
+		TargetUserID: nil,
+		Details:      details,
+	})
 }
 
 func adminExperimentHasConfirmableWinnerRecommendation(experiment AdminExperiment) bool {
@@ -625,7 +637,13 @@ func (h *AdminExperimentHandler) logHoldExperimentForReviewAction(c *gin.Context
 	details["status_after"] = statusAfter
 	details["lock_reason"] = adminExperimentHoldForReviewReason
 	details["manual_override"] = true
-	_ = h.auditService.LogAction(c.Request.Context(), *adminID, "hold_experiment_for_review", "experiment", nil, details)
+	_ = h.auditService.LogAction(c.Request.Context(), service.AuditActionParams{
+		AdminID:      *adminID,
+		Action:       "hold_experiment_for_review",
+		TargetType:   "experiment",
+		TargetUserID: nil,
+		Details:      details,
+	})
 }
 
 func validateExperimentName(name string) string {

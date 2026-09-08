@@ -289,7 +289,13 @@ func TestPostgresBanditRepository_ProcessPendingConversionPersistsImmutableEvent
 	require.NoError(t, err)
 
 	repo := repository.NewPostgresBanditRepository(db, zap.NewNop())
-	matched, processed, err := repo.ProcessPendingConversion(ctx, transactionID, userID, 19.99, "USD", processedAt)
+	matched, processed, err := repo.ProcessPendingConversion(ctx, service.ProcessPendingConversionParams{
+		TransactionID:   transactionID,
+		UserID:          userID,
+		ConversionValue: 19.99,
+		Currency:        "USD",
+		ProcessedAt:     processedAt,
+	})
 	require.NoError(t, err)
 	require.True(t, processed)
 	require.NotNil(t, matched)

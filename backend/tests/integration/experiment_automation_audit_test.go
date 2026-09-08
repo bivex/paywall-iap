@@ -78,9 +78,17 @@ func TestExperimentStatusAuditIdempotency(t *testing.T) {
 		Details:        map[string]interface{}{"reason": "auto_start"},
 	}
 
-	err = repo.UpdateExperimentStatusWithAudit(ctx, experimentID, "draft", "running", &startedAt, nil, audit)
+	params := service.UpdateExperimentStatusAuditParams{
+		ExperimentID:  experimentID,
+		CurrentStatus: "draft",
+		NextStatus:    "running",
+		StartAt:       &startedAt,
+		EndAt:         nil,
+		Audit:         audit,
+	}
+	err = repo.UpdateExperimentStatusWithAudit(ctx, params)
 	require.NoError(t, err)
-	err = repo.UpdateExperimentStatusWithAudit(ctx, experimentID, "draft", "running", &startedAt, nil, audit)
+	err = repo.UpdateExperimentStatusWithAudit(ctx, params)
 	require.NoError(t, err)
 
 	var status string
