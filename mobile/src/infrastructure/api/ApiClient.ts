@@ -89,14 +89,36 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({
+      let errorData: any = null;
+      try {
+        const text = await response.text();
+        if (text && text.trim()) {
+          errorData = JSON.parse(text);
+        }
+      } catch {
+        // ignore
+      }
+      const error = errorData || {
         error: 'UNKNOWN_ERROR',
         message: `HTTP ${response.status}`,
-      }));
+      };
       throw error;
     }
 
-    return response.json();
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return {} as T;
+    }
+
+    const text = await response.text();
+    if (!text || !text.trim()) {
+      return {} as T;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      return {} as T;
+    }
   }
 
   async post<T>(endpoint: string, data: any): Promise<T> {

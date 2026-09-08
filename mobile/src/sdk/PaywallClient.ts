@@ -99,7 +99,13 @@ class PaywallClient {
       const res = await fetch(url, { method: 'GET', headers });
 
       if (res.ok) {
-        const body = await res.json();
+        let body: any = {};
+        try {
+          const text = await res.text();
+          body = text && text.trim() ? JSON.parse(text) : {};
+        } catch {
+          // ignore
+        }
         const rawDef = body.data?.definition ?? body.definition ?? body.data;
 
         if (rawDef && typeof rawDef === 'object' && rawDef.plans) {
@@ -294,7 +300,13 @@ class PaywallClient {
       }
 
       if (!verifyRes.ok) {
-        const errData = await verifyRes.json().catch(() => ({}));
+        let errData: any = {};
+        try {
+          const text = await verifyRes.text();
+          errData = text && text.trim() ? JSON.parse(text) : {};
+        } catch {
+          // ignore
+        }
         return {
           success: false,
           error: errData.error || errData.message || `Verification failed with HTTP ${verifyRes.status}`,
