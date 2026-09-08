@@ -1,10 +1,47 @@
-import React from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator} from 'react-native';
 import {useSubscriptionStore} from '../../application/store/subscriptionStore';
 import {navigateToPaywall} from '../navigation/types';
 
 export function SubscriptionScreen() {
-  const {subscription, isLoading, error} = useSubscriptionStore();
+  const {subscription, isLoading, error, cancelSubscription} = useSubscriptionStore();
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancel = () => {
+    const performCancel = async () => {
+      setIsCancelling(true);
+      try {
+        await cancelSubscription();
+        if (Platform.OS !== 'web') {
+          Alert.alert('Subscription Cancelled', 'Your subscription has been successfully cancelled.');
+        }
+      } catch (err: any) {
+        const msg = err?.message || 'Failed to cancel subscription';
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert(msg);
+        } else {
+          Alert.alert('Error', msg);
+        }
+      } finally {
+        setIsCancelling(false);
+      }
+    };
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
+      if (window.confirm('Are you sure you want to cancel your subscription? You will lose access to premium features.')) {
+        performCancel();
+      }
+    } else {
+      Alert.alert(
+        'Cancel Subscription',
+        'Are you sure you want to cancel your subscription? You will lose access to premium features.',
+        [
+          {text: 'Keep Subscription', style: 'cancel'},
+          {text: 'Cancel Subscription', style: 'destructive', onPress: performCancel},
+        ],
+      );
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -50,9 +87,14 @@ export function SubscriptionScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, styles.secondaryButton]}
-            onPress={() => {/* TODO: Cancel subscription */}}>
-            <Text style={styles.buttonText}>Cancel Subscription</Text>
+            style={[styles.button, styles.cancelButton]}
+            onPress={handleCancel}
+            disabled={isCancelling}>
+            {isCancelling ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Cancel Subscription</Text>
+            )}
           </TouchableOpacity>
         </View>
       ) : (
@@ -149,6 +191,9 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: '#333',
+  },
+  cancelButton: {
+    backgroundColor: '#d32f2f',
   },
   buttonText: {
     color: '#fff',

@@ -51,11 +51,20 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           const subscription = await subscriptionService.getSubscription();
 
           set({subscription, isLoading: false});
-        } catch (error) {
-          set({
-            isLoading: false,
-            error: error instanceof Error ? error.message : 'Failed to fetch subscription',
-          });
+        } catch (error: any) {
+          if (
+            error?.status === 404 ||
+            error?.error === 'NOT_FOUND' ||
+            error?.message?.includes('not found') ||
+            error?.message?.includes('404')
+          ) {
+            set({subscription: null, isLoading: false, error: null});
+          } else {
+            set({
+              isLoading: false,
+              error: error instanceof Error ? error.message : 'Failed to fetch subscription',
+            });
+          }
         }
       },
 
@@ -116,9 +125,33 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           const subscriptionService = getService();
           await subscriptionService.cancelSubscription();
 
-          // Refetch subscription
+          // Reset local subscription state immediately
+          set({subscription: null, isLoading: false, error: null});
+
+          // Reset SDK state
+          try {
+            const {PaywallSDK} = await import('../../sdk');
+            PaywallSDK.reset();
+          } catch {}
+
+          // Clear web simulated purchases
+          try {
+            if (typeof localStorage !== 'undefined') {
+              localStorage.removeItem('__web_active_purchases');
+            }
+          } catch {}
+
+          // Sync with server
           await get().fetchSubscription();
-        } catch (error) {
+        } catch (error: any) {
+          if (
+            error?.status === 404 ||
+            error?.error === 'NOT_FOUND' ||
+            error?.message?.includes('not found')
+          ) {
+            set({subscription: null, isLoading: false, error: null});
+            return;
+          }
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to cancel subscription',

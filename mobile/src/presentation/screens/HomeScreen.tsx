@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator} from 'react-native';
 import {useAuthStore} from '../../application/store/authStore';
 import {useSubscriptionStore} from '../../application/store/subscriptionStore';
 import {navigateToPaywall} from '../navigation/types';
@@ -7,8 +7,9 @@ import {PaywallModal} from '../../sdk';
 
 export function HomeScreen() {
   const {user} = useAuthStore();
-  const {subscription, checkAccess, fetchSubscription} = useSubscriptionStore();
+  const {subscription, checkAccess, fetchSubscription, cancelSubscription} = useSubscriptionStore();
   const [modalVisible, setModalVisible] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     // Check access on mount
@@ -19,6 +20,39 @@ export function HomeScreen() {
     const access = await checkAccess('premium_content');
     if (!access.hasAccess) {
       navigateToPaywall('premium', 'feature_locked');
+    }
+  };
+
+  const handleCancelSubscription = () => {
+    const performCancel = async () => {
+      setIsCancelling(true);
+      try {
+        await cancelSubscription();
+        await checkAccess('premium_content');
+        if (Platform.OS !== 'web') {
+          Alert.alert('Subscription Cancelled', 'Your subscription has been cancelled.');
+        }
+      } catch (err: any) {
+        const msg = err?.message || 'Failed to cancel subscription';
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert(msg);
+        } else {
+          Alert.alert('Error', msg);
+        }
+      } finally {
+        setIsCancelling(false);
+      }
+    };
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
+      if (window.confirm('Are you sure you want to cancel your subscription?')) {
+        performCancel();
+      }
+    } else {
+      Alert.alert('Cancel Subscription', 'Are you sure you want to cancel your subscription?', [
+        {text: 'Keep Subscription', style: 'cancel'},
+        {text: 'Cancel Subscription', style: 'destructive', onPress: performCancel},
+      ]);
     }
   };
 
@@ -47,6 +81,18 @@ export function HomeScreen() {
                   Expires: <Text style={styles.statusValue}>{new Date(subscription.expiresAt).toLocaleDateString()}</Text>
                 </Text>
               )}
+
+              <TouchableOpacity
+                style={styles.cancelSubButton}
+                onPress={handleCancelSubscription}
+                disabled={isCancelling}
+              >
+                {isCancelling ? (
+                  <ActivityIndicator size="small" color="#f44336" />
+                ) : (
+                  <Text style={styles.cancelSubText}>Cancel Subscription</Text>
+                )}
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.statusContainer}>
@@ -128,6 +174,20 @@ const styles = StyleSheet.create({
   statusValue: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  cancelSubButton: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#f44336',
+    alignSelf: 'flex-start',
+  },
+  cancelSubText: {
+    color: '#f44336',
+    fontSize: 13,
+    fontWeight: '600',
   },
   noSubscriptionText: {
     color: '#888',
