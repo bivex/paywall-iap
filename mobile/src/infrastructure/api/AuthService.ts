@@ -1,4 +1,6 @@
-import {ApiClient, ApiResponse, AuthTokens} from './ApiClient';
+import {ApiClient} from './ApiClient';
+import {ApiResponse, AuthTokens} from './config';
+import {SecureStorage} from '../storage/SecureStorage';
 
 export interface RegisterRequest {
   platform_user_id: string;
@@ -46,7 +48,6 @@ export class AuthService {
   }
 
   private async storeTokens(accessToken: string, refreshToken: string): Promise<void> {
-    const SecureStorage = require('react-native-secure-storage').default;
     await SecureStorage.setItem('access_token', accessToken);
     await SecureStorage.setItem('refresh_token', refreshToken);
   }
@@ -63,7 +64,6 @@ export class AuthService {
   }
 
   async getStoredTokens(): Promise<{accessToken: string | null; refreshToken: string | null}> {
-    const SecureStorage = require('react-native-secure-storage').default;
     try {
       const accessToken = await SecureStorage.getItem('access_token');
       const refreshToken = await SecureStorage.getItem('refresh_token');

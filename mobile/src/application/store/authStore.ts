@@ -153,7 +153,6 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => ({
         getItem: async (name: string) => {
           try {
-            const SecureStorage = require('react-native-secure-storage').default;
             return await SecureStorage.getItem(name);
           } catch {
             return null;
@@ -161,7 +160,6 @@ export const useAuthStore = create<AuthState>()(
         },
         setItem: async (name: string, value: string) => {
           try {
-            const SecureStorage = require('react-native-secure-storage').default;
             await SecureStorage.setItem(name, value);
           } catch (e) {
             console.error('Failed to save to secure storage:', e);
@@ -169,7 +167,6 @@ export const useAuthStore = create<AuthState>()(
         },
         removeItem: async (name: string) => {
           try {
-            const SecureStorage = require('react-native-secure-storage').default;
             await SecureStorage.removeItem(name);
           } catch (e) {
             console.error('Failed to remove from secure storage:', e);
