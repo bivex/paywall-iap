@@ -63,5 +63,11 @@ export default defineConfig({
     port: 8082,
     host: '0.0.0.0',
     cors: true,
+    proxy: {
+      '/v1': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+    },
   },
 });
