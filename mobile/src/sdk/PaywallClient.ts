@@ -354,22 +354,100 @@ class PaywallClient {
     const config = this.getConfig();
 
     try {
-      const RNIap = await import('react-native-iap').catch(() => null);
+      // 1. Check store / simulated purchases
+      let purchases: any[] = [];
+      try {
+        const RNIap = await import('react-native-iap').catch(() => null);
+        if (RNIap && typeof RNIap.getAvailablePurchases === 'function') {
+          purchases = (await RNIap.getAvailablePurchases()) || [];
+        }
+      } catch (iapErr) {
+        console.warn('[PaywallSDK] getAvailablePurchases error:', iapErr);
+      }
 
-      if (RNIap && typeof RNIap.getAvailablePurchases === 'function') {
-        const purchases = await RNIap.getAvailablePurchases();
-        if (purchases && purchases.length > 0) {
-          const latest = purchases[0];
-          const verifyResult = await this.purchase(latest.productId, userToken);
+      // If store has purchases, verify the latest receipt directly without prompting for purchase
+      if (purchases && purchases.length > 0) {
+        const latest = purchases[0];
+        const receipt = latest.transactionReceipt || JSON.stringify(latest);
+        const productId = latest.productId;
+
+        const { useAuthStore, isTokenExpired } = await import('../application/store/authStore');
+        let token = userToken || config.authToken || useAuthStore.getState().accessToken || undefined;
+        if (!token || isTokenExpired(token)) {
+          try {
+            token = await useAuthStore.getState().refreshAccessToken();
+          } catch {
+            const { default: DeviceInfo } = await import('react-native-device-info');
+            const { Platform: RNPlatform } = await import('react-native');
+            const deviceId = await DeviceInfo.getUniqueId();
+            const plat = RNPlatform.OS === 'ios' ? 'ios' : 'android';
+            const appVersion = DeviceInfo.getVersion();
+            await useAuthStore.getState().register(deviceId, plat, appVersion);
+            token = useAuthStore.getState().accessToken || undefined;
+          }
+        }
+
+        const verifyRes = await fetch(`${config.baseUrl}/verify/iap`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-App-ID': config.appId,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            platform: Platform.OS === 'ios' ? 'ios' : 'android',
+            receipt_data: receipt,
+            product_id: productId,
+            transaction_id: latest.transactionId,
+          }),
+        });
+
+        if (verifyRes.ok) {
+          this.customerInfo = {
+            userId: 'current-user',
+            status: 'active',
+            planType: productId.includes('annual') || productId.includes('year') ? 'annual' : 'monthly',
+            entitlements: { premium: true },
+            hasActiveSubscription: true,
+          };
+
+          try {
+            const { useSubscriptionStore } = await import('../application/store/subscriptionStore');
+            await useSubscriptionStore.getState().fetchSubscription();
+          } catch {}
+
           return {
-            success: verifyResult.success,
+            success: true,
             restoredCount: purchases.length,
-            customerInfo: verifyResult.customerInfo,
-            error: verifyResult.error,
+            customerInfo: this.customerInfo,
           };
         }
       }
 
+      // 2. Check backend subscription directly
+      try {
+        const { useSubscriptionStore } = await import('../application/store/subscriptionStore');
+        await useSubscriptionStore.getState().fetchSubscription();
+        const sub = useSubscriptionStore.getState().subscription;
+        if (sub && String(sub.status).toLowerCase() === 'active') {
+          this.customerInfo = {
+            userId: sub.userId || 'current-user',
+            status: 'active',
+            planType: sub.planType || 'annual',
+            entitlements: { premium: true },
+            hasActiveSubscription: true,
+          };
+          return {
+            success: true,
+            restoredCount: 1,
+            customerInfo: this.customerInfo,
+          };
+        }
+      } catch (subErr) {
+        console.warn('[PaywallSDK] Check subscription during restore failed:', subErr);
+      }
+
+      // No active purchase found
       return {
         success: true,
         restoredCount: 0,

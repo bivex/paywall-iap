@@ -91,20 +91,28 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
     }
   };
 
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.alert) {
+      window.alert(`${title}: ${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleRestore = async () => {
     setIsRestoring(true);
     try {
       const result = await PaywallSDK.restorePurchases();
-      if (result.success && result.restoredCount > 0) {
-        Alert.alert('Restored', 'Your subscription was successfully restored!');
+      if (result.success && (result.restoredCount ?? 0) > 0) {
+        showAlert('Restored', 'Your subscription was successfully restored!');
         onPurchaseSuccess?.({ success: true, customerInfo: result.customerInfo });
       } else if (result.success) {
-        Alert.alert('No Purchases', 'No previous active purchases were found to restore.');
+        showAlert('No Purchases', 'No previous active purchases were found to restore.');
       } else {
-        Alert.alert('Restore Failed', result.error || 'Could not restore purchases.');
+        showAlert('Restore Failed', result.error || 'Could not restore purchases.');
       }
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Restore failed');
+      showAlert('Error', err?.message || 'Restore failed');
     } finally {
       setIsRestoring(false);
     }
@@ -497,6 +505,9 @@ const styles = StyleSheet.create({
   },
   restoreButton: {
     paddingVertical: 6,
+    ...Platform.select({
+      web: { cursor: 'pointer' } as any,
+    }),
   },
   restoreText: {
     fontSize: 13,

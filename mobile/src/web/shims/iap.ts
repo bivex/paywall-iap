@@ -118,12 +118,22 @@ export const requestPurchase = async (input: any): Promise<Purchase> => {
     type: 'subscription',
   });
   console.log('[react-native-iap:Web] Simulating purchase for:', sku);
-  return {
+  const purchase: Purchase = {
     productId: sku,
     transactionId: txId,
     transactionReceipt: receipt,
     transactionDate: Date.now(),
   };
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const existing = JSON.parse(localStorage.getItem('__web_active_purchases') || '[]');
+      const updated = [purchase, ...existing.filter((p: any) => p.productId !== sku)];
+      localStorage.setItem('__web_active_purchases', JSON.stringify(updated));
+    }
+  } catch {}
+
+  return purchase;
 };
 
 export const requestSubscription = async (input: any): Promise<Purchase> => {
@@ -133,6 +143,14 @@ export const requestSubscription = async (input: any): Promise<Purchase> => {
 export const finishTransaction = async (arg: any, isConsumable?: boolean): Promise<void> => {
   const txId = arg?.purchase?.transactionId || arg?.transactionId || 'web_tx';
   console.log('[react-native-iap:Web] Transaction finished:', txId);
+  const purchase = arg?.purchase || (arg?.transactionId ? arg : null);
+  if (purchase && typeof localStorage !== 'undefined') {
+    try {
+      const existing = JSON.parse(localStorage.getItem('__web_active_purchases') || '[]');
+      const updated = [purchase, ...existing.filter((p: any) => p.transactionId !== txId)];
+      localStorage.setItem('__web_active_purchases', JSON.stringify(updated));
+    } catch {}
+  }
 };
 
 export const getAvailablePurchases = async (): Promise<Purchase[]> => {
