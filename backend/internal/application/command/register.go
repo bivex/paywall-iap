@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bivex/paywall-iap/internal/appctx"
 	"github.com/bivex/paywall-iap/internal/application/dto"
 	appMiddleware "github.com/bivex/paywall-iap/internal/application/middleware"
 	"github.com/bivex/paywall-iap/internal/domain/entity"
@@ -77,6 +78,34 @@ func (c *RegisterCommand) Execute(ctx context.Context, req *dto.RegisterRequest)
 	appID, err := validateRegisterRequest(req)
 	if err != nil {
 		return nil, err
+	}
+	if appID != uuid.Nil {
+		ctx = appctx.WithAppID(ctx, appID)
+	}
+
+	// For anonymous device registration (no email), treat existing device as idempotent login
+	if strings.TrimSpace(req.Email) == "" {
+		var exists bool
+		var checkErr error
+		if appID != uuid.Nil {
+			exists, checkErr = c.userRepo.ExistsByPlatformIDAndApp(ctx, req.PlatformUserID, appID)
+		} else {
+			exists, checkErr = c.userRepo.ExistsByPlatformID(ctx, req.PlatformUserID)
+		}
+		if checkErr == nil && exists {
+			existingUser, getErr := c.userRepo.GetByPlatformID(ctx, req.PlatformUserID)
+			if getErr == nil && existingUser != nil {
+				accessToken, refreshToken, tokenErr := c.jwtMiddleware.GenerateTokenPair(existingUser.ID.String(), req.AppID, "")
+				if tokenErr == nil {
+					return &dto.RegisterResponse{
+						UserID:       existingUser.ID.String(),
+						AccessToken:  accessToken,
+						RefreshToken: refreshToken,
+						ExpiresIn:    900,
+					}, nil
+				}
+			}
+		}
 	}
 
 	if err := c.checkUserAvailability(ctx, req, appID); err != nil {

@@ -33,13 +33,29 @@ export class AuthService {
       request.email = email.trim();
     }
 
-    const response = await this.api.post<ApiResponse<RegisterResponse>>('/auth/register', request);
+    try {
+      const response = await this.api.post<ApiResponse<RegisterResponse>>('/auth/register', request);
 
-    // Store tokens
-    await this.storeTokens(response.data.access_token, response.data.refresh_token);
-    this.api.setAccessToken(response.data.access_token);
+      // Store tokens
+      await this.storeTokens(response.data.access_token, response.data.refresh_token);
+      this.api.setAccessToken(response.data.access_token);
 
-    return response.data;
+      return response.data;
+    } catch (err: any) {
+      if (err?.error === 'CONFLICT' || err?.message?.includes('already exists')) {
+        const stored = await this.getStoredTokens();
+        if (stored.accessToken && stored.refreshToken) {
+          this.api.setAccessToken(stored.accessToken);
+          return {
+            user_id: deviceId,
+            access_token: stored.accessToken,
+            refresh_token: stored.refreshToken,
+            expires_in: 900,
+          };
+        }
+      }
+      throw err;
+    }
   }
 
   async refreshToken(refreshToken: string): Promise<void> {
