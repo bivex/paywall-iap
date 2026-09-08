@@ -227,7 +227,9 @@ export function PendingWebhookTable({ rows }: { rows: WebhookRow[] }) {
             <TableCell className="font-mono text-xs text-muted-foreground max-w-[140px] truncate">
               {w.event_id}
             </TableCell>
-            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(w.created_at)}</TableCell>
+            <TableCell className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
+              {fmtDate(w.created_at)}
+            </TableCell>
             <TableCell>
               <ReplayWebhookButton webhookId={w.id} />
             </TableCell>

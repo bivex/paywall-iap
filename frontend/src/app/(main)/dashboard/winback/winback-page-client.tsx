@@ -235,8 +235,10 @@ export function WinbackPageClient({
                     <TableCell className="font-mono text-sm">{campaign.accepted_offers}</TableCell>
                     <TableCell className="font-mono text-sm">{campaign.expired_offers}</TableCell>
                     <TableCell className="font-mono text-sm">{campaign.declined_offers}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{formatDate(campaign.launched_at)}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
+                    <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>
+                      {formatDate(campaign.launched_at)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs" suppressHydrationWarning>
                       {formatDate(campaign.latest_expiry_at)}
                     </TableCell>
                     <TableCell>

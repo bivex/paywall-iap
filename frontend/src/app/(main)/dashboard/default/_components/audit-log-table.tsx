@@ -79,7 +79,7 @@ export function AuditLogTable({ entries }: { entries: AuditLogEntry[] }) {
           const meta = getActionMeta(entry.Action);
           return (
             <TableRow key={i} className="hover:bg-muted/40">
-              <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+              <TableCell className="text-xs text-muted-foreground tabular-nums whitespace-nowrap" suppressHydrationWarning>
                 {formatTime(entry.Time)}
               </TableCell>
               <TableCell>
