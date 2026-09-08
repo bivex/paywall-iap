@@ -20,10 +20,10 @@ export function SubscriptionScreen() {
         <View style={styles.content}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Current Plan</Text>
-            <Text style={styles.planType}>{subscription.planType.toUpperCase()}</Text>
+            <Text style={styles.planType}>{String(subscription.planType || (subscription as any).plan_type || 'PRO').toUpperCase()}</Text>
             <Text style={styles.statusText}>
-              Status: <Text style={{color: subscription.status === 'active' ? '#4CAF50' : '#f44336'}}>
-                {subscription.status.toUpperCase()}
+              Status: <Text style={{color: (subscription.status || '').toLowerCase() === 'active' ? '#4CAF50' : '#f44336'}}>
+                {String(subscription.status || 'ACTIVE').toUpperCase()}
               </Text>
             </Text>
             {subscription.expiresAt && (
@@ -36,9 +36,9 @@ export function SubscriptionScreen() {
           {subscription.platform && (
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Platform</Text>
-              <Text style={styles.platformText}>{subscription.platform.toUpperCase()}</Text>
+              <Text style={styles.platformText}>{String(subscription.platform).toUpperCase()}</Text>
               {subscription.source && (
-                <Text style={styles.sourceText}>via {subscription.source.toUpperCase()}</Text>
+                <Text style={styles.sourceText}>via {String(subscription.source).toUpperCase()}</Text>
               )}
             </View>
           )}

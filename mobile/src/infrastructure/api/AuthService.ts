@@ -67,6 +67,22 @@ export class AuthService {
     this.api.setAccessToken(response.data.access_token);
   }
 
+  async logout(refreshToken?: string): Promise<void> {
+    try {
+      if (refreshToken) {
+        await this.api.post<ApiResponse<void>>('/auth/logout', {
+          refresh_token: refreshToken,
+        });
+      }
+    } catch {
+      // Best-effort remote revocation
+    } finally {
+      await SecureStorage.removeItem('access_token');
+      await SecureStorage.removeItem('refresh_token');
+      this.api.clearAccessToken();
+    }
+  }
+
   private async storeTokens(accessToken: string, refreshToken: string): Promise<void> {
     await SecureStorage.setItem('access_token', accessToken);
     await SecureStorage.setItem('refresh_token', refreshToken);

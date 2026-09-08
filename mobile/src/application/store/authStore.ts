@@ -63,6 +63,11 @@ export const useAuthStore = create<AuthState>()(
           const authService = getService();
           const response = await authService.register(platform, deviceId, appVersion, email);
 
+          try {
+            const {getApiClient} = await import('../services/Services');
+            getApiClient().setAccessToken(response.access_token);
+          } catch {}
+
           const user: User = {
             id: response.user_id,
             platformUserId: deviceId,
@@ -71,6 +76,8 @@ export const useAuthStore = create<AuthState>()(
             email,
             createdAt: new Date().toISOString(),
           };
+
+          await SecureStorage.removeItem('user_logged_out');
 
           set({
             user,
@@ -91,8 +98,35 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         set({isLoading: true, error: null});
         try {
-          await SecureStorage.removeItem('access_token');
-          await SecureStorage.removeItem('refresh_token');
+          const refreshToken = get().refreshToken;
+          const authService = getService();
+          await authService.logout(refreshToken || undefined);
+
+          // Mark user as explicitly logged out
+          await SecureStorage.setItem('user_logged_out', 'true');
+
+          // Reset subscriptions
+          try {
+            const {useSubscriptionStore} = await import('./subscriptionStore');
+            useSubscriptionStore.getState().setSubscription(null);
+          } catch {}
+
+          // Reset IAP store
+          try {
+            const {useIAPStore} = await import('./iapStore');
+            useIAPStore.getState().setCurrentPurchase(null);
+          } catch {}
+
+          // Reset Paywall SDK
+          try {
+            const {PaywallSDK} = await import('../../sdk');
+            PaywallSDK.reset();
+          } catch {}
+
+          try {
+            const {getApiClient} = await import('../services/Services');
+            getApiClient().clearAccessToken();
+          } catch {}
 
           set({
             user: null,
@@ -110,7 +144,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       refreshAccessToken: async () => {
-        const {refreshToken: token} = get();
+        const token = get().refreshToken;
         if (!token) {
           throw new Error('No refresh token available');
         }
@@ -133,18 +167,43 @@ export const useAuthStore = create<AuthState>()(
       loadStoredTokens: async () => {
         set({isLoading: true, error: null});
         try {
+          const isExplicitlyLoggedOut = (await SecureStorage.getItem('user_logged_out')) === 'true';
           const authService = getService();
           const {accessToken, refreshToken} = await authService.getStoredTokens();
 
           if (accessToken && refreshToken) {
+            try {
+              const {getApiClient} = await import('../services/Services');
+              getApiClient().setAccessToken(accessToken);
+            } catch {}
+
             set({
               accessToken,
               refreshToken,
               isAuthenticated: true,
               isLoading: false,
             });
+          } else if (!isExplicitlyLoggedOut) {
+            // Auto-register device anonymously on first launch
+            try {
+              const {default: DeviceInfo} = await import('react-native-device-info');
+              const {Platform} = await import('react-native');
+              const deviceId = await DeviceInfo.getUniqueId();
+              const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+              const appVersion = DeviceInfo.getVersion();
+              await get().register(deviceId, platform, appVersion);
+            } catch (regErr) {
+              console.warn('[authStore] Auto-registration failed:', regErr);
+              set({isLoading: false});
+            }
           } else {
-            set({isLoading: false});
+            set({
+              user: null,
+              accessToken: null,
+              refreshToken: null,
+              isAuthenticated: false,
+              isLoading: false,
+            });
           }
         } catch (error) {
           set({

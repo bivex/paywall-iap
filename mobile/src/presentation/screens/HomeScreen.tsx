@@ -35,12 +35,12 @@ export function HomeScreen() {
           {subscription ? (
             <View style={styles.statusContainer}>
               <Text style={styles.statusText}>
-                Status: <Text style={[styles.statusValue, {color: subscription.status === 'active' ? '#4CAF50' : '#f44336'}]}>
-                  {subscription.status.toUpperCase()}
+                Status: <Text style={[styles.statusValue, {color: (subscription.status || '').toLowerCase() === 'active' ? '#4CAF50' : '#f44336'}]}>
+                  {String(subscription.status || 'ACTIVE').toUpperCase()}
                 </Text>
               </Text>
               <Text style={styles.statusText}>
-                Plan: <Text style={styles.statusValue}>{subscription.planType.toUpperCase()}</Text>
+                Plan: <Text style={styles.statusValue}>{String(subscription.planType || (subscription as any).plan_type || 'PRO').toUpperCase()}</Text>
               </Text>
               {subscription.expiresAt && (
                 <Text style={styles.statusText}>

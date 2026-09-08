@@ -26,8 +26,21 @@ export class ApiClient {
       'X-App-ID': this.appId,
     };
 
-    if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    let token = this.accessToken;
+    if (!token) {
+      try {
+        const {SecureStorage} = await import('../storage/SecureStorage');
+        token = await SecureStorage.getItem('access_token');
+        if (token) {
+          this.accessToken = token;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const response = await fetch(url, {

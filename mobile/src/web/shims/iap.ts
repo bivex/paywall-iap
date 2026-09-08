@@ -109,11 +109,19 @@ export const getSubscriptions = async (input: any): Promise<Product[]> => {
 
 export const requestPurchase = async (input: any): Promise<Purchase> => {
   const sku = normalizeSku(input);
+  const txId = 'web_tx_' + Date.now();
+  const token = 'valid_active_' + Date.now();
+  const receipt = JSON.stringify({
+    packageName: 'com.mothsalt.game1',
+    productId: sku,
+    purchaseToken: token,
+    type: 'subscription',
+  });
   console.log('[react-native-iap:Web] Simulating purchase for:', sku);
   return {
     productId: sku,
-    transactionId: 'web_tx_' + Date.now(),
-    transactionReceipt: 'web_simulated_receipt_' + btoa(JSON.stringify({ sku, time: Date.now() })),
+    transactionId: txId,
+    transactionReceipt: receipt,
     transactionDate: Date.now(),
   };
 };

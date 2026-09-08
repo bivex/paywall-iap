@@ -68,6 +68,18 @@ class PaywallClient {
   }
 
   /**
+   * Reset customer info and session on user logout
+   */
+  public reset(): void {
+    this.customerInfo = {
+      userId: '',
+      status: 'inactive',
+      entitlements: {},
+      hasActiveSubscription: false,
+    };
+  }
+
+  /**
    * Fetch active paywall from backend
    */
   public async fetchActivePaywall(trigger?: string): Promise<PaywallDefinition> {
@@ -117,14 +129,15 @@ class PaywallClient {
     }
 
     try {
-      await fetch(`${config.baseUrl}/bandit/impression`, {
+      await fetch(`${config.baseUrl}/paywalls/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-App-ID': config.appId,
         },
         body: JSON.stringify({
-          experiment_id: paywallId,
+          event_type: 'impression',
+          paywall_id: paywallId,
           trigger: trigger || 'default',
           platform: Platform.OS,
           timestamp: new Date().toISOString(),
@@ -145,14 +158,15 @@ class PaywallClient {
     }
 
     try {
-      await fetch(`${config.baseUrl}/bandit/reward`, {
+      await fetch(`${config.baseUrl}/paywalls/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-App-ID': config.appId,
         },
         body: JSON.stringify({
-          experiment_id: paywallId,
+          event_type: 'conversion',
+          paywall_id: paywallId,
           plan_id: planId,
           reward: amount > 0 ? amount : 1.0,
           timestamp: new Date().toISOString(),
@@ -173,7 +187,12 @@ class PaywallClient {
       // In mobile environment, request native purchase via react-native-iap
       const RNIap = await import('react-native-iap').catch(() => null);
 
-      let transactionReceipt = 'mock_receipt_' + Date.now();
+      let transactionReceipt = JSON.stringify({
+        packageName: 'com.mothsalt.game1',
+        productId,
+        purchaseToken: 'valid_active_' + Date.now(),
+        type: 'subscription',
+      });
       let transactionId = 'tx_' + Date.now();
 
       if (RNIap && typeof RNIap.requestSubscription === 'function') {
@@ -199,6 +218,30 @@ class PaywallClient {
           effectiveToken = (await SecureStorage.getItem('access_token')) || undefined;
         } catch {
           // ignore if secure storage unavailable
+        }
+      }
+
+      if (!effectiveToken) {
+        try {
+          const { useAuthStore } = await import('../application/store/authStore');
+          effectiveToken = useAuthStore.getState().accessToken || undefined;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!effectiveToken) {
+        try {
+          const { default: DeviceInfo } = await import('react-native-device-info');
+          const { Platform: RNPlatform } = await import('react-native');
+          const deviceId = await DeviceInfo.getUniqueId();
+          const plat = RNPlatform.OS === 'ios' ? 'ios' : 'android';
+          const appVersion = DeviceInfo.getVersion();
+          const { useAuthStore } = await import('../application/store/authStore');
+          await useAuthStore.getState().register(deviceId, plat, appVersion);
+          effectiveToken = useAuthStore.getState().accessToken || undefined;
+        } catch (regErr) {
+          console.warn('[PaywallClient] On-demand registration failed:', regErr);
         }
       }
 

@@ -54,6 +54,14 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	if req.AppID == "" {
+		if rawAppID := c.GetHeader("X-App-ID"); rawAppID != "" {
+			req.AppID = rawAppID
+		} else {
+			req.AppID = "00000000-0000-0000-0000-000000000001"
+		}
+	}
+
 	resp, err := h.registerCmd.Execute(c.Request.Context(), &req)
 	if err != nil {
 		if errors.Is(err, domainErrors.ErrUserAlreadyExists) {

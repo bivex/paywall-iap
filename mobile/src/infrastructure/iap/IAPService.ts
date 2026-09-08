@@ -213,7 +213,7 @@ export class IAPService {
   private async verifyWithBackend(purchase: SubscriptionPurchase): Promise<void> {
     try {
       const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-      const receiptData = purchase.receiptData || '';
+      const receiptData = (purchase as any).transactionReceipt || (purchase as any).receiptData || '';
 
       await this.subscriptionService.verifyIAP(
         platform,

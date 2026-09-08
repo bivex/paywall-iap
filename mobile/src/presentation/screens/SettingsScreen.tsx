@@ -1,12 +1,31 @@
-import React from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity} from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator} from 'react-native';
 import {useAuthStore} from '../../application/store/authStore';
 
 export function SettingsScreen() {
   const {logout} = useAuthStore();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    await logout();
+  const performLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleLogout = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
+      if (window.confirm('Are you sure you want to log out of your account?')) {
+        performLogout();
+      }
+    } else {
+      Alert.alert('Log Out', 'Are you sure you want to log out of your account?', [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Log Out', style: 'destructive', onPress: performLogout},
+      ]);
+    }
   };
 
   return (
@@ -19,9 +38,19 @@ export function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
 
-          <TouchableOpacity style={styles.settingItem} onPress={handleLogout}>
-            <Text style={styles.settingLabel}>Log Out</Text>
-            <Text style={styles.settingArrow}>›</Text>
+          <TouchableOpacity
+            style={[styles.settingItem, styles.logoutItem]}
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? (
+              <ActivityIndicator size="small" color="#f44336" />
+            ) : (
+              <>
+                <Text style={[styles.settingLabel, styles.logoutText]}>Log Out</Text>
+                <Text style={[styles.settingArrow, styles.logoutArrow]}>›</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -109,5 +138,16 @@ const styles = StyleSheet.create({
   settingArrow: {
     color: '#888',
     fontSize: 20,
+  },
+  logoutItem: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#f44336',
+  },
+  logoutText: {
+    color: '#f44336',
+    fontWeight: '600',
+  },
+  logoutArrow: {
+    color: '#f44336',
   },
 });

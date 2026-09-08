@@ -77,12 +77,19 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
           set({accessCheck, isLoading: false});
           return accessCheck;
-        } catch (error) {
+        } catch (error: any) {
+          const fallbackCheck: AccessCheck = {
+            hasAccess: false,
+            reason: error?.message || 'access_check_failed',
+            gateId: null,
+            requiredPlanType: null,
+          };
           set({
+            accessCheck: fallbackCheck,
             isLoading: false,
             error: error instanceof Error ? error.message : 'Access check failed',
           });
-          throw error;
+          return fallbackCheck;
         }
       },
 

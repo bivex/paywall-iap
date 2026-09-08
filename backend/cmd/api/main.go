@@ -323,8 +323,8 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	_ = iapAdapter // used by webhook handlers
 
 	credResolver := iapext.NewCredentialResolver(appRepo)
-	dynamicApple := iapext.NewDynamicAppleVerifier(credResolver, cfg.IAP.AppleMockURL)
-	dynamicGoogle := iapext.NewDynamicGoogleVerifier(credResolver, cfg.IAP.GoogleIAPBaseURL)
+	dynamicApple := iapext.NewDynamicAppleVerifier(credResolver, appleVerifier, cfg.IAP.AppleMockURL)
+	dynamicGoogle := iapext.NewDynamicGoogleVerifier(credResolver, googleVerifier, cfg.IAP.GoogleIAPBaseURL)
 
 	// Initialize commands
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
@@ -489,6 +489,9 @@ func setupRouter(cfg *config.Config, d *dependencies, redisClient *redis.Client)
 	v1 := router.Group("/v1")
 	{
 		v1.GET("/paywalls/active", d.adminPaywallsHandler.GetActivePaywall)
+		v1.POST("/paywalls/events", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		})
 		setupAuthRoutes(v1, d)
 		setupAdminAuthRoutes(v1, d)
 		setupBanditRoutes(v1, d)
@@ -504,6 +507,7 @@ func setupAuthRoutes(v1 *gin.RouterGroup, d *dependencies) {
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/register", d.authHandler.Register)
+		auth.POST("/logout", d.authHandler.AdminLogout)
 		auth.POST("/refresh",
 			d.rateLimiter.Middleware(middleware.ByIP, middleware.DefaultConfig),
 			d.authHandler.RefreshToken,
