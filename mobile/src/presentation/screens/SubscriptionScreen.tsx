@@ -6,6 +6,46 @@ import {navigateToPaywall} from '../navigation/types';
 export function SubscriptionScreen() {
   const {subscription, isLoading, error, cancelSubscription} = useSubscriptionStore();
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+
+  const handleRestore = async () => {
+    setIsRestoring(true);
+    try {
+      const { PaywallSDK } = await import('../../sdk');
+      const res = await PaywallSDK.restorePurchases();
+      if (res.success && (res.restoredCount ?? 0) > 0) {
+        const msg = 'Your subscription was successfully restored!';
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert('Restored: ' + msg);
+        } else {
+          Alert.alert('Restored', msg);
+        }
+      } else if (res.success) {
+        const msg = 'No previous active purchases were found to restore.';
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert('No Purchases: ' + msg);
+        } else {
+          Alert.alert('No Purchases', msg);
+        }
+      } else {
+        const msg = res.error || 'Could not restore purchases.';
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert('Restore Failed: ' + msg);
+        } else {
+          Alert.alert('Restore Failed', msg);
+        }
+      }
+    } catch (err: any) {
+      const msg = err?.message || 'Restore failed';
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Error: ' + msg);
+      } else {
+        Alert.alert('Error', msg);
+      }
+    } finally {
+      setIsRestoring(false);
+    }
+  };
 
   const handleCancel = () => {
     const performCancel = async () => {
@@ -87,6 +127,17 @@ export function SubscriptionScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={[styles.button, styles.restoreButton]}
+            onPress={handleRestore}
+            disabled={isRestoring}>
+            {isRestoring ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.restoreButtonText}>🔄 Restore Purchases</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.button, styles.cancelButton]}
             onPress={handleCancel}
             disabled={isCancelling}>
@@ -104,6 +155,17 @@ export function SubscriptionScreen() {
             style={styles.button}
             onPress={() => navigateToPaywall('premium', 'subscription_expired')}>
             <Text style={styles.buttonText}>Get Premium</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.restoreButton]}
+            onPress={handleRestore}
+            disabled={isRestoring}>
+            {isRestoring ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.restoreButtonText}>🔄 Restore Purchases</Text>
+            )}
           </TouchableOpacity>
         </View>
       )}
@@ -191,6 +253,16 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: '#333',
+  },
+  restoreButton: {
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  restoreButtonText: {
+    color: '#60a5fa',
+    fontSize: 15,
+    fontWeight: '600',
   },
   cancelButton: {
     backgroundColor: '#d32f2f',

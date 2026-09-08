@@ -6,12 +6,89 @@
 import React, { useState } from 'react';
 import { AppRegistry, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import App from './App';
+import { getMockScenario, setMockScenario, MockIAPScenario } from './src/web/shims/iap';
 
 function WebContainer() {
   const [deviceFrame, setDeviceFrame] = useState<'iphone' | 'fullscreen'>('iphone');
+  const [scenario, setScenario] = useState<MockIAPScenario>(getMockScenario());
+  const [webhookStatus, setWebhookStatus] = useState<string | null>(null);
+
+  const handleSetScenario = (s: MockIAPScenario) => {
+    setMockScenario(s);
+    setScenario(s);
+  };
+
+  const sendGoogleWebhook = async (notificationType: number, label: string) => {
+    setWebhookStatus(`Sending ${label}...`);
+    try {
+      const activePurchases = JSON.parse(localStorage.getItem('__web_active_purchases') || '[]');
+      const historyPurchases = JSON.parse(localStorage.getItem('__web_receipt_history') || '[]');
+      const last = activePurchases[0] || historyPurchases[0];
+      let token = 'valid_active_tok_web';
+      let productId = 'com.mothsalt.game1.monthly';
+      if (last?.transactionReceipt) {
+        try {
+          const parsed = JSON.parse(last.transactionReceipt);
+          if (parsed.purchaseToken) token = parsed.purchaseToken;
+          if (parsed.productId) productId = parsed.productId;
+        } catch {}
+      }
+
+      const payload = {
+        version: '1.0',
+        packageName: 'com.mothsalt.game1',
+        eventTimeMillis: String(Date.now()),
+        subscriptionNotification: {
+          version: '1.0',
+          notificationType,
+          purchaseToken: token,
+          subscriptionId: productId,
+        },
+      };
+
+      const base64Data = btoa(JSON.stringify(payload));
+      const res = await fetch('/webhook/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: {
+            data: base64Data,
+            messageId: 'web-msg-' + Date.now(),
+          },
+          subscription: 'projects/test/subscriptions/iap',
+        }),
+      });
+
+      if (res.ok) {
+        setWebhookStatus(`✅ ${label} sent!`);
+        try {
+          const { useSubscriptionStore } = await import('./src/application/store/subscriptionStore');
+          await useSubscriptionStore.getState().fetchSubscription();
+          await useSubscriptionStore.getState().checkAccess('premium_content');
+        } catch {}
+      } else {
+        setWebhookStatus(`❌ ${label} failed: HTTP ${res.status}`);
+      }
+    } catch (err: any) {
+      setWebhookStatus(`❌ Error: ${err.message}`);
+    } finally {
+      setTimeout(() => setWebhookStatus(null), 3000);
+    }
+  };
+
+  const refreshState = async () => {
+    try {
+      const { useSubscriptionStore } = await import('./src/application/store/subscriptionStore');
+      await useSubscriptionStore.getState().fetchSubscription();
+      await useSubscriptionStore.getState().checkAccess('premium_content');
+      setWebhookStatus('🔄 State refreshed');
+      setTimeout(() => setWebhookStatus(null), 2000);
+    } catch {}
+  };
 
   return (
     <View style={styles.outerContainer}>
+      {/* Top Main Toolbar */}
       <View style={styles.topToolbar}>
         <View style={styles.brandRow}>
           <Text style={styles.brandTitle}>Paywall IAP Mobile Web Runner</Text>
@@ -19,6 +96,7 @@ function WebContainer() {
             <Text style={styles.badgeText}>React Native Web</Text>
           </View>
         </View>
+
         <View style={styles.frameToggleRow}>
           <TouchableOpacity
             style={[styles.toggleBtn, deviceFrame === 'iphone' && styles.toggleBtnActive]}
@@ -37,6 +115,89 @@ function WebContainer() {
             </Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Sub-Toolbar: IAP Mock Scenario Selector & Webhook Testing */}
+      <View style={styles.subToolbar}>
+        <View style={styles.toolbarSection}>
+          <Text style={styles.toolbarLabel}>🧪 Mock IAP Scenario:</Text>
+          <View style={styles.btnGroup}>
+            <TouchableOpacity
+              style={[styles.scenarioBtn, scenario === 'valid_active' && styles.scenarioBtnActive]}
+              onPress={() => handleSetScenario('valid_active')}
+            >
+              <Text style={[styles.scenarioBtnText, scenario === 'valid_active' && styles.scenarioBtnTextActive]}>
+                ✅ Success (Active)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scenarioBtn, scenario === 'expired' && styles.scenarioBtnActive]}
+              onPress={() => handleSetScenario('expired')}
+            >
+              <Text style={[styles.scenarioBtnText, scenario === 'expired' && styles.scenarioBtnTextActive]}>
+                ⏱️ Expired (422)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scenarioBtn, scenario === 'invalid' && styles.scenarioBtnActive]}
+              onPress={() => handleSetScenario('invalid')}
+            >
+              <Text style={[styles.scenarioBtnText, scenario === 'invalid' && styles.scenarioBtnTextActive]}>
+                ❌ Decline (410)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.scenarioBtn, scenario === 'canceled_active_' && styles.scenarioBtnActive]}
+              onPress={() => handleSetScenario('canceled_active_')}
+            >
+              <Text style={[styles.scenarioBtnText, scenario === 'canceled_active_' && styles.scenarioBtnTextActive]}>
+                🔄 Cancelled + Paid
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.toolbarSection}>
+          <Text style={styles.toolbarLabel}>⚡ RTDN Webhooks:</Text>
+          <View style={styles.btnGroup}>
+            <TouchableOpacity
+              style={styles.webhookBtn}
+              onPress={() => sendGoogleWebhook(2, 'Renew')}
+            >
+              <Text style={styles.webhookBtnText}>🔔 Auto-Renew</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.webhookBtn}
+              onPress={() => sendGoogleWebhook(6, 'Grace Period')}
+            >
+              <Text style={styles.webhookBtnText}>⚠️ Grace</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.webhookBtn}
+              onPress={() => sendGoogleWebhook(13, 'Expire')}
+            >
+              <Text style={styles.webhookBtnText}>🚫 Expire</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.webhookBtn, styles.refreshBtn]}
+              onPress={refreshState}
+            >
+              <Text style={styles.refreshBtnText}>🔄 Refresh</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {webhookStatus && (
+          <View style={styles.statusPill}>
+            <Text style={styles.statusPillText}>{webhookStatus}</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.viewportArea}>
@@ -68,7 +229,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   topToolbar: {
-    height: 54,
+    height: 50,
     backgroundColor: '#111827',
     borderBottomWidth: 1,
     borderBottomColor: '#1f2937',
@@ -77,6 +238,87 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     zIndex: 100,
+  },
+  subToolbar: {
+    minHeight: 44,
+    backgroundColor: '#0f172a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 16,
+    zIndex: 99,
+  },
+  toolbarSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  toolbarLabel: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  btnGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  scenarioBtn: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  scenarioBtnActive: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#60a5fa',
+  },
+  scenarioBtnText: {
+    color: '#cbd5e1',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  scenarioBtnTextActive: {
+    color: '#ffffff',
+  },
+  webhookBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#475569',
+  },
+  webhookBtnText: {
+    color: '#cbd5e1',
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  refreshBtn: {
+    borderColor: '#10b981',
+    backgroundColor: '#064e3b',
+  },
+  refreshBtnText: {
+    color: '#34d399',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: '#1e293b',
+    borderRadius: 6,
+  },
+  statusPillText: {
+    color: '#e2e8f0',
+    fontSize: 11,
+    fontWeight: '600',
   },
   brandRow: {
     flexDirection: 'row',

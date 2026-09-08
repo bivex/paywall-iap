@@ -41,9 +41,10 @@ func (r *mockUserRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.User,
 	)
 
 	var user entity.User
+	var ltvUpdatedAt *time.Time
 	err := row.Scan(
 		&user.ID, &user.PlatformUserID, &user.DeviceID, &user.Platform,
-		&user.AppVersion, &user.Email, &user.LTV, &user.LTVUpdatedAt,
+		&user.AppVersion, &user.Email, &user.LTV, &ltvUpdatedAt,
 		&user.CreatedAt, &user.DeletedAt,
 	)
 	if err != nil {
@@ -51,6 +52,9 @@ func (r *mockUserRepo) GetByID(ctx context.Context, id uuid.UUID) (*entity.User,
 			return nil, domainErrors.ErrUserNotFound
 		}
 		return nil, err
+	}
+	if ltvUpdatedAt != nil {
+		user.LTVUpdatedAt = *ltvUpdatedAt
 	}
 	return &user, nil
 }
@@ -62,9 +66,10 @@ func (r *mockUserRepo) GetByPlatformID(ctx context.Context, platformUserID strin
 	)
 
 	var user entity.User
+	var ltvUpdatedAt *time.Time
 	err := row.Scan(
 		&user.ID, &user.PlatformUserID, &user.DeviceID, &user.Platform,
-		&user.AppVersion, &user.Email, &user.LTV, &user.LTVUpdatedAt,
+		&user.AppVersion, &user.Email, &user.LTV, &ltvUpdatedAt,
 		&user.CreatedAt, &user.DeletedAt,
 	)
 	if err != nil {
@@ -72,6 +77,9 @@ func (r *mockUserRepo) GetByPlatformID(ctx context.Context, platformUserID strin
 			return nil, domainErrors.ErrUserNotFound
 		}
 		return nil, err
+	}
+	if ltvUpdatedAt != nil {
+		user.LTVUpdatedAt = *ltvUpdatedAt
 	}
 	return &user, nil
 }
@@ -83,9 +91,10 @@ func (r *mockUserRepo) GetByEmail(ctx context.Context, email string) (*entity.Us
 	)
 
 	var user entity.User
+	var ltvUpdatedAt *time.Time
 	err := row.Scan(
 		&user.ID, &user.PlatformUserID, &user.DeviceID, &user.Platform,
-		&user.AppVersion, &user.Email, &user.LTV, &user.LTVUpdatedAt,
+		&user.AppVersion, &user.Email, &user.LTV, &ltvUpdatedAt,
 		&user.CreatedAt, &user.DeletedAt,
 	)
 	if err != nil {
@@ -93,6 +102,9 @@ func (r *mockUserRepo) GetByEmail(ctx context.Context, email string) (*entity.Us
 			return nil, domainErrors.ErrUserNotFound
 		}
 		return nil, err
+	}
+	if ltvUpdatedAt != nil {
+		user.LTVUpdatedAt = *ltvUpdatedAt
 	}
 	return &user, nil
 }

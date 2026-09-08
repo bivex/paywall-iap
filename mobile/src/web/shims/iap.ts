@@ -107,17 +107,34 @@ export const getSubscriptions = async (input: any): Promise<Product[]> => {
   return mockProducts.filter((p) => skus.includes(p.productId));
 };
 
+export type MockIAPScenario = 'valid_active' | 'expired' | 'pending' | 'invalid' | 'canceled_active_';
+
+export const getMockScenario = (): MockIAPScenario => {
+  if (typeof localStorage !== 'undefined') {
+    return (localStorage.getItem('__web_mock_scenario') as MockIAPScenario) || 'valid_active';
+  }
+  return 'valid_active';
+};
+
+export const setMockScenario = (scenario: MockIAPScenario): void => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('__web_mock_scenario', scenario);
+    console.log('[react-native-iap:Web] Mock scenario set to:', scenario);
+  }
+};
+
 export const requestPurchase = async (input: any): Promise<Purchase> => {
   const sku = normalizeSku(input);
+  const scenario = getMockScenario();
   const txId = 'web_tx_' + Date.now();
-  const token = 'valid_active_' + Date.now();
+  const token = `${scenario}_tok_${Date.now()}`;
   const receipt = JSON.stringify({
     packageName: 'com.mothsalt.game1',
     productId: sku,
     purchaseToken: token,
     type: 'subscription',
   });
-  console.log('[react-native-iap:Web] Simulating purchase for:', sku);
+  console.log(`[react-native-iap:Web] Simulating purchase for: ${sku} with scenario: ${scenario}`);
   const purchase: Purchase = {
     productId: sku,
     transactionId: txId,
@@ -127,13 +144,15 @@ export const requestPurchase = async (input: any): Promise<Purchase> => {
 
   try {
     if (typeof localStorage !== 'undefined') {
-      const existing = JSON.parse(localStorage.getItem('__web_active_purchases') || '[]');
-      const updated = [purchase, ...existing.filter((p: any) => p.productId !== sku)];
-      localStorage.setItem('__web_active_purchases', JSON.stringify(updated));
+      if (scenario === 'valid_active' || scenario === 'canceled_active_') {
+        const existing = JSON.parse(localStorage.getItem('__web_active_purchases') || '[]');
+        const updated = [purchase, ...existing.filter((p: any) => p.productId !== sku)];
+        localStorage.setItem('__web_active_purchases', JSON.stringify(updated));
 
-      const history = JSON.parse(localStorage.getItem('__web_receipt_history') || '[]');
-      const updatedHistory = [purchase, ...history.filter((p: any) => p.productId !== sku)];
-      localStorage.setItem('__web_receipt_history', JSON.stringify(updatedHistory));
+        const history = JSON.parse(localStorage.getItem('__web_receipt_history') || '[]');
+        const updatedHistory = [purchase, ...history.filter((p: any) => p.productId !== sku)];
+        localStorage.setItem('__web_receipt_history', JSON.stringify(updatedHistory));
+      }
     }
   } catch {}
 
@@ -211,4 +230,6 @@ export default {
   flushFailedPurchasesIOS,
   purchaseUpdatedListener,
   purchaseErrorListener,
+  getMockScenario,
+  setMockScenario,
 };

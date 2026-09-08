@@ -115,4 +115,46 @@ func TestUserJourney(t *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 	})
+
+	t.Run("Step 6: Restore Purchases", func(t *testing.T) {
+		require.NotEmpty(t, accessToken, "Access token is required")
+
+		req, err := testutil.NewTestRequest("POST", suite.GetAPIURL()+"/v1/subscription/restore", nil, accessToken)
+		require.NoError(t, err)
+
+		resp, body, err := testutil.DoRequest(suite.HTTPClient, req)
+		require.NoError(t, err)
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var apiResp struct {
+			Data struct {
+				Status    string `json:"status"`
+				AutoRenew bool   `json:"auto_renew"`
+				PlanType  string `json:"plan_type"`
+			} `json:"data"`
+		}
+		err = json.Unmarshal(body, &apiResp)
+		require.NoError(t, err)
+		assert.Equal(t, "active", apiResp.Data.Status)
+		assert.True(t, apiResp.Data.AutoRenew)
+	})
+
+	t.Run("Step 7: Check Access after Restore", func(t *testing.T) {
+		require.NotEmpty(t, accessToken, "Access token is required")
+
+		req, err := testutil.NewTestRequest("GET", suite.GetAPIURL()+"/v1/subscription/access", nil, accessToken)
+		require.NoError(t, err)
+
+		resp, body, err := testutil.DoRequest(suite.HTTPClient, req)
+		require.NoError(t, err)
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var apiResp testutil.AccessCheckResponse
+		err = json.Unmarshal(body, &apiResp)
+		require.NoError(t, err)
+
+		assert.True(t, apiResp.Data.HasAccess)
+	})
 }
