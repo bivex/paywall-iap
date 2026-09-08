@@ -530,9 +530,15 @@ func (h *AdminAuditHandler) GetAuditLog(c *gin.Context) {
 }
 
 func buildUserSearchFilter(search, platform, role string, appID uuid.UUID) (string, []interface{}) {
-	args := []interface{}{appID}
-	where := []string{"u.app_id = $1"}
-	idx := 2
+	args := []interface{}{}
+	where := []string{}
+	idx := 1
+
+	if appID != uuid.Nil {
+		args = append(args, appID)
+		where = append(where, fmt.Sprintf("u.app_id = $%d", idx))
+		idx++
+	}
 
 	if search != "" {
 		args = append(args, "%"+search+"%")
@@ -550,6 +556,9 @@ func buildUserSearchFilter(search, platform, role string, appID uuid.UUID) (stri
 		idx++
 	}
 
+	if len(where) == 0 {
+		return "", args
+	}
 	return "WHERE " + strings.Join(where, " AND "), args
 }
 
@@ -572,7 +581,14 @@ func (h *AdminUserHandler) SearchUsers(c *gin.Context) {
 	platform := c.Query("platform")
 	role := c.Query("role")
 
-	appID := appctx.MustAppIDFromCtx(ctx)
+	var appID uuid.UUID
+	if rawAppID := c.GetHeader("X-App-ID"); rawAppID != "" {
+		if parsed, err := uuid.Parse(rawAppID); err == nil {
+			appID = parsed
+		}
+	} else {
+		appID = appctx.MustAppIDFromCtx(ctx)
+	}
 	whereSQL, args := buildUserSearchFilter(search, platform, role, appID)
 
 	var total int64

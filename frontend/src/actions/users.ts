@@ -1,8 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
-
-const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
+import { isFetchError, serverFetch } from "@/lib/server-fetch";
 
 export interface UserRow {
   id: string;
@@ -14,6 +12,7 @@ export interface UserRow {
   app_version: string;
   created_at: string;
   sub_status: string;
+  plan_type: string;
   sub_expires_at: string;
 }
 
@@ -30,11 +29,6 @@ const EMPTY: UsersResponse = { users: [], total: 0, page: 1, limit: 20, total_pa
 export async function getUsers(
   params: { page?: number; limit?: number; search?: string; platform?: string; role?: string } = {},
 ): Promise<UsersResponse> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("admin_access_token")?.value;
-  const appId = cookieStore.get("admin_app_id")?.value;
-  if (!token) return EMPTY;
-
   const qs = new URLSearchParams();
   if (params.page) qs.set("page", String(params.page));
   if (params.limit) qs.set("limit", String(params.limit));
@@ -42,18 +36,9 @@ export async function getUsers(
   if (params.platform) qs.set("platform", params.platform);
   if (params.role) qs.set("role", params.role);
 
-  try {
-    const res = await fetch(`${BACKEND_URL}/v1/admin/users/search?${qs}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(appId ? { "X-App-ID": appId } : {}),
-      },
-      cache: "no-store",
-    });
-    if (!res.ok) return EMPTY;
-    const body = await res.json();
-    return (body.data ?? body) as UsersResponse;
-  } catch {
+  const res = await serverFetch<UsersResponse>(`/v1/admin/users/search?${qs}`);
+  if (isFetchError(res)) {
     return EMPTY;
   }
+  return res;
 }

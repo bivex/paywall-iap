@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 
 import { getUsers } from "@/actions/users";
+import { AppScopeBadge } from "@/components/app-scope-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,7 +63,10 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Users</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold">Users</h1>
+          <AppScopeBadge />
+        </div>
         <div className="flex gap-2 text-sm text-muted-foreground items-center">
           <span>{data.total} total</span>
         </div>
@@ -89,8 +93,12 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             <TableBody>
               {data.users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
-                    No users found.
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-10 space-y-2">
+                    <p className="font-medium text-foreground">No users found.</p>
+                    <p className="text-xs text-muted-foreground">
+                      If an app is selected in the top-left switcher, users are filtered by that app.
+                      Switch apps or clear filters to view users.
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : (

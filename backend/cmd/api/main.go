@@ -593,6 +593,10 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 		admin.PUT("/apps/:id/credentials", d.appSettingsHandler.PutAppCredentials)
 		admin.DELETE("/apps/:id/credentials/:provider", d.appSettingsHandler.DeleteAppCredentials)
 
+		// Users (search and profile support optional X-App-ID for scoping or global search)
+		admin.GET("/users/search", d.adminHandler.SearchUsers)
+		admin.GET("/users/:id/profile", d.adminHandler.GetUserProfile)
+
 		// App-scoped routes — require X-App-ID header
 		appScoped := admin.Group("/")
 		appScoped.Use(httpmiddleware.RequireAppID())
@@ -604,8 +608,6 @@ func setupAdminRoutes(v1 *gin.RouterGroup, d *dependencies, cfg *config.Config) 
 			appScoped.POST("/users/:id/force-renew", d.adminHandler.ForceRenew)
 			appScoped.POST("/users/:id/grant-grace", d.adminHandler.GrantGracePeriod)
 			appScoped.GET("/users", d.adminHandler.ListUsers)
-			appScoped.GET("/users/search", d.adminHandler.SearchUsers)
-			appScoped.GET("/users/:id/profile", d.adminHandler.GetUserProfile)
 
 			// Dashboard
 			appScoped.GET("/dashboard/metrics", d.adminHandler.GetDashboardMetrics)
