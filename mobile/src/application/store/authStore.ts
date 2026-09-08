@@ -2,7 +2,17 @@ import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {User} from '../../domain/entities/User';
 import {AuthService} from '../../infrastructure/api/AuthService';
+import {ApiClient} from '../../infrastructure/api/ApiClient';
 import {SecureStorage} from '../../infrastructure/storage/SecureStorage';
+import {getAuthService} from '../services/Services';
+
+const getService = (): AuthService => {
+  try {
+    return getAuthService();
+  } catch {
+    return new AuthService(new ApiClient());
+  }
+};
 
 interface AuthState {
   user: User | null;
@@ -50,7 +60,7 @@ export const useAuthStore = create<AuthState>()(
       register: async (deviceId: string, platform: 'ios' | 'android', appVersion: string, email?: string) => {
         set({isLoading: true, error: null});
         try {
-          const authService = new AuthService(/* apiClient */);
+          const authService = getService();
           const response = await authService.register(platform, deviceId, appVersion, email);
 
           const user: User = {
@@ -107,7 +117,7 @@ export const useAuthStore = create<AuthState>()(
 
         set({isLoading: true, error: null});
         try {
-          const authService = new AuthService(/* apiClient */);
+          const authService = getService();
           await authService.refreshToken(token);
 
           set({isLoading: false});
@@ -123,7 +133,7 @@ export const useAuthStore = create<AuthState>()(
       loadStoredTokens: async () => {
         set({isLoading: true, error: null});
         try {
-          const authService = new AuthService(/* apiClient */);
+          const authService = getService();
           const {accessToken, refreshToken} = await authService.getStoredTokens();
 
           if (accessToken && refreshToken) {

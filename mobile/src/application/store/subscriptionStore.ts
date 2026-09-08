@@ -3,7 +3,17 @@ import {persist} from 'zustand/middleware';
 import {Subscription} from '../../domain/entities/Subscription';
 import {AccessCheck} from '../../domain/entities/Subscription';
 import {SubscriptionService} from '../../infrastructure/api/SubscriptionService';
+import {ApiClient} from '../../infrastructure/api/ApiClient';
+import {getSubscriptionService} from '../services/Services';
 import {useAuthStore} from './authStore';
+
+const getService = (): SubscriptionService => {
+  try {
+    return getSubscriptionService();
+  } catch {
+    return new SubscriptionService(new ApiClient());
+  }
+};
 
 interface SubscriptionState {
   subscription: Subscription | null;
@@ -37,7 +47,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
         set({isLoading: true, error: null});
         try {
-          const subscriptionService = new SubscriptionService(/* apiClient */);
+          const subscriptionService = getService();
           const subscription = await subscriptionService.getSubscription();
 
           set({subscription, isLoading: false});
@@ -62,7 +72,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
         set({isLoading: true, error: null});
         try {
-          const subscriptionService = new SubscriptionService(/* apiClient */);
+          const subscriptionService = getService();
           const accessCheck = await subscriptionService.checkAccess();
 
           set({accessCheck, isLoading: false});
@@ -79,7 +89,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       updateSubscription: async (planType: string) => {
         set({isLoading: true, error: null});
         try {
-          const subscriptionService = new SubscriptionService(/* apiClient */);
+          const subscriptionService = getService();
           await subscriptionService.updateSubscriptionPlan(planType);
 
           // Refetch subscription
@@ -96,7 +106,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       cancelSubscription: async (reason?: string) => {
         set({isLoading: true, error: null});
         try {
-          const subscriptionService = new SubscriptionService(/* apiClient */);
+          const subscriptionService = getService();
           await subscriptionService.cancelSubscription();
 
           // Refetch subscription

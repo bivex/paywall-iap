@@ -1,5 +1,5 @@
 import {ApiClient} from './ApiClient';
-import {ApiResponse, AuthTokens} from './config';
+import {ApiResponse, AuthTokens, APP_ID} from './config';
 import {SecureStorage} from '../storage/SecureStorage';
 
 export interface RegisterRequest {
@@ -8,6 +8,7 @@ export interface RegisterRequest {
   platform: 'ios' | 'android';
   app_version: string;
   email?: string;
+  app_id?: string;
 }
 
 export interface RegisterResponse {
@@ -26,8 +27,11 @@ export class AuthService {
       device_id: deviceId,
       platform,
       app_version: appVersion,
-      email,
+      app_id: APP_ID,
     };
+    if (email && email.trim()) {
+      request.email = email.trim();
+    }
 
     const response = await this.api.post<ApiResponse<RegisterResponse>>('/auth/register', request);
 
