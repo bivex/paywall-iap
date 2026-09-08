@@ -382,7 +382,9 @@ const styles = StyleSheet.create({
     borderColor: '#262626',
     overflow: 'hidden',
     position: 'relative',
-    boxShadow: '0 20px 35px rgba(0, 0, 0, 0.6)' as any,
+    ...Platform.select({
+      web: { boxShadow: '0 20px 35px rgba(0, 0, 0, 0.6)' } as any,
+    }),
   },
   dynamicIsland: {
     position: 'absolute',

@@ -44,6 +44,11 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
   );
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: 'success' | 'error' | 'info';
+    title: string;
+    message: string;
+  } | null>(null);
 
   // Fetch active paywall on mount if not provided explicitly
   useEffect(() => {
@@ -70,49 +75,76 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
   const handlePurchase = async () => {
     if (!selectedPlan) return;
     setIsPurchasing(true);
+    setFeedback(null);
 
     try {
       const productId = selectedPlan.productId || selectedPlan.id;
       const result = await PaywallSDK.purchase(productId);
 
       if (result.success) {
-        onPurchaseSuccess?.(result);
+        setFeedback({
+          type: 'success',
+          title: 'Purchase Successful!',
+          message: 'Your subscription is now active. Enjoy premium features!',
+        });
+        setTimeout(() => {
+          onPurchaseSuccess?.(result);
+        }, 1200);
       } else if (!result.cancelled) {
         const errorMsg = result.error || 'Payment failed';
-        Alert.alert('Payment Error', errorMsg);
+        setFeedback({
+          type: 'error',
+          title: 'Purchase Failed',
+          message: errorMsg,
+        });
         onError?.(errorMsg);
       }
     } catch (err: any) {
       const msg = err?.message || 'Payment could not be completed';
-      Alert.alert('Error', msg);
+      setFeedback({
+        type: 'error',
+        title: 'Error',
+        message: msg,
+      });
       onError?.(msg);
     } finally {
       setIsPurchasing(false);
     }
   };
 
-  const showAlert = (title: string, message: string) => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.alert) {
-      window.alert(`${title}: ${message}`);
-    } else {
-      Alert.alert(title, message);
-    }
-  };
-
   const handleRestore = async () => {
     setIsRestoring(true);
+    setFeedback(null);
     try {
       const result = await PaywallSDK.restorePurchases();
       if (result.success && (result.restoredCount ?? 0) > 0) {
-        showAlert('Restored', 'Your subscription was successfully restored!');
-        onPurchaseSuccess?.({ success: true, customerInfo: result.customerInfo });
+        setFeedback({
+          type: 'success',
+          title: 'Purchases Restored!',
+          message: `Successfully restored ${result.restoredCount} subscription(s). Refreshing access...`,
+        });
+        setTimeout(() => {
+          onPurchaseSuccess?.({ success: true, customerInfo: result.customerInfo });
+        }, 1400);
       } else if (result.success) {
-        showAlert('No Purchases', 'No previous active purchases were found to restore.');
+        setFeedback({
+          type: 'info',
+          title: 'No Active Purchases',
+          message: 'No previous active purchases were found to restore for this account.',
+        });
       } else {
-        showAlert('Restore Failed', result.error || 'Could not restore purchases.');
+        setFeedback({
+          type: 'error',
+          title: 'Restore Failed',
+          message: result.error || 'Could not restore purchases.',
+        });
       }
     } catch (err: any) {
-      showAlert('Error', err?.message || 'Restore failed');
+      setFeedback({
+        type: 'error',
+        title: 'Restore Error',
+        message: err?.message || 'Failed to communicate with restore service',
+      });
     } finally {
       setIsRestoring(false);
     }
@@ -133,6 +165,33 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Inline Feedback Banner */}
+      {feedback && (
+        <View
+          style={[
+            styles.feedbackBanner,
+            feedback.type === 'success' && styles.feedbackBannerSuccess,
+            feedback.type === 'error' && styles.feedbackBannerError,
+            feedback.type === 'info' && styles.feedbackBannerInfo,
+          ]}
+        >
+          <Text style={styles.feedbackIcon}>
+            {feedback.type === 'success' ? '✅' : feedback.type === 'error' ? '❌' : 'ℹ️'}
+          </Text>
+          <View style={styles.feedbackTextCol}>
+            <Text style={styles.feedbackTitle}>{feedback.title}</Text>
+            <Text style={styles.feedbackMessage}>{feedback.message}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.feedbackCloseBtn}
+            onPress={() => setFeedback(null)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.feedbackCloseText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ScrollView
         contentContainerStyle={[
@@ -519,5 +578,56 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
     paddingHorizontal: 12,
+  },
+  feedbackBanner: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 10,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  feedbackBannerSuccess: {
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    borderColor: '#22c55e',
+  },
+  feedbackBannerError: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: '#ef4444',
+  },
+  feedbackBannerInfo: {
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    borderColor: '#3b82f6',
+  },
+  feedbackIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  feedbackTextCol: {
+    flex: 1,
+  },
+  feedbackTitle: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  feedbackMessage: {
+    color: '#d1d5db',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  feedbackCloseBtn: {
+    padding: 4,
+    marginLeft: 8,
+    ...Platform.select({
+      web: { cursor: 'pointer' } as any,
+    }),
+  },
+  feedbackCloseText: {
+    color: '#9ca3af',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

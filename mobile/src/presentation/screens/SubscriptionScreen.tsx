@@ -4,82 +4,72 @@ import {useSubscriptionStore} from '../../application/store/subscriptionStore';
 import {navigateToPaywall} from '../navigation/types';
 
 export function SubscriptionScreen() {
-  const {subscription, isLoading, error, cancelSubscription} = useSubscriptionStore();
+  const {subscription, isLoading, error, cancelSubscription, fetchSubscription} = useSubscriptionStore();
   const [isCancelling, setIsCancelling] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: 'success' | 'error' | 'info';
+    title: string;
+    message: string;
+  } | null>(null);
 
   const handleRestore = async () => {
     setIsRestoring(true);
+    setFeedback(null);
     try {
       const { PaywallSDK } = await import('../../sdk');
       const res = await PaywallSDK.restorePurchases();
       if (res.success && (res.restoredCount ?? 0) > 0) {
-        const msg = 'Your subscription was successfully restored!';
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          window.alert('Restored: ' + msg);
-        } else {
-          Alert.alert('Restored', msg);
-        }
+        setFeedback({
+          type: 'success',
+          title: 'Purchases Restored',
+          message: `Successfully restored ${res.restoredCount} subscription(s)! Your access has been updated.`,
+        });
+        await fetchSubscription();
       } else if (res.success) {
-        const msg = 'No previous active purchases were found to restore.';
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          window.alert('No Purchases: ' + msg);
-        } else {
-          Alert.alert('No Purchases', msg);
-        }
+        setFeedback({
+          type: 'info',
+          title: 'No Purchases Found',
+          message: 'No previous active purchases were found to restore for this account.',
+        });
       } else {
-        const msg = res.error || 'Could not restore purchases.';
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          window.alert('Restore Failed: ' + msg);
-        } else {
-          Alert.alert('Restore Failed', msg);
-        }
+        setFeedback({
+          type: 'error',
+          title: 'Restore Failed',
+          message: res.error || 'Could not restore purchases.',
+        });
       }
     } catch (err: any) {
-      const msg = err?.message || 'Restore failed';
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert('Error: ' + msg);
-      } else {
-        Alert.alert('Error', msg);
-      }
+      setFeedback({
+        type: 'error',
+        title: 'Restore Error',
+        message: err?.message || 'Restore failed',
+      });
     } finally {
       setIsRestoring(false);
     }
   };
 
-  const handleCancel = () => {
-    const performCancel = async () => {
-      setIsCancelling(true);
-      try {
-        await cancelSubscription();
-        if (Platform.OS !== 'web') {
-          Alert.alert('Subscription Cancelled', 'Your subscription has been successfully cancelled.');
-        }
-      } catch (err: any) {
-        const msg = err?.message || 'Failed to cancel subscription';
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          window.alert(msg);
-        } else {
-          Alert.alert('Error', msg);
-        }
-      } finally {
-        setIsCancelling(false);
-      }
-    };
-
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
-      if (window.confirm('Are you sure you want to cancel your subscription? You will lose access to premium features.')) {
-        performCancel();
-      }
-    } else {
-      Alert.alert(
-        'Cancel Subscription',
-        'Are you sure you want to cancel your subscription? You will lose access to premium features.',
-        [
-          {text: 'Keep Subscription', style: 'cancel'},
-          {text: 'Cancel Subscription', style: 'destructive', onPress: performCancel},
-        ],
-      );
+  const performCancel = async () => {
+    setIsCancelling(true);
+    setConfirmingCancel(false);
+    setFeedback(null);
+    try {
+      await cancelSubscription();
+      setFeedback({
+        type: 'info',
+        title: 'Subscription Cancelled',
+        message: 'Auto-renewal has been stopped. You will retain access until the expiration date.',
+      });
+    } catch (err: any) {
+      setFeedback({
+        type: 'error',
+        title: 'Cancellation Failed',
+        message: err?.message || 'Failed to cancel subscription',
+      });
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -88,6 +78,33 @@ export function SubscriptionScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Subscription</Text>
       </View>
+
+      {/* Inline Feedback Banner */}
+      {feedback && (
+        <View
+          style={[
+            styles.feedbackBanner,
+            feedback.type === 'success' && styles.feedbackSuccess,
+            feedback.type === 'error' && styles.feedbackError,
+            feedback.type === 'info' && styles.feedbackInfo,
+          ]}
+        >
+          <Text style={styles.feedbackIcon}>
+            {feedback.type === 'success' ? '✅' : feedback.type === 'error' ? '❌' : 'ℹ️'}
+          </Text>
+          <View style={styles.feedbackTextCol}>
+            <Text style={styles.feedbackTitle}>{feedback.title}</Text>
+            <Text style={styles.feedbackMessage}>{feedback.message}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.feedbackClose}
+            onPress={() => setFeedback(null)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.feedbackCloseText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {isLoading ? (
         <View style={styles.centered}>
@@ -137,16 +154,40 @@ export function SubscriptionScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, styles.cancelButton]}
-            onPress={handleCancel}
-            disabled={isCancelling}>
-            {isCancelling ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
+          {confirmingCancel ? (
+            <View style={styles.confirmBox}>
+              <Text style={styles.confirmTitle}>Cancel Subscription?</Text>
+              <Text style={styles.confirmDesc}>
+                You will lose access to premium features when your current period expires.
+              </Text>
+              <View style={styles.confirmBtnRow}>
+                <TouchableOpacity
+                  style={[styles.confirmBtn, styles.confirmCancelBtn]}
+                  onPress={() => setConfirmingCancel(false)}
+                >
+                  <Text style={styles.confirmCancelText}>Keep Plan</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmBtn, styles.confirmActionBtn]}
+                  onPress={performCancel}
+                  disabled={isCancelling}
+                >
+                  {isCancelling ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.confirmActionText}>Yes, Cancel</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => setConfirmingCancel(true)}
+              disabled={isCancelling}>
               <Text style={styles.buttonText}>Cancel Subscription</Text>
-            )}
-          </TouchableOpacity>
+            </TouchableOpacity>
+          )}
         </View>
       ) : (
         <View style={styles.centered}>
@@ -281,5 +322,103 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#f44336',
     textAlign: 'center',
+  },
+  feedbackBanner: {
+    margin: 20,
+    marginBottom: 0,
+    borderRadius: 10,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  feedbackSuccess: {
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    borderColor: '#22c55e',
+  },
+  feedbackError: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderColor: '#ef4444',
+  },
+  feedbackInfo: {
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    borderColor: '#3b82f6',
+  },
+  feedbackIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  feedbackTextCol: {
+    flex: 1,
+  },
+  feedbackTitle: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  feedbackMessage: {
+    color: '#d1d5db',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  feedbackClose: {
+    padding: 4,
+    marginLeft: 8,
+    ...Platform.select({
+      web: { cursor: 'pointer' } as any,
+    }),
+  },
+  feedbackCloseText: {
+    color: '#9ca3af',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  confirmBox: {
+    backgroundColor: '#1f1515',
+    borderColor: '#7f1d1d',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 16,
+    marginTop: 16,
+  },
+  confirmTitle: {
+    color: '#f87171',
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  confirmDesc: {
+    color: '#cbd5e1',
+    fontSize: 13,
+    marginBottom: 14,
+    lineHeight: 18,
+  },
+  confirmBtnRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmCancelBtn: {
+    backgroundColor: '#334155',
+  },
+  confirmCancelText: {
+    color: '#f1f5f9',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  confirmActionBtn: {
+    backgroundColor: '#dc2626',
+  },
+  confirmActionText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
