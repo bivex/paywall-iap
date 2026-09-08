@@ -121,17 +121,16 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	// Issue new access token
-	accessToken, _, err := h.jwtMiddleware.GenerateAccessToken(claims.UserID)
-	if err != nil {
-		response.InternalError(c, "Failed to generate access token")
-		return
+	// Resolve appID from claims, falling back to X-App-ID header
+	appID := claims.AppID
+	if appID == "" {
+		appID = c.GetHeader("X-App-ID")
 	}
 
-	// Rotate: issue a new refresh token
-	newRefreshToken, _, err := h.jwtMiddleware.GenerateRefreshToken(claims.UserID)
+	// Issue new access and refresh tokens preserving app_id and role
+	accessToken, newRefreshToken, err := h.jwtMiddleware.GenerateTokenPair(claims.UserID, appID, claims.Role)
 	if err != nil {
-		response.InternalError(c, "Failed to generate refresh token")
+		response.InternalError(c, "Failed to generate tokens")
 		return
 	}
 

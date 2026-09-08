@@ -71,9 +71,13 @@ func injectJWTClaims(c *gin.Context, claims *JWTClaims) {
 	if claims.Role != "" {
 		c.Set("role", claims.Role)
 	}
-	if claims.AppID != "" {
-		c.Set("app_id", claims.AppID)
-		if appID, err := uuid.Parse(claims.AppID); err == nil {
+	appIDStr := claims.AppID
+	if appIDStr == "" {
+		appIDStr = c.GetHeader("X-App-ID")
+	}
+	if appIDStr != "" {
+		c.Set("app_id", appIDStr)
+		if appID, err := uuid.Parse(appIDStr); err == nil {
 			c.Request = c.Request.WithContext(appctx.WithAppID(c.Request.Context(), appID))
 		}
 	}
