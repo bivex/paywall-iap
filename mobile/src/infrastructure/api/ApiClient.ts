@@ -1,4 +1,6 @@
-import {API_BASE_URL, APP_ID} from './config';
+import {API_BASE_URL, APP_ID, ApiResponse} from './config';
+
+export type {ApiResponse};
 
 export class ApiClient {
   private accessToken: string | null = null;
@@ -43,10 +45,48 @@ export class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       ...options,
       headers,
     });
+
+    if (response.status === 401 && !endpoint.startsWith('/auth/')) {
+      try {
+        const {useAuthStore} = await import('../../application/store/authStore');
+        const newToken = await useAuthStore.getState().refreshAccessToken();
+        if (newToken) {
+          headers['Authorization'] = `Bearer ${newToken}`;
+          response = await fetch(url, {
+            ...options,
+            headers,
+          });
+        }
+      } catch {
+        try {
+          const {SecureStorage} = await import('../storage/SecureStorage');
+          const isExplicitlyLoggedOut = (await SecureStorage.getItem('user_logged_out')) === 'true';
+          if (!isExplicitlyLoggedOut) {
+            const {useAuthStore} = await import('../../application/store/authStore');
+            const {default: DeviceInfo} = await import('react-native-device-info');
+            const {Platform} = await import('react-native');
+            const deviceId = await DeviceInfo.getUniqueId();
+            const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+            const appVersion = DeviceInfo.getVersion();
+            await useAuthStore.getState().register(deviceId, platform, appVersion);
+            const freshToken = useAuthStore.getState().accessToken;
+            if (freshToken) {
+              headers['Authorization'] = `Bearer ${freshToken}`;
+              response = await fetch(url, {
+                ...options,
+                headers,
+              });
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({

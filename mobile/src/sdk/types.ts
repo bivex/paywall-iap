@@ -58,6 +58,7 @@ export interface PaywallSDKConfig {
   appId: string;
   baseUrl?: string;
   apiKey?: string;
+  authToken?: string;
   debug?: boolean;
   offlineFallback?: PaywallDefinition;
 }
@@ -65,7 +66,7 @@ export interface PaywallSDKConfig {
 export interface CustomerInfo {
   userId: string;
   platformUserId?: string;
-  status: 'active' | 'grace_period' | 'cancelled' | 'expired' | 'none';
+  status: 'active' | 'grace_period' | 'cancelled' | 'expired' | 'none' | 'inactive';
   planType?: string;
   expiresAt?: string;
   entitlements: Record<string, boolean>;

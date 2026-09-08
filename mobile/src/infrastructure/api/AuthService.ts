@@ -58,13 +58,14 @@ export class AuthService {
     }
   }
 
-  async refreshToken(refreshToken: string): Promise<void> {
+  async refreshToken(refreshToken: string): Promise<{access_token: string; refresh_token: string; expires_in: number}> {
     const response = await this.api.post<ApiResponse<{access_token: string; refresh_token: string; expires_in: number}>>('/auth/refresh', {
       refresh_token: refreshToken,
     });
 
     await this.storeTokens(response.data.access_token, response.data.refresh_token);
     this.api.setAccessToken(response.data.access_token);
+    return response.data;
   }
 
   async logout(refreshToken?: string): Promise<void> {

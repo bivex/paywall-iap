@@ -214,61 +214,84 @@ class PaywallClient {
         }
       }
 
-      // Resolve authentication token
-      let effectiveToken = userToken;
-      if (!effectiveToken) {
+      // 2. Ensure auth token is available and fresh
+      const getValidAuthToken = async (): Promise<string | undefined> => {
         try {
-          const { SecureStorage } = await import('../infrastructure/storage/SecureStorage');
-          effectiveToken = (await SecureStorage.getItem('access_token')) || undefined;
-        } catch {
-          // ignore if secure storage unavailable
-        }
-      }
+          const { useAuthStore, isTokenExpired } = await import('../application/store/authStore');
+          let token = userToken || config.authToken || useAuthStore.getState().accessToken || undefined;
+          if (token && !isTokenExpired(token)) {
+            return token;
+          }
+          try {
+            token = await useAuthStore.getState().refreshAccessToken();
+            if (token) return token;
+          } catch {
+            // refresh failed, continue to registration
+          }
 
-      if (!effectiveToken) {
-        try {
-          const { useAuthStore } = await import('../application/store/authStore');
-          effectiveToken = useAuthStore.getState().accessToken || undefined;
-        } catch {
-          // ignore
-        }
-      }
-
-      if (!effectiveToken) {
-        try {
           const { default: DeviceInfo } = await import('react-native-device-info');
           const { Platform: RNPlatform } = await import('react-native');
           const deviceId = await DeviceInfo.getUniqueId();
           const plat = RNPlatform.OS === 'ios' ? 'ios' : 'android';
           const appVersion = DeviceInfo.getVersion();
-          const { useAuthStore } = await import('../application/store/authStore');
           await useAuthStore.getState().register(deviceId, plat, appVersion);
-          effectiveToken = useAuthStore.getState().accessToken || undefined;
+          return useAuthStore.getState().accessToken || undefined;
         } catch (regErr) {
-          console.warn('[PaywallClient] On-demand registration failed:', regErr);
+          console.warn('[PaywallClient] Auth resolution failed:', regErr);
+          return undefined;
         }
-      }
-
-      // Verify with backend
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'X-App-ID': config.appId,
       };
 
-      if (effectiveToken) {
-        headers['Authorization'] = `Bearer ${effectiveToken}`;
-      }
+      let effectiveToken = await getValidAuthToken();
 
-      const verifyRes = await fetch(`${config.baseUrl}/verify/iap`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          platform: Platform.OS === 'ios' ? 'ios' : 'android',
-          receipt_data: transactionReceipt,
-          product_id: productId,
-          transaction_id: transactionId,
-        }),
-      });
+      // Verify with backend
+      const sendVerify = async (token?: string) => {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+          'X-App-ID': config.appId,
+        };
+
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        return fetch(`${config.baseUrl}/verify/iap`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            platform: Platform.OS === 'ios' ? 'ios' : 'android',
+            receipt_data: transactionReceipt,
+            product_id: productId,
+            transaction_id: transactionId,
+          }),
+        });
+      };
+
+      let verifyRes = await sendVerify(effectiveToken);
+
+      if (verifyRes.status === 401) {
+        try {
+          const { useAuthStore } = await import('../application/store/authStore');
+          let freshToken: string | undefined;
+          try {
+            freshToken = await useAuthStore.getState().refreshAccessToken();
+          } catch {
+            const { default: DeviceInfo } = await import('react-native-device-info');
+            const { Platform: RNPlatform } = await import('react-native');
+            const deviceId = await DeviceInfo.getUniqueId();
+            const plat = RNPlatform.OS === 'ios' ? 'ios' : 'android';
+            const appVersion = DeviceInfo.getVersion();
+            await useAuthStore.getState().register(deviceId, plat, appVersion);
+            freshToken = useAuthStore.getState().accessToken || undefined;
+          }
+          if (freshToken) {
+            effectiveToken = freshToken;
+            verifyRes = await sendVerify(effectiveToken);
+          }
+        } catch (retryErr) {
+          console.warn('[PaywallClient] Retry verify/iap failed:', retryErr);
+        }
+      }
 
       if (!verifyRes.ok) {
         const errData = await verifyRes.json().catch(() => ({}));

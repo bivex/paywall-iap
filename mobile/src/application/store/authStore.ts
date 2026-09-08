@@ -26,11 +26,26 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (deviceId: string, platform: 'ios' | 'android', appVersion: string, email?: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshAccessToken: () => Promise<void>;
+  refreshAccessToken: () => Promise<string>;
   loadStoredTokens: () => Promise<void>;
   setUser: (user: User | null) => void;
   clearError: () => void;
 }
+
+export const isTokenExpired = (token: string): boolean => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const jsonStr = typeof atob === 'function' ? atob(base64) : Buffer.from(base64, 'base64').toString('utf8');
+    const payload = JSON.parse(jsonStr);
+    if (!payload.exp) return false;
+    // 30 second safety margin
+    return Date.now() >= payload.exp * 1000 - 30000;
+  } catch {
+    return true;
+  }
+};
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -143,8 +158,11 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      refreshAccessToken: async () => {
-        const token = get().refreshToken;
+      refreshAccessToken: async (): Promise<string> => {
+        let token = get().refreshToken;
+        if (!token) {
+          token = (await SecureStorage.getItem('refresh_token')) || null;
+        }
         if (!token) {
           throw new Error('No refresh token available');
         }
@@ -152,9 +170,21 @@ export const useAuthStore = create<AuthState>()(
         set({isLoading: true, error: null});
         try {
           const authService = getService();
-          await authService.refreshToken(token);
+          const newTokens = await authService.refreshToken(token);
 
-          set({isLoading: false});
+          try {
+            const {getApiClient} = await import('../services/Services');
+            getApiClient().setAccessToken(newTokens.access_token);
+          } catch {}
+
+          set({
+            accessToken: newTokens.access_token,
+            refreshToken: newTokens.refresh_token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+
+          return newTokens.access_token;
         } catch (error) {
           set({
             isLoading: false,
@@ -171,18 +201,41 @@ export const useAuthStore = create<AuthState>()(
           const authService = getService();
           const {accessToken, refreshToken} = await authService.getStoredTokens();
 
-          if (accessToken && refreshToken) {
+          if (accessToken && refreshToken && !isExplicitlyLoggedOut) {
+            let validAccessToken = accessToken;
+            if (isTokenExpired(accessToken)) {
+              try {
+                const refreshed = await authService.refreshToken(refreshToken);
+                validAccessToken = refreshed.access_token;
+                set({
+                  accessToken: refreshed.access_token,
+                  refreshToken: refreshed.refresh_token,
+                  isAuthenticated: true,
+                  isLoading: false,
+                });
+              } catch (refreshErr) {
+                console.warn('[authStore] Refresh on load failed, attempting auto-registration:', refreshErr);
+                const {default: DeviceInfo} = await import('react-native-device-info');
+                const {Platform} = await import('react-native');
+                const deviceId = await DeviceInfo.getUniqueId();
+                const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+                const appVersion = DeviceInfo.getVersion();
+                await get().register(deviceId, platform, appVersion);
+                return;
+              }
+            } else {
+              set({
+                accessToken,
+                refreshToken,
+                isAuthenticated: true,
+                isLoading: false,
+              });
+            }
+
             try {
               const {getApiClient} = await import('../services/Services');
-              getApiClient().setAccessToken(accessToken);
+              getApiClient().setAccessToken(validAccessToken);
             } catch {}
-
-            set({
-              accessToken,
-              refreshToken,
-              isAuthenticated: true,
-              isLoading: false,
-            });
           } else if (!isExplicitlyLoggedOut) {
             // Auto-register device anonymously on first launch
             try {
