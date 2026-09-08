@@ -26,7 +26,7 @@ export function SubscriptionRow({ s, showCreatedAt }: { s: SubscriptionRowData; 
           </TableCell>
           <TableCell>{formatSource(s.source, s.platform)}</TableCell>
           <TableCell>{formatPlanType(s.plan_type)}</TableCell>
-          <TableCell>
+          <TableCell suppressHydrationWarning>
             {new Date(s.expires_at).toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",

@@ -149,10 +149,10 @@ export function DunningQueueCard({
                   <TableCell className="font-mono text-sm tabular-nums">
                     {d.attempt_count}/{d.max_attempts}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
+                  <TableCell className="whitespace-nowrap text-muted-foreground text-xs" suppressHydrationWarning>
                     {fmtDate(d.next_attempt_at)}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground text-xs">
+                  <TableCell className="whitespace-nowrap text-muted-foreground text-xs" suppressHydrationWarning>
                     {fmtDate(d.last_attempt_at)}
                   </TableCell>
                   <TableCell>

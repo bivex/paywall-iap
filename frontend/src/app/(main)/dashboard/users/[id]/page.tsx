@@ -89,7 +89,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
               <Badge variant="outline">{user.role}</Badge>
             </span>
             <span className="text-muted-foreground">Joined</span>
-            <span>{fmtDate(user.created_at)}</span>
+            <span suppressHydrationWarning>{fmtDate(user.created_at)}</span>
             <span className="text-muted-foreground">User ID</span>
             <span className="font-mono text-xs text-muted-foreground">{user.id}</span>
           </CardContent>
@@ -116,7 +116,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                     {subStatusMeta[activeSub.status]?.label ?? activeSub.status}
                   </Badge>
                   <div className="text-xs text-muted-foreground mt-2">{activeSub.product_id}</div>
-                  <div className="text-xs text-muted-foreground">Expires {fmtDate(activeSub.expires_at)}</div>
+                  <div className="text-xs text-muted-foreground" suppressHydrationWarning>Expires {fmtDate(activeSub.expires_at)}</div>
                 </>
               ) : (
                 <span className="text-sm text-muted-foreground">No subscription</span>
@@ -172,8 +172,8 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                           </Badge>
                         </TableCell>
                         <TableCell>{s.auto_renew ? "✅" : "❌"}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{fmtDate(s.expires_at)}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{fmtDate(s.created_at)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground" suppressHydrationWarning>{fmtDate(s.expires_at)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground" suppressHydrationWarning>{fmtDate(s.created_at)}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -208,7 +208,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                   ) : (
                     transactions.map((t) => (
                       <TableRow key={t.id}>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(t.date)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>{fmt(t.date)}</TableCell>
                         <TableCell className="text-right font-mono font-medium">${t.amount.toFixed(2)}</TableCell>
                         <TableCell className="text-sm">{t.currency}</TableCell>
                         <TableCell>
@@ -246,7 +246,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                     <TableHead>Status</TableHead>
                     <TableHead>Attempts</TableHead>
                     <TableHead>Next Attempt</TableHead>
-                    <TableHead>Started</TableHead>
+                    <TableHead>Created</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -267,10 +267,10 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                         <TableCell>
                           {d.attempt_count} / {d.max_attempts}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="text-xs text-muted-foreground" suppressHydrationWarning>
                           {d.next_attempt_at ? fmt(d.next_attempt_at) : "—"}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{fmtDate(d.created_at)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground" suppressHydrationWarning>{fmtDate(d.created_at)}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -303,7 +303,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                   ) : (
                     audit_log.map((a, i) => (
                       <TableRow key={i}>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(a.date)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>{fmt(a.date)}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{a.action}</Badge>
                         </TableCell>

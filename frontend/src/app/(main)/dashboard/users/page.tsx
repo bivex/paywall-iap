@@ -112,7 +112,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                           {u.role}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
+                      <TableCell className="text-xs text-muted-foreground" suppressHydrationWarning>
                         {new Date(u.created_at).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",

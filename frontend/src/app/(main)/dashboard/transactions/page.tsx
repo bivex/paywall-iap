@@ -242,7 +242,7 @@ export default async function TransactionsPage({ searchParams }: Props) {
               ) : (
                 transactions.map((tx) => (
                   <TxRow key={tx.id} tx={tx}>
-                    <TableCell className="text-muted-foreground whitespace-nowrap">{fmt(tx.created_at)}</TableCell>
+                    <TableCell className="text-muted-foreground whitespace-nowrap" suppressHydrationWarning>{fmt(tx.created_at)}</TableCell>
                     <TableCell className="font-medium">{tx.email || tx.user_id.slice(0, 8) + "…"}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-medium">

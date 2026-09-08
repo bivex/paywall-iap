@@ -132,7 +132,7 @@ export default async function AuditLogPage({ searchParams }: { searchParams: Pro
               ) : (
                 data.rows.map((row) => (
                   <TableRow key={row.ID}>
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
                       {formatDate(row.Time)}
                     </TableCell>
                     <TableCell className="text-sm font-medium">{row.AdminEmail}</TableCell>
