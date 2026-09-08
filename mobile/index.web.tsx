@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { AppRegistry, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { AppRegistry, StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
 import App from './App';
 import { getMockScenario, setMockScenario, MockIAPScenario } from './src/web/shims/iap';
 
