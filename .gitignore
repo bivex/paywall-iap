@@ -25,6 +25,7 @@ mobile/ios/Pods/
 mobile/ios/build/
 mobile/android/build/
 mobile/.gradle/
+mobile/dist/
 *.ipa
 *.apk
 
