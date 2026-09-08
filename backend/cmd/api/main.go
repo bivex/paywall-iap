@@ -472,6 +472,7 @@ func setupRouter(cfg *config.Config, d *dependencies, redisClient *redis.Client)
 	// API v1 routes
 	v1 := router.Group("/v1")
 	{
+		v1.GET("/paywalls/active", d.adminPaywallsHandler.GetActivePaywall)
 		setupAuthRoutes(v1, d)
 		setupAdminAuthRoutes(v1, d)
 		setupBanditRoutes(v1, d)

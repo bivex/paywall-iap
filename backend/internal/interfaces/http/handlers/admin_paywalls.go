@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -268,4 +269,42 @@ func (h *AdminPaywallsHandler) DeletePaywall(c *gin.Context) {
 	}
 
 	response.OK(c, gin.H{"deleted": true})
+}
+
+// GetActivePaywall GET /v1/paywalls/active
+// Returns the active paywall definition for a mobile client.
+// Accepts X-App-ID header or ?app_id= query param.
+func (h *AdminPaywallsHandler) GetActivePaywall(c *gin.Context) {
+	rawAppID := c.GetHeader("X-App-ID")
+	if rawAppID == "" {
+		rawAppID = c.Query("app_id")
+	}
+	if rawAppID == "" {
+		response.BadRequest(c, "app_id or X-App-ID is required")
+		return
+	}
+
+	appID, err := uuid.Parse(rawAppID)
+	if err != nil {
+		response.BadRequest(c, "invalid app_id")
+		return
+	}
+
+	p, err := scanPaywall(h.pool.QueryRow(c.Request.Context(), `
+		SELECT id, app_id, name, description, definition, is_active, created_at, updated_at
+		FROM app_paywalls
+		WHERE app_id = $1 AND is_active = true
+		ORDER BY updated_at DESC
+		LIMIT 1
+	`, appID.String()))
+	if err == pgx.ErrNoRows {
+		response.NotFound(c, "No active paywall configured for this app")
+		return
+	}
+	if err != nil {
+		response.InternalError(c, "Failed to get active paywall")
+		return
+	}
+
+	response.OK(c, p)
 }
