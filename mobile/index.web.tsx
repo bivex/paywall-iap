@@ -140,10 +140,7 @@ const styles = StyleSheet.create({
     borderColor: '#262626',
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.6,
-    shadowRadius: 35,
+    boxShadow: '0 20px 35px rgba(0, 0, 0, 0.6)' as any,
   },
   dynamicIsland: {
     position: 'absolute',

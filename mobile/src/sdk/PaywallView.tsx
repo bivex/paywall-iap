@@ -49,10 +49,14 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
   useEffect(() => {
     if (!initialDefinition) {
       PaywallSDK.fetchActivePaywall(trigger).then((fetched) => {
-        setPaywall(fetched);
-        if (!selectedPlanId && fetched.plans.length > 0) {
-          const highlighted = fetched.plans.find((p) => p.highlight) || fetched.plans[0];
-          setSelectedPlanId(highlighted.id);
+        if (fetched && fetched.plans?.length > 0) {
+          setPaywall(fetched);
+          setSelectedPlanId((current) => {
+            const hasCurrent = fetched.plans.some((p) => p.id === current);
+            if (hasCurrent) return current;
+            const highlighted = fetched.plans.find((p) => p.highlight) || fetched.plans[0];
+            return highlighted.id;
+          });
         }
       });
     }
@@ -61,7 +65,7 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
   }, [initialDefinition, trigger]);
 
   const { theme, hero, features, plans, cta, footer, layout } = paywall;
-  const selectedPlan = plans.find((p) => p.id === selectedPlanId) || plans[0];
+  const selectedPlan = plans.find((p) => p.id === selectedPlanId) || plans.find((p) => p.highlight) || plans[0];
 
   const handlePurchase = async () => {
     if (!selectedPlan) return;
@@ -179,7 +183,8 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
                     backgroundColor: theme.surfaceColor,
                     borderColor: isSelected ? theme.accentColor : `${theme.textColor}1A`,
                     borderWidth: isSelected ? 2 : 1,
-                  },
+                    ...(Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+                  } as any,
                 ]}
               >
                 {plan.badge ? (
@@ -232,14 +237,23 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
             styles.ctaButton,
             { backgroundColor: theme.accentColor },
             isPurchasing && { opacity: 0.7 },
-          ]}
+            (Platform.OS === 'web' ? { cursor: 'pointer' } : {}),
+          ] as any}
         >
           {isPurchasing ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.ctaText}>{cta.primaryLabel}</Text>
+            <Text style={styles.ctaText}>
+              {(cta as any).primaryLabel || (cta as any).text || 'Continue'}
+            </Text>
           )}
         </TouchableOpacity>
+
+        {(cta as any).subtext ? (
+          <Text style={[styles.ctaSubtext, { color: `${theme.textColor}99` }]}>
+            {(cta as any).subtext}
+          </Text>
+        ) : null}
 
         {/* Secondary Dismiss Action (if configured) */}
         {cta.secondaryLabel && onDismiss ? (
@@ -261,14 +275,16 @@ export const PaywallView: React.FC<PaywallViewProps> = ({
               <ActivityIndicator size="small" color={theme.accentColor} />
             ) : (
               <Text style={[styles.restoreText, { color: `${theme.textColor}B3` }]}>
-                {footer.restoreLabel}
+                {(footer as any).restoreLabel || (footer as any).restoreText || 'Restore Purchases'}
               </Text>
             )}
           </TouchableOpacity>
 
-          <Text style={[styles.legalText, { color: `${theme.textColor}66` }]}>
-            {footer.legalText}
-          </Text>
+          {(footer as any).legalText ? (
+            <Text style={[styles.legalText, { color: `${theme.textColor}66` }]}>
+              {(footer as any).legalText}
+            </Text>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -460,6 +476,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '700',
+  },
+  ctaSubtext: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 6,
   },
   secondaryButton: {
     alignItems: 'center',
