@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/bivex/paywall-iap/internal/application/dto"
@@ -32,6 +33,15 @@ func (q *GetSubscriptionQuery) Execute(ctx context.Context, userID string) (*dto
 
 	sub, err := q.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
 	if err != nil {
+		// Fallback: check if user has a valid unexpired subscription even if status is cancelled
+		subs, subsErr := q.subscriptionRepo.GetByUserID(ctx, userUUID)
+		if subsErr == nil && len(subs) > 0 {
+			for _, s := range subs {
+				if s.ExpiresAt.After(time.Now()) && s.Status != entity.StatusExpired {
+					return q.toResponse(s), nil
+				}
+			}
+		}
 		return nil, fmt.Errorf("failed to get subscription: %w", err)
 	}
 

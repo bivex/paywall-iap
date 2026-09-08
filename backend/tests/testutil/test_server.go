@@ -42,11 +42,12 @@ func NewTestServer(
 	getSubQuery := query.NewGetSubscriptionQuery(subscriptionRepo)
 	checkAccessQuery := query.NewCheckAccessQuery(subscriptionRepo)
 	cancelCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
+	restoreCmd := command.NewRestoreSubscriptionCommand(subscriptionRepo)
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(registerCmd, nil, jwtMiddleware)
-	subscriptionHandler := handlers.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelCmd, jwtMiddleware)
+	subscriptionHandler := handlers.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelCmd, restoreCmd, jwtMiddleware)
 
 	// Setup routes
 	v1 := router.Group("/v1")
@@ -83,6 +84,7 @@ func NewTestServer(
 		{
 			subscription.GET("", subscriptionHandler.GetSubscription)
 			subscription.GET("/access", subscriptionHandler.CheckAccess)
+			subscription.POST("/restore", subscriptionHandler.RestoreSubscription)
 			subscription.DELETE("", subscriptionHandler.CancelSubscription)
 		}
 	}

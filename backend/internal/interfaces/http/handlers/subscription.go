@@ -16,6 +16,7 @@ type SubscriptionHandler struct {
 	getSubQuery         *query.GetSubscriptionQuery
 	checkAccessQuery    *query.CheckAccessQuery
 	cancelCmd           *command.CancelSubscriptionCommand
+	restoreCmd          *command.RestoreSubscriptionCommand
 	jwtMiddleware       *middleware.JWTMiddleware
 }
 
@@ -24,12 +25,14 @@ func NewSubscriptionHandler(
 	getSubQuery *query.GetSubscriptionQuery,
 	checkAccessQuery *query.CheckAccessQuery,
 	cancelCmd *command.CancelSubscriptionCommand,
+	restoreCmd *command.RestoreSubscriptionCommand,
 	jwtMiddleware *middleware.JWTMiddleware,
 ) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		getSubQuery:      getSubQuery,
 		checkAccessQuery: checkAccessQuery,
 		cancelCmd:        cancelCmd,
+		restoreCmd:       restoreCmd,
 		jwtMiddleware:    jwtMiddleware,
 	}
 }
@@ -110,4 +113,38 @@ func (h *SubscriptionHandler) CancelSubscription(c *gin.Context) {
 	}
 
 	response.NoContent(c)
+}
+
+// RestoreSubscription restores the user's previous purchases/subscriptions
+// @Summary Restore purchases
+// @Tags subscription
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} response.SuccessResponse{data=dto.SubscriptionResponse}
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /subscription/restore [post]
+func (h *SubscriptionHandler) RestoreSubscription(c *gin.Context) {
+	userID := c.GetString("user_id")
+	if userID == "" {
+		response.Unauthorized(c, "User not authenticated")
+		return
+	}
+
+	if h.restoreCmd == nil {
+		response.InternalError(c, "Restore command not configured")
+		return
+	}
+
+	resp, err := h.restoreCmd.Execute(c.Request.Context(), userID)
+	if err != nil {
+		if errors.Is(err, domainErrors.ErrSubscriptionNotFound) {
+			response.NotFound(c, "No previous purchases found to restore")
+			return
+		}
+		response.InternalError(c, "Failed to restore purchases: "+err.Error())
+		return
+	}
+
+	response.OK(c, resp)
 }

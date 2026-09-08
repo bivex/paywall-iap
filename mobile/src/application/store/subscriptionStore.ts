@@ -26,6 +26,7 @@ interface SubscriptionState {
   checkAccess: (featureId: string) => Promise<AccessCheck>;
   updateSubscription: (planType: string) => Promise<void>;
   cancelSubscription: (reason?: string) => Promise<void>;
+  restoreSubscription: () => Promise<Subscription | null>;
   setSubscription: (subscription: Subscription | null) => void;
   clearError: () => void;
 }
@@ -155,6 +156,22 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to cancel subscription',
+          });
+          throw error;
+        }
+      },
+
+      restoreSubscription: async () => {
+        set({isLoading: true, error: null});
+        try {
+          const subscriptionService = getService();
+          const restored = await subscriptionService.restoreSubscription();
+          set({subscription: restored, isLoading: false, error: null});
+          return restored;
+        } catch (error: any) {
+          set({
+            isLoading: false,
+            error: error instanceof Error ? error.message : 'Failed to restore subscription',
           });
           throw error;
         }

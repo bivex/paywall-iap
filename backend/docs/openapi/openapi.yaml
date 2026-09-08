@@ -750,6 +750,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/subscription/restore:
+    post:
+      tags: [subscription]
+      summary: Restore purchases and reactivate subscription
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Subscription restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionEnvelope'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No previous purchases found to restore
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /v1/subscription/access:
     get:
       tags: [subscription]

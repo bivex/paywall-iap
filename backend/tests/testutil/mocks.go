@@ -212,13 +212,35 @@ func (r *mockSubscriptionRepo) GetActiveByUserID(ctx context.Context, userID uui
 }
 
 func (r *mockSubscriptionRepo) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.Subscription, error) {
-	return []*entity.Subscription{}, nil
+	rows, err := r.pool.Query(ctx,
+		"SELECT id, user_id, status, source, platform, product_id, plan_type, expires_at, auto_renew, created_at, updated_at, deleted_at FROM subscriptions WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC",
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subs []*entity.Subscription
+	for rows.Next() {
+		var sub entity.Subscription
+		err := rows.Scan(
+			&sub.ID, &sub.UserID, &sub.Status, &sub.Source, &sub.Platform,
+			&sub.ProductID, &sub.PlanType, &sub.ExpiresAt, &sub.AutoRenew,
+			&sub.CreatedAt, &sub.UpdatedAt, &sub.DeletedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		subs = append(subs, &sub)
+	}
+	return subs, nil
 }
 
 func (r *mockSubscriptionRepo) Update(ctx context.Context, sub *entity.Subscription) error {
 	_, err := r.pool.Exec(ctx,
-		"UPDATE subscriptions SET status = $2, updated_at = now() WHERE id = $1",
-		sub.ID, sub.Status,
+		"UPDATE subscriptions SET status = $2, auto_renew = $3, expires_at = $4, updated_at = now() WHERE id = $1",
+		sub.ID, sub.Status, sub.AutoRenew, sub.ExpiresAt,
 	)
 	return err
 }

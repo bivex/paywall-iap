@@ -329,6 +329,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	// Initialize commands
 	registerCmd := command.NewRegisterCommand(userRepo, jwtMiddleware)
 	cancelSubCmd := command.NewCancelSubscriptionCommand(subscriptionRepo)
+	restoreSubCmd := command.NewRestoreSubscriptionCommand(subscriptionRepo)
 	verifyIAPCmd := command.NewVerifyIAPCommand(command.VerifyIAPCommandParams{
 		UserRepo:         userRepo,
 		SubscriptionRepo: subscriptionRepo,
@@ -347,7 +348,7 @@ func initDependencies(cfg *config.Config, dbPool *pgxpool.Pool, redisClient *red
 	appSettingsHandler := app_handler.NewAppSettingsHandler(appRepo, credResolver)
 	authHandler := app_handler.NewAuthHandler(registerCmd, adminLoginCmd, jwtMiddleware)
 	iapHandler := app_handler.NewIAPHandler(verifyIAPCmd, jwtMiddleware, rateLimiter)
-	subscriptionHandler := app_handler.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelSubCmd, jwtMiddleware)
+	subscriptionHandler := app_handler.NewSubscriptionHandler(getSubQuery, checkAccessQuery, cancelSubCmd, restoreSubCmd, jwtMiddleware)
 	adminHandler := app_handler.NewAdminHandler(app_handler.AdminHandlerDeps{
 		AdminInfraDeps: app_handler.AdminInfraDeps{
 			SubscriptionRepo: subscriptionRepo,
@@ -569,6 +570,7 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, d *dependencies) {
 				d.rateLimiter.Middleware(middleware.ByUserID, middleware.PollingConfig),
 				d.subscriptionHandler.CheckAccess,
 			)
+			subs.POST("/restore", d.subscriptionHandler.RestoreSubscription)
 			subs.DELETE("", d.subscriptionHandler.CancelSubscription)
 		}
 

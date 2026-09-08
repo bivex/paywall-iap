@@ -130,6 +130,10 @@ export const requestPurchase = async (input: any): Promise<Purchase> => {
       const existing = JSON.parse(localStorage.getItem('__web_active_purchases') || '[]');
       const updated = [purchase, ...existing.filter((p: any) => p.productId !== sku)];
       localStorage.setItem('__web_active_purchases', JSON.stringify(updated));
+
+      const history = JSON.parse(localStorage.getItem('__web_receipt_history') || '[]');
+      const updatedHistory = [purchase, ...history.filter((p: any) => p.productId !== sku)];
+      localStorage.setItem('__web_receipt_history', JSON.stringify(updatedHistory));
     }
   } catch {}
 
@@ -149,18 +153,31 @@ export const finishTransaction = async (arg: any, isConsumable?: boolean): Promi
       const existing = JSON.parse(localStorage.getItem('__web_active_purchases') || '[]');
       const updated = [purchase, ...existing.filter((p: any) => p.transactionId !== txId)];
       localStorage.setItem('__web_active_purchases', JSON.stringify(updated));
+
+      const history = JSON.parse(localStorage.getItem('__web_receipt_history') || '[]');
+      const updatedHistory = [purchase, ...history.filter((p: any) => p.transactionId !== txId)];
+      localStorage.setItem('__web_receipt_history', JSON.stringify(updatedHistory));
     } catch {}
   }
 };
 
 export const getAvailablePurchases = async (): Promise<Purchase[]> => {
-  const saved = localStorage.getItem('__web_active_purchases');
-  if (!saved) return [];
-  try {
-    return JSON.parse(saved);
-  } catch {
-    return [];
+  if (typeof localStorage === 'undefined') return [];
+  const active = localStorage.getItem('__web_active_purchases');
+  if (active) {
+    try {
+      const parsed = JSON.parse(active);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {}
   }
+  const history = localStorage.getItem('__web_receipt_history');
+  if (history) {
+    try {
+      const parsed = JSON.parse(history);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {}
+  }
+  return [];
 };
 
 export const getSubscriptionPurchases = async (): Promise<SubscriptionPurchase[]> => {

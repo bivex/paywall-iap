@@ -94,12 +94,52 @@ func NewVerifyIAPCommandLegacy(params VerifyIAPCommandLegacyParams) *VerifyIAPCo
 	})
 }
 
-func (c *VerifyIAPCommand) handleDuplicateReceipt(ctx context.Context, userUUID uuid.UUID) (*dto.VerifyIAPResponse, error) {
+func (c *VerifyIAPCommand) handleDuplicateReceipt(ctx context.Context, userUUID uuid.UUID, result *IAPVerificationResult, req *dto.VerifyIAPRequest) (*dto.VerifyIAPResponse, error) {
+	// 1. Return active subscription if already active
 	sub, err := c.subscriptionRepo.GetActiveByUserID(ctx, userUUID)
-	if err != nil {
-		return nil, fmt.Errorf("%w: receipt already processed", domainErrors.ErrReceiptAlreadyProcessed)
+	if err == nil && sub != nil {
+		return c.toSubscriptionResponse(sub, false), nil
 	}
-	return c.toSubscriptionResponse(sub, false), nil
+
+	// 2. If user has existing subscriptions (e.g. cancelled), reactivate the latest one
+	subs, err := c.subscriptionRepo.GetByUserID(ctx, userUUID)
+	if err == nil && len(subs) > 0 {
+		latestSub := subs[0]
+		latestSub.Status = entity.StatusActive
+		latestSub.AutoRenew = true
+		if result != nil && result.ExpiresAt.After(time.Now()) {
+			latestSub.ExpiresAt = result.ExpiresAt
+		} else if !latestSub.ExpiresAt.After(time.Now()) {
+			latestSub.ExpiresAt = time.Now().Add(30 * 24 * time.Hour)
+		}
+		if req != nil && req.ProductID != "" {
+			latestSub.ProductID = req.ProductID
+			latestSub.PlanType = c.determinePlanType(req.ProductID)
+		}
+		if err := c.subscriptionRepo.Update(ctx, latestSub); err != nil {
+			return nil, fmt.Errorf("failed to reactivate subscription: %w", err)
+		}
+		return c.toSubscriptionResponse(latestSub, false), nil
+	}
+
+	// 3. If no subscription exists for this user, restore by creating one
+	planType := c.determinePlanType(req.ProductID)
+	expiresAt := time.Now().Add(30 * 24 * time.Hour)
+	if result != nil && !result.ExpiresAt.IsZero() {
+		expiresAt = result.ExpiresAt
+	}
+	newSub := entity.NewSubscription(entity.NewSubscriptionParams{
+		UserID:    userUUID,
+		Source:    entity.SourceIAP,
+		Platform:  req.Platform,
+		ProductID: req.ProductID,
+		PlanType:  planType,
+		ExpiresAt: expiresAt,
+	})
+	if err := c.subscriptionRepo.Create(ctx, newSub); err != nil {
+		return nil, fmt.Errorf("failed to restore subscription: %w", err)
+	}
+	return c.toSubscriptionResponse(newSub, false), nil
 }
 
 type upsertSubscriptionParams struct {
@@ -159,7 +199,7 @@ func (c *VerifyIAPCommand) Execute(ctx context.Context, userID string, appID uui
 		return nil, fmt.Errorf("failed to check duplicate receipt: %w", err)
 	}
 	if isDuplicate {
-		return c.handleDuplicateReceipt(ctx, userUUID)
+		return c.handleDuplicateReceipt(ctx, userUUID, result, req)
 	}
 
 	// Determine plan type from product ID

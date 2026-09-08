@@ -424,12 +424,36 @@ class PaywallClient {
         }
       }
 
-      // 2. Check backend subscription directly
+      // 2. Try backend restore endpoint
+      try {
+        const { useSubscriptionStore } = await import('../application/store/subscriptionStore');
+        const restored = await useSubscriptionStore.getState().restoreSubscription();
+        if (restored) {
+          const plan = (restored.planType || (restored as any).plan_type || 'annual').toLowerCase();
+          this.customerInfo = {
+            userId: restored.userId || 'current-user',
+            status: 'active',
+            planType: plan.includes('month') ? 'monthly' : 'annual',
+            entitlements: { premium: true },
+            hasActiveSubscription: true,
+          };
+          return {
+            success: true,
+            restoredCount: 1,
+            customerInfo: this.customerInfo,
+          };
+        }
+      } catch (restoreErr) {
+        // Not critical if no restorable purchase on server
+        console.log('[PaywallSDK] Backend restore attempt:', restoreErr);
+      }
+
+      // 3. Check backend subscription directly
       try {
         const { useSubscriptionStore } = await import('../application/store/subscriptionStore');
         await useSubscriptionStore.getState().fetchSubscription();
         const sub = useSubscriptionStore.getState().subscription;
-        if (sub && String(sub.status).toLowerCase() === 'active') {
+        if (sub && (String(sub.status).toLowerCase() === 'active' || (sub.expiresAt && new Date(sub.expiresAt) > new Date()))) {
           this.customerInfo = {
             userId: sub.userId || 'current-user',
             status: 'active',

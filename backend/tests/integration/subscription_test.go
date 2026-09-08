@@ -97,9 +97,10 @@ func TestSubscriptionEndpoints(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 
+	var cancelUser *entity.User
 	t.Run("DELETE /v1/subscription - cancels subscription", func(t *testing.T) {
 		// Create a fresh user and subscription for this test
-		cancelUser := userFactory.Create(entity.PlatformiOS, true)
+		cancelUser = userFactory.Create(entity.PlatformiOS, true)
 		err = userRepo.Create(ctx, cancelUser)
 		require.NoError(t, err)
 
@@ -139,4 +140,26 @@ func TestSubscriptionEndpoints(t *testing.T) {
 
 		assert.False(t, apiResp.Data.HasAccess)
 	})
+
+	t.Run("POST /v1/subscription/restore - restores cancelled subscription", func(t *testing.T) {
+		req, err := testServer.NewAuthenticatedRequest("POST", "/v1/subscription/restore", nil, cancelUser.ID.String())
+		require.NoError(t, err)
+
+		resp, body, err := testutil.DoRequest(nil, req)
+		require.NoError(t, err)
+
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		var apiResp struct {
+			Data struct {
+				Status   string `json:"status"`
+				AutoRenew bool  `json:"auto_renew"`
+			} `json:"data"`
+		}
+		err = json.Unmarshal(body, &apiResp)
+		require.NoError(t, err)
+		assert.Equal(t, "active", apiResp.Data.Status)
+		assert.True(t, apiResp.Data.AutoRenew)
+	})
 }
+
